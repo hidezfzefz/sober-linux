@@ -1543,6 +1543,19 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_SINGLETON_FIX_FRESH") ||
                        getenv("SOBER_SINGLETON_FIX_PROBE") ||
                        getenv("SOBER_SINGLETON_FIX_VERBOSE") ||
+                       /* A8 residual: Tier-3 guest-visible config seeds. */
+                       getenv("SOBER_ASSET_ROOT") ||
+                       getenv("SOBER_SCREEN_WIDTH_DP") ||
+                       getenv("SOBER_SCREEN_HEIGHT_DP") ||
+                       getenv("SOBER_SCREEN_SIZE") ||
+                       getenv("SOBER_NAV_HIDDEN") ||
+                       getenv("SOBER_LANG") ||
+                       getenv("SOBER_COUNTRY") ||
+                       getenv("SOBER_WINDOW_WIDTH") ||
+                       getenv("SOBER_WINDOW_HEIGHT") ||
+                       getenv("SOBER_GUEST_PATH") ||
+                       getenv("SOBER_CALLBACK_PROVENANCE_GUEST_BASE") ||
+                       env_prefix_active("SOBER_PROP_") ||
                        sober_notifier_probe_should_withhold();
     if (seeded_state) {
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "

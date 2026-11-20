@@ -872,8 +872,9 @@ static void sr_build_tables(SoberJni *j)
         sober_platform_fields_install_slots(t->fn, 231);
     (void)sober_static_object_calls_install_slots(t->fn, 231);
     (void)sober_scalar_returns_install_slots(t->fn, 231);
-    if (sober_callback_provenance_is_active())
-        (void)sober_callback_provenance_install(NULL);
+    /* A5 audit fix: the module self-gates on SOBER_CALLBACK_PROVENANCE; calling
+     * it through is_active() first made the installer unreachable (dead code). */
+    (void)sober_callback_provenance_install(NULL);
 
     SRInvokeInterface *v = &j->vm_table;
     memset(v, 0, sizeof(*v));

@@ -53,7 +53,7 @@ No weakening is authorized; no success is claimed.
 
 `src/linux/guest_app_shell.c` now force-withholds the marker whenever any
 phase-7 diagnostic seed (`SOBER_SEED_USER_CONTROLLER`,
-`SOBER_SEED_APP_DELEGATE`, `SOBER_SEED_JNI_STRING_BRIDGE`) is active. This is
+`SOBER_SEED_APP_DELEGATE`, `SOBER_SEED_GLOBAL_STRING`) is active. This is
 defence in depth only: those seeds manufacture guest state and therefore cannot
 prove a login/app-shell frame.
 
@@ -72,7 +72,7 @@ and fires a genuine, counted `onAppBridgeNotification(String,String)`
 **explicitly rejected** as app-shell proof — it is JNI plumbing, and seeded guest
 state cannot qualify. The strict condition is unchanged: a real
 `onAppShellReloadNeeded` or `gameLoadedCallback` plus the phase-3 guest render
-call. No gate change was made; the marker remains withheld. The callback may only
+call. No gate weakening was made (the withhold chain was strengthened); the marker remains withheld. The callback may only
 be counted/logged by the opt-in diagnostic `SOBER_LOG_APP_BRIDGE_NOTIFICATION`.
 Remaining blockers and the task-linked next steps are recorded in PROGRESS.md
 (Phase 9); no success is claimed.

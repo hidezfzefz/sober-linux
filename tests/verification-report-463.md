@@ -1,3 +1,6 @@
+> **SUPERSEDED** by `tests/D12-final-invariants.md` and `docs/REVIEW-100.md`;
+> line numbers and withhold counts below are historical snapshots.
+
 # Verification report 463 — phase-8 wiring, marker gate, and opt-in withhold A/B
 
 Verifier, team `TEAM-LF55-5P2L-B4DQ`, task #463. Date 2026-11-20.

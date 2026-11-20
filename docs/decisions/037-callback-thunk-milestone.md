@@ -37,7 +37,9 @@ guest→Java callback without going through the broken `0x233319a` object path.
 
 ## Honesty requirement (mandatory)
 
-A passing `tests/app-shell.sh` with `app shell rendered` proves:
+Historical phase-5 text — read subject to decision 038, which downgrades the
+ALT thunk to diagnostic-only and forbids using it as proof. A passing
+`tests/app-shell.sh` with `app shell rendered` was originally taken to prove:
 - a genuine guest JNI thunk called into our bridge (real guest→Java callback),
 - the phase-3 guest render RVA `0x649d422` was executed.
 

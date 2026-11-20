@@ -10,18 +10,22 @@ Proton, box64, qemu, or any compat runtime).
 [![APS2 relocs](docs/assets/badge-relocs.svg)](PROGRESS.md)
 [![JNI slots](docs/assets/badge-jni.svg)](PROGRESS.md)
 [![native render](docs/assets/badge-render.svg)](PROGRESS.md)
-[![verification](docs/assets/badge-verification.svg)](tests/verification-report-471.md)
+[![verification](docs/assets/badge-verification.svg)](tests/D12-final-invariants.md)
 [![decision 013 gate](docs/assets/badge-gate.svg)](docs/decisions/013-no-weak-app-shell-marker.md)
 [![app-shell callback](docs/assets/badge-callback.svg)](analysis/C09-marker-evidence.md)
 [![marker](docs/assets/badge-marker.svg)](docs/decisions/038-strict-gate-alt-thunk-ruling.md)
 
-[![progress map](docs/assets/progress.svg)](PROGRESS.md)
+[![progress map](docs/assets/progress.svg)](docs/REVIEW-100.md)
 
-Regenerate badges/map: `python3 tools/gen_progress.py`.
+**Full review:** [docs/REVIEW-100.md](docs/REVIEW-100.md) — 14 parallel domain
+audits, weighted score and roadmap. Regenerate badges/map:
+`python3 tools/gen_progress.py`.
 
 **Honest headline:** native init, window and a guest-driven first frame work; the
-real login/app-shell frame is **not** proven. The strict `app shell rendered`
-marker stays withheld (decision 013 / 038).
+real login/app-shell frame is **not** proven. Overall project progress is
+**≈46%** (43–52% band: init 95%, render 55%, JNI 70%, app state 20%, callback 0%,
+gate/tests/docs 45%). The strict `app shell rendered` marker stays **WITHHELD**
+(decision 013 / 038).
 
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████
@@ -31,6 +35,7 @@ Native init + window + first frame       3/3          100%  ██████�
 JNIEnv function table built           231/231         100%  ████████████████████
 Cached jmethodIDs seeded                49/49         100%  ████████████████████
 Verification (verify-native + ctest)     2/2          100%  ████████████████████
+Weighted goal completion                    46%           46%  █████████░░░░░░░░░░░
 Decision-013 gate enforced               1/1          100%  ████████████████████
 Genuine app-shell callback observed       0/1            0%  ░░░░░░░░░░░░░░░░░░░░
 app shell rendered marker                WITHHELD          ░░░░░░░░░░░░░░░░░░░░
@@ -45,21 +50,23 @@ app shell rendered marker                WITHHELD          ░░░░░░░
 | Guest constructors + APS2 relocs | ✅ | 3618 ctors, 565390 relocations |
 | Native X11/EGL window + first frame | ✅ | guest swap `0x649d422` observed |
 | JNI bridge, callbacks, field/array slots | ✅ | 231 slots, 49 cached IDs |
-| Strict marker gate + decisions 013/038 | ✅ | name-only counting rejected; notifier provenance required |
-| Verification / diagnostics / docs | ✅ | ctest 2/2, `fault-baseline.sh`, 62 analysis reports |
+| Strict marker gate + decisions 013/038 | ✅ | gate enforced; notifier provenance required by policy, not positively coded yet |
+| Verification / diagnostics / docs | ⚠️ | ctest 2/2 (shallow), `fault-baseline.sh`; full DoD still manual |
 | App state (singleton/controller/delegate/488) | ⚠️ | guest-shaped opt-in modules only; no clean default-path creation |
 | Genuine `gameLoadedCallback(J)V` | ⬜ | notifier `0x27eaf6e` never entered by the guest |
 | Login/app-shell frame | ⬜ | no guest-side frame evidence; marker withheld |
 
-**Counts:** 23 JNI modules · 62 analysis reports · 9 test scripts · 22 opt-in
-modules in the decision-013 withhold chain. All opt-ins are **OFF by default**.
+**Counts:** 23 JNI modules · 62 pre-review analysis reports (+14 `REVIEW_A*`
+audits) · 9 test scripts. The decision-013 withhold chain is the live OR-chain in
+`src/linux/guest_app_shell.c` (87 env checks plus prefix families), not a fixed
+count. All opt-ins are **OFF by default**.
 
 ### Binary inventory (generated artifacts in `build/`)
 
 | Path | Role | Status | SHA-256 (prefix) |
 | --- | --- | --- | --- |
 | `build/sober-native` | shipped native ELF | ✅ libc-only | `7647f6d60c521…` |
-| `build/guest-init-host` | full harness (init/render/JNI) | ✅ builds | `733c8f2314eb…` |
+| `build/guest-init-host` | full harness (init/render/JNI) | ✅ builds | `b82bda6b9f8e…` |
 | `build/ndk-stubs/libc.so` | versioned native Bionic shim | ✅ builds | `d131185d781f…` |
 | guest `libroblox.so` (external) | frozen target, never modified | ✅ identity | `3e498d649421…` |
 

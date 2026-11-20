@@ -50,7 +50,13 @@ Source: worker-2 decision message, Ghidra evidence
 (126,706 procedures; `libroblox.so` SHA256
 `8afce3e695d08fe830d7857752c459de9a06c97390c7365a6660827e5d072e78`).
 The full 573-symbol list is `libroblox-imports.txt`; these 174 named imports
-are the evidence-backed priority subset.
+are a **symbol-name-only** priority subset.
+
+**Wrong-build caveat (lead, full review):** the Ghidra evidence above is bound to
+the **Flatpak** build SHA `8afce3e6…`, not the frozen AppImage
+`3e498d6494…` / BuildID `204ad049…` used by all shipped source and RVAs. It must
+NOT be treated as authoritative address evidence; it is retained only as a
+historical symbol-category hint. No RVA in this project comes from that build.
 
 | Group | Count | Symbols (prefix/example) | Subsystem | Status |
 | --- | --- | --- | --- | --- |

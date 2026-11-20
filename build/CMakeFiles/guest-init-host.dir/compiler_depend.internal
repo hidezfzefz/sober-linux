@@ -18,6 +18,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /home/user/sober-linux/src/jni/jni_strings.h
  /home/user/sober-linux/src/jni/native_jni.h
  /home/user/sober-linux/src/jni/notifier_probe.h
+ /home/user/sober-linux/src/jni/singleton_fix.h
  /home/user/sober-linux/src/jni/singleton_services.h
  /home/user/sober-linux/src/jni/startapp_params.h
  /home/user/sober-linux/src/jni/startapp_v2.h

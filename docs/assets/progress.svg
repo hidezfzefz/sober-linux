@@ -23,10 +23,12 @@
 <rect x="490" y="116" width="150" height="46" rx="4" fill="#2ea44f" fill-opacity="0.22" stroke="#2ea44f"/>
 <text x="565" y="136" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">JNI</text>
 <text x="565" y="149" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">fields/arrays/scalars</text>
-<rect x="650" y="116" width="150" height="46" rx="4" fill="#2ea44f" fill-opacity="0.22" stroke="#2ea44f"/>
+<rect x="650" y="116" width="150" height="46" rx="4" fill="#d29922" fill-opacity="0.22" stroke="#d29922"/>
 <text x="725" y="136" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">callback provenance</text>
-<rect x="10" y="172" width="150" height="46" rx="4" fill="#2ea44f" fill-opacity="0.22" stroke="#2ea44f"/>
+<text x="725" y="149" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">(diag)</text>
+<rect x="10" y="172" width="150" height="46" rx="4" fill="#d29922" fill-opacity="0.22" stroke="#d29922"/>
 <text x="85" y="192" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">notifier-hit probe</text>
+<text x="85" y="205" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">(diag)</text>
 <rect x="170" y="172" width="150" height="46" rx="4" fill="#2ea44f" fill-opacity="0.22" stroke="#2ea44f"/>
 <text x="245" y="192" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">strict gate 013/038</text>
 <rect x="330" y="172" width="150" height="46" rx="4" fill="#2ea44f" fill-opacity="0.22" stroke="#2ea44f"/>

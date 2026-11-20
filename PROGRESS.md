@@ -363,7 +363,7 @@ build PASS, verify-native.sh PASS, ctest 2/2, libc-only ldd, engine SHA
   Occasional X11 `:0` `XIO` teardown errors are environmental (D12: 3/3 clean
   re-runs). No app-shell callback proven; marker WITHHELD.
 
-## Phase 9 — current team `TEAM-XT29-DCJS-2UVE` (parallel track)
+## Phase 9b — `TEAM-XT29-DCJS-2UVE` follow-up (superseded by `docs/REVIEW-100.md`)
 
 Scope: reach a genuine guest→Java app-shell callback and a natively rendered
 login/app-shell frame under decision 013, by closing the remaining guest-side
@@ -381,7 +381,7 @@ completes without crashing and fires a genuine, counted guest→Java
 013, `onAppBridgeNotification` is JNI plumbing, NOT app-shell proof, and seeded
 state does not qualify. The strict condition is unchanged: a genuine
 `onAppShellReloadNeeded()V` or `gameLoadedCallback(J)V` from the real path plus
-the phase-3 render call. No gate change was made and decision 013 was not
+the phase-3 render call. No gate weakening was made and decision 013 was not
 weakened. The callback is only counted/logged by the opt-in diagnostic
 `SOBER_LOG_APP_BRIDGE_NOTIFICATION`, which cannot emit the marker.
 

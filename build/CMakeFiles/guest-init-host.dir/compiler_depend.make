@@ -17,6 +17,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/jni_strings.h \
   /home/user/sober-linux/src/jni/native_jni.h \
   /home/user/sober-linux/src/jni/notifier_probe.h \
+  /home/user/sober-linux/src/jni/singleton_fix.h \
   /home/user/sober-linux/src/jni/singleton_services.h \
   /home/user/sober-linux/src/jni/startapp_params.h \
   /home/user/sober-linux/src/jni/startapp_v2.h \
@@ -554,8 +555,6 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
 
 /usr/include/bits/types/struct___jmp_buf_tag.h:
 
-/usr/include/bits/types/sigevent_t.h:
-
 /usr/include/bits/types/error_t.h:
 
 /usr/include/bits/types/__sigval_t.h:
@@ -630,11 +629,7 @@ src/jni/libsober_jni.a:
 
 /usr/include/gnu/stubs-64.h:
 
-/usr/include/bits/mman_ext.h:
-
-/usr/include/linux/close_range.h:
-
-/usr/include/bits/stdint-intn.h:
+/usr/include/features-time64.h:
 
 /usr/include/bits/mman-shared.h:
 
@@ -722,6 +717,14 @@ src/jni/libsober_jni.a:
 
 /usr/include/asm/bitsperlong.h:
 
+/usr/include/bits/dl_find_object.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+/home/user/sober-linux/src/linux/guest_render.h:
+
+/usr/include/asm-generic/types.h:
+
 /home/user/sober-linux/src/jni/jni_arrays.h:
 
 /usr/include/asm/posix_types.h:
@@ -764,6 +767,10 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/bits/dlfcn.h:
 
+/usr/include/bits/types/sigevent_t.h:
+
+/home/user/sober-linux/src/jni/singleton_fix.h:
+
 /usr/include/bits/fcntl.h:
 
 /home/user/sober-linux/src/compat/bionic_bootstrap/bionic_bootstrap.h:
@@ -777,8 +784,6 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 /usr/include/bits/types/sigval_t.h:
 
 /usr/include/asm-generic/socket.h:
-
-/usr/include/features-time64.h:
 
 /usr/include/bits/mman-map-flags-generic.h:
 
@@ -806,6 +811,10 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/bits/types/__sigset_t.h:
 
+/usr/include/dlfcn.h:
+
+/home/user/sober-linux/src/jni/startapp_v2.h:
+
 /home/user/sober-linux/src/compat/android_types.h:
 
 /usr/include/bits/sigstksz.h:
@@ -826,13 +835,11 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/alloca.h:
 
-/usr/include/bits/dl_find_object.h:
+/usr/include/bits/mman_ext.h:
 
-/usr/include/asm-generic/errno-base.h:
+/usr/include/linux/close_range.h:
 
-/home/user/sober-linux/src/linux/guest_render.h:
-
-/usr/include/asm-generic/types.h:
+/usr/include/bits/stdint-intn.h:
 
 /usr/include/bits/openat2.h:
 
@@ -957,10 +964,6 @@ src/render/libsober_render.a:
 /usr/include/bits/waitstatus.h:
 
 /usr/include/bits/wordsize.h:
-
-/home/user/sober-linux/src/jni/startapp_v2.h:
-
-/usr/include/dlfcn.h:
 
 /usr/include/ucontext.h:
 

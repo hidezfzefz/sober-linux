@@ -1,3 +1,6 @@
+> **SUPERSEDED** by `tests/D12-final-invariants.md` and `docs/REVIEW-100.md`.
+> Counts, test text and the ALT-thunk observation below are historical snapshots.
+
 # Verification report 471 — invariants + decision-013 gate audit
 
 Verifier, team `TEAM-XT29-DCJS-2UVE`, task #471. Date 2026-11-20 (UTC).
