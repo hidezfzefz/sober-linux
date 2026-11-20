@@ -1,0 +1,182 @@
+[
+  {
+    "requested": "0x2a326ff",
+    "entry": "0x2a31960",
+    "name": "FUN_02a31960",
+    "file": "FUN_02a31960_2a31960.c",
+    "pseudocode_bytes": 23515,
+    "evidence_id": "ev_15121efb8f65e9ff0b43edaba2d7766c6d05700b531096e10f1ca8c0225d2f56",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2cb4529",
+    "entry": "0x2cb3eb4",
+    "name": "FUN_02cb3eb4",
+    "file": "FUN_02cb3eb4_2cb3eb4.c",
+    "pseudocode_bytes": 11078,
+    "evidence_id": "ev_15121efb8f65e9ff0b43edaba2d7766c6d05700b531096e10f1ca8c0225d2f56",
+    "status": "ok"
+  },
+  {
+    "requested": "0x3298c35",
+    "entry": "0x3297ea6",
+    "name": "FUN_03297ea6",
+    "file": "FUN_03297ea6_3297ea6.c",
+    "pseudocode_bytes": 15046,
+    "evidence_id": "ev_15121efb8f65e9ff0b43edaba2d7766c6d05700b531096e10f1ca8c0225d2f56",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2a326ff",
+    "entry": "0x2a31960",
+    "name": "FUN_02a31960",
+    "file": "FUN_02a31960_2a31960.c",
+    "pseudocode_bytes": 23515,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2cb4529",
+    "entry": "0x2cb3eb4",
+    "name": "FUN_02cb3eb4",
+    "file": "FUN_02cb3eb4_2cb3eb4.c",
+    "pseudocode_bytes": 11078,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x1f4034e",
+    "entry": "0x1f40343",
+    "name": "_INIT_2137",
+    "file": "_INIT_2137_1f40343.c",
+    "pseudocode_bytes": 568,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x640e3b0",
+    "entry": "0x640d7f8",
+    "name": "FUN_0640d7f8",
+    "file": "FUN_0640d7f8_640d7f8.c",
+    "pseudocode_bytes": 16762,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x200dac2",
+    "entry": "0x200dac2",
+    "name": "Java_com_roblox_engine_jni_NativeSettingsInterface_nativeSetHttpClientProxy",
+    "file": "Java_com_roblox_engine_jni_NativeSettingsInterface_nativeSetHttpClientProxy_200dac2.c",
+    "pseudocode_bytes": 1436,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x3298c35",
+    "entry": "0x3297ea6",
+    "name": "FUN_03297ea6",
+    "file": "FUN_03297ea6_3297ea6.c",
+    "pseudocode_bytes": 15046,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x3298fa9",
+    "entry": "0x3298f5e",
+    "name": "FUN_03298f5e",
+    "file": "FUN_03298f5e_3298f5e.c",
+    "pseudocode_bytes": 691,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x3298f22",
+    "entry": "0x3298d0a",
+    "name": "FUN_03298d0a",
+    "file": "FUN_03298d0a_3298d0a.c",
+    "pseudocode_bytes": 2684,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x32875c6",
+    "entry": "0x32859c2",
+    "name": "FUN_032859c2",
+    "file": "FUN_032859c2_32859c2.c",
+    "pseudocode_bytes": 66642,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x4136981",
+    "entry": "0x41366c6",
+    "name": "FUN_041366c6",
+    "file": "FUN_041366c6_41366c6.c",
+    "pseudocode_bytes": 4150,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x5df1af3",
+    "entry": "0x5df1af3",
+    "name": "FUN_unknown",
+    "file": "FUN_unknown_5df1af3.c",
+    "pseudocode_bytes": 11955,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2283e8b",
+    "entry": "0x2283e0c",
+    "name": "FUN_02283e0c",
+    "file": "FUN_02283e0c_2283e0c.c",
+    "pseudocode_bytes": 5736,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x3915c20",
+    "entry": "0x3915a22",
+    "name": "FUN_03915a22",
+    "file": "FUN_03915a22_3915a22.c",
+    "pseudocode_bytes": 6642,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x5bf9827",
+    "entry": "0x5bf95b5",
+    "name": "FUN_05bf95b5",
+    "file": "FUN_05bf95b5_5bf95b5.c",
+    "pseudocode_bytes": 3240,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2c8d9e3",
+    "entry": "0x2c8d8fa",
+    "name": "FUN_02c8d8fa",
+    "file": "FUN_02c8d8fa_2c8d8fa.c",
+    "pseudocode_bytes": 3111,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2c8dac7",
+    "entry": "0x2c8d8fa",
+    "name": "FUN_02c8d8fa",
+    "file": "FUN_02c8d8fa_2c8d8fa.c",
+    "pseudocode_bytes": 3111,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  },
+  {
+    "requested": "0x2b35d6d",
+    "entry": "0x2b35d6d",
+    "name": "Java_com_roblox_client_startup_MainGameActivity_nativeSetAssetPath",
+    "file": "Java_com_roblox_client_startup_MainGameActivity_nativeSetAssetPath_2b35d6d.c",
+    "pseudocode_bytes": 683,
+    "evidence_id": "ev_439b29f6ef315227952ac382be5de3af210057eaf8f25753f6b769c67041226b",
+    "status": "ok"
+  }
+]

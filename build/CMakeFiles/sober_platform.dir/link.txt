@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsober_platform.a CMakeFiles/sober_platform.dir/src/linux/platform.c.o CMakeFiles/sober_platform.dir/src/linux/gfx_loader.c.o CMakeFiles/sober_platform.dir/src/linux/android_relocs.c.o
+/usr/bin/ranlib libsober_platform.a

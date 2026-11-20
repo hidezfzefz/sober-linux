@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/native_trace.dir/link.d -Wl,-soname,libnative_trace.so -o ../../libnative_trace.so CMakeFiles/native_trace.dir/native_trace.c.o  -ldl

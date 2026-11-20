@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/render_probe.dir/link.d CMakeFiles/render_probe.dir/render_probe.c.o -o ../../render_probe  libsober_render.a -ldl -lpthread

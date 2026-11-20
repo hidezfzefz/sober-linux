@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/jni_probe.dir/link.d CMakeFiles/jni_probe.dir/jni_probe.c.o -o ../../jni_probe  libsober_jni.a

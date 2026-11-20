@@ -1,0 +1,1369 @@
+[
+  {
+    "entry": "0x1f40343",
+    "name": "_INIT_2137",
+    "evidence_id": "ev_b867f14d56da26b9f890fbfe3d2144adb675ae7b29886d974b853cd0be4da064",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [],
+    "callee_count": 1,
+    "external_or_import_callees": [],
+    "import_names_referenced": [],
+    "referenced_strings": [
+      "https://apis.roblox.com/adaptive-config-service/public/v1/configs/perfdata/envs/production:settings",
+      "AdaptiveConfigSuccess",
+      "default",
+      "AdaptiveConfigFailure",
+      "AdaptiveConfigRequest"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x1fa969a",
+    "name": "JNI_OnLoad",
+    "evidence_id": "ev_a468547e2310b5af67657eafacbaad3014b35dbd4e3e305be08094a423a55c1e",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined8",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      }
+    ],
+    "callee_count": 28,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a46080",
+        "name": "<EXTERNAL>::__android_log_print",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__android_log_print",
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "LoggingProtocol::getProcessTimestamp() returned -1, process timestamps will be inaccurate. Check to ensure trackProcessStartTime is being called.",
+      "exitGameWithError",
+      "JNIMain",
+      "JNIMain",
+      "JNIMain",
+      "JNIMain",
+      "JNIMain",
+      "JNIMain",
+      "create",
+      "getDeviceStaticParams",
+      "()Ljava/lang/String;",
+      "([BI)V",
+      "(JLjava/lang/String;Lcom/roblox/engine/jni/autovalue/NativePurchaseContext;)V",
+      "dynamic_initializers_duration",
+      "DeviceStaticParams is null.",
+      "onVrSessionStateUpdate",
+      "com/roblox/engine/jni/memstorage/Connection",
+      "getProcessTimestamp",
+      "screenOrientationChanged",
+      "LoggingProtocol::getProcessTimestamp() threw an exception, process timestamps will be inaccurate.",
+      "()Lcom/roblox/engine/jni/model/DeviceStaticParams;",
+      "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
+      "com/roblox/engine/jni/autovalue/NativePurchaseContext",
+      "gameDidLeave",
+      "getPublicIPv4Addresseses",
+      "(Ljava/lang/String;Ljava/lang/String;Z)Lcom/roblox/engine/jni/autovalue/NativePurchaseContext;",
+      "(JLjava/lang/String;Ljava/lang/String;)V",
+      "(JLjava/lang/String;Ljava/lang/String;)V",
+      "(JLjava/lang/String;Ljava/lang/String;)V",
+      "promptNativePurchaseWithContext",
+      "jni_onload_begin",
+      "onLuaTextBoxPropertyChangedCallback",
+      "hideKeyboard",
+      "promptNativePurchase",
+      "promptNativePurchase",
+      "com/roblox/engine/jni/NativeGLJavaInterface",
+      "com/roblox/engine/jni/NativeGLJavaInterface",
+      "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onAppBridgeNotification",
+      "promptNativePurchaseWithPayload"
+    ],
+    "unresolved_call_count": 53
+  },
+  {
+    "entry": "0x1ffc346",
+    "name": "Java_com_roblox_engine_jni_NativeGLInterface_nativeGameGlobalInit",
+    "evidence_id": "ev_4b92d4ea1e8d869ea604f9dd8a83deb1b5df51d4cdc9ab6f4df5d64170685136",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [],
+    "callee_count": 4,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x200dac2",
+    "name": "Java_com_roblox_engine_jni_NativeSettingsInterface_nativeSetHttpClientProxy",
+    "evidence_id": "ev_86fa367d0111426ad3e3fd1d4ab064443bcd861040d18f55099a283b6c294ebf",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "undefined8",
+        "storage": "RCX:8"
+      }
+    ],
+    "callee_count": 7,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "[FLog::Android] Set proxy host to %s",
+      "Android",
+      "Android",
+      "[FLog::Android] Set proxy port to %ld"
+    ],
+    "unresolved_call_count": 1
+  },
+  {
+    "entry": "0x201a315",
+    "name": "Java_com_roblox_engine_jni_NativeGLInterface_nativeInitClientSettings",
+    "evidence_id": "ev_15690a93354e68608f5fe0ecf3a8e13c5d98a36c1127c88355a4c66e56bf453d",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined4",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "undefined8",
+        "storage": "RCX:8"
+      },
+      {
+        "name": "param_5",
+        "type": "undefined8",
+        "storage": "R8:8"
+      }
+    ],
+    "callee_count": 6,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "AndroidGLView",
+      "[FLog::AndroidGLView] nativeInitClientSettings"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x202830e",
+    "name": "FUN_0202830e",
+    "evidence_id": "ev_1eace4fc5b8c1e0b732ebf6724f69f459afc0b6c07f4ebd6e2dcea374db89592",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "ulong *",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "ulong *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "long",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "char",
+        "storage": "CL:1"
+      }
+    ],
+    "callee_count": 20,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "Output",
+      "ClientSettings",
+      "ClientSettings",
+      "[FLog::Output] LoadClientSettingsFromLocal: \"%s\"",
+      "[FLog::ClientSettings] LoadClientSettingsFromLocal group: \"%s\"",
+      "[FLog::ClientSettings] LoadClientSettingsFromLocal: Couldn't fetch any data from local"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x203774e",
+    "name": "FUN_0203774e",
+    "evidence_id": "ev_3b13ea07def4cc509bd9d1b672e42ec8c57b49850b41f232e28f652e578d6430",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "char *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "long",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "uint *",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "char",
+        "storage": "CL:1"
+      }
+    ],
+    "callee_count": 17,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a460a0",
+        "name": "<EXTERNAL>::strlen",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::strlen"
+    ],
+    "referenced_strings": [
+      "LoadSettings",
+      "[DFLog::FlagCache] {} Deferring flag cache write to post TTI",
+      "FlagCache",
+      "[FlagCache]",
+      "[FlagCache]"
+    ],
+    "unresolved_call_count": 1
+  },
+  {
+    "entry": "0x20383ca",
+    "name": "FUN_020383ca",
+    "evidence_id": "ev_51cb04c7b01ebc13dd6e3cbedfbdf033056d61b44b5df387d6ed6ffdd3bc90c9",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [],
+    "callee_count": 7,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "ClientSettings",
+      "[FLog::ClientSettings] {} Tombstone initialized with {}. Check result: {}",
+      "[FlagCache]",
+      "[FlagCache]"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x210c2d5",
+    "name": "Java_com_roblox_engine_jni_NativeSettingsInterface_nativeSetBaseDataDirectories",
+    "evidence_id": "ev_9bea6df2fc666f74a14870e1b4ba5667d6378cc04a89d4197bedd0040cdf0c19",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "undefined8",
+        "storage": "RCX:8"
+      }
+    ],
+    "callee_count": 3,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x2283e0c",
+    "name": "FUN_02283e0c",
+    "evidence_id": "ev_219d1ae235a77b8c7c3c3046746c3b32a9434a87a4a6a3f35ce5c3567a8e06e1",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long *",
+        "storage": "RDI:8"
+      }
+    ],
+    "callee_count": 28,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "CacheableContentProvider::workerThreadFunction"
+    ],
+    "unresolved_call_count": 4
+  },
+  {
+    "entry": "0x2a31960",
+    "name": "FUN_02a31960",
+    "evidence_id": "ev_21ce98753326f1df4deab31a1a79df6ef90ff162f759e715dea92dc2f5b2e2b1",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined8",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "long",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "long",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "int",
+        "storage": "ECX:4"
+      },
+      {
+        "name": "param_5",
+        "type": "ulong *",
+        "storage": "R8:8"
+      },
+      {
+        "name": "param_6",
+        "type": "byte *",
+        "storage": "R9:8"
+      }
+    ],
+    "callee_count": 37,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a460a0",
+        "name": "<EXTERNAL>::strlen",
+        "external": false
+      },
+      {
+        "address": "0x6a46ab0",
+        "name": "<EXTERNAL>::memmove",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::memmove",
+      "<EXTERNAL>::strlen"
+    ],
+    "referenced_strings": [
+      "The HTTP response is: ",
+      "sentry[event_id]",
+      "Failed to upload report ",
+      "application/octet-stream",
+      "application/octet-stream",
+      "Sequential Sentry upload requires application parameter mapping",
+      "Backtrace",
+      "Sentry",
+      "Sentry",
+      "Successfully uploaded report ",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "%c%s=%s",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "product",
+      "Uploading report ",
+      "upload_file_minidump"
+    ],
+    "unresolved_call_count": 3
+  },
+  {
+    "entry": "0x2a31960",
+    "name": "FUN_02a31960",
+    "evidence_id": "ev_790bb4a90ba61b293e81a8ca17696d303d27f6482f0ae6c810a7025615b4e168",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined8",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "long",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "long",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "int",
+        "storage": "ECX:4"
+      },
+      {
+        "name": "param_5",
+        "type": "ulong *",
+        "storage": "R8:8"
+      },
+      {
+        "name": "param_6",
+        "type": "byte *",
+        "storage": "R9:8"
+      }
+    ],
+    "callee_count": 37,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a460a0",
+        "name": "<EXTERNAL>::strlen",
+        "external": false
+      },
+      {
+        "address": "0x6a46ab0",
+        "name": "<EXTERNAL>::memmove",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::memmove",
+      "<EXTERNAL>::strlen"
+    ],
+    "referenced_strings": [
+      "The HTTP response is: ",
+      "sentry[event_id]",
+      "Failed to upload report ",
+      "application/octet-stream",
+      "application/octet-stream",
+      "Sequential Sentry upload requires application parameter mapping",
+      "Backtrace",
+      "Sentry",
+      "Sentry",
+      "Successfully uploaded report ",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "UploadResult crashpad::RbxSequentialUploader::UploadToDestination(const CrashReportDatabase::UploadReport *, const CrashUploadParameters &, CrashUploadDestination, const std::string &, std::string *)",
+      "%c%s=%s",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "../../../../../../handler/rbx_sequential_uploader.cc",
+      "product",
+      "Uploading report ",
+      "upload_file_minidump"
+    ],
+    "unresolved_call_count": 3
+  },
+  {
+    "entry": "0x2b1998e",
+    "name": "Java_com_roblox_client_flags_FlagJniInterface_nativeGetFFlag",
+    "evidence_id": "ev_6f794823c297b5328efd271ac31069ef94113ad89a5ef0fb7bab34a91921fb5d",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "ulong",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "ulong",
+        "storage": "RCX:8"
+      }
+    ],
+    "callee_count": 5,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a46080",
+        "name": "<EXTERNAL>::__android_log_print",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__android_log_print",
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "rbx.JNIRobloxSettings",
+      "rbx.JNIRobloxSettings",
+      "nativeGetFFlag: %s",
+      "nativeGetFFlag: FFlag::%s not found."
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x2b35d6d",
+    "name": "Java_com_roblox_client_startup_MainGameActivity_nativeSetAssetPath",
+    "evidence_id": "ev_3b5f7d68196a702edc9407fe794de96c4df1c6b8a571305db764bbd0b76b0363",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      }
+    ],
+    "callee_count": 4,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x2c8d8fa",
+    "name": "FUN_02c8d8fa",
+    "evidence_id": "ev_8caeb5dba991fac65755d8c69c5c67cffb283e53364b01c36699a12b7fbbcbe2",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined8",
+    "parameters": [],
+    "callee_count": 5,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a461a0",
+        "name": "<EXTERNAL>::dlopen",
+        "external": false
+      },
+      {
+        "address": "0x6a461b0",
+        "name": "<EXTERNAL>::dlsym",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::dlopen",
+      "<EXTERNAL>::dlsym"
+    ],
+    "referenced_strings": [
+      "AAsset_close",
+      "AAssetManager_fromJava",
+      "AAssetManager_open",
+      "AAsset_read",
+      "AAsset_seek",
+      "()Landroid/content/res/AssetManager;",
+      "libandroid.so",
+      "AAsset_getLength",
+      "checkInit",
+      "getAssetManager"
+    ],
+    "unresolved_call_count": 6
+  },
+  {
+    "entry": "0x2cb3eb4",
+    "name": "FUN_02cb3eb4",
+    "evidence_id": "ev_a3b3c97b1f2720b41d004e582f9c13f48f955d8c250507e1ada8e08e53e29e93",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "long",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      },
+      {
+        "name": "param_4",
+        "type": "byte *",
+        "storage": "RCX:8"
+      }
+    ],
+    "callee_count": 20,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      " HttpClient::destroyed:1",
+      " proxy: \"%s\"",
+      " proxy: \"%s\"",
+      "[DFLog::NetworkAudit] {\"http\":{\"method\":\"%s\",\"url\":\"%s\",\"asset\":\"%d\",\"fromLua\":\"%d\",\"reqDataSize\":\"%zu\",\"respDataSize\":\"%zu\"}}",
+      "original: \"{}\" current: \"{}\"",
+      "[DFLog::HttpTraceError] %s",
+      "status:%d %s bodySize:%zu%s%s url:{ %s } ip:%s external:%d numberOfTimesRetried:%d",
+      " cached:1",
+      " error:%u message:%s%s url:{ %s } ip:%s external:%d numberOfTimesRetried:%d",
+      " challengedByGcs",
+      " challengedByGcs",
+      "NetworkAudit",
+      "HttpResponse(#{} {}) time:{:.1f}ms (net:{:.1f}ms timeInRetryQueue:{:.1f}ms)",
+      "HttpTraceError",
+      "[DFLog::HttpTraceLight] %s"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x32859c2",
+    "name": "FUN_032859c2",
+    "evidence_id": "ev_01836bb3973923ef8ec246757f439eeff1512dcd4735b765e896322545cb9fd5",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8 *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8 *",
+        "storage": "RSI:8"
+      }
+    ],
+    "callee_count": 77,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a460a0",
+        "name": "<EXTERNAL>::strlen",
+        "external": false
+      },
+      {
+        "address": "0x6a461d0",
+        "name": "<EXTERNAL>::strncmp",
+        "external": false
+      },
+      {
+        "address": "0x6a461e0",
+        "name": "<EXTERNAL>::pthread_self",
+        "external": false
+      },
+      {
+        "address": "0x6a47280",
+        "name": "<EXTERNAL>::glGetIntegerv",
+        "external": false
+      },
+      {
+        "address": "0x6a472e0",
+        "name": "<EXTERNAL>::glGetError",
+        "external": false
+      },
+      {
+        "address": "0x6a47340",
+        "name": "<EXTERNAL>::glEnable",
+        "external": false
+      },
+      {
+        "address": "0x6a47350",
+        "name": "<EXTERNAL>::glGetString",
+        "external": false
+      },
+      {
+        "address": "0x6a47530",
+        "name": "<EXTERNAL>::glDisable",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::glDisable",
+      "<EXTERNAL>::glEnable",
+      "<EXTERNAL>::glGetError",
+      "<EXTERNAL>::glGetIntegerv",
+      "<EXTERNAL>::glGetString",
+      "<EXTERNAL>::pthread_self",
+      "<EXTERNAL>::strlen",
+      "<EXTERNAL>::strncmp"
+    ],
+    "referenced_strings": [
+      "false",
+      "false",
+      "false",
+      "[FLog::Graphics] GL Renderer: %s",
+      "OpenGL ES 3.",
+      "[FLog::Graphics] GLES Constant buffer support is disabled for {}",
+      "[FLog::Graphics] GLES Constant buffer support is disabled for {}",
+      "[FLog::Graphics] GLES Constant buffer support is disabled for {}",
+      "GL_EXT_multisampled_render_to_texture2",
+      "GL_KHR_debug",
+      "OpenGL ES ",
+      "[FLog::Graphics] GL feature level: %s",
+      "GL_EXT_timer_query",
+      "PowerVR SGX",
+      "[FLog::Graphics] Caps: ASTC Support ( LDR: {}, Sliced 3D: {}, HDR: {}, Volumetric 3D: {} )",
+      "[FLog::Graphics] Caps: ASTC Support ( LDR: {}, Sliced 3D: {}, HDR: {}, Volumetric 3D: {} )",
+      "[FLog::Graphics] Caps: ASTC Support ( LDR: {}, Sliced 3D: {}, HDR: {}, Volumetric 3D: {} )",
+      "OpenGL is disabled",
+      "GL_EXT_disjoint_timer_query",
+      "glGenVertexArrays(1, &defaultVao)",
+      "[FLog::Graphics] GL Vendor: %s",
+      "[FLog::Graphics] No GL shader programs loaded from cache; cache file removed.",
+      "[FLog::Graphics] No GL shader programs loaded from cache; cache file removed.",
+      "[FLog::Graphics] No GL shader programs loaded from cache; cache file removed.",
+      "glEnable(GL_SCISSOR_TEST)",
+      "[FLog::Graphics] GL shader program cache header is invalid; cache file removed.",
+      "[FLog::Graphics] GL shader program cache header is invalid; cache file removed.",
+      "[FLog::Graphics] GL shader program cache header is invalid; cache file removed.",
+      "[FLog::Graphics] Android API %d",
+      "[FLog::Graphics] Excluded '%s:%s' - disabling HQ shaders",
+      "[FLog::Graphics] Excluded '%s:%s' - disabling HQ shaders",
+      "[FLog::Graphics] Caps: VAO %d TexStorage %d MapBuffer %d MapBufferRange %d",
+      "GL_EXT_multisampled_render_to_texture",
+      "GL_IMG_texture_compression_pvrtc",
+      "GL_KHR_texture_compression_astc_ldr",
+      "glGetIntegerv(GL_PROGRAM_BINARY_FORMATS, supportedBinaryFormats.data())",
+      "[FLog::Graphics] GLSL version: %s",
+      "glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxStructBufferSize)",
+      "[FLog::Graphics] Failed to parse shader program cache.",
+      "[FLog::Graphics] Failed to parse shader program cache."
+    ],
+    "unresolved_call_count": 6
+  },
+  {
+    "entry": "0x3297ea6",
+    "name": "FUN_03297ea6",
+    "evidence_id": "ev_860668a789eb6edf3491cdb722a94b15f4983129e8aa906469c827dedd8a5fb6",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8 *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8 *",
+        "storage": "RDX:8"
+      }
+    ],
+    "callee_count": 26,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a45f20",
+        "name": "<EXTERNAL>::ANativeWindow_acquire",
+        "external": false
+      },
+      {
+        "address": "0x6a45f30",
+        "name": "<EXTERNAL>::ANativeWindow_getHeight",
+        "external": false
+      },
+      {
+        "address": "0x6a45f70",
+        "name": "<EXTERNAL>::ANativeWindow_getWidth",
+        "external": false
+      },
+      {
+        "address": "0x6a461d0",
+        "name": "<EXTERNAL>::strncmp",
+        "external": false
+      },
+      {
+        "address": "0x6a47350",
+        "name": "<EXTERNAL>::glGetString",
+        "external": false
+      },
+      {
+        "address": "0x6a47610",
+        "name": "<EXTERNAL>::eglCreateContext",
+        "external": false
+      },
+      {
+        "address": "0x6a47630",
+        "name": "<EXTERNAL>::eglGetProcAddress",
+        "external": false
+      },
+      {
+        "address": "0x6a47650",
+        "name": "<EXTERNAL>::eglGetConfigAttrib",
+        "external": false
+      },
+      {
+        "address": "0x6a47680",
+        "name": "<EXTERNAL>::eglGetDisplay",
+        "external": false
+      },
+      {
+        "address": "0x6a47690",
+        "name": "<EXTERNAL>::eglGetError",
+        "external": false
+      },
+      {
+        "address": "0x6a476b0",
+        "name": "<EXTERNAL>::eglQuerySurface",
+        "external": false
+      },
+      {
+        "address": "0x6a476e0",
+        "name": "<EXTERNAL>::eglMakeCurrent",
+        "external": false
+      },
+      {
+        "address": "0x6a47700",
+        "name": "<EXTERNAL>::eglInitialize",
+        "external": false
+      },
+      {
+        "address": "0x6a47710",
+        "name": "<EXTERNAL>::eglSwapInterval",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::ANativeWindow_acquire",
+      "<EXTERNAL>::ANativeWindow_getHeight",
+      "<EXTERNAL>::ANativeWindow_getWidth",
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::eglCreateContext",
+      "<EXTERNAL>::eglGetConfigAttrib",
+      "<EXTERNAL>::eglGetDisplay",
+      "<EXTERNAL>::eglGetError",
+      "<EXTERNAL>::eglGetProcAddress",
+      "<EXTERNAL>::eglInitialize",
+      "<EXTERNAL>::eglMakeCurrent",
+      "<EXTERNAL>::eglQuerySurface",
+      "<EXTERNAL>::eglSwapInterval",
+      "<EXTERNAL>::glGetString",
+      "<EXTERNAL>::strncmp"
+    ],
+    "referenced_strings": [
+      "glBindVertexArrayOES",
+      "glEndQuery",
+      "OpenGL ES ",
+      "glWaitSyncEXT",
+      "glDrawBuffersEXT",
+      "glBindBufferBaseEXT",
+      "glGetQueryiv",
+      "glGenVertexArraysOES",
+      "glCompressedTexImage3D",
+      "glFenceSync",
+      "glGetQueryObjectui64v",
+      "glRenderbufferStorageMultisample",
+      "glPushGroupMarker",
+      "glQueryCounter",
+      "[FLog::Graphics] eglSwapInterval(%d)",
+      "glMapBuffer",
+      "glUnmapBuffer",
+      "glClearBufferfv",
+      "glGetInteger64vEXT",
+      "glProgramParameteriOES",
+      "glTexSubImage3D",
+      "glCopyImageSubDataEXT",
+      "glProgramBinaryOES",
+      "glProgramParameteri",
+      "glFenceSyncEXT",
+      "glProgramBinary",
+      "shared",
+      "glBindBufferRange",
+      "glGetQueryObjectiv",
+      "glObjectLabelKHRKHR",
+      "glDeleteVertexArrays",
+      "glMapBufferRange",
+      "glDeleteSyncEXT",
+      "glGenQueriesEXT",
+      "glDeleteQueries",
+      "glEndQueryEXT",
+      "[FLog::Graphics] Window size: %dx%d",
+      "glBindVertexArray",
+      "glCompressedTexSubImage3DOES",
+      "glGetQueryObjectivEXT"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x3298d0a",
+    "name": "FUN_03298d0a",
+    "evidence_id": "ev_8f6de9674e682afb6780429d523b346bd172906c3d730daf8d4eea9e0aaf7df0",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "undefined8",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      }
+    ],
+    "callee_count": 7,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47690",
+        "name": "<EXTERNAL>::eglGetError",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::eglGetError"
+    ],
+    "referenced_strings": [
+      "Error creating context: could not find suitable config (%x)",
+      "Graphics",
+      "[FLog::Graphics] No EGL config with 8-bit stencil; using stencil-free config, UI stencil clipping disabled on this device"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x3298f5e",
+    "name": "FUN_03298f5e",
+    "evidence_id": "ev_2a5252237bc3a89130ff99d51b6d022d847ac4b5ef89ec8fcdb89f0971a1d304",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined8 *",
+        "storage": "RSI:8"
+      }
+    ],
+    "callee_count": 6,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47640",
+        "name": "<EXTERNAL>::eglCreateWindowSurface",
+        "external": false
+      },
+      {
+        "address": "0x6a47690",
+        "name": "<EXTERNAL>::eglGetError",
+        "external": false
+      },
+      {
+        "address": "0x6a476d0",
+        "name": "<EXTERNAL>::eglCreatePbufferSurface",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::eglCreatePbufferSurface",
+      "<EXTERNAL>::eglCreateWindowSurface",
+      "<EXTERNAL>::eglGetError"
+    ],
+    "referenced_strings": [
+      "Error creating context: eglCreateWindowSurface %x"
+    ],
+    "unresolved_call_count": 0
+  },
+  {
+    "entry": "0x3915a22",
+    "name": "FUN_03915a22",
+    "evidence_id": "ev_36f3a7cb2edd6ad035b59a3fc20567d57c66e12a91a7396a0cb566f701f140b9",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "int *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "long *",
+        "storage": "RSI:8"
+      }
+    ],
+    "callee_count": 12,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "Mesh in generate HSR data for %s does not have vertices",
+      "ContentProvider:getContent() in generate HSR data does not have response for %s",
+      "Failed to fetch mesh data",
+      "Failed to fetch mesh data",
+      "Mesh does not have vertices",
+      "ContentProvider:getContent() in generate HSR data failed for %s"
+    ],
+    "unresolved_call_count": 6
+  },
+  {
+    "entry": "0x41366c6",
+    "name": "FUN_041366c6",
+    "evidence_id": "ev_b99724559e383ad906209614f2e0f3054713f68ec4d97f2babfff1352d79c4a5",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "long",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "byte *",
+        "storage": "RSI:8"
+      }
+    ],
+    "callee_count": 13,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "[DFLog::GenerationService] Empty RBXM download url",
+      "GenerationService",
+      "GenerationService",
+      "Unable to download generated model",
+      "[DFLog::GenerationService] Beginning RBXM download from: {}",
+      "ModelGenerationJob::downloadRbxm"
+    ],
+    "unresolved_call_count": 4
+  },
+  {
+    "entry": "0x5bf95b5",
+    "name": "FUN_05bf95b5",
+    "evidence_id": "ev_8e9835b52d24c93c3ca185e02e8a4a7680cda8b77061408e893e34e2dc06130e",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "void",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "undefined8",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "undefined *",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "undefined8",
+        "storage": "RDX:8"
+      }
+    ],
+    "callee_count": 9,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a46880",
+        "name": "<EXTERNAL>::memcpy",
+        "external": false
+      },
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail",
+      "<EXTERNAL>::memcpy"
+    ],
+    "referenced_strings": [
+      "invalid buffer size",
+      "ZSTD_decompress returned error {}",
+      "ZSTD_getFrameContentSize returned error {}",
+      "ZSTD_decompress decompressed size mismatch",
+      "invalid buffer node",
+      "zbase64",
+      "invalid zbase64 data",
+      "base64",
+      "invalid base64 data"
+    ],
+    "unresolved_call_count": 2
+  },
+  {
+    "entry": "0x640d7f8",
+    "name": "FUN_0640d7f8",
+    "evidence_id": "ev_4dd21f9ed7c0c2765116ddb20e8f10d1aa0910408168d8841d2dc7d7e8aa5662",
+    "calling_convention_reported": "__stdcall",
+    "signature_source": "default",
+    "return_type": "int *",
+    "parameters": [
+      {
+        "name": "param_1",
+        "type": "int *",
+        "storage": "RDI:8"
+      },
+      {
+        "name": "param_2",
+        "type": "ulong *",
+        "storage": "RSI:8"
+      },
+      {
+        "name": "param_3",
+        "type": "int",
+        "storage": "EDX:4"
+      },
+      {
+        "name": "param_4",
+        "type": "undefined8",
+        "storage": "RCX:8"
+      },
+      {
+        "name": "param_5",
+        "type": "undefined8",
+        "storage": "R8:8"
+      },
+      {
+        "name": "param_6",
+        "type": "undefined8",
+        "storage": "R9:8"
+      }
+    ],
+    "callee_count": 40,
+    "external_or_import_callees": [
+      {
+        "address": "0x6a47a60",
+        "name": "<EXTERNAL>::__stack_chk_fail",
+        "external": false
+      }
+    ],
+    "import_names_referenced": [
+      "<EXTERNAL>::__stack_chk_fail"
+    ],
+    "referenced_strings": [
+      "RSL PANIC: %s\n",
+      "HTTP request timed out",
+      "Undefined",
+      "googleAdFormat",
+      "mobileAdvertisingId",
+      "adTracingId",
+      "webViewUserAgent",
+      "/ads/v2/serve-media-ads",
+      "/ads/v2/serve-media-ads",
+      "/ads/v2/serve-media-ads",
+      "ServeAdResult",
+      "Condition failed: valid()",
+      "placement",
+      "https",
+      "googleFields",
+      "InterstitialAd",
+      "InterstitialAd"
+    ],
+    "unresolved_call_count": 11
+  }
+]

@@ -1,0 +1,845 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000233319a <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2e72>:
+ 233319a:	48 85 ff             	test   rdi,rdi
+ 233319d:	0f 84 ed 03 00 00    	je     2333590 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3268>
+ 23331a3:	55                   	push   rbp
+ 23331a4:	48 89 e5             	mov    rbp,rsp
+ 23331a7:	41 57                	push   r15
+ 23331a9:	41 56                	push   r14
+ 23331ab:	41 54                	push   r12
+ 23331ad:	53                   	push   rbx
+ 23331ae:	48 8b 1f             	mov    rbx,QWORD PTR [rdi]
+ 23331b1:	48 85 db             	test   rbx,rbx
+ 23331b4:	0f 84 ce 03 00 00    	je     2333588 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3260>
+ 23331ba:	48 c7 07 00 00 00 00 	mov    QWORD PTR [rdi],0x0
+ 23331c1:	f6 83 06 10 00 00 02 	test   BYTE PTR [rbx+0x1006],0x2
+ 23331c8:	75 13                	jne    23331dd <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2eb5>
+ 23331ca:	48 8b 7b 68          	mov    rdi,QWORD PTR [rbx+0x68]
+ 23331ce:	48 85 ff             	test   rdi,rdi
+ 23331d1:	74 0a                	je     23331dd <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2eb5>
+ 23331d3:	48 89 de             	mov    rsi,rbx
+ 23331d6:	e8 82 2e 12 00       	call   245605d <Java_com_roblox_universalapp_messagebus_MessageBus_getMessageId@@LIBROBLOX+0x4b35>
+ 23331db:	eb 4f                	jmp    233322c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2f04>
+ 23331dd:	48 8b 43 20          	mov    rax,QWORD PTR [rbx+0x20]
+ 23331e1:	48 85 c0             	test   rax,rax
+ 23331e4:	74 1f                	je     2333205 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2edd>
+ 23331e6:	8b 88 24 03 00 00    	mov    ecx,DWORD PTR [rax+0x324]
+ 23331ec:	85 c9                	test   ecx,ecx
+ 23331ee:	74 15                	je     2333205 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2edd>
+ 23331f0:	ff c9                	dec    ecx
+ 23331f2:	89 88 24 03 00 00    	mov    DWORD PTR [rax+0x324],ecx
+ 23331f8:	75 0b                	jne    2333205 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2edd>
+ 23331fa:	48 c7 80 00 03 00 00 	mov    QWORD PTR [rax+0x300],0x0
+ 2333201:	00 00 00 00 
+ 2333205:	48 c7 43 20 00 00 00 	mov    QWORD PTR [rbx+0x20],0x0
+ 233320c:	00 
+ 233320d:	f6 83 06 10 00 00 02 	test   BYTE PTR [rbx+0x1006],0x2
+ 2333214:	75 16                	jne    233322c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2f04>
+ 2333216:	48 8b 7b 70          	mov    rdi,QWORD PTR [rbx+0x70]
+ 233321a:	48 85 ff             	test   rdi,rdi
+ 233321d:	74 0d                	je     233322c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2f04>
+ 233321f:	e8 04 a8 70 04       	call   6a3da28 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1245efa>
+ 2333224:	48 c7 43 70 00 00 00 	mov    QWORD PTR [rbx+0x70],0x0
+ 233322b:	00 
+ 233322c:	48 89 df             	mov    rdi,rbx
+ 233322f:	e8 5f 03 00 00       	call   2333593 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x326b>
+ 2333234:	f6 83 05 10 00 00 08 	test   BYTE PTR [rbx+0x1005],0x8
+ 233323b:	74 10                	je     233324d <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2f25>
+ 233323d:	48 8d 05 74 8e f3 04 	lea    rax,[rip+0x4f38e74]        # 726c0b8 <strncat@plt+0x538538>
+ 2333244:	48 8b bb 08 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe08]
+ 233324b:	ff 10                	call   QWORD PTR [rax]
+ 233324d:	48 89 df             	mov    rdi,rbx
+ 2333250:	e8 2d 04 00 00       	call   2333682 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x335a>
+ 2333255:	4c 8d 3d 5c 8e f3 04 	lea    r15,[rip+0x4f38e5c]        # 726c0b8 <strncat@plt+0x538538>
+ 233325c:	48 8b bb 08 0a 00 00 	mov    rdi,QWORD PTR [rbx+0xa08]
+ 2333263:	41 ff 17             	call   QWORD PTR [r15]
+ 2333266:	48 c7 83 08 0a 00 00 	mov    QWORD PTR [rbx+0xa08],0x0
+ 233326d:	00 00 00 00 
+ 2333271:	48 8d b3 e8 09 00 00 	lea    rsi,[rbx+0x9e8]
+ 2333278:	48 89 df             	mov    rdi,rbx
+ 233327b:	e8 38 04 00 00       	call   23336b8 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3390>
+ 2333280:	48 8d b3 f0 09 00 00 	lea    rsi,[rbx+0x9f0]
+ 2333287:	48 89 df             	mov    rdi,rbx
+ 233328a:	e8 29 04 00 00       	call   23336b8 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3390>
+ 233328f:	80 a3 35 07 00 00 f7 	and    BYTE PTR [rbx+0x735],0xf7
+ 2333296:	c7 03 00 00 00 00    	mov    DWORD PTR [rbx],0x0
+ 233329c:	48 8d bb b0 00 00 00 	lea    rdi,[rbx+0xb0]
+ 23332a3:	48 89 de             	mov    rsi,rbx
+ 23332a6:	e8 14 05 00 00       	call   23337bf <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3497>
+ 23332ab:	48 8b 05 4e 90 f3 04 	mov    rax,QWORD PTR [rip+0x4f3904e]        # 726c300 <strncat@plt+0x538780>
+ 23332b2:	48 8b 40 78          	mov    rax,QWORD PTR [rax+0x78]
+ 23332b6:	48 85 c0             	test   rax,rax
+ 23332b9:	74 05                	je     23332c0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2f98>
+ 23332bb:	48 89 df             	mov    rdi,rbx
+ 23332be:	ff d0                	call   rax
+ 23332c0:	48 8b bb a0 09 00 00 	mov    rdi,QWORD PTR [rbx+0x9a0]
+ 23332c7:	41 ff 17             	call   QWORD PTR [r15]
+ 23332ca:	48 c7 83 a0 09 00 00 	mov    QWORD PTR [rbx+0x9a0],0x0
+ 23332d1:	00 00 00 00 
+ 23332d5:	48 89 df             	mov    rdi,rbx
+ 23332d8:	e8 90 c2 fe ff       	call   231f56d <Java_com_roblox_universalapp_linking_JNIWebLoginProtocol_init@@LIBROBLOX+0xbce>
+ 23332dd:	4c 8d a3 a8 0e 00 00 	lea    r12,[rbx+0xea8]
+ 23332e4:	48 8b bb b0 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xeb0]
+ 23332eb:	48 85 ff             	test   rdi,rdi
+ 23332ee:	74 0b                	je     23332fb <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2fd3>
+ 23332f0:	49 8b 04 24          	mov    rax,QWORD PTR [r12]
+ 23332f4:	48 85 c0             	test   rax,rax
+ 23332f7:	74 02                	je     23332fb <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x2fd3>
+ 23332f9:	ff d0                	call   rax
+ 23332fb:	0f 57 c0             	xorps  xmm0,xmm0
+ 23332fe:	41 0f 11 04 24       	movups XMMWORD PTR [r12],xmm0
+ 2333303:	45 31 f6             	xor    r14d,r14d
+ 2333306:	4d 89 74 24 10       	mov    QWORD PTR [r12+0x10],r14
+ 233330b:	48 89 df             	mov    rdi,rbx
+ 233330e:	e8 df 05 00 00       	call   23338f2 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x35ca>
+ 2333313:	48 8b bb 70 09 00 00 	mov    rdi,QWORD PTR [rbx+0x970]
+ 233331a:	41 ff 17             	call   QWORD PTR [r15]
+ 233331d:	4c 89 b3 80 09 00 00 	mov    QWORD PTR [rbx+0x980],r14
+ 2333324:	0f 57 c0             	xorps  xmm0,xmm0
+ 2333327:	0f 11 83 70 09 00 00 	movups XMMWORD PTR [rbx+0x970],xmm0
+ 233332e:	48 89 df             	mov    rdi,rbx
+ 2333331:	be 01 00 00 00       	mov    esi,0x1
+ 2333336:	e8 86 06 00 00       	call   23339c1 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3699>
+ 233333b:	48 8b bb 00 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe00]
+ 2333342:	41 ff 17             	call   QWORD PTR [r15]
+ 2333345:	4c 89 b3 00 0e 00 00 	mov    QWORD PTR [rbx+0xe00],r14
+ 233334c:	48 8b bb 40 10 00 00 	mov    rdi,QWORD PTR [rbx+0x1040]
+ 2333353:	41 ff 17             	call   QWORD PTR [r15]
+ 2333356:	4c 89 b3 40 10 00 00 	mov    QWORD PTR [rbx+0x1040],r14
+ 233335d:	48 8b bb 48 10 00 00 	mov    rdi,QWORD PTR [rbx+0x1048]
+ 2333364:	41 ff 17             	call   QWORD PTR [r15]
+ 2333367:	4c 89 b3 48 10 00 00 	mov    QWORD PTR [rbx+0x1048],r14
+ 233336e:	48 8b bb e0 06 00 00 	mov    rdi,QWORD PTR [rbx+0x6e0]
+ 2333375:	48 85 ff             	test   rdi,rdi
+ 2333378:	74 3c                	je     23333b6 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x308e>
+ 233337a:	48 8b 07             	mov    rax,QWORD PTR [rdi]
+ 233337d:	4c 8b 77 08          	mov    r14,QWORD PTR [rdi+0x8]
+ 2333381:	48 89 83 e0 06 00 00 	mov    QWORD PTR [rbx+0x6e0],rax
+ 2333388:	41 ff 17             	call   QWORD PTR [r15]
+ 233338b:	49 c7 86 d8 06 00 00 	mov    QWORD PTR [r14+0x6d8],0x0
+ 2333392:	00 00 00 00 
+ 2333396:	41 80 a6 ec 06 00 00 	and    BYTE PTR [r14+0x6ec],0xfe
+ 233339d:	fe 
+ 233339e:	48 8b bb d8 06 00 00 	mov    rdi,QWORD PTR [rbx+0x6d8]
+ 23333a5:	48 85 ff             	test   rdi,rdi
+ 23333a8:	74 c4                	je     233336e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3046>
+ 23333aa:	4c 89 f6             	mov    rsi,r14
+ 23333ad:	31 d2                	xor    edx,edx
+ 23333af:	e8 7f 46 71 04       	call   6a47a33 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x124ff05>
+ 23333b4:	eb b8                	jmp    233336e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3046>
+ 23333b6:	48 8b bb d8 06 00 00 	mov    rdi,QWORD PTR [rbx+0x6d8]
+ 23333bd:	48 85 ff             	test   rdi,rdi
+ 23333c0:	74 33                	je     23333f5 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x30cd>
+ 23333c2:	48 81 c7 e0 06 00 00 	add    rdi,0x6e0
+ 23333c9:	48 89 f8             	mov    rax,rdi
+ 23333cc:	48 8b 3f             	mov    rdi,QWORD PTR [rdi]
+ 23333cf:	48 85 ff             	test   rdi,rdi
+ 23333d2:	74 0f                	je     23333e3 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x30bb>
+ 23333d4:	48 39 5f 08          	cmp    QWORD PTR [rdi+0x8],rbx
+ 23333d8:	75 ef                	jne    23333c9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x30a1>
+ 23333da:	48 8b 0f             	mov    rcx,QWORD PTR [rdi]
+ 23333dd:	48 89 08             	mov    QWORD PTR [rax],rcx
+ 23333e0:	41 ff 17             	call   QWORD PTR [r15]
+ 23333e3:	48 c7 83 d8 06 00 00 	mov    QWORD PTR [rbx+0x6d8],0x0
+ 23333ea:	00 00 00 00 
+ 23333ee:	80 a3 ec 06 00 00 fe 	and    BYTE PTR [rbx+0x6ec],0xfe
+ 23333f5:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 23333f9:	48 85 c0             	test   rax,rax
+ 23333fc:	74 47                	je     2333445 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x311d>
+ 23333fe:	f6 40 04 02          	test   BYTE PTR [rax+0x4],0x2
+ 2333402:	74 21                	je     2333425 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x30fd>
+ 2333404:	4c 8b 40 10          	mov    r8,QWORD PTR [rax+0x10]
+ 2333408:	4d 85 c0             	test   r8,r8
+ 233340b:	74 18                	je     2333425 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x30fd>
+ 233340d:	48 8b 48 20          	mov    rcx,QWORD PTR [rax+0x20]
+ 2333411:	48 89 df             	mov    rdi,rbx
+ 2333414:	be 01 00 00 00       	mov    esi,0x1
+ 2333419:	ba 02 00 00 00       	mov    edx,0x2
+ 233341e:	41 ff d0             	call   r8
+ 2333421:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 2333425:	ff 48 08             	dec    DWORD PTR [rax+0x8]
+ 2333428:	f6 40 04 02          	test   BYTE PTR [rax+0x4],0x2
+ 233342c:	74 17                	je     2333445 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x311d>
+ 233342e:	48 8b 48 18          	mov    rcx,QWORD PTR [rax+0x18]
+ 2333432:	48 85 c9             	test   rcx,rcx
+ 2333435:	74 0e                	je     2333445 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x311d>
+ 2333437:	48 8b 50 20          	mov    rdx,QWORD PTR [rax+0x20]
+ 233343b:	48 89 df             	mov    rdi,rbx
+ 233343e:	be 01 00 00 00       	mov    esi,0x1
+ 2333443:	ff d1                	call   rcx
+ 2333445:	48 83 bb 80 00 00 00 	cmp    QWORD PTR [rbx+0x80],0x0
+ 233344c:	00 
+ 233344d:	74 1c                	je     233346b <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3143>
+ 233344f:	4c 8d b3 80 00 00 00 	lea    r14,[rbx+0x80]
+ 2333456:	4c 89 f7             	mov    rdi,r14
+ 2333459:	e8 4f 3c 70 04       	call   6a370ad <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x123f57f>
+ 233345e:	49 8b 3e             	mov    rdi,QWORD PTR [r14]
+ 2333461:	41 ff 17             	call   QWORD PTR [r15]
+ 2333464:	49 c7 06 00 00 00 00 	mov    QWORD PTR [r14],0x0
+ 233346b:	45 31 f6             	xor    r14d,r14d
+ 233346e:	4c 89 b3 a0 00 00 00 	mov    QWORD PTR [rbx+0xa0],r14
+ 2333475:	48 8b bb e0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfe0]
+ 233347c:	41 ff 17             	call   QWORD PTR [r15]
+ 233347f:	4c 89 b3 e0 0f 00 00 	mov    QWORD PTR [rbx+0xfe0],r14
+ 2333486:	48 8b bb 98 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xf98]
+ 233348d:	41 ff 17             	call   QWORD PTR [r15]
+ 2333490:	4c 89 b3 98 0f 00 00 	mov    QWORD PTR [rbx+0xf98],r14
+ 2333497:	48 8b bb a8 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfa8]
+ 233349e:	41 ff 17             	call   QWORD PTR [r15]
+ 23334a1:	4c 89 b3 a8 0f 00 00 	mov    QWORD PTR [rbx+0xfa8],r14
+ 23334a8:	48 8b bb a0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfa0]
+ 23334af:	41 ff 17             	call   QWORD PTR [r15]
+ 23334b2:	4c 89 b3 a0 0f 00 00 	mov    QWORD PTR [rbx+0xfa0],r14
+ 23334b9:	48 8b bb b0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfb0]
+ 23334c0:	41 ff 17             	call   QWORD PTR [r15]
+ 23334c3:	4c 89 b3 b0 0f 00 00 	mov    QWORD PTR [rbx+0xfb0],r14
+ 23334ca:	48 8b bb b8 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfb8]
+ 23334d1:	41 ff 17             	call   QWORD PTR [r15]
+ 23334d4:	4c 89 b3 b8 0f 00 00 	mov    QWORD PTR [rbx+0xfb8],r14
+ 23334db:	48 8b bb c0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfc0]
+ 23334e2:	41 ff 17             	call   QWORD PTR [r15]
+ 23334e5:	4c 89 b3 c0 0f 00 00 	mov    QWORD PTR [rbx+0xfc0],r14
+ 23334ec:	48 8b bb c8 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfc8]
+ 23334f3:	41 ff 17             	call   QWORD PTR [r15]
+ 23334f6:	4c 89 b3 c8 0f 00 00 	mov    QWORD PTR [rbx+0xfc8],r14
+ 23334fd:	48 8b bb d0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfd0]
+ 2333504:	41 ff 17             	call   QWORD PTR [r15]
+ 2333507:	4c 89 b3 d0 0f 00 00 	mov    QWORD PTR [rbx+0xfd0],r14
+ 233350e:	48 8b bb d8 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfd8]
+ 2333515:	41 ff 17             	call   QWORD PTR [r15]
+ 2333518:	4c 89 b3 d8 0f 00 00 	mov    QWORD PTR [rbx+0xfd8],r14
+ 233351f:	48 8b bb e8 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xfe8]
+ 2333526:	41 ff 17             	call   QWORD PTR [r15]
+ 2333529:	4c 89 b3 e8 0f 00 00 	mov    QWORD PTR [rbx+0xfe8],r14
+ 2333530:	48 8b bb f0 0f 00 00 	mov    rdi,QWORD PTR [rbx+0xff0]
+ 2333537:	41 ff 17             	call   QWORD PTR [r15]
+ 233353a:	4c 89 b3 f0 0f 00 00 	mov    QWORD PTR [rbx+0xff0],r14
+ 2333541:	48 89 df             	mov    rdi,rbx
+ 2333544:	e8 d9 07 00 00       	call   2333d22 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39fa>
+ 2333549:	4c 8d b3 f8 0e 00 00 	lea    r14,[rbx+0xef8]
+ 2333550:	4c 8b a3 f8 0e 00 00 	mov    r12,QWORD PTR [rbx+0xef8]
+ 2333557:	4d 85 e4             	test   r12,r12
+ 233355a:	74 0f                	je     233356b <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3243>
+ 233355c:	49 8b 7c 24 08       	mov    rdi,QWORD PTR [r12+0x8]
+ 2333561:	4d 8b 64 24 18       	mov    r12,QWORD PTR [r12+0x18]
+ 2333566:	41 ff 17             	call   QWORD PTR [r15]
+ 2333569:	eb ec                	jmp    2333557 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x322f>
+ 233356b:	48 c7 83 78 0f 00 00 	mov    QWORD PTR [rbx+0xf78],0x0
+ 2333572:	00 00 00 00 
+ 2333576:	0f 57 c0             	xorps  xmm0,xmm0
+ 2333579:	41 0f 11 46 10       	movups XMMWORD PTR [r14+0x10],xmm0
+ 233357e:	41 0f 11 06          	movups XMMWORD PTR [r14],xmm0
+ 2333582:	48 89 df             	mov    rdi,rbx
+ 2333585:	41 ff 17             	call   QWORD PTR [r15]
+ 2333588:	5b                   	pop    rbx
+ 2333589:	41 5c                	pop    r12
+ 233358b:	41 5e                	pop    r14
+ 233358d:	41 5f                	pop    r15
+ 233358f:	5d                   	pop    rbp
+ 2333590:	31 c0                	xor    eax,eax
+ 2333592:	c3                   	ret
+ 2333593:	48 8b 57 68          	mov    rdx,QWORD PTR [rdi+0x68]
+ 2333597:	48 85 d2             	test   rdx,rdx
+ 233359a:	0f 84 e1 00 00 00    	je     2333681 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3359>
+ 23335a0:	55                   	push   rbp
+ 23335a1:	48 89 e5             	mov    rbp,rsp
+ 23335a4:	53                   	push   rbx
+ 23335a5:	50                   	push   rax
+ 23335a6:	48 89 fb             	mov    rbx,rdi
+ 23335a9:	48 83 bf 50 0a 00 00 	cmp    QWORD PTR [rdi+0xa50],0x0
+ 23335b0:	00 
+ 23335b1:	75 0d                	jne    23335c0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3298>
+ 23335b3:	83 bb 58 0a 00 00 00 	cmp    DWORD PTR [rbx+0xa58],0x0
+ 23335ba:	0f 84 bb 00 00 00    	je     233367b <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3353>
+ 23335c0:	48 8b ba 20 01 00 00 	mov    rdi,QWORD PTR [rdx+0x120]
+ 23335c7:	48 81 c2 20 01 00 00 	add    rdx,0x120
+ 23335ce:	48 8d b3 60 0a 00 00 	lea    rsi,[rbx+0xa60]
+ 23335d5:	e8 9b 4e 02 00       	call   2358475 <Java_com_roblox_engine_jni_NativeGLInterface_nativeUpdateAdapterInit@@LIBROBLOX+0xa512>
+ 23335da:	85 c0                	test   eax,eax
+ 23335dc:	74 3e                	je     233361c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32f4>
+ 23335de:	f6 83 35 07 00 00 08 	test   BYTE PTR [rbx+0x735],0x8
+ 23335e5:	74 35                	je     233361c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32f4>
+ 23335e7:	48 8b 8b 90 0f 00 00 	mov    rcx,QWORD PTR [rbx+0xf90]
+ 23335ee:	48 85 c9             	test   rcx,rcx
+ 23335f1:	74 06                	je     23335f9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32d1>
+ 23335f3:	83 79 08 00          	cmp    DWORD PTR [rcx+0x8],0x0
+ 23335f7:	7e 23                	jle    233361c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32f4>
+ 23335f9:	48 8d 35 0a bf 26 fe 	lea    rsi,[rip+0xfffffffffe26bf0a]        # 59f50a <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1837d96>
+ 2333600:	48 89 df             	mov    rdi,rbx
+ 2333603:	89 c2                	mov    edx,eax
+ 2333605:	31 c0                	xor    eax,eax
+ 2333607:	e8 d6 d5 6f 04       	call   6a30be2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x12390b4>
+ 233360c:	eb 0e                	jmp    233361c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32f4>
+ 233360e:	48 8b bb a0 0a 00 00 	mov    rdi,QWORD PTR [rbx+0xaa0]
+ 2333615:	31 f6                	xor    esi,esi
+ 2333617:	e8 32 91 70 04       	call   6a3c74e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1244c20>
+ 233361c:	48 83 bb b0 0a 00 00 	cmp    QWORD PTR [rbx+0xab0],0x0
+ 2333623:	00 
+ 2333624:	75 e8                	jne    233360e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x32e6>
+ 2333626:	48 83 7b 08 00       	cmp    QWORD PTR [rbx+0x8],0x0
+ 233362b:	78 39                	js     2333666 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x333e>
+ 233362d:	f6 83 35 07 00 00 08 	test   BYTE PTR [rbx+0x735],0x8
+ 2333634:	74 30                	je     2333666 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x333e>
+ 2333636:	48 8b 83 90 0f 00 00 	mov    rax,QWORD PTR [rbx+0xf90]
+ 233363d:	48 85 c0             	test   rax,rax
+ 2333640:	74 06                	je     2333648 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3320>
+ 2333642:	83 78 08 00          	cmp    DWORD PTR [rax+0x8],0x0
+ 2333646:	7e 1e                	jle    2333666 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x333e>
+ 2333648:	48 8d 05 51 89 f3 04 	lea    rax,[rip+0x4f38951]        # 726bfa0 <strncat@plt+0x538420>
+ 233364f:	83 78 08 00          	cmp    DWORD PTR [rax+0x8],0x0
+ 2333653:	7e 11                	jle    2333666 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x333e>
+ 2333655:	48 8d 35 7a 3f 1c fe 	lea    rsi,[rip+0xfffffffffe1c3f7a]        # 4f75d6 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18dfcca>
+ 233365c:	48 89 df             	mov    rdi,rbx
+ 233365f:	31 c0                	xor    eax,eax
+ 2333661:	e8 89 da 6f 04       	call   6a310ef <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x12395c1>
+ 2333666:	48 c7 83 50 0a 00 00 	mov    QWORD PTR [rbx+0xa50],0x0
+ 233366d:	00 00 00 00 
+ 2333671:	c7 83 58 0a 00 00 00 	mov    DWORD PTR [rbx+0xa58],0x0
+ 2333678:	00 00 00 
+ 233367b:	48 83 c4 08          	add    rsp,0x8
+ 233367f:	5b                   	pop    rbx
+ 2333680:	5d                   	pop    rbp
+ 2333681:	c3                   	ret
+ 2333682:	55                   	push   rbp
+ 2333683:	48 89 e5             	mov    rbp,rsp
+ 2333686:	53                   	push   rbx
+ 2333687:	50                   	push   rax
+ 2333688:	48 89 fb             	mov    rbx,rdi
+ 233368b:	48 8b b7 f8 09 00 00 	mov    rsi,QWORD PTR [rdi+0x9f8]
+ 2333692:	48 85 f6             	test   rsi,rsi
+ 2333695:	74 13                	je     23336aa <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3382>
+ 2333697:	f6 83 33 07 00 00 40 	test   BYTE PTR [rbx+0x733],0x40
+ 233369e:	75 0a                	jne    23336aa <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3382>
+ 23336a0:	48 89 df             	mov    rdi,rbx
+ 23336a3:	31 d2                	xor    edx,edx
+ 23336a5:	e8 86 30 70 04       	call   6a36730 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x123ec02>
+ 23336aa:	48 89 df             	mov    rdi,rbx
+ 23336ad:	48 83 c4 08          	add    rsp,0x8
+ 23336b1:	5b                   	pop    rbx
+ 23336b2:	5d                   	pop    rbp
+ 23336b3:	e9 59 31 70 04       	jmp    6a36811 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x123ece3>
+ 23336b8:	55                   	push   rbp
+ 23336b9:	48 89 e5             	mov    rbp,rsp
+ 23336bc:	41 57                	push   r15
+ 23336be:	41 56                	push   r14
+ 23336c0:	41 55                	push   r13
+ 23336c2:	41 54                	push   r12
+ 23336c4:	53                   	push   rbx
+ 23336c5:	50                   	push   rax
+ 23336c6:	4c 8b 36             	mov    r14,QWORD PTR [rsi]
+ 23336c9:	4d 85 f6             	test   r14,r14
+ 23336cc:	0f 84 de 00 00 00    	je     23337b0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3488>
+ 23336d2:	48 89 fb             	mov    rbx,rdi
+ 23336d5:	4c 8b 7f 78          	mov    r15,QWORD PTR [rdi+0x78]
+ 23336d9:	4d 85 ff             	test   r15,r15
+ 23336dc:	74 07                	je     23336e5 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x33bd>
+ 23336de:	41 f6 47 04 08       	test   BYTE PTR [r15+0x4],0x8
+ 23336e3:	75 14                	jne    23336f9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x33d1>
+ 23336e5:	48 8b 43 68          	mov    rax,QWORD PTR [rbx+0x68]
+ 23336e9:	4c 8d b8 d8 00 00 00 	lea    r15,[rax+0xd8]
+ 23336f0:	48 85 c0             	test   rax,rax
+ 23336f3:	4c 0f 44 f8          	cmove  r15,rax
+ 23336f7:	eb 07                	jmp    2333700 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x33d8>
+ 23336f9:	49 81 c7 a0 00 00 00 	add    r15,0xa0
+ 2333700:	48 c7 06 00 00 00 00 	mov    QWORD PTR [rsi],0x0
+ 2333707:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 233370b:	48 85 c0             	test   rax,rax
+ 233370e:	74 2f                	je     233373f <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3417>
+ 2333710:	48 8d 88 a0 00 00 00 	lea    rcx,[rax+0xa0]
+ 2333717:	4c 39 f9             	cmp    rcx,r15
+ 233371a:	75 23                	jne    233373f <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3417>
+ 233371c:	f6 40 04 08          	test   BYTE PTR [rax+0x4],0x8
+ 2333720:	74 1d                	je     233373f <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3417>
+ 2333722:	4c 8b 40 10          	mov    r8,QWORD PTR [rax+0x10]
+ 2333726:	4d 85 c0             	test   r8,r8
+ 2333729:	74 14                	je     233373f <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3417>
+ 233372b:	48 8b 48 20          	mov    rcx,QWORD PTR [rax+0x20]
+ 233372f:	48 89 df             	mov    rdi,rbx
+ 2333732:	be 03 00 00 00       	mov    esi,0x3
+ 2333737:	ba 02 00 00 00       	mov    edx,0x2
+ 233373c:	41 ff d0             	call   r8
+ 233373f:	49 ff 4e 18          	dec    QWORD PTR [r14+0x18]
+ 2333743:	75 2b                	jne    2333770 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3448>
+ 2333745:	49 8b 3e             	mov    rdi,QWORD PTR [r14]
+ 2333748:	48 85 ff             	test   rdi,rdi
+ 233374b:	74 17                	je     2333764 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x343c>
+ 233374d:	4c 8d 25 64 89 f3 04 	lea    r12,[rip+0x4f38964]        # 726c0b8 <strncat@plt+0x538538>
+ 2333754:	4c 8b 6f 28          	mov    r13,QWORD PTR [rdi+0x28]
+ 2333758:	41 ff 14 24          	call   QWORD PTR [r12]
+ 233375c:	4c 89 ef             	mov    rdi,r13
+ 233375f:	4d 85 ed             	test   r13,r13
+ 2333762:	75 f0                	jne    2333754 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x342c>
+ 2333764:	48 8d 05 4d 89 f3 04 	lea    rax,[rip+0x4f3894d]        # 726c0b8 <strncat@plt+0x538538>
+ 233376b:	4c 89 f7             	mov    rdi,r14
+ 233376e:	ff 10                	call   QWORD PTR [rax]
+ 2333770:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 2333774:	48 85 c0             	test   rax,rax
+ 2333777:	74 37                	je     23337b0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3488>
+ 2333779:	48 8d 88 a0 00 00 00 	lea    rcx,[rax+0xa0]
+ 2333780:	4c 39 f9             	cmp    rcx,r15
+ 2333783:	75 2b                	jne    23337b0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3488>
+ 2333785:	f6 40 04 08          	test   BYTE PTR [rax+0x4],0x8
+ 2333789:	74 25                	je     23337b0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3488>
+ 233378b:	48 8b 48 18          	mov    rcx,QWORD PTR [rax+0x18]
+ 233378f:	48 85 c9             	test   rcx,rcx
+ 2333792:	74 1c                	je     23337b0 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3488>
+ 2333794:	48 8b 50 20          	mov    rdx,QWORD PTR [rax+0x20]
+ 2333798:	48 89 df             	mov    rdi,rbx
+ 233379b:	be 03 00 00 00       	mov    esi,0x3
+ 23337a0:	48 83 c4 08          	add    rsp,0x8
+ 23337a4:	5b                   	pop    rbx
+ 23337a5:	41 5c                	pop    r12
+ 23337a7:	41 5d                	pop    r13
+ 23337a9:	41 5e                	pop    r14
+ 23337ab:	41 5f                	pop    r15
+ 23337ad:	5d                   	pop    rbp
+ 23337ae:	ff e1                	jmp    rcx
+ 23337b0:	48 83 c4 08          	add    rsp,0x8
+ 23337b4:	5b                   	pop    rbx
+ 23337b5:	41 5c                	pop    r12
+ 23337b7:	41 5d                	pop    r13
+ 23337b9:	41 5e                	pop    r14
+ 23337bb:	41 5f                	pop    r15
+ 23337bd:	5d                   	pop    rbp
+ 23337be:	c3                   	ret
+ 23337bf:	55                   	push   rbp
+ 23337c0:	48 89 e5             	mov    rbp,rsp
+ 23337c3:	41 56                	push   r14
+ 23337c5:	53                   	push   rbx
+ 23337c6:	48 89 f3             	mov    rbx,rsi
+ 23337c9:	49 89 fe             	mov    r14,rdi
+ 23337cc:	48 8d 05 e5 88 f3 04 	lea    rax,[rip+0x4f388e5]        # 726c0b8 <strncat@plt+0x538538>
+ 23337d3:	48 8b bf c0 00 00 00 	mov    rdi,QWORD PTR [rdi+0xc0]
+ 23337da:	ff 10                	call   QWORD PTR [rax]
+ 23337dc:	49 c7 86 c0 00 00 00 	mov    QWORD PTR [r14+0xc0],0x0
+ 23337e3:	00 00 00 00 
+ 23337e7:	41 f6 86 cb 00 00 00 	test   BYTE PTR [r14+0xcb],0x4
+ 23337ee:	04 
+ 23337ef:	74 0c                	je     23337fd <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x34d5>
+ 23337f1:	49 83 c6 68          	add    r14,0x68
+ 23337f5:	4c 89 f7             	mov    rdi,r14
+ 23337f8:	e8 3e 3f 12 00       	call   245773b <Java_com_roblox_universalapp_messagebus_MessageBus_getMessageId@@LIBROBLOX+0x6213>
+ 23337fd:	48 89 df             	mov    rdi,rbx
+ 2333800:	5b                   	pop    rbx
+ 2333801:	41 5e                	pop    r14
+ 2333803:	5d                   	pop    rbp
+ 2333804:	e9 00 00 00 00       	jmp    2333809 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x34e1>
+ 2333809:	55                   	push   rbp
+ 233380a:	48 89 e5             	mov    rbp,rsp
+ 233380d:	41 57                	push   r15
+ 233380f:	41 56                	push   r14
+ 2333811:	53                   	push   rbx
+ 2333812:	50                   	push   rax
+ 2333813:	48 89 fb             	mov    rbx,rdi
+ 2333816:	e8 02 f0 70 04       	call   6a4281d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x124acef>
+ 233381b:	4c 8b b3 08 01 00 00 	mov    r14,QWORD PTR [rbx+0x108]
+ 2333822:	4d 85 f6             	test   r14,r14
+ 2333825:	74 30                	je     2333857 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x352f>
+ 2333827:	4c 8d 3d 8a 88 f3 04 	lea    r15,[rip+0x4f3888a]        # 726c0b8 <strncat@plt+0x538538>
+ 233382e:	49 8b 46 08          	mov    rax,QWORD PTR [r14+0x8]
+ 2333832:	48 89 83 08 01 00 00 	mov    QWORD PTR [rbx+0x108],rax
+ 2333839:	49 8b 06             	mov    rax,QWORD PTR [r14]
+ 233383c:	48 89 df             	mov    rdi,rbx
+ 233383f:	4c 89 f6             	mov    rsi,r14
+ 2333842:	ff 50 20             	call   QWORD PTR [rax+0x20]
+ 2333845:	4c 89 f7             	mov    rdi,r14
+ 2333848:	41 ff 17             	call   QWORD PTR [r15]
+ 233384b:	4c 8b b3 08 01 00 00 	mov    r14,QWORD PTR [rbx+0x108]
+ 2333852:	4d 85 f6             	test   r14,r14
+ 2333855:	75 d7                	jne    233382e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3506>
+ 2333857:	48 c7 83 c0 00 00 00 	mov    QWORD PTR [rbx+0xc0],0x0
+ 233385e:	00 00 00 00 
+ 2333862:	c7 83 ec 00 00 00 00 	mov    DWORD PTR [rbx+0xec],0x0
+ 2333869:	00 00 00 
+ 233386c:	48 83 c4 08          	add    rsp,0x8
+ 2333870:	5b                   	pop    rbx
+ 2333871:	41 5e                	pop    r14
+ 2333873:	41 5f                	pop    r15
+ 2333875:	5d                   	pop    rbp
+ 2333876:	c3                   	ret
+ 2333877:	55                   	push   rbp
+ 2333878:	48 89 e5             	mov    rbp,rsp
+ 233387b:	41 56                	push   r14
+ 233387d:	53                   	push   rbx
+ 233387e:	48 89 fb             	mov    rbx,rdi
+ 2333881:	48 8b bf 30 0a 00 00 	mov    rdi,QWORD PTR [rdi+0xa30]
+ 2333888:	48 85 ff             	test   rdi,rdi
+ 233388b:	74 10                	je     233389d <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3575>
+ 233388d:	e8 de b6 90 00       	call   2c3ef70 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x21f140>
+ 2333892:	48 c7 83 30 0a 00 00 	mov    QWORD PTR [rbx+0xa30],0x0
+ 2333899:	00 00 00 00 
+ 233389d:	48 8b bb 28 0a 00 00 	mov    rdi,QWORD PTR [rbx+0xa28]
+ 23338a4:	48 85 ff             	test   rdi,rdi
+ 23338a7:	74 10                	je     23338b9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3591>
+ 23338a9:	e8 c2 b6 90 00       	call   2c3ef70 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x21f140>
+ 23338ae:	48 c7 83 28 0a 00 00 	mov    QWORD PTR [rbx+0xa28],0x0
+ 23338b5:	00 00 00 00 
+ 23338b9:	48 8b bb 38 0a 00 00 	mov    rdi,QWORD PTR [rbx+0xa38]
+ 23338c0:	e8 cb a4 8d 00       	call   2c0dd90 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x1edf60>
+ 23338c5:	45 31 f6             	xor    r14d,r14d
+ 23338c8:	4c 89 b3 38 0a 00 00 	mov    QWORD PTR [rbx+0xa38],r14
+ 23338cf:	48 8d 05 e2 87 f3 04 	lea    rax,[rip+0x4f387e2]        # 726c0b8 <strncat@plt+0x538538>
+ 23338d6:	48 8b bb 40 0a 00 00 	mov    rdi,QWORD PTR [rbx+0xa40]
+ 23338dd:	ff 10                	call   QWORD PTR [rax]
+ 23338df:	4c 89 b3 40 0a 00 00 	mov    QWORD PTR [rbx+0xa40],r14
+ 23338e6:	80 a3 48 0a 00 00 fe 	and    BYTE PTR [rbx+0xa48],0xfe
+ 23338ed:	5b                   	pop    rbx
+ 23338ee:	41 5e                	pop    r14
+ 23338f0:	5d                   	pop    rbp
+ 23338f1:	c3                   	ret
+ 23338f2:	55                   	push   rbp
+ 23338f3:	48 89 e5             	mov    rbp,rsp
+ 23338f6:	41 57                	push   r15
+ 23338f8:	41 56                	push   r14
+ 23338fa:	53                   	push   rbx
+ 23338fb:	50                   	push   rax
+ 23338fc:	48 89 fb             	mov    rbx,rdi
+ 23338ff:	4c 8d 3d b2 87 f3 04 	lea    r15,[rip+0x4f387b2]        # 726c0b8 <strncat@plt+0x538538>
+ 2333906:	48 8b bf 50 0e 00 00 	mov    rdi,QWORD PTR [rdi+0xe50]
+ 233390d:	41 ff 17             	call   QWORD PTR [r15]
+ 2333910:	45 31 f6             	xor    r14d,r14d
+ 2333913:	4c 89 b3 50 0e 00 00 	mov    QWORD PTR [rbx+0xe50],r14
+ 233391a:	48 8b bb 58 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe58]
+ 2333921:	41 ff 17             	call   QWORD PTR [r15]
+ 2333924:	4c 89 b3 58 0e 00 00 	mov    QWORD PTR [rbx+0xe58],r14
+ 233392b:	48 8b bb 60 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe60]
+ 2333932:	41 ff 17             	call   QWORD PTR [r15]
+ 2333935:	4c 89 b3 60 0e 00 00 	mov    QWORD PTR [rbx+0xe60],r14
+ 233393c:	48 8b bb 68 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe68]
+ 2333943:	41 ff 17             	call   QWORD PTR [r15]
+ 2333946:	4c 89 b3 68 0e 00 00 	mov    QWORD PTR [rbx+0xe68],r14
+ 233394d:	48 8b bb 70 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe70]
+ 2333954:	41 ff 17             	call   QWORD PTR [r15]
+ 2333957:	4c 89 b3 70 0e 00 00 	mov    QWORD PTR [rbx+0xe70],r14
+ 233395e:	48 8b bb 78 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe78]
+ 2333965:	41 ff 17             	call   QWORD PTR [r15]
+ 2333968:	4c 89 b3 78 0e 00 00 	mov    QWORD PTR [rbx+0xe78],r14
+ 233396f:	48 8b bb 80 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe80]
+ 2333976:	41 ff 17             	call   QWORD PTR [r15]
+ 2333979:	4c 89 b3 80 0e 00 00 	mov    QWORD PTR [rbx+0xe80],r14
+ 2333980:	48 8b bb 88 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe88]
+ 2333987:	41 ff 17             	call   QWORD PTR [r15]
+ 233398a:	4c 89 b3 88 0e 00 00 	mov    QWORD PTR [rbx+0xe88],r14
+ 2333991:	4c 8b b3 48 0e 00 00 	mov    r14,QWORD PTR [rbx+0xe48]
+ 2333998:	4d 85 f6             	test   r14,r14
+ 233399b:	74 0e                	je     23339ab <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3683>
+ 233399d:	4c 89 f7             	mov    rdi,r14
+ 23339a0:	e8 14 4f 71 04       	call   6a488b9 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1250d8b>
+ 23339a5:	4c 89 f7             	mov    rdi,r14
+ 23339a8:	41 ff 17             	call   QWORD PTR [r15]
+ 23339ab:	48 c7 83 48 0e 00 00 	mov    QWORD PTR [rbx+0xe48],0x0
+ 23339b2:	00 00 00 00 
+ 23339b6:	48 83 c4 08          	add    rsp,0x8
+ 23339ba:	5b                   	pop    rbx
+ 23339bb:	41 5e                	pop    r14
+ 23339bd:	41 5f                	pop    r15
+ 23339bf:	5d                   	pop    rbp
+ 23339c0:	c3                   	ret
+ 23339c1:	55                   	push   rbp
+ 23339c2:	48 89 e5             	mov    rbp,rsp
+ 23339c5:	41 57                	push   r15
+ 23339c7:	41 56                	push   r14
+ 23339c9:	41 55                	push   r13
+ 23339cb:	41 54                	push   r12
+ 23339cd:	53                   	push   rbx
+ 23339ce:	48 83 ec 38          	sub    rsp,0x38
+ 23339d2:	41 89 f5             	mov    r13d,esi
+ 23339d5:	48 89 fb             	mov    rbx,rdi
+ 23339d8:	4c 8b 3d 19 5a ef 04 	mov    r15,QWORD PTR [rip+0x4ef5a19]        # 72293f8 <strncat@plt+0x4f5878>
+ 23339df:	49 8b 07             	mov    rax,QWORD PTR [r15]
+ 23339e2:	48 89 45 d0          	mov    QWORD PTR [rbp-0x30],rax
+ 23339e6:	48 8b 47 78          	mov    rax,QWORD PTR [rdi+0x78]
+ 23339ea:	48 85 c0             	test   rax,rax
+ 23339ed:	74 23                	je     2333a12 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x36ea>
+ 23339ef:	f6 40 04 04          	test   BYTE PTR [rax+0x4],0x4
+ 23339f3:	74 1d                	je     2333a12 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x36ea>
+ 23339f5:	4c 8b 40 10          	mov    r8,QWORD PTR [rax+0x10]
+ 23339f9:	4d 85 c0             	test   r8,r8
+ 23339fc:	74 14                	je     2333a12 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x36ea>
+ 23339fe:	48 8b 48 20          	mov    rcx,QWORD PTR [rax+0x20]
+ 2333a02:	48 89 df             	mov    rdi,rbx
+ 2333a05:	be 02 00 00 00       	mov    esi,0x2
+ 2333a0a:	ba 02 00 00 00       	mov    edx,0x2
+ 2333a0f:	41 ff d0             	call   r8
+ 2333a12:	4c 8b a3 40 07 00 00 	mov    r12,QWORD PTR [rbx+0x740]
+ 2333a19:	4d 85 e4             	test   r12,r12
+ 2333a1c:	0f 84 a6 02 00 00    	je     2333cc8 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39a0>
+ 2333a22:	4c 8b b3 50 05 00 00 	mov    r14,QWORD PTR [rbx+0x550]
+ 2333a29:	4d 85 f6             	test   r14,r14
+ 2333a2c:	0f 84 54 02 00 00    	je     2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333a32:	41 f6 84 24 f0 07 00 	test   BYTE PTR [r12+0x7f0],0x1
+ 2333a39:	00 01 
+ 2333a3b:	0f 84 45 02 00 00    	je     2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333a41:	31 c0                	xor    eax,eax
+ 2333a43:	48 89 45 c8          	mov    QWORD PTR [rbp-0x38],rax
+ 2333a47:	48 89 45 c0          	mov    QWORD PTR [rbp-0x40],rax
+ 2333a4b:	4c 89 e7             	mov    rdi,r12
+ 2333a4e:	e8 c0 81 6f 04       	call   6a2bc13 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x12340e5>
+ 2333a53:	48 8d 3d 38 df 18 fe 	lea    rdi,[rip+0xfffffffffe18df38]        # 4c1992 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x191590e>
+ 2333a5a:	4c 89 f6             	mov    rsi,r14
+ 2333a5d:	e8 fe e0 9f 04       	call   6d31b60 <strcmp@plt>
+ 2333a62:	89 45 ac             	mov    DWORD PTR [rbp-0x54],eax
+ 2333a65:	85 c0                	test   eax,eax
+ 2333a67:	4c 89 75 a0          	mov    QWORD PTR [rbp-0x60],r14
+ 2333a6b:	74 25                	je     2333a92 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x376a>
+ 2333a6d:	4c 89 f6             	mov    rsi,r14
+ 2333a70:	4c 8d 75 c8          	lea    r14,[rbp-0x38]
+ 2333a74:	48 8d 4d c0          	lea    rcx,[rbp-0x40]
+ 2333a78:	48 89 df             	mov    rdi,rbx
+ 2333a7b:	4c 89 f2             	mov    rdx,r14
+ 2333a7e:	e8 af 85 6f 04       	call   6a2c032 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1234504>
+ 2333a83:	31 c9                	xor    ecx,ecx
+ 2333a85:	4d 8b 36             	mov    r14,QWORD PTR [r14]
+ 2333a88:	85 c0                	test   eax,eax
+ 2333a8a:	0f 85 7e 01 00 00    	jne    2333c0e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38e6>
+ 2333a90:	eb 0c                	jmp    2333a9e <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3776>
+ 2333a92:	48 8b 05 57 48 ef 04 	mov    rax,QWORD PTR [rip+0x4ef4857]        # 72282f0 <strncat@plt+0x4f4770>
+ 2333a99:	4c 8b 30             	mov    r14,QWORD PTR [rax]
+ 2333a9c:	b1 01                	mov    cl,0x1
+ 2333a9e:	89 4d b8             	mov    DWORD PTR [rbp-0x48],ecx
+ 2333aa1:	48 8d 3d c1 5f 13 fe 	lea    rdi,[rip+0xfffffffffe135fc1]        # 469a69 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x196d837>
+ 2333aa8:	4c 89 f6             	mov    rsi,r14
+ 2333aab:	e8 c0 e7 9f 04       	call   6d32270 <fputs@plt>
+ 2333ab0:	41 8b b4 24 e8 07 00 	mov    esi,DWORD PTR [r12+0x7e8]
+ 2333ab7:	00 
+ 2333ab8:	48 85 f6             	test   rsi,rsi
+ 2333abb:	0f 84 e1 00 00 00    	je     2333ba2 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x387a>
+ 2333ac1:	4c 89 75 b0          	mov    QWORD PTR [rbp-0x50],r14
+ 2333ac5:	48 8d 05 f4 85 f3 04 	lea    rax,[rip+0x4f385f4]        # 726c0c0 <strncat@plt+0x538540>
+ 2333acc:	48 c1 e6 03          	shl    rsi,0x3
+ 2333ad0:	bf 01 00 00 00       	mov    edi,0x1
+ 2333ad5:	ff 10                	call   QWORD PTR [rax]
+ 2333ad7:	49 89 c6             	mov    r14,rax
+ 2333ada:	b8 1b 00 00 00       	mov    eax,0x1b
+ 2333adf:	4d 85 f6             	test   r14,r14
+ 2333ae2:	0f 84 1f 01 00 00    	je     2333c07 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38df>
+ 2333ae8:	44 89 6d bc          	mov    DWORD PTR [rbp-0x44],r13d
+ 2333aec:	31 c0                	xor    eax,eax
+ 2333aee:	45 31 ed             	xor    r13d,r13d
+ 2333af1:	48 89 c1             	mov    rcx,rax
+ 2333af4:	48 c1 e1 05          	shl    rcx,0x5
+ 2333af8:	49 8b 0c 0c          	mov    rcx,QWORD PTR [r12+rcx*1]
+ 2333afc:	48 85 c9             	test   rcx,rcx
+ 2333aff:	74 18                	je     2333b19 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x37f1>
+ 2333b01:	48 8b 51 08          	mov    rdx,QWORD PTR [rcx+0x8]
+ 2333b05:	48 83 7a 58 00       	cmp    QWORD PTR [rdx+0x58],0x0
+ 2333b0a:	74 07                	je     2333b13 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x37eb>
+ 2333b0c:	4b 89 14 ee          	mov    QWORD PTR [r14+r13*8],rdx
+ 2333b10:	49 ff c5             	inc    r13
+ 2333b13:	48 8b 49 18          	mov    rcx,QWORD PTR [rcx+0x18]
+ 2333b17:	eb e3                	jmp    2333afc <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x37d4>
+ 2333b19:	48 ff c0             	inc    rax
+ 2333b1c:	48 83 f8 3f          	cmp    rax,0x3f
+ 2333b20:	75 cf                	jne    2333af1 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x37c9>
+ 2333b22:	48 8d 0d 10 84 6f 04 	lea    rcx,[rip+0x46f8410]        # 6a2bf39 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x123440b>
+ 2333b29:	ba 08 00 00 00       	mov    edx,0x8
+ 2333b2e:	4c 89 f7             	mov    rdi,r14
+ 2333b31:	4c 89 ee             	mov    rsi,r13
+ 2333b34:	e8 c7 ec 9f 04       	call   6d32800 <qsort@plt>
+ 2333b39:	4d 85 ed             	test   r13,r13
+ 2333b3c:	74 49                	je     2333b87 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x385f>
+ 2333b3e:	41 bf 01 00 00 00    	mov    r15d,0x1
+ 2333b44:	31 c0                	xor    eax,eax
+ 2333b46:	49 8b 3c c6          	mov    rdi,QWORD PTR [r14+rax*8]
+ 2333b4a:	e8 34 83 6f 04       	call   6a2be83 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1234355>
+ 2333b4f:	48 85 c0             	test   rax,rax
+ 2333b52:	0f 84 93 00 00 00    	je     2333beb <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38c3>
+ 2333b58:	49 89 c4             	mov    r12,rax
+ 2333b5b:	48 8b 7d b0          	mov    rdi,QWORD PTR [rbp-0x50]
+ 2333b5f:	48 8d 35 03 fd f6 fd 	lea    rsi,[rip+0xfffffffffdf6fd03]        # 2a3869 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b33a37>
+ 2333b66:	48 89 c2             	mov    rdx,rax
+ 2333b69:	31 c0                	xor    eax,eax
+ 2333b6b:	e8 13 9e 70 04       	call   6a3d983 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1245e55>
+ 2333b70:	4c 89 e7             	mov    rdi,r12
+ 2333b73:	48 8d 05 3e 85 f3 04 	lea    rax,[rip+0x4f3853e]        # 726c0b8 <strncat@plt+0x538538>
+ 2333b7a:	ff 10                	call   QWORD PTR [rax]
+ 2333b7c:	44 89 f8             	mov    eax,r15d
+ 2333b7f:	41 ff c7             	inc    r15d
+ 2333b82:	49 39 c5             	cmp    r13,rax
+ 2333b85:	77 bf                	ja     2333b46 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x381e>
+ 2333b87:	48 8d 05 2a 85 f3 04 	lea    rax,[rip+0x4f3852a]        # 726c0b8 <strncat@plt+0x538538>
+ 2333b8e:	4c 89 f7             	mov    rdi,r14
+ 2333b91:	ff 10                	call   QWORD PTR [rax]
+ 2333b93:	4c 8b 3d 5e 58 ef 04 	mov    r15,QWORD PTR [rip+0x4ef585e]        # 72293f8 <strncat@plt+0x4f5878>
+ 2333b9a:	44 8b 6d bc          	mov    r13d,DWORD PTR [rbp-0x44]
+ 2333b9e:	4c 8b 75 b0          	mov    r14,QWORD PTR [rbp-0x50]
+ 2333ba2:	83 7d ac 00          	cmp    DWORD PTR [rbp-0x54],0x0
+ 2333ba6:	74 29                	je     2333bd1 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38a9>
+ 2333ba8:	4c 89 f7             	mov    rdi,r14
+ 2333bab:	e8 70 e3 9f 04       	call   6d31f20 <fclose@plt>
+ 2333bb0:	4c 8b 75 c0          	mov    r14,QWORD PTR [rbp-0x40]
+ 2333bb4:	4d 85 f6             	test   r14,r14
+ 2333bb7:	74 1e                	je     2333bd7 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38af>
+ 2333bb9:	4c 89 f7             	mov    rdi,r14
+ 2333bbc:	48 8b 75 a0          	mov    rsi,QWORD PTR [rbp-0x60]
+ 2333bc0:	e8 bb de 9f 04       	call   6d31a80 <rename@plt>
+ 2333bc5:	41 bc 17 00 00 00    	mov    r12d,0x17
+ 2333bcb:	85 c0                	test   eax,eax
+ 2333bcd:	75 5d                	jne    2333c2c <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3904>
+ 2333bcf:	eb 09                	jmp    2333bda <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38b2>
+ 2333bd1:	4c 8b 75 c0          	mov    r14,QWORD PTR [rbp-0x40]
+ 2333bd5:	eb 03                	jmp    2333bda <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38b2>
+ 2333bd7:	45 31 f6             	xor    r14d,r14d
+ 2333bda:	48 8d 05 d7 84 f3 04 	lea    rax,[rip+0x4f384d7]        # 726c0b8 <strncat@plt+0x538538>
+ 2333be1:	4c 89 f7             	mov    rdi,r14
+ 2333be4:	ff 10                	call   QWORD PTR [rax]
+ 2333be6:	e9 9b 00 00 00       	jmp    2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333beb:	4c 89 f7             	mov    rdi,r14
+ 2333bee:	48 8d 05 c3 84 f3 04 	lea    rax,[rip+0x4f384c3]        # 726c0b8 <strncat@plt+0x538538>
+ 2333bf5:	ff 10                	call   QWORD PTR [rax]
+ 2333bf7:	4c 8b 3d fa 57 ef 04 	mov    r15,QWORD PTR [rip+0x4ef57fa]        # 72293f8 <strncat@plt+0x4f5878>
+ 2333bfe:	44 8b 6d bc          	mov    r13d,DWORD PTR [rbp-0x44]
+ 2333c02:	b8 1b 00 00 00       	mov    eax,0x1b
+ 2333c07:	4c 8b 75 b0          	mov    r14,QWORD PTR [rbp-0x50]
+ 2333c0b:	8b 4d b8             	mov    ecx,DWORD PTR [rbp-0x48]
+ 2333c0e:	41 89 c4             	mov    r12d,eax
+ 2333c11:	4d 85 f6             	test   r14,r14
+ 2333c14:	0f 94 c0             	sete   al
+ 2333c17:	08 c8                	or     al,cl
+ 2333c19:	75 08                	jne    2333c23 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x38fb>
+ 2333c1b:	4c 89 f7             	mov    rdi,r14
+ 2333c1e:	e8 fd e2 9f 04       	call   6d31f20 <fclose@plt>
+ 2333c23:	4c 8b 75 c0          	mov    r14,QWORD PTR [rbp-0x40]
+ 2333c27:	4d 85 f6             	test   r14,r14
+ 2333c2a:	74 14                	je     2333c40 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3918>
+ 2333c2c:	4c 89 f7             	mov    rdi,r14
+ 2333c2f:	e8 1c e9 9f 04       	call   6d32550 <unlink@plt>
+ 2333c34:	48 8d 05 7d 84 f3 04 	lea    rax,[rip+0x4f3847d]        # 726c0b8 <strncat@plt+0x538538>
+ 2333c3b:	4c 89 f7             	mov    rdi,r14
+ 2333c3e:	ff 10                	call   QWORD PTR [rax]
+ 2333c40:	48 85 db             	test   rbx,rbx
+ 2333c43:	74 41                	je     2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333c45:	f6 83 35 07 00 00 08 	test   BYTE PTR [rbx+0x735],0x8
+ 2333c4c:	74 38                	je     2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333c4e:	48 8b 83 90 0f 00 00 	mov    rax,QWORD PTR [rbx+0xf90]
+ 2333c55:	48 85 c0             	test   rax,rax
+ 2333c58:	74 06                	je     2333c60 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3938>
+ 2333c5a:	83 78 08 00          	cmp    DWORD PTR [rax+0x8],0x0
+ 2333c5e:	7e 26                	jle    2333c86 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x395e>
+ 2333c60:	4c 8b b3 50 05 00 00 	mov    r14,QWORD PTR [rbx+0x550]
+ 2333c67:	44 89 e7             	mov    edi,r12d
+ 2333c6a:	e8 eb bd 12 00       	call   245fa5a <Java_com_roblox_universalapp_messagebus_MessageBus_getMessageId@@LIBROBLOX+0xe532>
+ 2333c6f:	48 8d 35 86 b5 26 fe 	lea    rsi,[rip+0xfffffffffe26b586]        # 59f1fc <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18380a4>
+ 2333c76:	48 89 df             	mov    rdi,rbx
+ 2333c79:	4c 89 f2             	mov    rdx,r14
+ 2333c7c:	48 89 c1             	mov    rcx,rax
+ 2333c7f:	31 c0                	xor    eax,eax
+ 2333c81:	e8 5c cf 6f 04       	call   6a30be2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x12390b4>
+ 2333c86:	45 84 ed             	test   r13b,r13b
+ 2333c89:	74 3d                	je     2333cc8 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39a0>
+ 2333c8b:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 2333c8f:	4c 8b b3 40 07 00 00 	mov    r14,QWORD PTR [rbx+0x740]
+ 2333c96:	48 85 c0             	test   rax,rax
+ 2333c99:	74 09                	je     2333ca4 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x397c>
+ 2333c9b:	4c 3b b0 d0 00 00 00 	cmp    r14,QWORD PTR [rax+0xd0]
+ 2333ca2:	74 24                	je     2333cc8 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39a0>
+ 2333ca4:	4d 85 f6             	test   r14,r14
+ 2333ca7:	74 14                	je     2333cbd <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3995>
+ 2333ca9:	4c 89 f7             	mov    rdi,r14
+ 2333cac:	e8 46 80 6f 04       	call   6a2bcf7 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x12341c9>
+ 2333cb1:	48 8d 05 00 84 f3 04 	lea    rax,[rip+0x4f38400]        # 726c0b8 <strncat@plt+0x538538>
+ 2333cb8:	4c 89 f7             	mov    rdi,r14
+ 2333cbb:	ff 10                	call   QWORD PTR [rax]
+ 2333cbd:	48 c7 83 40 07 00 00 	mov    QWORD PTR [rbx+0x740],0x0
+ 2333cc4:	00 00 00 00 
+ 2333cc8:	48 8b 43 78          	mov    rax,QWORD PTR [rbx+0x78]
+ 2333ccc:	48 85 c0             	test   rax,rax
+ 2333ccf:	74 34                	je     2333d05 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39dd>
+ 2333cd1:	f6 40 04 04          	test   BYTE PTR [rax+0x4],0x4
+ 2333cd5:	74 2e                	je     2333d05 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39dd>
+ 2333cd7:	48 8b 48 18          	mov    rcx,QWORD PTR [rax+0x18]
+ 2333cdb:	48 85 c9             	test   rcx,rcx
+ 2333cde:	74 25                	je     2333d05 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39dd>
+ 2333ce0:	48 8b 50 20          	mov    rdx,QWORD PTR [rax+0x20]
+ 2333ce4:	49 8b 07             	mov    rax,QWORD PTR [r15]
+ 2333ce7:	48 3b 45 d0          	cmp    rax,QWORD PTR [rbp-0x30]
+ 2333ceb:	75 30                	jne    2333d1d <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39f5>
+ 2333ced:	48 89 df             	mov    rdi,rbx
+ 2333cf0:	be 02 00 00 00       	mov    esi,0x2
+ 2333cf5:	48 83 c4 38          	add    rsp,0x38
+ 2333cf9:	5b                   	pop    rbx
+ 2333cfa:	41 5c                	pop    r12
+ 2333cfc:	41 5d                	pop    r13
+ 2333cfe:	41 5e                	pop    r14
+ 2333d00:	41 5f                	pop    r15
+ 2333d02:	5d                   	pop    rbp
+ 2333d03:	ff e1                	jmp    rcx
+ 2333d05:	49 8b 07             	mov    rax,QWORD PTR [r15]
+ 2333d08:	48 3b 45 d0          	cmp    rax,QWORD PTR [rbp-0x30]
+ 2333d0c:	75 0f                	jne    2333d1d <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x39f5>
+ 2333d0e:	48 83 c4 38          	add    rsp,0x38
+ 2333d12:	5b                   	pop    rbx
+ 2333d13:	41 5c                	pop    r12
+ 2333d15:	41 5d                	pop    r13
+ 2333d17:	41 5e                	pop    r14
+ 2333d19:	41 5f                	pop    r15
+ 2333d1b:	5d                   	pop    rbp
+ 2333d1c:	c3                   	ret
+ 2333d1d:	e8 1e e4 9f 04       	call   6d32140 <__stack_chk_fail@plt>
+ 2333d22:	55                   	push   rbp
+ 2333d23:	48 89 e5             	mov    rbp,rsp
+ 2333d26:	41 57                	push   r15
+ 2333d28:	41 56                	push   r14
+ 2333d2a:	41 54                	push   r12
+ 2333d2c:	53                   	push   rbx
+ 2333d2d:	48 89 fb             	mov    rbx,rdi
+ 2333d30:	45 31 f6             	xor    r14d,r14d
+ 2333d33:	4c 8d 3d 7e 83 f3 04 	lea    r15,[rip+0x4f3837e]        # 726c0b8 <strncat@plt+0x538538>
+ 2333d3a:	4a 8b bc f3 78 04 00 	mov    rdi,QWORD PTR [rbx+r14*8+0x478]
+ 2333d41:	00 
+ 2333d42:	41 ff 17             	call   QWORD PTR [r15]
+ 2333d45:	4a c7 84 f3 78 04 00 	mov    QWORD PTR [rbx+r14*8+0x478],0x0
+ 2333d4c:	00 00 00 00 00 
+ 2333d51:	49 ff c6             	inc    r14
+ 2333d54:	49 83 fe 3a          	cmp    r14,0x3a
+ 2333d58:	75 e0                	jne    2333d3a <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3a12>
+ 2333d5a:	45 31 f6             	xor    r14d,r14d
+ 2333d5d:	4a 8b bc f3 48 06 00 	mov    rdi,QWORD PTR [rbx+r14*8+0x648]
+ 2333d64:	00 
+ 2333d65:	41 ff 17             	call   QWORD PTR [r15]
+ 2333d68:	4a c7 84 f3 48 06 00 	mov    QWORD PTR [rbx+r14*8+0x648],0x0
+ 2333d6f:	00 00 00 00 00 
+ 2333d74:	49 ff c6             	inc    r14
+ 2333d77:	49 83 fe 08          	cmp    r14,0x8
+ 2333d7b:	75 e0                	jne    2333d5d <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3a35>
+ 2333d7d:	4c 8d b3 a8 0e 00 00 	lea    r14,[rbx+0xea8]
+ 2333d84:	48 8b bb b0 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xeb0]
+ 2333d8b:	48 85 ff             	test   rdi,rdi
+ 2333d8e:	74 0a                	je     2333d9a <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3a72>
+ 2333d90:	49 8b 06             	mov    rax,QWORD PTR [r14]
+ 2333d93:	48 85 c0             	test   rax,rax
+ 2333d96:	74 02                	je     2333d9a <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3a72>
+ 2333d98:	ff d0                	call   rax
+ 2333d9a:	0f 57 c0             	xorps  xmm0,xmm0
+ 2333d9d:	41 0f 11 06          	movups XMMWORD PTR [r14],xmm0
+ 2333da1:	49 c7 46 10 00 00 00 	mov    QWORD PTR [r14+0x10],0x0
+ 2333da8:	00 
+ 2333da9:	4c 8d b3 90 0e 00 00 	lea    r14,[rbx+0xe90]
+ 2333db0:	48 8b bb 98 0e 00 00 	mov    rdi,QWORD PTR [rbx+0xe98]
+ 2333db7:	48 85 ff             	test   rdi,rdi
+ 2333dba:	74 0d                	je     2333dc9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3aa1>
+ 2333dbc:	49 8b 06             	mov    rax,QWORD PTR [r14]
+ 2333dbf:	48 85 c0             	test   rax,rax
+ 2333dc2:	74 05                	je     2333dc9 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3aa1>
+ 2333dc4:	ff d0                	call   rax
+ 2333dc6:	0f 57 c0             	xorps  xmm0,xmm0
+ 2333dc9:	41 0f 11 06          	movups XMMWORD PTR [r14],xmm0
+ 2333dcd:	49 c7 46 10 00 00 00 	mov    QWORD PTR [r14+0x10],0x0
+ 2333dd4:	00 
+ 2333dd5:	4c 8b b3 88 0f 00 00 	mov    r14,QWORD PTR [rbx+0xf88]
+ 2333ddc:	4d 85 f6             	test   r14,r14
+ 2333ddf:	74 1f                	je     2333e00 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3ad8>
+ 2333de1:	49 8b 3e             	mov    rdi,QWORD PTR [r14]
+ 2333de4:	4d 8b 66 08          	mov    r12,QWORD PTR [r14+0x8]
+ 2333de8:	41 ff 17             	call   QWORD PTR [r15]
+ 2333deb:	49 c7 06 00 00 00 00 	mov    QWORD PTR [r14],0x0
+ 2333df2:	4c 89 f7             	mov    rdi,r14
+ 2333df5:	41 ff 17             	call   QWORD PTR [r15]
+ 2333df8:	4d 89 e6             	mov    r14,r12
+ 2333dfb:	4d 85 e4             	test   r12,r12
+ 2333dfe:	75 e1                	jne    2333de1 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeGetCookiesInNetscapeFormat@@LIBROBLOX+0x3ab9>

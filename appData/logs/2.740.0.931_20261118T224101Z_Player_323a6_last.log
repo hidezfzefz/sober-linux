@@ -1,0 +1,7 @@
+[FLog::Output] All use of Roblox services must comply with Roblox's Terms of Use, Privacy Policy, Community Standards, and applicable laws. Processing of User personal information is limited to the purposes expressly permitted therein.
+2026-11-18T22:41:06.038Z,5.038987,e9d1980,6,Info [FLog::JNIAppBridge] nativeAppBridgeV2Init:
+2026-11-18T22:41:06.040Z,5.040456,d2bff6c0,6 [FLog::SingleSurfaceApp] initializeWithAppStarter
+2026-11-18T22:41:06.040Z,5.040504,d2bff6c0,6 [FLog::SingleSurfaceApp] initializeSingleton
+2026-11-18T22:41:06.040Z,5.040798,d2bff6c0,6 [FLog::Output] setAssetFolder 
+2026-11-18T22:41:06.041Z,5.041103,d2bff6c0,6 [FLog::Error] Error: The path '' does not exist
+2026-11-18T22:41:06.041Z,5.041220,e9d1980,6,Info [FLog::JNIAppBridge] nativeAppBridgeAppStart:

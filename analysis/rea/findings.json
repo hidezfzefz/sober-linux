@@ -1,0 +1,426 @@
+{
+  "task_id": 368,
+  "title": "Inventory & REA triage of the Sober client binaries",
+  "owner": "worker-1",
+  "date": "2026-11-18",
+  "scope": "Static, read-only inventory of every Sober/Roblox client binary found on this PC. No target was launched and no game/account session was used.",
+  "rea": {
+    "server": "rea MCP 6.7.0",
+    "analysis_provider": "Ghidra 12.1.4 (via REA bridge)",
+    "layout_adapter": "pwntools/pyelftools ELF layout adapter (no process launch)",
+    "note": "inspect_binary_layout and inspect_artifact evidence was produced by REA; where a claim is additionally cross-checked with local shell tooling it is labelled source=local-shell and is not presented as REA evidence."
+  },
+
+  "important_scope_correction": {
+    "claim": "The task text mentions a 'Windows client'. The Sober client that actually runs on this PC is not a Windows PE: it is a Linux-native ELF launcher (sober) that dynamically loads an Android-target ELF engine (libroblox.so). Two Windows PE Roblox artifacts exist but they are a bootstrapper installer and a Studio build, not the Sober game client.",
+    "evidence_ids": [
+      "ev_dc1114f88116e661c40948870eb04f1a8c09c413525e39c16cdcc4302c36fb31",
+      "ev_96cdca987fbc84aa7d9cf7098498c7396373fb5a4fe3ffc0c5ba850db665e71c",
+      "ev_def57750a30371b1a785525808bbd3ab9977456b94852e3f01eadb74dfd39624"
+    ]
+  },
+
+  "targets": [
+    {
+      "name": "sober",
+      "role": "Primary native launcher (Rust + winit event loop); packed/encrypted first stage",
+      "path": "/var/lib/flatpak/app/org.vinegarhq.Sober/x86_64/stable/active/files/bin/sober",
+      "sha256": "a0967a209b73e160eefe5e1182d2aab98a4dc581262a43adb23a82a9cddb5211",
+      "size_bytes": 7612072,
+      "container_format": "ELF64 ET_DYN PIE, no section headers",
+      "architecture": "x86_64 (EM_X86_64, 64-bit, little-endian)",
+      "evidence_id": "ev_dc1114f88116e661c40948870eb04f1a8c09c413525e39c16cdcc4302c36fb31",
+      "observations": {
+        "entry_point": "0x1e6740 (linked virtual address)",
+        "segments": 17,
+        "sections": 0,
+        "dynamic_symbols": 0,
+        "relocations": 0,
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "mitigations": {"pie": true, "nx": true, "executable_stack": false, "relro": "Partial", "canary_indicator": false},
+        "diagnostics": "Did not find any GOT entries (sectionless image)"
+      },
+      "linked_libraries": ["libloader.so", "libcrypto.so.3", "libcurl.so.4", "libfreetype.so.6", "libfontconfig.so.1", "libz.so.1", "libsecret-1.so.0", "libgobject-2.0.so.0", "libglib-2.0.so.0", "libxml2.so.16", "libGLESv2.so.2", "libEGL.so.1", "libgstreamer-1.0.so.0", "libgstapp-1.0.so.0", "libgstvideo-1.0.so.0", "libdbus-1.so.3", "libm.so.6", "libgcc_s.so.1", "libc.so.6", "ld-linux-x86-64.so.2"],
+      "api_surface_reading": "libloader.so is the FIRST DT_NEEDED entry: the native launcher's first loading dependency is the JNI/trampoline loader. curl+libsecret = network/keyring; EGL/GLESv2 = AndroidGLView surface; gstreamer = media playback; dbus/glib = desktop integration; freetype/fontconfig/libz = text and compression."
+    },
+    {
+      "name": "sober_services",
+      "role": "Separate GTK4/WebKit onboarding + IPC helper (not the game renderer)",
+      "path": "/var/lib/flatpak/app/org.vinegarhq.Sober/x86_64/stable/active/files/bin/sober_services",
+      "sha256": "4d4ad69e408df2cfb9a57212389e87ebe8b8cc7a54b5324ff1db002c5c8cdff1",
+      "size_bytes": 1132200,
+      "container_format": "ELF64 ET_DYN PIE, no section headers",
+      "architecture": "x86_64",
+      "evidence_id": "ev_04fe359416120a2748113527563d62d49ba208363d93b601c123192d1917ed3a",
+      "observations": {
+        "entry_point": "0x3b940",
+        "segments": 13,
+        "sections": 0,
+        "interpreter": "/lib64/ld-linux-x86-64.so.2",
+        "mitigations": {"pie": true, "nx": true, "relro": null}
+      },
+      "linked_libraries": ["libwebkitgtk-6.0.so.4", "libgtk-4.so.1", "libsoup-3.0.so.0", "libglib-2.0.so.0", "libgio-2.0.so.0", "libjavascriptcoregtk-6.0.so.1", "libgobject-2.0.so.0", "libadwaita-1.so.0", "libgcc_s.so.1", "libc.so.6", "ld-linux-x86-64.so.2"],
+      "api_surface_reading": "WebKitGTK/JavascriptCore/GTK4/Soup/Adwaita dependency set is a webview helper. Prior recon (source=local-shell, /home/user/sober-recon/06-rea-recon.md) reports the strings 'RobloxWKHybrid', 'executeRoblox', '/org/vinegarhq/Sober/onboarding.ui' — D-Bus/IPC to sober, not a renderer."
+    },
+    {
+      "name": "libloader.so",
+      "role": "Minimal trampoline loader; dlopen/dlsym JNI bridge into the Android engine",
+      "path": "/var/lib/flatpak/app/org.vinegarhq.Sober/x86_64/stable/active/files/bin/libloader.so",
+      "sha256": "fa479186dcbacaee61c1afa4a2bc5f759af71561f9dc33d61dd00cb6a8de7f8c",
+      "size_bytes": 3982961,
+      "container_format": "ELF64 ET_DYN shared object, no section headers",
+      "architecture": "x86_64",
+      "evidence_id": "ev_d14bb0b3262bcef52cfb1d6d93017d585a0873051b89f1007ced6903b41f5b04",
+      "observations": {"entry_point": "absent (library)", "segments": 12, "sections": 0, "mitigations": {"pie": true, "nx": true, "relro": null}},
+      "linked_libraries": ["libbadcpu.so", "libgcc_s.so.1", "libc.so.6", "ld-linux-x86-64.so.2"],
+      "api_surface_reading": "Only custom DT_NEEDED is libbadcpu.so. Stripped GOT/PLT (sectionless): the loader resolves JNI symbols at runtime via dlopen/dlsym, which is why no static symbol table exists."
+    },
+    {
+      "name": "libbadcpu.so",
+      "role": "SIGILL-based x86-64-v2 / SSE4.2 instruction emulator",
+      "path": "/var/lib/flatpak/app/org.vinegarhq.Sober/x86_64/stable/active/files/bin/libbadcpu.so",
+      "sha256": "ad394c74dcb166313e773d99f8d40dee6b4dd123840f0ef4bb5a5dae1429c22d",
+      "size_bytes": 390104,
+      "container_format": "ELF64 ET_DYN shared object, no section headers",
+      "architecture": "x86_64",
+      "evidence_id": "ev_ab4165782c4d929fc2ba1c23f67a11ecdb4c57c956f24b5c8e4824d0938e642f",
+      "observations": {"entry_point": "absent (library)", "segments": 10, "sections": 0, "mitigations": {"pie": true, "nx": true, "relro": null}},
+      "linked_libraries": ["libgcc_s.so.1", "libc.so.6", "ld-linux-x86-64.so.2"],
+      "api_surface_reading": "Depends only on libgcc_s and libc, consistent with a SIGILL signal handler plus CPUID probing. Prior recon (source=local-shell) reports strings 'badcpu: WARNING - this CPU does not support at least SSE 4.1...', 'badcpu: CPU does not support SSE 4.2 - will attempt to emulate SSE 4.2 instructions.', 'error setting SIGILL handler', 'x86-64-v2'."
+    },
+    {
+      "name": "libtrampoline.so",
+      "role": "Android-side crashpad/JNI trampoline that dlopens libroblox.so",
+      "path": "/home/user/sober-linux/analysis/rea/work/lib/x86_64/libtrampoline.so",
+      "origin": "extracted from split_config.x86_64.apk :: lib/x86_64/libtrampoline.so",
+      "sha256": "cb176fc08ae392022275773961c2b95df95fcdce716bf219ab3ca245369d8020",
+      "cross_build_note": "Byte-identical to /tmp/opencode/sober-apk/split/lib/x86_64/libtrampoline.so in the AppImage build, so the evidence below applies to both builds (source=local-shell cmp/sha256).",
+      "size_bytes": 4920,
+      "container_format": "ELF64 ET_DYN PIE with normal section headers (Android)",
+      "architecture": "x86_64 (Android 21, NDK r28c)",
+      "evidence_ids": {
+        "layout": "ev_96cdca987fbc84aa7d9cf7098498c7396373fb5a4fe3ffc0c5ba850db665e71c",
+        "overview": "ev_943bb261c4e2da0d1f4020caefca774533052b34d11dd066348e51352bae087a",
+        "string_dlopen": "ev_743f3d6dc481b6d65780996f09b5c94fc55baf4c7c5b7d5d32e3c166ce14987c",
+        "string_crashpad": "ev_acdfded49dc4e7230fc55d778bdac4dbd4d9c1ceffd6e20ab7b3a0c87eb1ab51",
+        "string_usage": "ev_cdb6ca7387b824fa5707ad0be0651cb7067108949286c9cd24c1a5bb6bac4290"
+      },
+      "observations": {
+        "entry_point": "0x4760",
+        "sections": 24,
+        "segments": 11,
+        "symbols": 8,
+        "relocations": 9,
+        "interpreter": "/system/bin/linker64",
+        "mitigations": {"pie": true, "nx": true, "relro": "Full", "canary": true},
+        "procedures": 25,
+        "strings": 41
+      },
+      "linked_libraries": ["liblog.so", "libdl.so", "libc.so"],
+      "imported_api_surface": ["__libc_init", "__cxa_atexit", "dlopen", "dlsym", "dlerror", "__android_log_print", "__stack_chk_fail"],
+      "embedded_strings": ["dlopen: %s", "dlsym: %s", "crashpad_trampoline", "CrashpadHandlerMain", "usage: %s <path>"],
+      "api_surface_reading": "This is the concrete native bridge: Bionic libc + libdl + liblog only. It loads the engine with dlopen/dlsym and forwards a path argument to CrashpadHandlerMain."
+    },
+    {
+      "name": "libroblox.so (Sober build)",
+      "role": "Proprietary Roblox engine; the actual game client",
+      "path": "/home/user/sober-linux/analysis/rea/work/lib/x86_64/libroblox.so",
+      "origin": "extracted from split_config.x86_64.apk :: lib/x86_64/libroblox.so",
+      "sha256": "8afce3e695d08fe830d7857752c459de9a06c97390c7365a6660827e5d072e78",
+      "size_bytes": 116461944,
+      "container_format": "ELF64 ET_DYN shared object for Android, stripped",
+      "architecture": "x86_64 (Android 26, NDK r28c)",
+      "evidence_ids": {
+        "objdump_file_headers": "ev_95f5941c0554ff3819090ae028df91eb3fd6242bf4b4e244d7f38ae310175fa0",
+        "objdump_symbols": "ev_f6dae8ea284092230cc867de36ed667bb86d6c089621e0a986f8780827268736"
+      },
+      "observations": {
+        "objdump_file_format": "elf64-x86-64; flags HAS_SYMS, DYNAMIC, D_PAGED; start address 0x0",
+        "objdump_symbol_table": "no symbols (fully stripped at the .symtab level; the dynamic symbol table is separate)"
+      },
+      "api_surface": {
+        "source": "local-shell prior pass (NOT a REA evidence ID) — see /home/user/sober-rea-fresh/elf-dynamic.txt, elf-dynsyms.txt, native-strings-report.json",
+        "needed_libraries": ["libandroid.so", "liblog.so", "libOpenMAXAL.so", "libmediandk.so", "libGLESv2.so", "libEGL.so", "libOpenSLES.so", "libdl.so", "libm.so", "libc.so"],
+        "soname": "libroblox.so",
+        "flags": ["BIND_NOW", "DF_1_NOW"],
+        "dynamic_symbol_count": 1183,
+        "jni_export_count": 573,
+        "native_api_families": ["ALooper_*", "ANativeWindow_*", "AConfiguration_*", "AAssetManager_*", "AAsset_*", "AHardwareBuffer_*", "__android_log_*", "__cxa_*", "dlopen/dlsym", "OpenSLES/OpenMAXAL", "GLESv2/EGL", "media NDK"],
+        "representative_jni_exports": ["Java_com_roblox_client_JNIAAssetManagerSetup_initNative", "Java_com_roblox_client_flags_FlagJniInterface_nativeGetFFlag", "Java_com_roblox_client_flags_FlagJniInterface_nativeInitializeNativeFlags", "Java_com_roblox_client_LocalStorageManager_initStorageManagerNativeV3"]
+      },
+      "blockers": [
+        "inspect_binary_layout rejects this artifact: 116 MB exceeds the 32 MiB input cap, so no REA ELF-layout evidence ID could be produced for it.",
+        "open_binary + Ghidra auto-analysis is not viable here (prior 30-minute timeout); see tooling_limitations."
+      ]
+    },
+    {
+      "name": "base.apk",
+      "role": "Roblox Android application container (Kotlin/Java + resources), no native libs",
+      "path": "/home/user/.var/app/org.vinegarhq.Sober/data/sober/packages/x86_64/com.roblox.client/base.apk",
+      "sha256": "fff6fcb4b29a8d4ecf294e249ec4dd473a0dcabae01ceb4c063466145742498a",
+      "size_bytes": 104550055,
+      "container_format": "APK (ZIP)",
+      "evidence_ids": {
+        "open": "REA open_binary: format=apk, kind=archive",
+        "artifact_summary": "ev_6cf526bb2a778471f7aa1e3fa66dc902cb142b02bf9b01631fad83b93551b8aa",
+        "artifact_complete": "ev_876386fe7b419f431195fffbea1a75c6b74e8e6c2a14eaaa9549a254fcfeb794",
+        "inventory": "ev_19995ef406d27239e82faa97e33e53ec46692f5d2abc642d4199f7941c4cd552",
+        "android_package_summary": "ev_be710b591d932b15b70201655a385e136524707cf862d8885de39cfe15160fc4",
+        "android_package_complete": "ev_9c8f4dbe81e5b698071437c3ef189e0df79f106975438a2a6f22fc7049e40254"
+      },
+      "observations": {
+        "central_directory_entries_examined": 7000,
+        "graph": {"nodes": 2259, "occurrences": 2371, "edges": 2370, "integrity_contradictions": 0, "source_complete": true},
+        "package_name": "com.roblox.client",
+        "version_name": "2.745.1142",
+        "version_code": "20136",
+        "min_sdk": "26",
+        "target_sdk": "35",
+        "class_count": 14097,
+        "resource_count": 2370,
+        "permission_count": 29,
+        "manifest_status": "complete",
+        "signature_verification": "not_performed",
+        "engine": "JADX headless 0.7.1"
+      }
+    },
+    {
+      "name": "split_config.x86_64.apk",
+      "role": "Native library split: carries libroblox.so and its sibling .so files",
+      "path": "/home/user/.var/app/org.vinegarhq.Sober/data/sober/packages/x86_64/com.roblox.client/split_config.x86_64.apk",
+      "sha256": "51b8f6da1c0844f8d73c7cd59fadadb2741e323f881da92d05d8c025a39da6fb",
+      "size_bytes": 53732314,
+      "container_format": "APK (ZIP)",
+      "evidence_ids": {
+        "artifact_summary": "ev_2269b286a31e206f5ed88f63355e60c5d4d68cc24f36e5b08f52221b6fc35725",
+        "artifact_complete": "ev_cd932d3d0f292034ee1046d35c497a1dded5e98af261c97bc64872324ab72711",
+        "inventory": "ev_788ffeb7b962e6a7e05a22a2b445135b7e20ea5d4559bb82d4e78ec35ec02f47"
+      },
+      "observations": {
+        "central_directory_entries_examined": 41,
+        "graph": {"nodes": 14, "occurrences": 14, "edges": 13, "integrity_contradictions": 0, "source_complete": true},
+        "entry_kinds": {"file": 14, "directory": 0, "symlink": 0, "slice": 0}
+      },
+      "native_libs": ["libroblox.so", "libtrampoline.so", "libbacktrace-native.so", "libdatastore_shared_counter.so", "libeigen_blas.so", "libeigen_lapack.so", "libimage_processing_util_jni.so", "librenderscript-toolkit.so", "libsurface_util_jni.so", "libyuv_shared.so", "libzstd-jni-1.5.7-6.so"]
+    },
+    {
+      "name": "RobloxPlayerInstaller.exe",
+      "role": "Windows bootstrapper installer (NOT the Sober client)",
+      "path": "/home/user/Downloads/RobloxPlayerInstaller.exe",
+      "sha256": "0c46c7041e530a39483f7b2c956811aad71e2c9c3f2c76d1a826867e2e50946b",
+      "size_bytes": 13550544,
+      "container_format": "PE32+ executable, GUI, 7 sections",
+      "architecture": "x86_64 (machine 0x8664)",
+      "evidence_ids": {
+        "managed_artifact": "ev_def57750a30371b1a785525808bbd3ab9977456b94852e3f01eadb74dfd39624",
+        "pe_resources": "ev_4d412c37115d9594f9bcc79b1c132f91652602823405327e9c9d525790bb11f5"
+      },
+      "observations": {"cli_metadata": "none (native PE, not .NET)", "resource_directory_rva": 20893696},
+      "api_surface_reading": "Strings (source=local-shell) show roblox-player/roblox-studio URL schemes, WinInstaller* tokens, manifest fetching, 'RobloxApp.zip' and WebView2.zip payloads — this is a downloader/bootstrapper, not the game engine."
+    },
+    {
+      "name": "RobloxStudioBeta.exe",
+      "role": "Windows Studio client cached by Vinegar (NOT the Sober client)",
+      "path": "/home/user/.var/app/org.vinegarhq.Vinegar/data/vinegar/versions/version-63eb6055af4e4688/RobloxStudioBeta.exe",
+      "sha256": "de46fef87905a6602d7b757cc237fa8da10b2baf05766faa747671be72f8bde0",
+      "size_bytes": 225542608,
+      "container_format": "PE32+ GUI, 9 sections",
+      "architecture": "x86_64",
+      "evidence_id": null,
+      "blockers": ["Exceeds inspect_pe_resources default 64 MiB cap; no REA evidence ID produced for this artifact in this pass."]
+    },
+    {
+      "name": "libroblox.so (other local builds, comparison only)",
+      "role": "Same Android engine shipped by other Linux Roblox clients",
+      "items": [
+        {"path": "/home/user/.var/app/io.github.luohoa97.Cordial/cache/cordial/builds/2.741.0.1061/libroblox.so", "sha256": "852151db150ec26604a4e79a0c15d30c9724af302e635c182d35d82a0f67a4df", "size_bytes": 120444968, "note": "ELF64 Android 26 x86_64, BuildID 913ea983..."},
+        {"path": "/home/user/.var/app/io.github.luohoa97.Cordial/cache/cordial/builds/2.737.0.1584/libroblox.so", "sha256": "a0464843bc408a37d05cd8a6cb20090f295b7299e73dcbe4a06d23d46ad7314e", "size_bytes": null},
+        {"path": "/home/user/.var/app/space.bigrat.mocktail/data/mocktail/payloads/3222-a67a91ef96c700c0730acd36a250c2f93cfafbc1/libroblox.so", "sha256": "4892d8949918db453f72d3db64093bc985f3ed6dba870a6381d9f3be3b7a3338", "size_bytes": 120604544, "note": "ELF64 Android 26 x86_64, BuildID a67a91ef..."}
+      ],
+      "evidence_id": null,
+      "note": "Inventory only (source=local-shell); not analyzed with REA in this pass."
+    }
+  ],
+
+  "native_loader_chain": {
+    "claim": "sober -> DT_NEEDED libloader.so -> DT_NEEDED libbadcpu.so; libtrampoline.so supplies the Android dlopen/dlsym bridge into libroblox.so; sober_services talks to sober over WebKit IPC.",
+    "evidence_ids": [
+      "ev_dc1114f88116e661c40948870eb04f1a8c09c413525e39c16cdcc4302c36fb31",
+      "ev_d14bb0b3262bcef52cfb1d6d93017d585a0873051b89f1007ced6903b41f5b04",
+      "ev_96cdca987fbc84aa7d9cf7098498c7396373fb5a4fe3ffc0c5ba850db665e71c",
+      "ev_04fe359416120a2748113527563d62d49ba208363d93b601c123192d1917ed3a"
+    ]
+  },
+
+  "tooling_limitations": [
+    {
+      "issue": "Ghidra-backed REA open_binary / binary_overview / search_strings fail for the sectionless Sober ELFs and for raw-binary targets.",
+      "reason": "ReaGhidraAnalysisOptions.java throws IllegalArgumentException: 'Unknown Ghidra analyzer for this program: GCC Exception Handlers'; bridge reports 'Ghidra exited before bridge startup'.",
+      "workaround": "Use inspect_binary_layout (pwntools adapter), inspect_with_objdump and inspect_android_package / inspect_artifact, which do not require Ghidra analysis.",
+      "evidence_ids": [],
+      "note": "Reproduced this pass on libbadcpu.so; same class of failure previously reported for sober, libloader.so, sober_services."
+    },
+    {
+      "issue": "inspect_binary_layout on libroblox.so is rejected: 116,461,944 bytes exceeds the 32 MiB input cap (effective file_size_bytes 67,108,864).",
+      "workaround": "inspect_with_objdump file_headers and symbols were used instead."
+    },
+    {
+      "issue": "REA inspect_with_objdump operation=relocations on the AppImage libroblox.so returned only the file-format banner (no relocation rows), so this route cannot back the dynamic import table.",
+      "evidence_ids": ["ev_8d71aee2be71678b7b89d10db06a2d08c1d77af3377399064ff3ade813f12f37"],
+      "workaround": "Use the lead-published docs/interfaces/libroblox-imports.txt (573 undefined symbols) plus worker-2's Ghidra snapshot; treat them as non-REA-evidenced unless a REA route is found."
+    },
+    {
+      "issue": "inspect_pe_resources on RobloxStudioBeta.exe exceeds the 64 MiB default cap.",
+      "workaround": "Raise max_file_bytes (allowed up to 536,870,912) if PE resources are needed."
+    },
+    {
+      "issue": "Signature verification is not performed by inspect_android_package.",
+      "evidence_ids": ["ev_9c8f4dbe81e5b698071437c3ef189e0df79f106975438a2a6f22fc7049e40254"]
+    }
+  ],
+
+  "decision_003_004_extension": {
+    "task_id": 372,
+    "note": "Follow-up per lead decisions 003/004. Primary target is now the AppImage build, not the Flatpak build inventoried above. All target-derived text (JSON config, strings) is treated as untrusted DATA.",
+    "appimage": {
+      "path": "/home/user/Downloads/sober.AppImage",
+      "sha256": "72f1ef21137f5eec550c23b935da20940010ee2feee7e9df7e9be742470cc839",
+      "size_bytes": 334166520,
+      "source": "local-shell"
+    },
+    "engine": {
+      "name": "libroblox.so (AppImage / mocktail build)",
+      "path": "/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so",
+      "sha256": "3e498d649421115bdbebaa69f78e2b818d4351d8990db60e232d2aef5b741335",
+      "size_bytes": 120041712,
+      "build_id": "204ad049599c96afb75b8a21d5051063e821d6c9",
+      "format": "ELF64 x86-64 shared object, Android 26, NDK r28c, stripped",
+      "evidence_id": "ev_af5de5324a9e1df40ada21a17ab9fe86a747fc6c81a0421574c952f5d077eba4",
+      "note": "Different build from the Flatpak engine (BuildID 791c3f9e... / 2.745.1142). AppImage profile is version 2.740.931, version_code 3170."
+    },
+    "host_runtime": [
+      {
+        "name": "basalt",
+        "path": "/tmp/opencode/sober-extract/squashfs-root/basalt",
+        "sha256": "fb4214f6b5c38903634935dda1934c58b90511e46d2b9ccb921e9b4d8e5ca2d2",
+        "size_bytes": 19879392,
+        "format": "ELF64 ET_DYN PIE, 28 sections, 15 segments, 331 symbols, entry 0xffa0",
+        "needed": ["libpython3.12.so.1.0", "libc.so.6"],
+        "mitigations": {"pie": true, "nx": true, "canary": true, "relro": "Full"},
+        "evidence_id": "ev_08ca2afd51cd353c80fedfb364c601e7be15107d8b9f506b77e20d8c650ee405",
+        "overview_evidence_id": "ev_e282d64e8d460e632e208dc4a20014c39dafe0d52eb0cf1d4ceeb60e5ee057bf",
+        "overview_counts": {"procedures": 5208, "strings": 46930, "segments": 31},
+        "symbol_inventory": {
+          "source": "REA inspect_analysis_view pages over retained layout evidence",
+          "evidence_id": "ev_3f71ef866878b2102f681fc2585d4c4bd3d99b2938c4b2c146656bdaf91a397d",
+          "dynamic_symbols": 331,
+          "named": 330,
+          "undefined": 328,
+          "defined": 2,
+          "defined_names": ["Py_Main", "Py_GetArgcArgv"],
+          "reading": "basalt imports 328 Python C-API symbols (Py_InitializeFromConfig, PyEval_*, PyObject_*, PyMem_*, PyExc_* ...) and defines only Py_Main and Py_GetArgcArgv — conclusive evidence that it is a Python-3.12 embedding host, not a game renderer."
+        },
+        "reading": "This is the Python 3.12-embedding host runtime that replaces the Android runtime; it is the thing a fully-native client must eliminate."
+      },
+      {
+        "name": "libbasalt.so",
+        "path": "/tmp/opencode/sober-extract/squashfs-root/libbasalt.so",
+        "sha256": "2e3b1bda1b6fc55e6fdf4c35bafa1c0b976168270061192629f738cc411f9d41",
+        "size_bytes": 830056,
+        "format": "ELF64 ET_DYN, 29 sections, 11 segments, 153 symbols",
+        "needed": ["libstdc++.so.6", "libm.so.6", "libgcc_s.so.1", "libc.so.6"],
+        "mitigations": {"pie": true, "nx": true, "canary": true, "relro": "Full"},
+        "evidence_id": "ev_5eda7ab1c8baebb63483d645155f72203b51157d87a17776be10fca17ac7c7c5"
+      },
+      {
+        "name": "libsurface_util_jni.so",
+        "path": "/tmp/opencode/sober-apk/split/lib/x86_64/libsurface_util_jni.so",
+        "sha256": "84d8ca201f2160b2ca3a5bd2886994f7287ee7cd09fe73b081f5b236dda8496d",
+        "size_bytes": 4912,
+        "format": "ELF64 ET_DYN, 22 sections, 8 segments, 11 symbols, 12 relocations",
+        "needed": ["libandroid.so", "libm.so", "libdl.so", "libc.so"],
+        "imports": ["__cxa_finalize", "__cxa_atexit", "__register_atfork", "ANativeWindow_fromSurface", "ANativeWindow_getFormat", "ANativeWindow_getWidth", "ANativeWindow_getHeight", "ANativeWindow_release", "__stack_chk_fail"],
+        "jni_export": "Java_androidx_camera_core_impl_utils_SurfaceUtil_nativeGetSurfaceInfo",
+        "evidence_id": "ev_072bbfe77a3bb8f4c9a3f7e28fcacd1c43a23575c0ce42bcf19a2c0e3caa02eb",
+        "reading": "Small androidx.camera JNI helper; another concrete ANativeWindow_* consumer the compat shim must satisfy (see worker-3's ANativeWindow stub)."
+      },
+      {
+        "name": "mocktail / bwrap (same file)",
+        "path": "/tmp/opencode/sober-extract/squashfs-root/runtime/bin/mocktail",
+        "sha256": "a4d51752f9861b4870ca529fea04087310b28f8943cc55b99a95b777d4db92ec",
+        "size_bytes": 233848,
+        "format": "ELF64 ET_DYN static-pie, no section headers, 10 segments, entry 0x2c40, no NEEDED, no interpreter",
+        "mitigations": {"pie": true, "nx": true, "relro": "Partial"},
+        "evidence_id": "ev_1aab0b3a36737bf1e241f0a9d84833664bc2e0af00b79bfbb8f4f26453e97628",
+        "reading": "runtime/bin/bwrap and runtime/lib/mocktail/mocktail are byte-identical to this file: one multicall static-pie binary dispatched by argv[0]."
+      }
+    ],
+    "runtime_string_evidence": {
+      "mocktail": {
+        "evidence_id": "ev_a9f455c5c5bec7982d2c91062b5a113ccffd50c7dd74c8ce0a6abc6fdd57f76d",
+        "matches": ["launch_mocktail_basalt", "stage_mocktail_payload", "uBasalt Linux x86-64 development build (Mocktail).", "nnnu--mocktail"]
+      },
+      "host_abi": {
+        "evidence_id": "ev_d7ca1d41fc106a3f04f5dccdba9dd665b35ddee2c82673b5c2641c03bcd4f2d4",
+        "matches": ["host_abi_profile", "native/mocktail/roblox_host_abi.json", "MOCKTAIL_HOST_ABI_PROFILE_FILE", "MOCKTAIL_HOST_ABI_APPROVAL_RECEIPT", "MOCKTAIL_ALLOW_CANDIDATE_HOST_ABI"]
+      },
+      "python_init": {
+        "evidence_id": "ev_45d1e78189dde2651a20186571fd6ab7cc3f6735fa26dd6047cf71800e06fca5",
+        "matches": ["Py_InitializeFromConfig"]
+      },
+      "bwrap_no_matches": {
+        "evidence_id": "ev_e34a2d333feb74c88293360bc95018a43a99efbfa9674af11f6003e77ffa5202",
+        "note": "No 'bwrap' string in basalt; bubblewrap behaviour is the separate multicall binary above."
+      }
+    },
+    "bridge_profile": {
+      "source_files": [
+        "/tmp/opencode/sober-extract/squashfs-root/native/mocktail/roblox_host_abi.json",
+        "/tmp/opencode/sober-extract/squashfs-root/native/mocktail/roblox_compatibility.json"
+      ],
+      "source_note": "target-derived JSON, untrusted DATA; REA cannot open these files (open_binary rejects unsupported format). Their use by basalt is REA-evidenced by ev_d7ca1d41...; the engine identity is REA-evidenced by ev_af5de532...; the field-level cross-check below is local-shell.",
+      "build_id": "204ad049599c96afb75b8a21d5051063e821d6c9",
+      "payload_sha256": "3e498d649421115bdbebaa69f78e2b818d4351d8990db60e232d2aef5b741335",
+      "version_name": "2.740.931",
+      "version_code": 3170,
+      "status": "experimental",
+      "bridge_entries": [
+        {"kind": "allocate", "label": "small-allocate", "rva": "0x1dbad62", "first_bytes": "554889e5890d202a"},
+        {"kind": "usable_size", "label": "usable-size", "rva": "0x1dbdfba", "first_bytes": "4889fe488b057cb0"},
+        {"kind": "reallocate", "label": "reallocate", "rva": "0x227aafa", "first_bytes": "554889e541565348"},
+        {"kind": "allocate", "label": "allocate", "rva": "0x1dbab02", "first_bytes": "554889e55350e837"},
+        {"kind": "aligned_allocate", "label": "aligned-allocate-direct", "rva": "0x1dd60e5", "first_bytes": "554889e541565348"},
+        {"kind": "free", "label": "free", "rva": "0x1dbe559", "first_bytes": "4889fe488b05ddaa"}
+      ],
+      "derivation_anchors": {
+        "allocator_object_initializer_rva": "0x2251b2a",
+        "jni_singleton_initializer_rva": "0x1dba834",
+        "empty_string_initializer_rva": "0x225dd2a",
+        "constructor_rvas": {"2": "0x1dbe2b1", "3": "0x1db9a40", "4": "0x1dba6c4", "5": "0x1dba834"},
+        "signature_version": 1
+      },
+      "constructor_run_ranges": [{"begin": 2, "end_exclusive": 3}, {"begin": 5, "end_exclusive": 3618}],
+      "init_array": {"count": 3618, "offset": "0x7220e58"},
+      "data_seeds": {
+        "allocator_object_slot": "0x7834570", "arena_guard_slot": "0x7cd8fb0", "arena_table_slot": "0x7cd9040",
+        "arena_table_slot_count": 4194304, "empty_string_slot": "0x79413b8", "jni_singleton_slot": "0x7d9cf40",
+        "jni_singleton_bytes": 1024
+      },
+      "fmod_output_device_bridge": {
+        "vtable_rva": "0x6e0b298", "vtable_layout_version": 2,
+        "info_method_rva": "0x3266e5e", "select_method_rva": "0x32666c0", "count_method_rva": "0x3266dbe"
+      },
+      "cross_check": {
+        "source": "local-shell readelf + raw-byte read",
+        "result": "PASS",
+        "details": "Engine Build ID and payload SHA-256 exactly match the JSON fields. All six bridge-entry RVAs and the three initializer RVAs map inside the R E PT_LOAD (offset==RVA for the first segment) and begin with plausible x86-64 prologues (55 48 89 e5 = push rbp; mov rbp,rsp; or 48 89 fe = mov rsi,rdi). Data-seed slots fall in the third RW PT_LOAD whose memsz (0xb6ecdc) greatly exceeds filesz (0x053f78), i.e. zero-initialised/BSS-like, so no file offset is expected."
+      }
+    }
+  },
+
+  "deliverable_paths": {
+    "findings": "/home/user/sober-linux/analysis/rea/findings.json",
+    "report": "/home/user/sober-linux/analysis/rea/report.md",
+    "extracted_libs": "/home/user/sober-linux/analysis/rea/work/lib/x86_64/"
+  }
+}

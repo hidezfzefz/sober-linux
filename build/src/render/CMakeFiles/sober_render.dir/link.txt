@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsober_render.a CMakeFiles/sober_render.dir/native_render.c.o
+/usr/bin/ranlib libsober_render.a

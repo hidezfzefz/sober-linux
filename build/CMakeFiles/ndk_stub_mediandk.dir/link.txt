@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/ndk_stub_mediandk.dir/link.d -Wl,-soname,libmediandk.so -o ndk-stubs/libmediandk.so CMakeFiles/ndk_stub_mediandk.dir/src/compat/ndk_stub.c.o

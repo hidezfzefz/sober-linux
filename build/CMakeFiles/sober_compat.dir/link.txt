@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsober_compat.a CMakeFiles/sober_compat.dir/src/compat/android_compat.c.o CMakeFiles/sober_compat.dir/src/compat/gl_egl_forward.c.o
+/usr/bin/ranlib libsober_compat.a

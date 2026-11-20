@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/ndk_stub_c.dir/link.d -Wl,-soname,libc.so -o ndk-stubs/libc.so CMakeFiles/ndk_stub_c.dir/src/compat/ndk_stub.c.o

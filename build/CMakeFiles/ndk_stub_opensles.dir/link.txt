@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/ndk_stub_opensles.dir/link.d -Wl,-soname,libOpenSLES.so -o ndk-stubs/libOpenSLES.so CMakeFiles/ndk_stub_opensles.dir/src/compat/ndk_stub.c.o

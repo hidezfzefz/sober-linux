@@ -1,0 +1,1492 @@
+/*
+ * native_jni.c - Native JNI bridge implementation.
+ *
+ * Worker-2, Phase 4 task #386.  Pure native C.  The JNIEnv/JavaVM tables
+ * follow the JDK's JNINativeInterface_ / JNIInvokeInterface_ layout exactly
+ * (231 + 5 pointer-sized slots, four reserved slots at the front of each),
+ * so the guest's own JNI headers can call through them without adaptation.
+ *
+ * Every slot defaults to a harmless stub returning 0/NULL; the functions the
+ * guest needs for JNI_OnLoad and the app-shell callback path are implemented
+ * below with their real signatures.  Native calls and callback dispatches are
+ * logged and counted so the harness can gate its completion marker on real
+ * guest JNI activity.
+ */
+#define _GNU_SOURCE
+#include "native_jni.h"
+#include "platform_fields.h"
+#include "static_object_calls.h"
+#include "scalar_returns.h"
+#include "callback_provenance.h"
+
+#include <dlfcn.h>
+#include <link.h>
+#include <pthread.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+/* ---- local JNI scalar types (ABI-identical to jni.h) ------------------ */
+typedef int32_t  sr_jint;
+typedef uint8_t  sr_jboolean;
+typedef uint16_t sr_jchar;
+typedef int64_t  sr_jlong;
+#define SR_JNI_VERSION_1_6 0x00010006
+
+#define SR_OBJ_MAGIC 0x534A4E49u   /* "SJNI" */
+
+/* Published by the native calloc bridge (src/compat/bionic_bootstrap). */
+extern void *sober_bootstrap_calloc_handles[16] __attribute__((weak));
+extern unsigned sober_bootstrap_calloc_handle_count __attribute__((weak));
+static int sr_is_safe_ptr(const void *p);
+
+static SoberJni *g_active_jni;
+
+/* Zero-signal field transition logger: called from hot JNI entry points. */
+static int sr_log_fields_enabled;
+static void sr_log_handle_fields(const char *tag)
+{
+    if (!sr_log_fields_enabled) return;
+    if (!&sober_bootstrap_calloc_handles || !&sober_bootstrap_calloc_handle_count) return;
+    unsigned n = sober_bootstrap_calloc_handle_count;
+    if (n > 16) n = 16;
+    for (unsigned i = 0; i < n; ++i) {
+        unsigned char *h = (unsigned char *)sober_bootstrap_calloc_handles[i];
+        if (!h || !sr_is_safe_ptr(h)) continue;
+        fprintf(stderr, "[handle-fields] %s #%u ptr=%p +0x20=%#lx +0x68=%#lx\n",
+                tag, i, (void *)h,
+                (unsigned long)*(uint64_t *)(h + 0x20),
+                (unsigned long)*(uint64_t *)(h + 0x68));
+    }
+}
+
+#define SR_MAX_CLASSES   256
+#define SR_MAX_METHODS   768
+#define SR_MAX_REFS     1024
+#define SR_MAX_NATIVES   512
+#define SR_MAX_HANDLERS  256
+#define SR_LOG_LINES      96
+#define SR_LOG_WIDTH     192
+
+/* ---- function table shapes -------------------------------------------- */
+typedef struct {
+    void *reserved0, *reserved1, *reserved2, *reserved3;
+    void *fn[231];            /* JNINativeInterface_ order */
+} SRNativeInterface;
+
+typedef struct {
+    void *reserved0, *reserved1, *reserved2;
+    void *fn[5];              /* JNIInvokeInterface_ order */
+} SRInvokeInterface;
+
+typedef struct SoberJni SoberJni;
+
+/* The first field is the pointer the guest dereferences with (*env)->... ;
+ * extra fields are invisible to the guest but let our stubs find their owner. */
+typedef struct {
+    SRNativeInterface *functions;
+    SoberJni          *owner;
+} SREnvObj;
+
+typedef struct {
+    SRInvokeInterface *functions;
+    SoberJni          *owner;
+} SRVmObj;
+
+/* ---- synthetic objects ------------------------------------------------- */
+typedef enum { SR_K_CLASS, SR_K_METHOD, SR_K_OBJECT, SR_K_STRING } SrKind;
+
+/* Guest-shaped objects: the engine validator at 0x245605d checks
+ * *(jobj) -> object B with magic 0xc0dedbad, and *(B+0x68) -> object C with
+ * magic 0x000bab1e.  Our SrObject therefore keeps a pointer to B at offset 0
+ * and our own magic at +8 (sr_check reads that). */
+typedef struct {
+    uint32_t magic;   /* 0xc0dedbad */
+    uint32_t reserved;
+    uint64_t pad[12];
+    void    *child;   /* +0x68 */
+} SrGuestB;
+
+typedef struct {
+    uint32_t magic;   /* 0x000bab1e */
+    uint32_t reserved;
+    uint64_t pad[14];
+} SrGuestC;
+
+typedef struct {
+    void    *guest_b;     /* +0x00: pointer to A (engine treats us as a slot) */
+    uint32_t magic;       /* +0x08: SR_OBJ_MAGIC */
+    uint32_t reserved;
+    SrKind   kind;
+    uint32_t pad0;
+    char    *name;        /* class name / method name / string bytes */
+    char    *sig;
+    char    *class_name;
+    int      refs;
+    uint32_t pad1;
+    void    *payload;
+    size_t   payload_size;
+    uint64_t pad2[4];
+    void    *guest_c;     /* +0x68: pointer to B */
+    /* Extended graph (decision 017 / worker-1 Addendum 8); all canonical. */
+    void    *guest_d;
+    void    *guest_deep_c;
+    void    *guest_table;
+    void    *guest_sub;
+} SrObject;
+
+typedef struct {
+    char *class_name;
+    char *method_name;
+    char *sig;
+    void *fn;
+} SrNative;
+
+typedef struct {
+    char *name;
+    SoberJniCallbackFn fn;
+    void *user;
+    uint64_t count;
+} SrHandler;
+
+struct SoberJni {
+    SoberJniOptions opts;
+    SRNativeInterface env_table;
+    SRInvokeInterface vm_table;
+    SREnvObj env_obj;
+    SRVmObj  vm_obj;
+    int      initialised;
+
+    SrObject *classes[SR_MAX_CLASSES];  int n_classes;
+    SrObject *methods[SR_MAX_METHODS];  int n_methods;
+    SrObject *objects[SR_MAX_REFS];     int n_objects;
+    SrNative  natives[SR_MAX_NATIVES];  int n_natives;
+    SrHandler handlers[SR_MAX_HANDLERS];int n_handlers;
+
+    uint64_t env_calls;
+    uint64_t callback_calls;
+    uint64_t register_calls;
+    char     last_callback[SR_LOG_WIDTH];
+    char     log[SR_LOG_LINES][SR_LOG_WIDTH];
+    int      log_head;
+    int      log_count;
+};
+
+/* ---- helpers ----------------------------------------------------------- */
+/* Re-entrancy guard: a native callback must never be able to re-enter the
+ * JNI dispatcher through the guest's exception/scheduler wrappers. */
+static _Thread_local int sr_in_dispatch;
+
+static char *sr_strdup(const char *s)
+{
+    if (!s) return NULL;
+    size_t n = strlen(s) + 1;
+    char *p = (char *)malloc(n);
+    if (p) memcpy(p, s, n);
+    return p;
+}
+
+static void sr_add_log(SoberJni *j, const char *fmt, ...)
+{
+    if (!j) return;
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(j->log[j->log_head], sizeof(j->log[0]), fmt, ap);
+    va_end(ap);
+    j->log_head = (j->log_head + 1) % SR_LOG_LINES;
+    if (j->log_count < SR_LOG_LINES) j->log_count++;
+    if (j->opts.verbose) fprintf(stderr, "[sober-jni] %s\n", j->log[j->log_head]);
+}
+
+static SrObject *sr_new_object(SoberJni *j, SrKind kind,
+                               const char *name, const char *sig,
+                               const char *class_name)
+{
+    SrObject *o = (SrObject *)calloc(1, sizeof(*o));
+    if (!o) return NULL;
+
+    /* A: magic 0xc0dedbad, index 0, B* at +0x68, D* at +0xf90.
+     * B: magic 0x000bab1e, 16-entry table at +0x10 (entry[0]=B),
+     *    capacity 16 at +0x20, C* at +0x120.  D/C are plain zeroed nodes. */
+    /* >= 0x1100: the guest creator for 0xc0dedbad handles writes fields up to
+     * +0x10xx; an undersized block lets a late copier land in stale bytes. */
+    unsigned char *A = (unsigned char *)calloc(1, 0x1200);
+    unsigned char *Bv = (unsigned char *)calloc(1, 0x1200);
+    unsigned char *Cv = (unsigned char *)calloc(1, 0x1200);
+    unsigned char *Dv = (unsigned char *)calloc(1, 64);
+    void **table = (void **)calloc(16, sizeof(void *));
+    if (!A || !Bv || !Cv || !Dv || !table) {
+        free(A); free(Bv); free(Cv); free(Dv); free(table); free(o);
+        return NULL;
+    }
+    *(uint32_t *)(A + 0x00) = 0xc0dedbadu;
+    *(uint32_t *)(A + 0x10) = 0u;                 /* index */
+    *(uint32_t *)(Bv + 0x00) = 0x000bab1eu;
+    table[0] = Bv;
+    *(void **)(Bv + 0x10) = table;
+    *(uint32_t *)(Bv + 0x20) = 16u;               /* capacity */
+    *(int32_t *)(Dv + 0x08) = 0;
+    /* Leave +0x68 and +0x20 ZERO on any object carrying 0xc0dedbad: the
+     * guest's lazy-link guard (0x2350044) and teardown null-checks (0x23331ce
+     * / 0x2333593) then take their safe zero branches instead of consuming
+     * stale code bytes.  Bv is kept in our private field for internal use. */
+    memset(A + 0x20, 0, 8);
+    memset(A + 0x68, 0, 8);
+    *(void **)(A + 0xf90) = Dv;
+    *(void **)(Bv + 0x120) = Cv;
+    /* Second-level +0x68 (guest 0x2333593 reads [B+0x68] then [result+0x120]).
+     * Close the gap at construction time: every level is a canonical pointer
+     * into this same self-consistent graph. */
+    *(uint32_t *)(Cv + 0x00) = 0x000bab1eu;
+    *(void **)(Cv + 0x120) = Cv;          /* self pointer: always canonical */
+    *(void **)(Bv + 0x68) = Cv;
+
+    o->guest_b = A;
+    o->guest_c = Bv;
+    o->guest_sub = Bv;   /* internal back-reference; not at A+0x68 */
+    o->guest_d = Dv;
+    o->guest_deep_c = Cv;
+    o->guest_table = table;
+    o->magic = SR_OBJ_MAGIC;
+    o->kind = kind;
+    o->name = sr_strdup(name ? name : "");
+    o->sig = sr_strdup(sig ? sig : "");
+    o->class_name = sr_strdup(class_name ? class_name : "");
+    o->refs = 1;
+    SrObject **slot = NULL;
+    int *count = NULL;
+    switch (kind) {
+        case SR_K_CLASS:  slot = j->classes; count = &j->n_classes; break;
+        case SR_K_METHOD: slot = j->methods; count = &j->n_methods; break;
+        default:          slot = j->objects; count = &j->n_objects; break;
+    }
+    if (*count < (kind == SR_K_CLASS ? SR_MAX_CLASSES :
+                  kind == SR_K_METHOD ? SR_MAX_METHODS : SR_MAX_REFS)) {
+        slot[(*count)++] = o;
+    }
+    return o;
+}
+
+/* The guest can hand us its own stack-guard sentinel (0xABCDEF...) or other
+ * bogus jobject values.  Never dereference an untrusted handle: validate the
+ * pointer shape first, then the magic word. */
+static int sr_is_safe_ptr(const void *p)
+{
+    uintptr_t v = (uintptr_t)p;
+    if (!p || v < 0x10000u) return 0;
+    if (v == 0xabcdef0123456789ULL) return 0;
+    if (v > 0x00007fffffffffffULL && v < 0xffff000000000000ULL) return 0;
+    return 1;
+}
+
+static SrObject *sr_check(void *h, SrKind kind)
+{
+    if (!sr_is_safe_ptr(h)) return NULL;
+    SrObject *o = (SrObject *)h;
+    if (o->magic != SR_OBJ_MAGIC) return NULL;
+    if (kind != (SrKind)-1 && o->kind != kind) return NULL;
+    return o;
+}
+
+static SoberJni *sr_owner_from_env(void *env)
+{
+    SREnvObj *e = (SREnvObj *)env;
+    return e ? e->owner : NULL;
+}
+
+static SrObject *sr_find_class_object(SoberJni *j, const char *name)
+{
+    if (!j || !name) return NULL;
+    for (int i = 0; i < j->n_classes; ++i) {
+        SrObject *o = j->classes[i];
+        if (o && o->name && !strcmp(o->name, name)) return o;
+    }
+    return sr_new_object(j, SR_K_CLASS, name, NULL, name);
+}
+
+static SrObject *sr_find_method_object(SoberJni *j, SrObject *clazz,
+                                       const char *name, const char *sig)
+{
+    if (!j || !name) return NULL;
+    for (int i = 0; i < j->n_methods; ++i) {
+        SrObject *m = j->methods[i];
+        if (m && m->name && !strcmp(m->name, name) &&
+            (!sig || !m->sig || !strcmp(m->sig, sig)) &&
+            (!clazz || !m->class_name || !strcmp(m->class_name, clazz->name)))
+            return m;
+    }
+    return sr_new_object(j, SR_K_METHOD, name, sig,
+                         clazz ? clazz->name : "");
+}
+
+/* Never dereference an arbitrary "canonical-looking" pointer handed to us by
+ * the guest.  Only objects we actually allocated may be inspected. */
+static int sr_is_our_object(SoberJni *j, const void *h)
+{
+    if (!j || !h) return 0;
+    for (int i = 0; i < j->n_objects; ++i) if ((void *)j->objects[i] == h) return 1;
+    for (int i = 0; i < j->n_classes; ++i) if ((void *)j->classes[i] == h) return 1;
+    for (int i = 0; i < j->n_methods; ++i) if ((void *)j->methods[i] == h) return 1;
+    return 0;
+}
+static SrObject *sr_validate(SoberJni *j, void *h, SrKind kind)
+{
+    if (!sr_is_our_object(j, h)) return NULL;
+    return sr_check(h, kind);
+}
+
+/* ---- default stub & real JNIEnv entry points -------------------------- */
+static void *sr_stub(void *env, ...)
+{
+    (void)env;
+    return NULL;
+}
+
+static sr_jint sr_GetVersion(void *env)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) { j->env_calls++; sr_add_log(j, "GetVersion"); }
+    return SR_JNI_VERSION_1_6;
+}
+
+static void *sr_FindClass(void *env, const char *name)
+{
+    sr_log_handle_fields("FindClass");
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *o = sr_find_class_object(j, name);
+    sr_add_log(j, "FindClass(%s) -> %p", name ? name : "(null)", (void *)o);
+    return o;
+}
+
+static void *sr_GetObjectClass(void *env, void *obj)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *o = sr_check(obj, (SrKind)-1);
+    const char *cn = o ? (o->class_name && o->class_name[0] ? o->class_name : o->name) : "java/lang/Object";
+    SrObject *clazz = sr_find_class_object(j, cn);
+    sr_add_log(j, "GetObjectClass -> %s", cn);
+    return clazz;
+}
+
+static void *sr_GetMethodID_impl(SoberJni *j, void *clazz,
+                                 const char *name, const char *sig)
+{
+    sr_log_handle_fields("GetMethodID");
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *c = sr_check(clazz, SR_K_CLASS);
+    SrObject *m = sr_find_method_object(j, c, name, sig);
+    sr_add_log(j, "GetMethodID(%s.%s%s) -> %p",
+               c && c->name ? c->name : "?", name ? name : "?",
+               sig ? sig : "", (void *)m);
+    return m;
+}
+
+static void *sr_GetMethodID(void *env, void *clazz, const char *name, const char *sig)
+{ return sr_GetMethodID_impl(sr_owner_from_env(env), clazz, name, sig); }
+static void *sr_GetStaticMethodID(void *env, void *clazz, const char *name, const char *sig)
+{ return sr_GetMethodID_impl(sr_owner_from_env(env), clazz, name, sig); }
+
+/* A handle handed back to the guest must always be shaped and canonical. */
+static void *sr_shaped_or_new(SoberJni *j, void *h, const char *name)
+{
+    SrObject *o = sr_check(h, (SrKind)-1);
+    if (o) return h;
+    return sr_new_object(j, SR_K_OBJECT,
+                         name ? name : "java/lang/Object", NULL,
+                         name ? name : "java/lang/Object");
+}
+
+static void *sr_NewGlobalRef(void *env, void *obj)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) { j->env_calls++; sr_add_log(j, "NewGlobalRef(%p)", obj); }
+    void *safe = sr_shaped_or_new(j, obj, NULL);
+    SrObject *o = sr_check(safe, (SrKind)-1);
+    if (o) o->refs++;
+    return safe;
+}
+static void sr_DeleteGlobalRef(void *env, void *obj)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) { j->env_calls++; sr_add_log(j, "DeleteGlobalRef(%p)", obj); }
+    SrObject *o = sr_check(obj, (SrKind)-1);
+    if (o && o->refs > 0) o->refs--;
+}
+static void *sr_NewLocalRef(void *env, void *obj) { return sr_NewGlobalRef(env, obj); }
+static void sr_DeleteLocalRef(void *env, void *obj) { sr_DeleteGlobalRef(env, obj); }
+static void *sr_NewWeakGlobalRef(void *env, void *obj) { return sr_NewGlobalRef(env, obj); }
+static void sr_DeleteWeakGlobalRef(void *env, void *obj) { sr_DeleteGlobalRef(env, obj); }
+static sr_jboolean sr_IsSameObject(void *env, void *a, void *b)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+    return (sr_jboolean)(a == b);
+}
+static sr_jboolean sr_IsInstanceOf(void *env, void *obj, void *clazz)
+{
+    (void)obj; (void)clazz;
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+    return 1;
+}
+
+/* ---- RegisterNatives --------------------------------------------------- */
+typedef struct {
+    char *name;
+    char *signature;
+    void *fnPtr;
+} SRJNINativeMethod;
+
+static sr_jint sr_RegisterNatives(void *env, void *clazz,
+                                  const SRJNINativeMethod *methods,
+                                  sr_jint count)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return -1;
+    j->env_calls++;
+    j->register_calls++;
+    SrObject *c = sr_check(clazz, SR_K_CLASS);
+    const char *cn = c && c->name ? c->name : "?";
+    sr_add_log(j, "RegisterNatives(%s, %d methods)", cn, (int)count);
+    for (sr_jint i = 0; methods && i < count; ++i) {
+        if (j->n_natives >= SR_MAX_NATIVES) break;
+        SrNative *n = &j->natives[j->n_natives++];
+        n->class_name = sr_strdup(cn);
+        n->method_name = sr_strdup(methods[i].name ? methods[i].name : "");
+        n->sig = sr_strdup(methods[i].signature ? methods[i].signature : "");
+        n->fn = methods[i].fnPtr;
+        sr_add_log(j, "  native %s.%s%s -> %p", cn, n->method_name, n->sig, n->fn);
+    }
+    return 0;
+}
+static sr_jint sr_UnregisterNatives(void *env, void *clazz)
+{
+    (void)clazz;
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) { j->env_calls++; sr_add_log(j, "UnregisterNatives"); }
+    return 0;
+}
+
+/* ---- method-call dispatch --------------------------------------------- */
+static intptr_t sr_dispatch_call(SoberJni *j, void *obj, void *method,
+                                 void *args, int is_va, int want_object)
+{
+    if (!j) return 0;
+    if (sr_in_dispatch) return 0;   /* block recursive callback re-entry */
+    sr_in_dispatch = 1;
+    (void)is_va;   /* args are always passed through opaquely to handlers */
+    j->env_calls++;
+    SrObject *m = sr_check(method, SR_K_METHOD);
+    const char *name = m && m->name ? m->name : "?";
+    const char *sig = m && m->sig ? m->sig : "";
+    sr_add_log(j, "Call %s%s (obj=%p)", name, sig, obj);
+    snprintf(j->last_callback, sizeof(j->last_callback), "%s", name);
+    /* B11: opt-in provenance recorder; no-op unless SOBER_CALLBACK_PROVENANCE. */
+    sober_callback_provenance_on_dispatch(name, obj, method);
+
+    intptr_t result = 0;
+    /* Registered native method first (what RegisterNatives installed). */
+    for (int i = 0; i < j->n_natives; ++i) {
+        SrNative *n = &j->natives[i];
+        if (n->fn && n->method_name && !strcmp(n->method_name, name)) {
+            intptr_t (*fn)(void *, void *, ...) = (intptr_t (*)(void *, void *, ...))n->fn;
+            result = fn(&j->env_obj, obj, name, sig, args);
+            break;
+        }
+    }
+    /* Named callback handler (the app-shell surface worker-1 maps). */
+    for (int i = 0; i < j->n_handlers; ++i) {
+        SrHandler *h = &j->handlers[i];
+        if (h->fn && h->name && !strcmp(h->name, name)) {
+            j->callback_calls++;
+            h->count++;
+            result = h->fn(&j->env_obj, obj, name, sig, args, h->user);
+            break;
+        }
+    }
+    /* Object-returning calls must NEVER hand the guest a NULL, a narrow int,
+     * or a sign-extended 32-bit handle (worker-1/lead decision 013+014). */
+    if (want_object) {
+        void *safe = sr_shaped_or_new(j, (void *)result, "java/lang/String");
+        result = (intptr_t)safe;
+    }
+    sr_in_dispatch = 0;
+    return result;
+}
+
+/* Plain (varargs) forms: forward a va_list* to handlers. */
+#define SR_DEFINE_CALL_PLAIN(fname, ret, want_obj)                          \
+    static ret fname(void *env, void *obj, void *method, ...) {            \
+        SoberJni *j = sr_owner_from_env(env);                               \
+        va_list ap; va_start(ap, method);                                   \
+        intptr_t r = sr_dispatch_call(j, obj, method, &ap, 1, want_obj);    \
+        va_end(ap);                                                         \
+        return (ret)r;                                                      \
+    }
+
+/* V forms: `args` is already a va_list; pass its address. */
+#define SR_DEFINE_CALL_V(fname, ret, want_obj)                              \
+    static ret fname(void *env, void *obj, void *method, va_list args) {    \
+        SoberJni *j = sr_owner_from_env(env);                               \
+        return (ret)sr_dispatch_call(j, obj, method, &args, 1, want_obj);   \
+    }
+
+/* A forms: `args` is a jvalue array; pass it verbatim. */
+#define SR_DEFINE_CALL_A(fname, ret, want_obj)                              \
+    static ret fname(void *env, void *obj, void *method, void *args) {      \
+        SoberJni *j = sr_owner_from_env(env);                               \
+        return (ret)sr_dispatch_call(j, obj, method, args, 0, want_obj);    \
+    }
+
+SR_DEFINE_CALL_PLAIN(sr_CallObjectMethod, void *, 1)
+SR_DEFINE_CALL_PLAIN(sr_CallBooleanMethod, sr_jboolean, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallByteMethod, int8_t, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallCharMethod, sr_jchar, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallShortMethod, int16_t, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallIntMethod, sr_jint, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallLongMethod, sr_jlong, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallFloatMethod, float, 0)
+SR_DEFINE_CALL_PLAIN(sr_CallDoubleMethod, double, 0)
+static void sr_CallVoidMethod(void *env, void *obj, void *method, ...)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    va_list ap; va_start(ap, method);
+    (void)sr_dispatch_call(j, obj, method, &ap, 1, 0);
+    va_end(ap);
+}
+SR_DEFINE_CALL_V(sr_CallObjectMethodV, void *, 1)
+SR_DEFINE_CALL_V(sr_CallBooleanMethodV, sr_jboolean, 0)
+SR_DEFINE_CALL_V(sr_CallByteMethodV, int8_t, 0)
+SR_DEFINE_CALL_V(sr_CallCharMethodV, sr_jchar, 0)
+SR_DEFINE_CALL_V(sr_CallShortMethodV, int16_t, 0)
+SR_DEFINE_CALL_V(sr_CallIntMethodV, sr_jint, 0)
+SR_DEFINE_CALL_V(sr_CallLongMethodV, sr_jlong, 0)
+SR_DEFINE_CALL_V(sr_CallFloatMethodV, float, 0)
+SR_DEFINE_CALL_V(sr_CallDoubleMethodV, double, 0)
+static void sr_CallVoidMethodV(void *env, void *obj, void *method, va_list args)
+{
+    (void)sr_dispatch_call(sr_owner_from_env(env), obj, method, &args, 1, 0);
+}
+SR_DEFINE_CALL_A(sr_CallObjectMethodA, void *, 1)
+SR_DEFINE_CALL_A(sr_CallBooleanMethodA, sr_jboolean, 0)
+SR_DEFINE_CALL_A(sr_CallByteMethodA, int8_t, 0)
+SR_DEFINE_CALL_A(sr_CallCharMethodA, sr_jchar, 0)
+SR_DEFINE_CALL_A(sr_CallShortMethodA, int16_t, 0)
+SR_DEFINE_CALL_A(sr_CallIntMethodA, sr_jint, 0)
+SR_DEFINE_CALL_A(sr_CallLongMethodA, sr_jlong, 0)
+SR_DEFINE_CALL_A(sr_CallFloatMethodA, float, 0)
+SR_DEFINE_CALL_A(sr_CallDoubleMethodA, double, 0)
+static void sr_CallVoidMethodA(void *env, void *obj, void *method, void *args)
+{
+    (void)sr_dispatch_call(sr_owner_from_env(env), obj, method, args, 0, 0);
+}
+
+/* Static object form must RETURN the synthetic object the dispatcher made;
+ * dropping it is what produced "DeviceStaticParams is null" in the guest. */
+static void *sr_CallStaticObjectMethod(void *env, void *c, void *m, ...)
+{
+    sr_log_handle_fields("CallStaticObjectMethod");
+    SoberJni *j = sr_owner_from_env(env);
+    va_list ap; va_start(ap, m);
+    intptr_t r = sr_dispatch_call(j, c, m, &ap, 1, 1);
+    va_end(ap);
+    return (void *)r;
+}
+static sr_jint sr_CallStaticIntMethod(void *env, void *c, void *m, ...)
+{ SoberJni *j = sr_owner_from_env(env); va_list ap; va_start(ap,m);
+  (void)sr_dispatch_call(j,c,m,&ap,1,0); va_end(ap); return 0; }
+static void sr_CallStaticVoidMethod(void *env, void *c, void *m, ...)
+{ sr_log_handle_fields("CallStaticVoidMethod"); SoberJni *j = sr_owner_from_env(env); va_list ap; va_start(ap,m);
+  (void)sr_dispatch_call(j,c,m,&ap,1,0); va_end(ap); }
+
+/* Phase 5: the guest calls the cached gameLoadedCallback jmethodID through
+ * CallStaticVoidMethodV (JNIEnv fn[138], global slot 142, offset 0x470) or
+ * the A form at fn[139].  Without these, both slots stay NULL stubs and a
+ * genuine guest callback can never be observed. */
+static void sr_CallStaticVoidMethodV(void *env, void *c, void *m, va_list args)
+{
+    sr_log_handle_fields("CallStaticVoidMethodV");
+    (void)sr_dispatch_call(sr_owner_from_env(env), c, m, &args, 1, 0);
+}
+static void sr_CallStaticVoidMethodA(void *env, void *c, void *m, void *args)
+{
+    sr_log_handle_fields("CallStaticVoidMethodA");
+    (void)sr_dispatch_call(sr_owner_from_env(env), c, m, args, 0, 0);
+}
+
+/* ---- strings / exceptions / arrays ------------------------------------ */
+/* UTF-16 family at the canonical JNI slots 159/161/162. Our synthetic string
+ * payload is UTF-8; these provide correctly typed, non-NULL behaviour. */
+static void *sr_NewString(void *env, const uint16_t *chars, int32_t len)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    size_t n = len > 0 ? (size_t)len : 0;
+    char *buf = (char *)calloc(n + 1, 1);
+    if (!buf) return NULL;
+    for (size_t i = 0; i < n; ++i)
+        buf[i] = chars[i] < 128 ? (char)chars[i] : '?';
+    SrObject *o = sr_new_object(j, SR_K_STRING, buf, NULL, "java/lang/String");
+    free(buf);
+    if (!o) return NULL;
+    free(o->payload);
+    o->payload = sr_strdup(o->name ? o->name : "");
+    o->payload_size = strlen(o->name ? o->name : "") + 1;
+    sr_add_log(j, "NewString(len=%d)", (int)len);
+    return o;
+}
+static const uint16_t *sr_GetStringChars(void *env, void *str, sr_jboolean *isCopy)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+    if (isCopy) *isCopy = 0;
+    SrObject *o = sr_validate(j, str, SR_K_STRING);
+    if (!o || !o->guest_c) return NULL;
+    return (const uint16_t *)o->guest_c;
+}
+static void sr_ReleaseStringChars(void *env, void *str, const uint16_t *chars)
+{ (void)str; (void)chars; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; }
+
+static void *sr_NewStringUTF(void *env, const char *bytes)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *o = sr_new_object(j, SR_K_STRING, bytes ? bytes : "", NULL,
+                                "java/lang/String");
+    if (o && bytes) o->payload = sr_strdup(bytes);
+    if (getenv("SOBER_JNI_STRING_DEBUG"))
+        fprintf(stderr, "[jni-str] NewStringUTF -> %p payload='%s' len=%zu\n",
+                (void *)o, bytes ? bytes : "", bytes ? strlen(bytes) : 0);
+    sr_add_log(j, "NewStringUTF(\"%.48s\")", bytes ? bytes : "");
+    return o;
+}
+static const char *sr_GetStringUTFChars(void *env, void *str, sr_jboolean *isCopy)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+    if (isCopy) *isCopy = 0;
+    SrObject *o = sr_validate(j, str, SR_K_STRING);
+    if (getenv("SOBER_JNI_STRING_DEBUG"))
+        fprintf(stderr, "[jni-str] GetStringUTFChars(%p) -> o=%p payload='%s'\n",
+                str, (void *)o, o && o->payload ? (const char *)o->payload : "(null)");
+    if (o && o->payload) return (const char *)o->payload;
+    /* Unknown / foreign handle: hand back a safe static empty C string. */
+    static const char empty[] = "";
+    return empty;
+}
+static void sr_ReleaseStringUTFChars(void *env, void *str, const char *chars)
+{
+    (void)str; (void)chars;
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+}
+static sr_jint sr_GetStringUTFLength(void *env, void *str)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) j->env_calls++;
+    SrObject *o = sr_validate(j, str, SR_K_STRING);
+    return o && o->name ? (sr_jint)strlen(o->name) : 0;
+}
+/* Exception state is deliberately PURE: no callbacks, no logging, no counter
+ * writes.  The guest's 0x6ca7f72/0x2a12e80 wrapper calls slot 0x720 on every
+ * scheduler lambda, so any side effect here can re-enter that path. */
+static void *sr_ExceptionOccurred(void *env)
+{ (void)env; return NULL; }
+static sr_jboolean sr_ExceptionCheck(void *env)
+{ (void)env; return 0; }
+static void sr_ExceptionClear(void *env)
+{ (void)env; }
+static sr_jint sr_Throw(void *env, void *t)
+{ (void)t; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return 0; }
+static sr_jint sr_ThrowNew(void *env, void *c, const char *msg)
+{ (void)c; SoberJni *j = sr_owner_from_env(env); if (j && msg) sr_add_log(j, "ThrowNew: %s", msg); return 0; }
+static sr_jint sr_PushLocalFrame(void *env, sr_jint cap)
+{ (void)cap; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return 0; }
+static void *sr_PopLocalFrame(void *env, void *result)
+{ SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return result; }
+static sr_jint sr_MonitorEnter(void *env, void *o)
+{ (void)o; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return 0; }
+static sr_jint sr_MonitorExit(void *env, void *o)
+{ (void)o; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return 0; }
+static sr_jint sr_GetJavaVM(void *env, void ***vm)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j || !vm) return -1;
+    j->env_calls++;
+    *vm = (void **)&j->vm_obj;
+    return 0;
+}
+static sr_jint sr_GetArrayLength(void *env, void *arr)
+{ (void)arr; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return 0; }
+static void *sr_NewObjectArray(void *env, sr_jint len, void *clazz, void *init)
+{ (void)len; (void)clazz; (void)init; SoberJni *j = sr_owner_from_env(env);
+  if (!j) return NULL;
+  j->env_calls++;
+  return sr_new_object(j, SR_K_OBJECT, "java/lang/Object", "[Ljava/lang/Object;", clazz ? "java/lang/Object" : NULL); }
+static void *sr_GetObjectArrayElement(void *env, void *arr, sr_jint idx)
+{ (void)arr; (void)idx; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; return NULL; }
+static void sr_SetObjectArrayElement(void *env, void *arr, sr_jint idx, void *val)
+{ (void)arr; (void)idx; (void)val; SoberJni *j = sr_owner_from_env(env); if (j) j->env_calls++; }
+static void *sr_AllocObject(void *env, void *clazz)
+{
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *c = sr_check(clazz, SR_K_CLASS);
+    return sr_new_object(j, SR_K_OBJECT, c && c->name ? c->name : "java/lang/Object",
+                         NULL, c && c->name ? c->name : "java/lang/Object");
+}
+static void *sr_NewObject(void *env, void *clazz, void *method, ...)
+{
+    (void)method;
+    SoberJni *j = sr_owner_from_env(env);
+    if (!j) return NULL;
+    j->env_calls++;
+    SrObject *c = sr_check(clazz, SR_K_CLASS);
+    sr_add_log(j, "NewObject(%s)", c && c->name ? c->name : "?");
+    return sr_new_object(j, SR_K_OBJECT, c && c->name ? c->name : "java/lang/Object",
+                         NULL, c && c->name ? c->name : "java/lang/Object");
+}
+
+/* ---- JavaVM table ------------------------------------------------------ */
+static sr_jint sr_GetEnv(void *vm, void **env_out, sr_jint version)
+{
+    (void)version;
+    SRVmObj *v = (SRVmObj *)vm;
+    if (!env_out || !v || !v->owner) return -1;
+    *env_out = &v->owner->env_obj;
+    return 0;
+}
+static sr_jint sr_AttachCurrentThread(void *vm, void **env_out, void *args)
+{ (void)args; return sr_GetEnv(vm, env_out, 0); }
+static sr_jint sr_DetachCurrentThread(void *vm) { (void)vm; return 0; }
+static sr_jint sr_DestroyJavaVM(void *vm) { (void)vm; return 0; }
+static sr_jint sr_AttachCurrentThreadAsDaemon(void *vm, void **env_out, void *args)
+{ return sr_AttachCurrentThread(vm, env_out, args); }
+
+/* ---- table construction ------------------------------------------------ */
+#define SETFN(tab, idx, fp) do { (tab).fn[(idx)] = (void *)(uintptr_t)(fp); } while (0)
+
+static void sr_build_tables(SoberJni *j)
+{
+    SRNativeInterface *t = &j->env_table;
+    memset(t, 0, sizeof(*t));
+    for (int i = 0; i < 231; ++i) t->fn[i] = (void *)(uintptr_t)&sr_stub;
+
+    SETFN(*t,   0, sr_GetVersion);
+    SETFN(*t,   2, sr_FindClass);
+    SETFN(*t,   9, sr_Throw);
+    SETFN(*t,  10, sr_ThrowNew);
+    SETFN(*t,  11, sr_ExceptionOccurred);
+    SETFN(*t,  13, sr_ExceptionClear);
+    SETFN(*t,  15, sr_PushLocalFrame);
+    SETFN(*t,  16, sr_PopLocalFrame);
+    SETFN(*t,  17, sr_NewGlobalRef);
+    SETFN(*t,  18, sr_DeleteGlobalRef);
+    SETFN(*t,  19, sr_DeleteLocalRef);
+    SETFN(*t,  20, sr_IsSameObject);
+    SETFN(*t,  21, sr_NewLocalRef);
+    SETFN(*t,  27, sr_GetObjectClass);
+    SETFN(*t,  28, sr_IsInstanceOf);
+    SETFN(*t,  29, sr_GetMethodID);
+    SETFN(*t,  30, sr_CallObjectMethod);
+    SETFN(*t,  31, sr_CallObjectMethodV);
+    SETFN(*t,  32, sr_CallObjectMethodA);
+    SETFN(*t,  33, sr_CallBooleanMethod);
+    SETFN(*t,  34, sr_CallBooleanMethodV);
+    SETFN(*t,  35, sr_CallBooleanMethodA);
+    SETFN(*t,  36, sr_CallByteMethod);
+    SETFN(*t,  37, sr_CallByteMethodV);
+    SETFN(*t,  38, sr_CallByteMethodA);
+    SETFN(*t,  39, sr_CallCharMethod);
+    SETFN(*t,  40, sr_CallCharMethodV);
+    SETFN(*t,  41, sr_CallCharMethodA);
+    SETFN(*t,  42, sr_CallShortMethod);
+    SETFN(*t,  43, sr_CallShortMethodV);
+    SETFN(*t,  44, sr_CallShortMethodA);
+    SETFN(*t,  45, sr_CallIntMethod);
+    SETFN(*t,  46, sr_CallIntMethodV);
+    SETFN(*t,  47, sr_CallIntMethodA);
+    SETFN(*t,  48, sr_CallLongMethod);
+    SETFN(*t,  49, sr_CallLongMethodV);
+    SETFN(*t,  50, sr_CallLongMethodA);
+    SETFN(*t,  51, sr_CallFloatMethod);
+    SETFN(*t,  52, sr_CallFloatMethodV);
+    SETFN(*t,  53, sr_CallFloatMethodA);
+    SETFN(*t,  54, sr_CallDoubleMethod);
+    SETFN(*t,  55, sr_CallDoubleMethodV);
+    SETFN(*t,  56, sr_CallDoubleMethodA);
+    SETFN(*t,  57, sr_CallVoidMethod);
+    SETFN(*t,  58, sr_CallVoidMethodV);
+    SETFN(*t,  59, sr_CallVoidMethodA);
+    SETFN(*t, 109, sr_GetStaticMethodID);
+    /* Static Call* variants share the instance wrappers' ABI shape; the
+     * dispatcher does not distinguish a jclass from a jobject. */
+    SETFN(*t, 110, sr_CallStaticObjectMethod);   /* CallStaticObjectMethod    */
+    SETFN(*t, 113, sr_CallBooleanMethod);        /* CallStaticBooleanMethod   */
+    SETFN(*t, 116, sr_CallByteMethod);           /* CallStaticByteMethod      */
+    SETFN(*t, 119, sr_CallCharMethod);           /* CallStaticCharMethod      */
+    SETFN(*t, 122, sr_CallShortMethod);          /* CallStaticShortMethod     */
+    SETFN(*t, 125, sr_CallStaticIntMethod);      /* CallStaticIntMethod       */
+    SETFN(*t, 128, sr_CallLongMethod);           /* CallStaticLongMethod      */
+    SETFN(*t, 131, sr_CallFloatMethod);          /* CallStaticFloatMethod     */
+    SETFN(*t, 134, sr_CallDoubleMethod);         /* CallStaticDoubleMethod    */
+    SETFN(*t, 137, sr_CallStaticVoidMethod);     /* CallStaticVoidMethod      */
+    SETFN(*t, 138, sr_CallStaticVoidMethodV);    /* slot 142 / offset 0x470   */
+    SETFN(*t, 139, sr_CallStaticVoidMethodA);    /* CallStaticVoidMethodA     */
+    /* Canonical jni.h slots (verified against worker-1's finding): 159/161/162
+     * are the UTF-16 NewString/GetStringChars/ReleaseStringChars family; the
+     * UTF-8 family we actually implement lives at 163/165/166. */
+    SETFN(*t, 159, sr_NewString);
+    SETFN(*t, 161, sr_GetStringChars);
+    SETFN(*t, 162, sr_ReleaseStringChars);
+    SETFN(*t, 163, sr_NewStringUTF);
+    SETFN(*t, 165, sr_GetStringUTFChars);
+    SETFN(*t, 166, sr_ReleaseStringUTFChars);
+    SETFN(*t, 164, sr_GetStringUTFLength);
+    SETFN(*t, 167, sr_GetArrayLength);
+    SETFN(*t, 168, sr_NewObjectArray);
+    SETFN(*t, 169, sr_GetObjectArrayElement);
+    SETFN(*t, 170, sr_SetObjectArrayElement);
+    SETFN(*t, 211, sr_RegisterNatives);
+    SETFN(*t, 212, sr_UnregisterNatives);
+    SETFN(*t, 213, sr_MonitorEnter);
+    SETFN(*t, 214, sr_MonitorExit);
+    SETFN(*t, 215, sr_GetJavaVM);
+    SETFN(*t, 222, sr_NewWeakGlobalRef);
+    SETFN(*t, 223, sr_DeleteWeakGlobalRef);
+    SETFN(*t, 224, sr_ExceptionCheck);
+    SETFN(*t,  23, sr_AllocObject);
+    SETFN(*t,  24, sr_NewObject);
+
+    /* A9/B5: opt-in typed JNI field path needed by PlatformParams parsing. */
+    if (sober_platform_fields_enabled())
+        sober_platform_fields_install_slots(t->fn, 231);
+    (void)sober_static_object_calls_install_slots(t->fn, 231);
+    (void)sober_scalar_returns_install_slots(t->fn, 231);
+    if (sober_callback_provenance_is_active())
+        (void)sober_callback_provenance_install(NULL);
+
+    SRInvokeInterface *v = &j->vm_table;
+    memset(v, 0, sizeof(*v));
+    for (int i = 0; i < 5; ++i) v->fn[i] = (void *)(uintptr_t)&sr_stub;
+    SETFN(*v, 0, sr_DestroyJavaVM);
+    SETFN(*v, 1, sr_AttachCurrentThread);
+    SETFN(*v, 2, sr_DetachCurrentThread);
+    SETFN(*v, 3, sr_GetEnv);
+    SETFN(*v, 4, sr_AttachCurrentThreadAsDaemon);
+
+    j->env_obj.functions = &j->env_table;
+    j->env_obj.owner = j;
+    j->vm_obj.functions = &j->vm_table;
+    j->vm_obj.owner = j;
+    j->initialised = 1;
+}
+
+/* ---- public API -------------------------------------------------------- */
+#define SR_API __attribute__((visibility("default")))
+
+SR_API int sober_jni_probe(SoberJniProbe *out)
+{
+    SoberJniProbe p;
+    memset(&p, 0, sizeof(p));
+    p.bridge_ready = 1;
+    p.env_slots = 231;
+    p.vm_slots = 5;
+    /* Optional native JVM discovery: file check only, never starts a JVM. */
+    const char *cands[4];
+    char homebuf[512];
+    const char *home = getenv("JAVA_HOME");
+    int n = 0;
+    if (home && *home) {
+        snprintf(homebuf, sizeof(homebuf), "%s/lib/server/libjvm.so", home);
+        cands[n++] = homebuf;
+    }
+    cands[n++] = "/usr/lib/jvm/default-java/lib/server/libjvm.so";
+    cands[n++] = "/usr/lib64/libjvm.so";
+    cands[n++] = "/usr/lib/jvm/java-21-openjdk-amd64/lib/server/libjvm.so";
+    for (int i = 0; i < n; ++i) {
+        if (access(cands[i], R_OK) == 0) {
+            p.jvm_available = 1;
+            p.jvm_path = cands[i] == homebuf ? "JAVA_HOME/lib/server/libjvm.so" : cands[i];
+            break;
+        }
+    }
+    if (out) *out = p;
+    return SOBER_JNI_OK;
+}
+
+SR_API const char *sober_jni_probe_describe(char *buf, size_t cap)
+{
+    if (!buf || !cap) return "";
+    SoberJniProbe p;
+    sober_jni_probe(&p);
+    snprintf(buf, cap,
+             "bridge=ready env_slots=%u vm_slots=%u native_jvm=%d jvm_path=%s",
+             p.env_slots, p.vm_slots, p.jvm_available,
+             p.jvm_path ? p.jvm_path : "");
+    return buf;
+}
+
+SR_API int sober_jni_create(const SoberJniOptions *opts, SoberJni **out)
+{
+    if (out) *out = NULL;
+    SoberJni *j = (SoberJni *)calloc(1, sizeof(*j));
+    if (!j) return SOBER_JNI_ERR;
+    if (opts) j->opts = *opts;
+    sr_log_fields_enabled = (getenv("SOBER_TRACE_HANDLE_FIELDS") != NULL ||
+                             getenv("SOBER_POLL_FIELDS") != NULL);
+    sr_build_tables(j);
+    g_active_jni = j;
+    sr_add_log(j, "native JNI bridge created");
+    if (out) *out = j;
+    return SOBER_JNI_OK;
+}
+
+SR_API int sober_jni_init(SoberJni *j)
+{
+    if (!j) return SOBER_JNI_ERR;
+    if (!j->initialised) sr_build_tables(j);
+    return SOBER_JNI_OK;
+}
+
+SR_API void sober_jni_shutdown(SoberJni *j)
+{
+    if (!j) return;
+    if (g_active_jni == j) g_active_jni = NULL;
+    for (int i = 0; i < j->n_classes; ++i) { SrObject *o=j->classes[i]; free(o->name); free(o->sig); free(o->class_name); free(o->payload); free(o->guest_d); free(o->guest_deep_c); free(o->guest_table); free(o->guest_b); free(o->guest_c); free(o); }
+    for (int i = 0; i < j->n_methods; ++i) { SrObject *o=j->methods[i]; free(o->name); free(o->sig); free(o->class_name); free(o->payload); free(o->guest_d); free(o->guest_deep_c); free(o->guest_table); free(o->guest_b); free(o->guest_c); free(o); }
+    for (int i = 0; i < j->n_objects; ++i) { SrObject *o=j->objects[i]; free(o->name); free(o->sig); free(o->class_name); free(o->payload); free(o->guest_d); free(o->guest_deep_c); free(o->guest_table); free(o->guest_b); free(o->guest_c); free(o); }
+    for (int i = 0; i < j->n_natives; ++i) { SrNative *n=&j->natives[i]; free(n->class_name); free(n->method_name); free(n->sig); }
+    for (int i = 0; i < j->n_handlers; ++i) free(j->handlers[i].name);
+    memset(j, 0, sizeof(*j));
+    free(j);
+}
+
+SR_API void *sober_jni_java_vm(SoberJni *j) { return j ? (void *)&j->vm_obj : NULL; }
+SR_API void *sober_jni_env(SoberJni *j) { return j ? (void *)&j->env_obj : NULL; }
+SR_API int sober_jni_attach(SoberJni *j, void **env_out)
+{
+    if (!j || !env_out) return SOBER_JNI_ERR;
+    *env_out = &j->env_obj;
+    j->env_calls++;
+    return SOBER_JNI_OK;
+}
+
+SR_API void *sober_jni_find_class(SoberJni *j, const char *name)
+{ return sr_find_class_object(j, name); }
+SR_API void *sober_jni_get_method_id(SoberJni *j, void *clazz,
+                                     const char *name, const char *sig)
+{ return sr_find_method_object(j, sr_check(clazz, SR_K_CLASS), name, sig); }
+SR_API void *sober_jni_new_global_ref(SoberJni *j, void *obj)
+{ (void)j; SrObject *o = sr_check(obj,(SrKind)-1); if (o) o->refs++; return obj; }
+SR_API void sober_jni_delete_global_ref(SoberJni *j, void *obj)
+{ (void)j; SrObject *o = sr_check(obj,(SrKind)-1); if (o && o->refs) o->refs--; }
+
+SR_API int sober_jni_register_native(SoberJni *j, const char *class_name,
+                                     const char *method_name, const char *sig,
+                                     void *fn)
+{
+    if (!j || !method_name || j->n_natives >= SR_MAX_NATIVES) return SOBER_JNI_ERR;
+    SrNative *n = &j->natives[j->n_natives++];
+    n->class_name = sr_strdup(class_name ? class_name : "");
+    n->method_name = sr_strdup(method_name);
+    n->sig = sr_strdup(sig ? sig : "");
+    n->fn = fn;
+    sr_add_log(j, "register native %s.%s%s", n->class_name, n->method_name, n->sig);
+    return SOBER_JNI_OK;
+}
+SR_API int sober_jni_is_native_registered(SoberJni *j, const char *class_name,
+                                          const char *method_name)
+{
+    if (!j) return 0;
+    for (int i = 0; i < j->n_natives; ++i) {
+        SrNative *n = &j->natives[i];
+        if (n->method_name && !strcmp(n->method_name, method_name ? method_name : "") &&
+            (!class_name || !n->class_name || !strcmp(n->class_name, class_name)))
+            return 1;
+    }
+    return 0;
+}
+
+SR_API int sober_jni_set_callback_handler(SoberJni *j, const char *method_name,
+                                          SoberJniCallbackFn fn, void *user)
+{
+    if (!j || !method_name) return SOBER_JNI_ERR;
+    for (int i = 0; i < j->n_handlers; ++i) {
+        if (j->handlers[i].name && !strcmp(j->handlers[i].name, method_name)) {
+            j->handlers[i].fn = fn; j->handlers[i].user = user;
+            return SOBER_JNI_OK;
+        }
+    }
+    if (j->n_handlers >= SR_MAX_HANDLERS) return SOBER_JNI_ERR;
+    SrHandler *h = &j->handlers[j->n_handlers++];
+    h->name = sr_strdup(method_name);
+    h->fn = fn;
+    h->user = user;
+    return SOBER_JNI_OK;
+}
+
+static intptr_t sr_default_app_shell_handler(void *env, void *obj,
+                                             const char *name, const char *sig,
+                                             void *args, void *user)
+{
+    (void)obj; (void)args; (void)user;
+    SoberJni *j = sr_owner_from_env(env);
+    if (j) sr_add_log(j, "app-shell callback satisfied: %s%s", name, sig ? sig : "");
+    if (!j || !name) return 0;
+
+    /* Object-returning getters must be non-NULL and plausibly typed: worker-1
+     * observed the guest warning "DeviceStaticParams is null" and looping in
+     * the scheduler-gated FindClass wrapper 0x6c8f340. */
+    int object_return = (sig && strstr(sig, ")L") != NULL);
+    if (!object_return) return 0;
+    const char *payload = "native";
+    if (strstr(name, "Locale")) payload = "en-US";
+    else if (strstr(name, "UserAgent")) payload = "SoberNative/1.0";
+    else if (strstr(name, "AdvertisingId")) payload = "00000000-0000-0000-0000-000000000000";
+    else if (strstr(name, "Username") || strstr(name, "DisplayName")) payload = "player";
+    else if (strstr(name, "UserId") || strstr(name, "MembershipType")) payload = "0";
+
+    const char *class_name = "java/lang/String";
+    if (!strcmp(name, "getDeviceStaticParams")) {
+        class_name = "com/roblox/engine/jni/model/DeviceStaticParams";
+        payload = "";
+    }
+    SrObject *o = sr_new_object(j, SR_K_OBJECT, payload, sig, class_name);
+    return (intptr_t)o;
+}
+
+SR_API int sober_jni_install_default_app_shell_handlers(SoberJni *j)
+{
+    if (!j) return SOBER_JNI_ERR;
+    static const char *const names[] = {
+        /* app-shell specific (worker-1 §4) */
+        "onAppShellReloadNeeded", "gameLoadedCallback", "getDeviceStaticParams",
+        "getWebViewUserAgent", "getMobileAdvertisingId", "showKeyboard",
+        "hideKeyboard", "getRobloxLocale", "getGameLocale", "getUsername",
+        "getDisplayName", "getUserId", "getMembershipType", "getTheme",
+        "getProcessTimestamp", "onDataModelNotificationCallback",
+        "onLuaTextBoxChangedCallback", "onLuaTextBoxPropertyChangedCallback",
+        "onExtendedAnalyticsRecvCallback",
+        /* activity/lifecycle (worker-1 §2 + §4) */
+        "onStartNative", "onResumeNative", "onPauseNative", "onStopNative",
+        "onSurfaceCreatedNative", "onSurfaceChangedNative",
+        "onSurfaceDestroyedNative", "onSurfaceRedrawNeededNative",
+        "onWindowFocusChangedNative", "onConfigurationChangedNative",
+        "onTrimMemoryNative", "onTouchEventNative", "onKeyDownNative",
+        "onKeyUpNative", "initializeNativeCode",
+        NULL
+    };
+    for (int i = 0; names[i]; ++i)
+        (void)sober_jni_set_callback_handler(j, names[i],
+                                             sr_default_app_shell_handler, NULL);
+    sr_add_log(j, "installed %zu default app-shell handlers",
+               sizeof(names) / sizeof(names[0]) - 1);
+    return SOBER_JNI_OK;
+}
+
+/* Locate the versioned NDK libc stub (build/ndk-stubs/libc.so), NOT glibc's
+ * libc.so.6.  The guest's pthread_getspecific@LIBC reads the stub's private
+ * 512-slot array, so seeding via glibc's pthread_setspecific has no effect. */
+struct SrStubScan { char path[512]; };
+static int sr_scan_stub(struct dl_phdr_info *info, size_t size, void *data)
+{
+    (void)size;
+    if (!info || !info->dlpi_name || !data) return 0;
+    const char *n = info->dlpi_name;
+    /* Match "libc.so" but not "libc.so.6" or other libcs. */
+    size_t len = strlen(n);
+    if (len >= 8 && !strcmp(n + len - 8, "/libc.so")) {
+        struct SrStubScan *s = (struct SrStubScan *)data;
+        snprintf(s->path, sizeof(s->path), "%s", n);
+        return 1;
+    }
+    return 0;
+}
+
+static void *sr_stub_libc(void)
+{
+    static void *cached;
+    static int tried;
+    if (tried) return cached;
+    tried = 1;
+    const char *env = getenv("SOBER_NDK_STUB_LIBC");
+    if (env && *env) {
+        cached = dlopen(env, RTLD_LAZY | RTLD_LOCAL);
+        if (cached) return cached;
+    }
+    struct SrStubScan scan;
+    memset(&scan, 0, sizeof(scan));
+    if (dl_iterate_phdr(sr_scan_stub, &scan) && scan.path[0])
+        cached = dlopen(scan.path, RTLD_LAZY | RTLD_LOCAL);
+    if (!cached) cached = dlopen("libc.so", RTLD_LAZY | RTLD_LOCAL);
+    return cached;
+}
+
+/* ---- shared_ptr teardown seeds ---------------------------------------- */
+SR_API void sober_jni_noop_shared_dtor(void *control_block)
+{
+    (void)control_block;    /* native no-op: guest keeps its own logic */
+}
+
+/* Slots: +0x10 = virtual release/destroy, +0x20/+0x28 = destructor variants. */
+static void *const sr_shared_vtable[6] = {
+    NULL, NULL,
+    (void *)(uintptr_t)&sober_jni_noop_shared_dtor,   /* +0x10 */
+    NULL,
+    (void *)(uintptr_t)&sober_jni_noop_shared_dtor,   /* +0x20 */
+    (void *)(uintptr_t)&sober_jni_noop_shared_dtor    /* +0x28 */
+};
+
+SR_API void *sober_jni_shared_vtable(void)
+{
+    return (void *)sr_shared_vtable;
+}
+
+typedef struct {
+    void    *vtable;
+    int64_t  refcount;
+} SrSharedControl;
+
+SR_API void *sober_jni_new_shared_control(SoberJni *j)
+{
+    (void)j;
+    SrSharedControl *c = (SrSharedControl *)calloc(1, sizeof(*c));
+    if (!c) return NULL;
+    c->vtable = (void *)sr_shared_vtable;
+    c->refcount = 1;
+    return c;
+}
+
+/* Separate shared_ptr-style wrapper (worker-1's attachment ruling): NEVER
+ * overwrite A+0 (validator magic) or B+0 (backing magic). */
+#define SR_SHARED_PAYLOAD_OFF 0x40
+
+SR_API void *sober_jni_new_shared_param(SoberJni *j, const char *back_pointer,
+                                        size_t bytes, const void *initial)
+{
+    (void)j;
+    if (bytes == 0) bytes = 1;
+    unsigned char *w = (unsigned char *)calloc(1, SR_SHARED_PAYLOAD_OFF + bytes);
+    if (!w) return NULL;
+    *(void **)(w + 0x00) = (void *)sr_shared_vtable;
+    *(int64_t *)(w + 0x08) = 1;
+    *(void **)(w + 0x10) = (void *)(uintptr_t)back_pointer;
+    *(size_t *)(w + 0x18) = bytes;
+    if (initial) memcpy(w + SR_SHARED_PAYLOAD_OFF, initial, bytes);
+    return w;
+}
+
+SR_API unsigned char *sober_jni_shared_param_data(void *wrapper, size_t *cap)
+{
+    if (!wrapper) { if (cap) *cap = 0; return NULL; }
+    if (cap) *cap = *(size_t *)((unsigned char *)wrapper + 0x18);
+    return (unsigned char *)wrapper + SR_SHARED_PAYLOAD_OFF;
+}
+
+SR_API void *sober_jni_new_string_utf8(SoberJni *j, const char *text)
+{
+    if (!j) return NULL;
+    const char *s = text ? text : "";
+    SrObject *o = sr_new_object(j, SR_K_STRING, s, NULL, "java/lang/String");
+    if (!o) return NULL;
+    free(o->payload);
+    o->payload = sr_strdup(s);
+    o->payload_size = strlen(s) + 1;
+    return o;
+}
+SR_API const char *sober_jni_string_utf8(SoberJni *j, void *str)
+{
+    (void)j;
+    SrObject *o = sr_check(str, SR_K_STRING);
+    return o && o->payload ? (const char *)o->payload : "";
+}
+SR_API void *sober_jni_new_native_object(SoberJni *j, const char *class_name,
+                                         size_t bytes, const void *initial)
+{
+    if (!j || bytes == 0) return NULL;
+    SrObject *o = sr_new_object(j, SR_K_OBJECT,
+                                class_name ? class_name : "java/lang/Object",
+                                NULL, class_name ? class_name : "java/lang/Object");
+    if (!o) return NULL;
+    void *p = calloc(1, bytes);
+    if (!p) return NULL;
+    if (initial) memcpy(p, initial, bytes);
+    free(o->payload);
+    o->payload = p;
+    o->payload_size = bytes;
+    return o;
+}
+SR_API unsigned char *sober_jni_native_object_data(SoberJni *j, void *obj,
+                                                   size_t *cap)
+{
+    (void)j;
+    SrObject *o = sr_check(obj, SR_K_OBJECT);
+    if (!o || !o->payload) { if (cap) *cap = 0; return NULL; }
+    if (cap) *cap = o->payload_size;
+    return (unsigned char *)o->payload;
+}
+
+SR_API int sober_jni_seed_guest_tls(void *guest_base, uintptr_t key_rva,
+                                    size_t state_bytes)
+{
+    if (!guest_base || !key_rva) return SOBER_JNI_ERR;
+    if (state_bytes == 0) state_bytes = 4096;
+    uint32_t key = 0;
+    memcpy(&key, (const unsigned char *)guest_base + key_rva, sizeof(key));
+    if (key == 0 || key >= 512) return SOBER_JNI_ERR;
+
+    void *stub = sr_stub_libc();
+    if (!stub) { fprintf(stderr, "[sober-jni] NDK libc stub not loaded\n"); return SOBER_JNI_ERR; }
+    int (*stub_set)(unsigned int, const void *) =
+        (int (*)(unsigned int, const void *))dlvsym(stub, "pthread_setspecific", "LIBC");
+    if (!stub_set) {
+        fprintf(stderr, "[sober-jni] stub pthread_setspecific@@LIBC unavailable\n");
+        return SOBER_JNI_ERR;
+    }
+    void *state = calloc(1, state_bytes);
+    if (!state) return SOBER_JNI_ERR;
+    if (stub_set(key, state) != 0) { free(state); return SOBER_JNI_ERR; }
+    fprintf(stderr,
+            "[sober-jni] seeded STUB TSD key %u (rva %#lx) -> %p (%zu bytes)\n",
+            (unsigned)key, (unsigned long)key_rva, state, state_bytes);
+    return SOBER_JNI_OK;
+}
+
+SR_API int sober_jni_neutralize_guest_scheduler(void *guest_base,
+                                                uintptr_t singleton_rva)
+{
+    if (!guest_base || !singleton_rva) return SOBER_JNI_ERR;
+    unsigned char *p = (unsigned char *)guest_base + singleton_rva;
+    memset(p + 0x28, 0, 16);   /* callback pointer (+0x28) and neighbour */
+    /* Task #464: zeroing +0x70 destroys the guest's packed nesting word and
+     * trips the scheduler assertion at 0x2a13315 -> RSL panic -> RBXCRASH int3.
+     * Keep the guest's own ctor-initialized value when opted in; +0x28 still
+     * breaks the FindClass recursion that motivated the neutralize. */
+    int keep_r70 = getenv("SOBER_SCHED_R70_KEEP") != NULL;
+    int nest_one = getenv("SOBER_SCHED_NEST_ONE") != NULL;
+    if (nest_one) {
+        uint64_t *w = (uint64_t *)(p + 0x70);
+        *w = (*w & ~0x3fULL) | 1ULL;  /* guest scheduler nesting low 6 bits */
+    } else if (!keep_r70) memset(p + 0x70, 0, 8);
+    fprintf(stderr,
+            "[sober-jni] neutralised guest scheduler at rva %#lx "
+            "(+0x28%s)\n", (unsigned long)singleton_rva,
+            keep_r70 ? " only, +0x70 kept" : ",+0x70");
+    return SOBER_JNI_OK;
+}
+
+/* Cached jmethodID globals from analysis/jni/jni-map.md §1.2 (AppImage 204ad049). */
+typedef struct {
+    uintptr_t   rva;
+    const char *class_name;
+    const char *method;
+    const char *sig;
+} SrCachedMethod;
+
+static const SrCachedMethod sr_cached_methods[] = {
+    { 0x72a3008u, "com/roblox/universalapp/logging/LoggingProtocol",
+      "getProcessTimestamp", "()J" },
+    { 0x72a2f68u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "showKeyboard", "(JZ[BLcom/roblox/engine/jni/model/NativeTextBoxInfo;)V" },
+    { 0x72a2f70u, "com/roblox/engine/jni/NativeGLJavaInterface", "hideKeyboard", "()V" },
+    { 0x72a2f78u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "promptNativePurchase", "(JLjava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2f80u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "promptNativePurchase", "(JLjava/lang/String;)V" },
+    { 0x72a2f88u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "promptNativePurchaseWithPayload", "(JLjava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2f90u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "promptNativePurchaseWithPaymentSessionId", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2f98u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "promptNativePurchaseWithPaymentSessionId", "(JLjava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2fa0u, "com/roblox/engine/jni/NativeGLJavaInterface", "gameDidLeave", "()V" },
+    { 0x72a2fa8u, "com/roblox/engine/jni/NativeGLJavaInterface", "screenOrientationChanged", "(I)V" },
+    { 0x72a2fb0u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "openNativeOverlay", "(Ljava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2fb8u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onDataModelNotificationCallback", "(Ljava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a2fc0u, "com/roblox/engine/jni/NativeGLJavaInterface", "gameLoadedCallback", "(J)V" },
+    { 0x72a2fc8u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onLuaTextBoxChangedCallback", "(Ljava/lang/String;)V" },
+    { 0x72a2fd0u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onLuaTextBoxPropertyChangedCallback", "()V" },
+    { 0x72a2fd8u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "saveImageToAlbum", "(Ljava/lang/String;)V" },
+    { 0x72a2fe0u, "com/roblox/engine/jni/NativeGLJavaInterface", "onVrSessionStateUpdate", "(I)V" },
+    { 0x72a3018u, "com/roblox/engine/jni/NativeGLJavaInterface", "exitGameWithError", "(I)V" },
+    { 0x72a3020u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onAppShellReloadNeeded", "()V" },
+    { 0x72a3028u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onAppBridgeNotification", "(Ljava/lang/String;Ljava/lang/String;)V" },
+    { 0x72a3030u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "getWebViewUserAgent", "()Ljava/lang/String;" },
+    { 0x72a3038u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "getMobileAdvertisingId", "()Ljava/lang/String;" },
+    { 0x72a3040u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "onExtendedAnalyticsRecvCallback", "([BI)V" },
+    { 0x72a2f60u, "com/roblox/engine/jni/NativeGLJavaInterface",
+      "listenToMotionEvents", "(Ljava/lang/String;)V" },
+    { 0x72ca188u, "com/roblox/engine/jni/locale/NativeLocaleJavaInterface",
+      "getRobloxLocale", "()Ljava/lang/String;" },
+    { 0x72ca190u, "com/roblox/engine/jni/locale/NativeLocaleJavaInterface",
+      "getGameLocale", "()Ljava/lang/String;" },
+};
+
+SR_API int sober_jni_seed_guest_jni_state(SoberJni *j, void *guest_base)
+{
+    if (!j || !guest_base) return SOBER_JNI_ERR;
+    int seeded = 0;
+
+    /* Named entries first (worker-1 jni-map §1.2). */
+    for (size_t i = 0; i < sizeof(sr_cached_methods) / sizeof(sr_cached_methods[0]); ++i) {
+        const SrCachedMethod *cm = &sr_cached_methods[i];
+        SrObject *clazz = sr_find_class_object(j, cm->class_name);
+        SrObject *m = sr_find_method_object(j, clazz, cm->method, cm->sig);
+        if (!m) continue;
+        void **slot = (void **)((unsigned char *)guest_base + cm->rva);
+        *slot = m;
+        seeded++;
+    }
+
+    /* 0x72a2f48 is a CACHED jclass (NewGlobalRef(FindClass(NativeGLJavaInterface))),
+     * NOT a jmethodID.  The generic range fill below would otherwise seed it
+     * with a synthetic method object; the notifier 0x27eaf98 loads it into RSI
+     * as the class argument of the guest thunk 0x25848e0.  Seed it first with
+     * a real class object so the range fill leaves it alone. */
+    {
+        void **slot = (void **)((unsigned char *)guest_base + 0x72a2f48u);
+        SrObject *clazz = sr_find_class_object(
+            j, "com/roblox/engine/jni/NativeGLJavaInterface");
+        if (clazz) { *slot = clazz; seeded++; }
+    }
+
+    /* Fill the complete cached-ID ranges worker-1/lead confirmed.  Unknown
+     * slots get a generic synthetic method object; never leave NULL, because
+     * the startup path calls through every cached ID. */
+    static const uintptr_t ranges[][2] = {
+        { 0x72a2f48u, 0x72a3058u },
+        { 0x72ca178u, 0x72ca1e0u },
+    };
+    for (size_t r = 0; r < sizeof(ranges) / sizeof(ranges[0]); ++r) {
+        for (uintptr_t a = ranges[r][0]; a <= ranges[r][1]; a += 8u) {
+            void **slot = (void **)((unsigned char *)guest_base + a);
+            if (*slot == NULL) {
+                char name[64];
+                snprintf(name, sizeof(name), "cachedMethod@%lx", (unsigned long)a);
+                *slot = sr_find_method_object(j, NULL, name, "()V");
+                seeded++;
+            }
+        }
+    }
+
+    /* Both JNI_OnLoad completion flags (worker-1/lead decision 013). */
+    *(uint32_t *)((unsigned char *)guest_base + 0x72a3000u) = 1u;
+    *(uint32_t *)((unsigned char *)guest_base + 0x7d8fb60u) = 1u;
+    sr_add_log(j, "seeded %d guest cached jmethodIDs (2 ranges) + OnLoad flags", seeded);
+    fprintf(stderr,
+            "[sober-jni] seeded %d guest cached jmethodIDs (0x72a2f48-0x72a3058, "
+            "0x72ca178-0x72ca1e0), flags 0x72a3000/0x7d8fb60 = 1\n", seeded);
+
+    /* Phase 7 / task #449: the skipped JNI_OnLoad also never cached the
+     * JavaVM pointer that the string helper 0x227b9e2 needs.  The opt-in
+     * seed is a separate API (sober_jni_seed_guest_onload_globals) that the
+     * harness wires explicitly behind SOBER_SEED_JNI_VM. */
+    return SOBER_JNI_OK;
+}
+
+/* ---- opt-in JavaVM global seed (phase 7 / task #449) -------------------
+ * Reverse-engineered construction path (build 204ad049):
+ *   0x227af6e  JNI_OnLoad saves its first argument (JavaVM*) into RBX
+ *   0x227af7f  calls 0x227b8fb with RDI = that JavaVM*
+ *   0x227b912  CAS-guarded init; 0x227b946 installs the JNIInvokeInterface_
+ *              vtable (function ptrs at 0x7cdec38/+0x18 .. 0x7cdec58/+0x38)
+ *              into the object; 0x227b92d stores it in global 0x7cdec78.
+ * Consumer 0x227b9e2: GetEnv(vm, out, 0x10006) via vtable +0x30, then the
+ * caller at 0x2eb4b65 issues JNIEnv NewStringUTF via vtable +0x538.  The
+ * EVERSION fallback goes through 0x2ea6440 / 0x227aecc.  Our JavaVM has the
+ * exact JNIInvokeInterface_ slot order, so this is a faithful seed; there is
+ * no need to fabricate the guest's scheduler-gated vtable wrappers, and no
+ * guest->Java callback is emitted or triggered by this function. */
+SR_API int sober_jni_seed_guest_onload_globals(SoberJni *j, void *guest_base)
+{
+    const uintptr_t vm_global_rva = 0x7cdec78u;
+
+    if (!j || !guest_base) return SOBER_JNI_ERR;
+    if (!getenv("SOBER_SEED_JNI_VM")) return SOBER_JNI_OK;   /* default OFF */
+
+    void *vm = sober_jni_java_vm(j);
+    if (!vm) return SOBER_JNI_ERR;
+    void **slot = (void **)((unsigned char *)guest_base + vm_global_rva);
+    void *old = *slot;
+    *slot = vm;
+    fprintf(stderr,
+            "[sober-jni] seeded guest JavaVM global 0x%lx -> %p (was %p): "
+            "GetEnv(+0x30)/Attach(+0x20) resolve to our JNIEnv; no callbacks\n",
+            (unsigned long)vm_global_rva, vm, old);
+    sr_add_log(j, "seeded guest JavaVM global 0x%lx", (unsigned long)vm_global_rva);
+    return SOBER_JNI_OK;
+}
+
+SR_API uint64_t sober_jni_env_call_count(SoberJni *j) { return j ? j->env_calls : 0; }
+SR_API uint64_t sober_jni_callback_count(SoberJni *j) { return j ? j->callback_calls : 0; }
+SR_API uint64_t sober_jni_register_natives_count(SoberJni *j) { return j ? j->register_calls : 0; }
+SR_API const char *sober_jni_last_callback(SoberJni *j)
+{ return j && j->last_callback[0] ? j->last_callback : ""; }
+
+SR_API int sober_jni_callback_was_called(SoberJni *j, const char *method_name)
+{
+    if (!j || !method_name) return 0;
+    for (int i = 0; i < j->n_handlers; ++i) {
+        SrHandler *h = &j->handlers[i];
+        if (h->fn && h->name && !strcmp(h->name, method_name))
+            return h->count > 0;
+    }
+    return 0;
+}
+
+SR_API const char *sober_jni_describe_activity(SoberJni *j, char *buf, size_t cap)
+{
+    if (!buf || !cap) return "";
+    if (!j) { buf[0] = '\0'; return buf; }
+    snprintf(buf, cap,
+             "env_calls=%llu callbacks=%llu register_natives=%llu last=%s",
+             (unsigned long long)j->env_calls,
+             (unsigned long long)j->callback_calls,
+             (unsigned long long)j->register_calls,
+             j->last_callback);
+    return buf;
+}
+
+/* Opt-in caller-side substitute (Phase 4c): a shaped JNI object handle whose
+ * backing A has magic 0xc0dedbad at +0, +0x20/+0x68 zero, and >=0x1200 bytes
+ * from the unified glibc allocator family (host_calloc/host_allocate). */
+SR_API void *sober_jni_safe_app_shell_handle(void)
+{
+    SoberJni *j = g_active_jni;
+    if (!j) return NULL;
+    return sr_find_class_object(j, "com/roblox/engine/jni/NativeGLJavaInterface");
+}
+
+/* Decision 038: a genuinely FRESH handle for the real app-shell path.
+ * Unlike sober_jni_safe_app_shell_handle(), this never reuses a cached class
+ * from j->classes and never aliases guest global 0x72293f8 (__stack_chk_guard
+ * GOT). Each call builds a new self-consistent A/B/C/D graph. */
+SR_API void *sober_jni_fresh_handle(void)
+{
+    SoberJni *j = g_active_jni;
+    if (!j) return NULL;
+    SrObject *o = sr_new_object(j, SR_K_OBJECT,
+                                "com/roblox/engine/jni/NativeGLJavaInterface",
+                                NULL, "java/lang/Object");
+    return o;
+}

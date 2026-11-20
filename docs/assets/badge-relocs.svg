@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="232" height="20" role="img" aria-label="APS2 relocs: 565390/565390">
+  <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+  <clipPath id="r"><rect width="232" height="20" rx="3"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="108" height="20" fill="#484f58"/>
+    <rect x="108" width="124" height="20" fill="#2ea44f"/>
+    <rect width="232" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#ffffff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+    <text x="54" y="14">APS2 relocs</text>
+    <text x="170" y="14">565390/565390</text>
+  </g>
+</svg>

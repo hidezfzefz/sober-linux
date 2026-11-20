@@ -1,0 +1,11 @@
+[FLog::Output] All use of Roblox services must comply with Roblox's Terms of Use, Privacy Policy, Community Standards, and applicable laws. Processing of User personal information is limited to the purposes expressly permitted therein.
+2026-11-18T21:48:09.307Z,2.307361,6aad0980,6 [FLog::AndroidGLView] nativeInitClientSettings
+2026-11-18T21:48:09.307Z,2.307414,6aad0980,6,Error [DFLog::LoadSettingsZstdDictionary] Platform assets path not set for dictionary loading.
+2026-11-18T21:48:09.307Z,2.307424,6aad0980,6,Warning [FLog::Output] settingsUrl: https:///v2/settings-compressed/application/ca4e847a9b8abc5623e36c4fc4b4b2883e5aec70b32bf7d07be3def926669256.dcz
+2026-11-18T21:48:09.307Z,2.307835,6aad0980,6,Error [FLog::Error] fetch flag exception: HttpError: InvalidUrl
+2026-11-18T21:48:09.307Z,2.307872,6aad0980,6 [FLog::AndroidGLView] initClientSettingsAndroid: Exception = [HttpError: InvalidUrl].
+2026-11-18T21:48:09.307Z,2.307887,6aad0980,6 [FLog::AndroidGLView] nativePostClientSettingsLoadedInitialization3
+2026-11-18T21:48:09.307Z,2.307902,6aad0980,6 [FLog::ClientRunInfo] RobloxGitHash: 07c234fd1c25eade6b6d878706568f9f7e5b22e3
+2026-11-18T21:48:09.307Z,2.307908,6aad0980,6 [FLog::ClientRunInfo] The base url is 
+2026-11-18T21:48:09.307Z,2.307913,6aad0980,6 [FLog::ClientRunInfo] The channel is production
+2026-11-18T21:48:09.308Z,2.308023,6aad0980,6 [LOGCHANNELS + 1] RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)

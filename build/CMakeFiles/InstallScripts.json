@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/user/sober-linux/build/cmake_install.cmake",
+		"/home/user/sober-linux/build/src/render/cmake_install.cmake",
+		"/home/user/sober-linux/build/src/jni/cmake_install.cmake",
+		"/home/user/sober-linux/build/src/trace/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

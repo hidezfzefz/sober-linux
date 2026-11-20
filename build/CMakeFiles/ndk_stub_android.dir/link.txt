@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/ndk_stub_android.dir/link.d -Wl,-soname,libandroid.so -o ndk-stubs/libandroid.so CMakeFiles/ndk_stub_android.dir/src/compat/ndk_stub.c.o

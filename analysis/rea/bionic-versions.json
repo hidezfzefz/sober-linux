@@ -1,0 +1,1684 @@
+{
+  "task_id": "#374",
+  "owner": "lead (absorbed from worker-1)",
+  "target": "AppImage libroblox.so, BuildID 204ad049599c96afb75b8a21d5051063e821d6c9, version 2.740.931/3170",
+  "evidence": {
+    "engine_identity_rea": "ev_af5de5324a9e1df40ada21a17ab9fe86a747fc6c81a0421574c952f5d077eba4",
+    "bridge_profile_rea": "ev_d7ca1d41 (basalt reads native/mocktail/roblox_host_abi.json)",
+    "method": "readelf --dyn-syms -W + readelf -V (local shell); REA-backed objdump evidence ev_af5de532... confirms engine identity. Ghidra-backed REA cannot open sectionless Sober ELFs."
+  },
+  "version_needs": [
+    {
+      "file": "libc.so",
+      "nodes": [
+        "LIBC",
+        "LIBC_N",
+        "LIBC_O"
+      ]
+    },
+    {
+      "file": "libm.so",
+      "nodes": [
+        "LIBC"
+      ]
+    },
+    {
+      "file": "libdl.so",
+      "nodes": [
+        "LIBC"
+      ]
+    }
+  ],
+  "versioned_undefined_count": 411,
+  "counts_by_node": {
+    "LIBC": 405,
+    "LIBC_N": 5,
+    "LIBC_O": 1
+  },
+  "symbols": [
+    {
+      "name": "__cxa_finalize",
+      "version": "LIBC"
+    },
+    {
+      "name": "__cxa_atexit",
+      "version": "LIBC"
+    },
+    {
+      "name": "__register_atfork",
+      "version": "LIBC"
+    },
+    {
+      "name": "strlen",
+      "version": "LIBC"
+    },
+    {
+      "name": "memcmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "remove",
+      "version": "LIBC"
+    },
+    {
+      "name": "mkdir",
+      "version": "LIBC"
+    },
+    {
+      "name": "rename",
+      "version": "LIBC"
+    },
+    {
+      "name": "__errno",
+      "version": "LIBC"
+    },
+    {
+      "name": "fprintf",
+      "version": "LIBC"
+    },
+    {
+      "name": "memchr",
+      "version": "LIBC"
+    },
+    {
+      "name": "stderr",
+      "version": "LIBC"
+    },
+    {
+      "name": "__memset_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "__memcpy_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "atoi",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strlen_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "dladdr",
+      "version": "LIBC"
+    },
+    {
+      "name": "dlerror",
+      "version": "LIBC"
+    },
+    {
+      "name": "dlopen",
+      "version": "LIBC"
+    },
+    {
+      "name": "dlsym",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "strncmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_once",
+      "version": "LIBC"
+    },
+    {
+      "name": "close",
+      "version": "LIBC"
+    },
+    {
+      "name": "__open_2",
+      "version": "LIBC"
+    },
+    {
+      "name": "__read_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "read",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_self",
+      "version": "LIBC"
+    },
+    {
+      "name": "clock_gettime",
+      "version": "LIBC"
+    },
+    {
+      "name": "syscall",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_getcpu",
+      "version": "LIBC"
+    },
+    {
+      "name": "sysconf",
+      "version": "LIBC"
+    },
+    {
+      "name": "mmap",
+      "version": "LIBC"
+    },
+    {
+      "name": "mprotect",
+      "version": "LIBC"
+    },
+    {
+      "name": "munmap",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_setstacksize",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_create",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_join",
+      "version": "LIBC"
+    },
+    {
+      "name": "memset",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_setspecific",
+      "version": "LIBC"
+    },
+    {
+      "name": "time",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutex_lock",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_signal",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutex_unlock",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_broadcast",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_wait",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutex_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutex_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtoll",
+      "version": "LIBC"
+    },
+    {
+      "name": "atan2f",
+      "version": "LIBC"
+    },
+    {
+      "name": "vsnprintf",
+      "version": "LIBC"
+    },
+    {
+      "name": "rand",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strncpy_chk2",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strncpy_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "stat",
+      "version": "LIBC"
+    },
+    {
+      "name": "opendir",
+      "version": "LIBC"
+    },
+    {
+      "name": "readdir",
+      "version": "LIBC"
+    },
+    {
+      "name": "closedir",
+      "version": "LIBC"
+    },
+    {
+      "name": "posix_fallocate",
+      "version": "LIBC"
+    },
+    {
+      "name": "open",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_get_priority_max",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_setscheduler",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_equal",
+      "version": "LIBC"
+    },
+    {
+      "name": "atoll",
+      "version": "LIBC"
+    },
+    {
+      "name": "srand",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtod",
+      "version": "LIBC"
+    },
+    {
+      "name": "wmemchr",
+      "version": "LIBC"
+    },
+    {
+      "name": "localtime",
+      "version": "LIBC"
+    },
+    {
+      "name": "fseek",
+      "version": "LIBC"
+    },
+    {
+      "name": "ftell",
+      "version": "LIBC"
+    },
+    {
+      "name": "fclose",
+      "version": "LIBC"
+    },
+    {
+      "name": "atan",
+      "version": "LIBC"
+    },
+    {
+      "name": "__fread_chk",
+      "version": "LIBC_N"
+    },
+    {
+      "name": "fread",
+      "version": "LIBC"
+    },
+    {
+      "name": "asinf",
+      "version": "LIBC"
+    },
+    {
+      "name": "dlclose",
+      "version": "LIBC"
+    },
+    {
+      "name": "__system_property_get",
+      "version": "LIBC"
+    },
+    {
+      "name": "access",
+      "version": "LIBC"
+    },
+    {
+      "name": "getenv",
+      "version": "LIBC"
+    },
+    {
+      "name": "strncpy",
+      "version": "LIBC"
+    },
+    {
+      "name": "feof",
+      "version": "LIBC"
+    },
+    {
+      "name": "fopen",
+      "version": "LIBC"
+    },
+    {
+      "name": "fseeko",
+      "version": "LIBC"
+    },
+    {
+      "name": "ftello",
+      "version": "LIBC"
+    },
+    {
+      "name": "__fwrite_chk",
+      "version": "LIBC_N"
+    },
+    {
+      "name": "fwrite",
+      "version": "LIBC"
+    },
+    {
+      "name": "fflush",
+      "version": "LIBC"
+    },
+    {
+      "name": "gmtime",
+      "version": "LIBC"
+    },
+    {
+      "name": "mktime",
+      "version": "LIBC"
+    },
+    {
+      "name": "pipe",
+      "version": "LIBC"
+    },
+    {
+      "name": "write",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_key_create",
+      "version": "LIBC"
+    },
+    {
+      "name": "abort",
+      "version": "LIBC"
+    },
+    {
+      "name": "__assert",
+      "version": "LIBC"
+    },
+    {
+      "name": "strrchr",
+      "version": "LIBC"
+    },
+    {
+      "name": "__stack_chk_fail",
+      "version": "LIBC"
+    },
+    {
+      "name": "fcntl",
+      "version": "LIBC"
+    },
+    {
+      "name": "memcpy",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcpy",
+      "version": "LIBC"
+    },
+    {
+      "name": "strerror",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_setdetachstate",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_cond_timedwait",
+      "version": "LIBC"
+    },
+    {
+      "name": "memmove",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtol",
+      "version": "LIBC"
+    },
+    {
+      "name": "getpid",
+      "version": "LIBC"
+    },
+    {
+      "name": "gettid",
+      "version": "LIBC"
+    },
+    {
+      "name": "gettimeofday",
+      "version": "LIBC"
+    },
+    {
+      "name": "localtime_r",
+      "version": "LIBC"
+    },
+    {
+      "name": "__sF",
+      "version": "LIBC"
+    },
+    {
+      "name": "fputs",
+      "version": "LIBC"
+    },
+    {
+      "name": "strerror_r",
+      "version": "LIBC"
+    },
+    {
+      "name": "snprintf",
+      "version": "LIBC"
+    },
+    {
+      "name": "prctl",
+      "version": "LIBC"
+    },
+    {
+      "name": "sigaltstack",
+      "version": "LIBC"
+    },
+    {
+      "name": "getpagesize",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_getspecific",
+      "version": "LIBC"
+    },
+    {
+      "name": "fork",
+      "version": "LIBC"
+    },
+    {
+      "name": "waitpid",
+      "version": "LIBC"
+    },
+    {
+      "name": "execv",
+      "version": "LIBC"
+    },
+    {
+      "name": "_exit",
+      "version": "LIBC"
+    },
+    {
+      "name": "execve",
+      "version": "LIBC"
+    },
+    {
+      "name": "optarg",
+      "version": "LIBC"
+    },
+    {
+      "name": "getopt_long",
+      "version": "LIBC"
+    },
+    {
+      "name": "optind",
+      "version": "LIBC"
+    },
+    {
+      "name": "getppid",
+      "version": "LIBC"
+    },
+    {
+      "name": "geteuid",
+      "version": "LIBC"
+    },
+    {
+      "name": "epoll_create1",
+      "version": "LIBC"
+    },
+    {
+      "name": "eventfd",
+      "version": "LIBC"
+    },
+    {
+      "name": "epoll_ctl",
+      "version": "LIBC"
+    },
+    {
+      "name": "getsockopt",
+      "version": "LIBC"
+    },
+    {
+      "name": "setsockopt",
+      "version": "LIBC"
+    },
+    {
+      "name": "epoll_wait",
+      "version": "LIBC"
+    },
+    {
+      "name": "getuid",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutex_trylock",
+      "version": "LIBC"
+    },
+    {
+      "name": "ldexp",
+      "version": "LIBC"
+    },
+    {
+      "name": "strchr",
+      "version": "LIBC"
+    },
+    {
+      "name": "getaddrinfo",
+      "version": "LIBC"
+    },
+    {
+      "name": "socket",
+      "version": "LIBC"
+    },
+    {
+      "name": "freeaddrinfo",
+      "version": "LIBC"
+    },
+    {
+      "name": "connect",
+      "version": "LIBC"
+    },
+    {
+      "name": "poll",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_getscheduler",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_getparam",
+      "version": "LIBC"
+    },
+    {
+      "name": "getpriority",
+      "version": "LIBC"
+    },
+    {
+      "name": "uname",
+      "version": "LIBC"
+    },
+    {
+      "name": "tzset",
+      "version": "LIBC"
+    },
+    {
+      "name": "tzname",
+      "version": "LIBC"
+    },
+    {
+      "name": "daylight",
+      "version": "LIBC"
+    },
+    {
+      "name": "timezone",
+      "version": "LIBC"
+    },
+    {
+      "name": "strnlen",
+      "version": "LIBC"
+    },
+    {
+      "name": "writev",
+      "version": "LIBC"
+    },
+    {
+      "name": "sscanf",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtoul",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtoull",
+      "version": "LIBC"
+    },
+    {
+      "name": "lseek",
+      "version": "LIBC"
+    },
+    {
+      "name": "ftruncate",
+      "version": "LIBC"
+    },
+    {
+      "name": "fstat",
+      "version": "LIBC"
+    },
+    {
+      "name": "lstat",
+      "version": "LIBC"
+    },
+    {
+      "name": "unlink",
+      "version": "LIBC"
+    },
+    {
+      "name": "rmdir",
+      "version": "LIBC"
+    },
+    {
+      "name": "nanosleep",
+      "version": "LIBC"
+    },
+    {
+      "name": "sigemptyset",
+      "version": "LIBC"
+    },
+    {
+      "name": "sigaction",
+      "version": "LIBC"
+    },
+    {
+      "name": "raise",
+      "version": "LIBC"
+    },
+    {
+      "name": "environ",
+      "version": "LIBC"
+    },
+    {
+      "name": "fscanf",
+      "version": "LIBC"
+    },
+    {
+      "name": "pread64",
+      "version": "LIBC"
+    },
+    {
+      "name": "ptrace",
+      "version": "LIBC"
+    },
+    {
+      "name": "socketpair",
+      "version": "LIBC"
+    },
+    {
+      "name": "sendmsg",
+      "version": "LIBC"
+    },
+    {
+      "name": "recvmsg",
+      "version": "LIBC"
+    },
+    {
+      "name": "__cmsg_nxthdr",
+      "version": "LIBC"
+    },
+    {
+      "name": "readlink",
+      "version": "LIBC"
+    },
+    {
+      "name": "getnameinfo",
+      "version": "LIBC"
+    },
+    {
+      "name": "strftime",
+      "version": "LIBC"
+    },
+    {
+      "name": "tanhf",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strcpy_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "frexpf",
+      "version": "LIBC"
+    },
+    {
+      "name": "ldexpf",
+      "version": "LIBC"
+    },
+    {
+      "name": "__vsnprintf_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "__memmove_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "tanf",
+      "version": "LIBC"
+    },
+    {
+      "name": "atanf",
+      "version": "LIBC"
+    },
+    {
+      "name": "acosf",
+      "version": "LIBC"
+    },
+    {
+      "name": "erff",
+      "version": "LIBC"
+    },
+    {
+      "name": "strstr",
+      "version": "LIBC"
+    },
+    {
+      "name": "erfcf",
+      "version": "LIBC"
+    },
+    {
+      "name": "printf",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_yield",
+      "version": "LIBC"
+    },
+    {
+      "name": "modf",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcasecmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "atan2",
+      "version": "LIBC"
+    },
+    {
+      "name": "cbrtf",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtof",
+      "version": "LIBC"
+    },
+    {
+      "name": "madvise",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strchr_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "clock",
+      "version": "LIBC"
+    },
+    {
+      "name": "fileno",
+      "version": "LIBC"
+    },
+    {
+      "name": "localeconv",
+      "version": "LIBC"
+    },
+    {
+      "name": "remainderf",
+      "version": "LIBC"
+    },
+    {
+      "name": "nan",
+      "version": "LIBC"
+    },
+    {
+      "name": "modff",
+      "version": "LIBC"
+    },
+    {
+      "name": "qsort",
+      "version": "LIBC"
+    },
+    {
+      "name": "nextafterf",
+      "version": "LIBC"
+    },
+    {
+      "name": "coshf",
+      "version": "LIBC"
+    },
+    {
+      "name": "sinhf",
+      "version": "LIBC"
+    },
+    {
+      "name": "__FD_SET_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "select",
+      "version": "LIBC"
+    },
+    {
+      "name": "__FD_ISSET_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "sendto",
+      "version": "LIBC"
+    },
+    {
+      "name": "recvfrom",
+      "version": "LIBC"
+    },
+    {
+      "name": "hypotf",
+      "version": "LIBC"
+    },
+    {
+      "name": "ferror",
+      "version": "LIBC"
+    },
+    {
+      "name": "clearerr",
+      "version": "LIBC"
+    },
+    {
+      "name": "__vsprintf_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "__strcat_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "setpriority",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutexattr_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutexattr_settype",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_mutexattr_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "sem_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "sem_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "sem_wait",
+      "version": "LIBC"
+    },
+    {
+      "name": "sem_post",
+      "version": "LIBC"
+    },
+    {
+      "name": "inet_ntop",
+      "version": "LIBC"
+    },
+    {
+      "name": "inet_pton",
+      "version": "LIBC"
+    },
+    {
+      "name": "strncasecmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_setschedparam",
+      "version": "LIBC"
+    },
+    {
+      "name": "bind",
+      "version": "LIBC"
+    },
+    {
+      "name": "getsockname",
+      "version": "LIBC"
+    },
+    {
+      "name": "gethostname",
+      "version": "LIBC"
+    },
+    {
+      "name": "__sendto_chk",
+      "version": "LIBC_O"
+    },
+    {
+      "name": "puts",
+      "version": "LIBC"
+    },
+    {
+      "name": "in6addr_any",
+      "version": "LIBC_N"
+    },
+    {
+      "name": "stdin",
+      "version": "LIBC"
+    },
+    {
+      "name": "stdout",
+      "version": "LIBC"
+    },
+    {
+      "name": "acos",
+      "version": "LIBC"
+    },
+    {
+      "name": "exit",
+      "version": "LIBC"
+    },
+    {
+      "name": "wcslen",
+      "version": "LIBC"
+    },
+    {
+      "name": "wmemcmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "exp",
+      "version": "LIBC"
+    },
+    {
+      "name": "pow",
+      "version": "LIBC"
+    },
+    {
+      "name": "fmod",
+      "version": "LIBC"
+    },
+    {
+      "name": "log",
+      "version": "LIBC"
+    },
+    {
+      "name": "log2",
+      "version": "LIBC"
+    },
+    {
+      "name": "log10",
+      "version": "LIBC"
+    },
+    {
+      "name": "round",
+      "version": "LIBC"
+    },
+    {
+      "name": "frexp",
+      "version": "LIBC"
+    },
+    {
+      "name": "asin",
+      "version": "LIBC"
+    },
+    {
+      "name": "sin",
+      "version": "LIBC"
+    },
+    {
+      "name": "sinh",
+      "version": "LIBC"
+    },
+    {
+      "name": "cos",
+      "version": "LIBC"
+    },
+    {
+      "name": "cosh",
+      "version": "LIBC"
+    },
+    {
+      "name": "tan",
+      "version": "LIBC"
+    },
+    {
+      "name": "tanh",
+      "version": "LIBC"
+    },
+    {
+      "name": "atol",
+      "version": "LIBC"
+    },
+    {
+      "name": "atof",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_condattr_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_condattr_setclock",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_condattr_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "ldiv",
+      "version": "LIBC"
+    },
+    {
+      "name": "in6addr_loopback",
+      "version": "LIBC_N"
+    },
+    {
+      "name": "ioctl",
+      "version": "LIBC"
+    },
+    {
+      "name": "getpeername",
+      "version": "LIBC"
+    },
+    {
+      "name": "listen",
+      "version": "LIBC"
+    },
+    {
+      "name": "accept",
+      "version": "LIBC"
+    },
+    {
+      "name": "epoll_create",
+      "version": "LIBC"
+    },
+    {
+      "name": "__FD_CLR_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "sched_get_priority_min",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_setschedparam",
+      "version": "LIBC"
+    },
+    {
+      "name": "strspn",
+      "version": "LIBC"
+    },
+    {
+      "name": "expm1",
+      "version": "LIBC"
+    },
+    {
+      "name": "if_indextoname",
+      "version": "LIBC"
+    },
+    {
+      "name": "sinf",
+      "version": "LIBC"
+    },
+    {
+      "name": "sincosf",
+      "version": "LIBC"
+    },
+    {
+      "name": "exp2",
+      "version": "LIBC"
+    },
+    {
+      "name": "cbrt",
+      "version": "LIBC"
+    },
+    {
+      "name": "ilogb",
+      "version": "LIBC"
+    },
+    {
+      "name": "sincos",
+      "version": "LIBC"
+    },
+    {
+      "name": "llroundf",
+      "version": "LIBC"
+    },
+    {
+      "name": "fmal",
+      "version": "LIBC"
+    },
+    {
+      "name": "exp2f",
+      "version": "LIBC"
+    },
+    {
+      "name": "lroundf",
+      "version": "LIBC"
+    },
+    {
+      "name": "log10f",
+      "version": "LIBC"
+    },
+    {
+      "name": "finitef",
+      "version": "LIBC"
+    },
+    {
+      "name": "llround",
+      "version": "LIBC"
+    },
+    {
+      "name": "logf",
+      "version": "LIBC"
+    },
+    {
+      "name": "remquof",
+      "version": "LIBC"
+    },
+    {
+      "name": "powf",
+      "version": "LIBC"
+    },
+    {
+      "name": "fmodf",
+      "version": "LIBC"
+    },
+    {
+      "name": "log2f",
+      "version": "LIBC"
+    },
+    {
+      "name": "expf",
+      "version": "LIBC"
+    },
+    {
+      "name": "powl",
+      "version": "LIBC"
+    },
+    {
+      "name": "lround",
+      "version": "LIBC"
+    },
+    {
+      "name": "cosf",
+      "version": "LIBC"
+    },
+    {
+      "name": "fgets",
+      "version": "LIBC"
+    },
+    {
+      "name": "setjmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "longjmp",
+      "version": "LIBC"
+    },
+    {
+      "name": "fdopen",
+      "version": "LIBC"
+    },
+    {
+      "name": "gai_strerror",
+      "version": "LIBC"
+    },
+    {
+      "name": "timerfd_create",
+      "version": "LIBC"
+    },
+    {
+      "name": "timerfd_settime",
+      "version": "LIBC"
+    },
+    {
+      "name": "fputc",
+      "version": "LIBC"
+    },
+    {
+      "name": "bsearch",
+      "version": "LIBC"
+    },
+    {
+      "name": "vfprintf",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_exit",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcspn",
+      "version": "LIBC"
+    },
+    {
+      "name": "gmtime_r",
+      "version": "LIBC"
+    },
+    {
+      "name": "difftime",
+      "version": "LIBC"
+    },
+    {
+      "name": "strpbrk",
+      "version": "LIBC"
+    },
+    {
+      "name": "shutdown",
+      "version": "LIBC"
+    },
+    {
+      "name": "memrchr",
+      "version": "LIBC"
+    },
+    {
+      "name": "accept4",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_detach",
+      "version": "LIBC"
+    },
+    {
+      "name": "if_nametoindex",
+      "version": "LIBC"
+    },
+    {
+      "name": "setvbuf",
+      "version": "LIBC"
+    },
+    {
+      "name": "realpath",
+      "version": "LIBC"
+    },
+    {
+      "name": "__write_chk",
+      "version": "LIBC_N"
+    },
+    {
+      "name": "recvmmsg",
+      "version": "LIBC"
+    },
+    {
+      "name": "__assert2",
+      "version": "LIBC"
+    },
+    {
+      "name": "getcwd",
+      "version": "LIBC"
+    },
+    {
+      "name": "pread",
+      "version": "LIBC"
+    },
+    {
+      "name": "pwrite",
+      "version": "LIBC"
+    },
+    {
+      "name": "fchmod",
+      "version": "LIBC"
+    },
+    {
+      "name": "fchown",
+      "version": "LIBC"
+    },
+    {
+      "name": "mremap",
+      "version": "LIBC"
+    },
+    {
+      "name": "fsync",
+      "version": "LIBC"
+    },
+    {
+      "name": "utimes",
+      "version": "LIBC"
+    },
+    {
+      "name": "__gnu_strerror_r",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_getschedparam",
+      "version": "LIBC"
+    },
+    {
+      "name": "sigfillset",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_sigmask",
+      "version": "LIBC"
+    },
+    {
+      "name": "_Exit",
+      "version": "LIBC"
+    },
+    {
+      "name": "msync",
+      "version": "LIBC"
+    },
+    {
+      "name": "statvfs",
+      "version": "LIBC"
+    },
+    {
+      "name": "getauxval",
+      "version": "LIBC"
+    },
+    {
+      "name": "mallinfo",
+      "version": "LIBC"
+    },
+    {
+      "name": "__readlink_chk",
+      "version": "LIBC"
+    },
+    {
+      "name": "arc4random_buf",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_key_delete",
+      "version": "LIBC"
+    },
+    {
+      "name": "sysinfo",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_setname_np",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_getattr_np",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_attr_getstack",
+      "version": "LIBC"
+    },
+    {
+      "name": "mlock",
+      "version": "LIBC"
+    },
+    {
+      "name": "dl_iterate_phdr",
+      "version": "LIBC"
+    },
+    {
+      "name": "isspace",
+      "version": "LIBC"
+    },
+    {
+      "name": "gethostbyname",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcat",
+      "version": "LIBC"
+    },
+    {
+      "name": "sendmmsg",
+      "version": "LIBC"
+    },
+    {
+      "name": "tolower",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_rwlock_destroy",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_rwlock_init",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_rwlock_rdlock",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_rwlock_unlock",
+      "version": "LIBC"
+    },
+    {
+      "name": "pthread_rwlock_wrlock",
+      "version": "LIBC"
+    },
+    {
+      "name": "signal",
+      "version": "LIBC"
+    },
+    {
+      "name": "tcgetattr",
+      "version": "LIBC"
+    },
+    {
+      "name": "tcsetattr",
+      "version": "LIBC"
+    },
+    {
+      "name": "utime",
+      "version": "LIBC"
+    },
+    {
+      "name": "vasprintf",
+      "version": "LIBC"
+    },
+    {
+      "name": "android_set_abort_message",
+      "version": "LIBC"
+    },
+    {
+      "name": "openlog",
+      "version": "LIBC"
+    },
+    {
+      "name": "syslog",
+      "version": "LIBC"
+    },
+    {
+      "name": "closelog",
+      "version": "LIBC"
+    },
+    {
+      "name": "ungetc",
+      "version": "LIBC"
+    },
+    {
+      "name": "getc",
+      "version": "LIBC"
+    },
+    {
+      "name": "ungetwc",
+      "version": "LIBC"
+    },
+    {
+      "name": "getwc",
+      "version": "LIBC"
+    },
+    {
+      "name": "fputwc",
+      "version": "LIBC"
+    },
+    {
+      "name": "newlocale",
+      "version": "LIBC"
+    },
+    {
+      "name": "uselocale",
+      "version": "LIBC"
+    },
+    {
+      "name": "vsscanf",
+      "version": "LIBC"
+    },
+    {
+      "name": "strftime_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "mbsrtowcs",
+      "version": "LIBC"
+    },
+    {
+      "name": "freelocale",
+      "version": "LIBC"
+    },
+    {
+      "name": "strcoll_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "strxfrm_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "wcscoll_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "wcsxfrm_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswlower_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswspace_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswprint_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswblank_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswcntrl_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswupper_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswalpha_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswdigit_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswpunct_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "iswxdigit_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "towupper_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "towlower_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "btowc",
+      "version": "LIBC"
+    },
+    {
+      "name": "wctob",
+      "version": "LIBC"
+    },
+    {
+      "name": "wcsnrtombs",
+      "version": "LIBC"
+    },
+    {
+      "name": "wcrtomb",
+      "version": "LIBC"
+    },
+    {
+      "name": "mbsnrtowcs",
+      "version": "LIBC"
+    },
+    {
+      "name": "mbrtowc",
+      "version": "LIBC"
+    },
+    {
+      "name": "mbtowc",
+      "version": "LIBC"
+    },
+    {
+      "name": "__ctype_get_mb_cur_max",
+      "version": "LIBC"
+    },
+    {
+      "name": "mbrlen",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtoll_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtoull_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "strtold_l",
+      "version": "LIBC"
+    },
+    {
+      "name": "__cxa_thread_atexit_impl",
+      "version": "LIBC"
+    },
+    {
+      "name": "strncat",
+      "version": "LIBC"
+    },
+    {
+      "name": "__stack_chk_guard",
+      "version": "LIBC"
+    }
+  ]
+}

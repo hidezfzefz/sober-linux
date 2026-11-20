@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -O3 -DNDEBUG -shared -Wl,--as-needed -Wl,--dependency-file=CMakeFiles/ndk_stub_openmaxal.dir/link.d -Wl,-soname,libOpenMAXAL.so -o ndk-stubs/libOpenMAXAL.so CMakeFiles/ndk_stub_openmaxal.dir/src/compat/ndk_stub.c.o

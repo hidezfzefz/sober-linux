@@ -1,0 +1,47 @@
+Start testing: Nov 20 23:04 -00
+----------------------------------------------------------
+1/2 Testing: sober_native_check
+1/2 Test: sober_native_check
+Command: "/home/user/sober-linux/build/sober-native" "--check"
+Directory: /home/user/sober-linux/build
+"sober_native_check" start time: Nov 20 23:04 -00
+Output:
+----------------------------------------------------------
+[INFO/sober-android] native NDK/Bionic shim initialised (no Android runtime)
+sober-native 0.1.0 | native Linux ELF | no translation layer
+compat backend: native-linux/posix (epoll+mmap+pthread+dlopen NDK shim)
+gfx backend: native libEGL + libGLESv2 (dlopen)
+native graphics libraries (dlopen): X11 Wayland OpenGL Vulkan
+native monotonic clock (s): 89940
+command line: /usr/bin/ctest
+NDK/Bionic shim entries: 268 | GL/EGL trampolines: 91
+sober-native self-check: OK
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"sober_native_check" end time: Nov 20 23:04 -00
+"sober_native_check" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: sober_native_version
+2/2 Test: sober_native_version
+Command: "/home/user/sober-linux/build/sober-native" "--version"
+Directory: /home/user/sober-linux/build
+"sober_native_version" start time: Nov 20 23:04 -00
+Output:
+----------------------------------------------------------
+[INFO/sober-android] native NDK/Bionic shim initialised (no Android runtime)
+sober-native 0.1.0 | native Linux ELF | no translation layer
+compat backend: native-linux/posix (epoll+mmap+pthread+dlopen NDK shim)
+gfx backend: native libEGL + libGLESv2 (dlopen)
+sober-native 0.1.0
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"sober_native_version" end time: Nov 20 23:04 -00
+"sober_native_version" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 20 23:04 -00
