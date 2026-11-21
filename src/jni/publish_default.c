@@ -64,7 +64,20 @@ const char *sober_publish_default_env_vars(void)
 
 int sober_publish_default_should_withhold(void)
 {
-    return sober_publish_default_enabled() ? 1 : 0;
+    /* Decision 013: the re-drive is a diagnostic seed and stays force-withheld,
+     * but a module that was merely compiled/enabled and never actually drove
+     * 0x253cb56 / 0x27eaf04 manufactured no state, so it must not make the
+     * clean path structurally unreachable.  Once it has re-driven (or a hit
+     * was recorded) it is withheld for the rest of the run. */
+    if (!sober_publish_default_enabled()) return 0;
+    if (atomic_load_explicit(&g_register_calls, memory_order_relaxed) != 0u)
+        return 1;
+    if (atomic_load_explicit(&g_publish_calls, memory_order_relaxed) != 0u)
+        return 1;
+    for (unsigned i = 0u; i < (unsigned)SOBER_PD_STAGE_COUNT; ++i)
+        if (atomic_load_explicit(&g_hits[i], memory_order_relaxed) != 0u)
+            return 1;
+    return 0;
 }
 
 /* ---- raw read-only guest accessors --------------------------------------- */

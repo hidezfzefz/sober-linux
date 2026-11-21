@@ -106,6 +106,11 @@ extern "C" {
 
 /* ---- gate ---------------------------------------------------------------- */
 #define SOBER_FRAME_EVIDENCE_ENV "SOBER_FRAME_EVIDENCE"
+/* H6 genuine guest-log observer is OPT-IN (lead ruling): set =1 to install.
+ * It parks on the guest FLog sink data pointer at 0x7d8f820 (a guest-data
+ * mutation), so the DEFAULT is OFF to keep seeded_state==0 on the clean path.
+ * When installed it parses the REAL "Created ANativeWindow ... (ID:G)" string. */
+#define SOBER_FRAME_EVIDENCE_FLOG_ENV "SOBER_FRAME_FLOG_SINK"
 /* DEFAULT ON: false only when getenv(SOBER_FRAME_EVIDENCE) is exactly "0". */
 SOBER_FRAME_EVIDENCE_API int         frame_evidence_enabled(void);
 SOBER_FRAME_EVIDENCE_API const char *frame_evidence_env_var(void);
@@ -384,6 +389,20 @@ SOBER_FRAME_EVIDENCE_API void frame_evidence_guest_ra_range(
     uintptr_t *lo, uintptr_t *hi);
 SOBER_FRAME_EVIDENCE_API void frame_evidence_draw_ra_range(
     uintptr_t *lo, uintptr_t *hi);
+
+/* ---- H6 genuine FLog sink observer (task #493) --------------------------- */
+/* The guest FLog emitter 0x232de10 formats the real "Created ANativeWindow"
+ * string (fmt 0x3c163c, emit 0x26feb0f) and dispatches through the data pointer
+ * at guest+0x7d8f820 (NULL in our harness).  These install/query a read-only
+ * observer there that parses the REAL guest text (never synthesizes it) and
+ * feeds the G8 C10 observation.  No guest code byte is patched.  OPT-IN: only
+ * installed when SOBER_FRAME_FLOG_SINK=1 (default OFF).  Because it writes a
+ * guest data pointer, OR frame_evidence_flog_installed() into seeded_state
+ * (withhold when active); default path mutates no guest data.*/
+SOBER_FRAME_EVIDENCE_API int      frame_evidence_flog_killed(void);
+SOBER_FRAME_EVIDENCE_API int      frame_evidence_flog_installed(void);
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_flog_calls(void);
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_flog_h6(void);
 
 /* ---- verdict / snapshot / diagnostics ----------------------------------- */
 SOBER_FRAME_EVIDENCE_API int         frame_evidence_verdict(void);

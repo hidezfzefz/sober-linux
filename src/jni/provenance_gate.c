@@ -50,6 +50,9 @@ static const char *const k_qual_names[SOBER_PG_QUAL_COUNT] = {
 /* Stack scan window.  The genuine chain is a handful of frames deep; 8 KiB is
  * ample and the scan stops at the nearest thunk return site. */
 #define SOBER_PG_SCAN_WORDS 1024u
+/* Guest .text span (frozen first R E PT_LOAD).  Used only for a read-only
+ * classification of the frame above the notifier return site. */
+#define SOBER_PG_TEXT_SIZE 0x6d33b90u
 
 /* ---- state (all atomics: bridge and gate may live on different threads) - */
 static _Atomic int      g_enabled;        /* kill-switch state (default ON)     */
@@ -65,6 +68,8 @@ static _Atomic uintptr_t g_thunk_ra;       /* last base+0x2584960 observed      
 static _Atomic uintptr_t g_caller_ra;      /* last caller return address observed */
 static _Atomic uintptr_t g_cached_class;   /* value read at base+0x72a2f48       */
 static _Atomic uintptr_t g_cached_method;  /* value read at base+0x72a2fc0       */
+static _Atomic int64_t  g_place_id;        /* read at base+0x72a31c0              */
+static _Atomic int      g_prov_emitted;    /* one-shot gate provenance line       */
 static _Atomic int      g_last_verdict;    /* SOBER_PROV_GATE_VERDICT_*           */
 
 static _Atomic uint64_t g_qual_obs[SOBER_PG_QUAL_COUNT];       /* observations  */
@@ -185,6 +190,8 @@ void sober_provenance_gate_reset(void)
     atomic_store_explicit(&g_caller_ra, 0, memory_order_relaxed);
     atomic_store_explicit(&g_cached_class, 0, memory_order_relaxed);
     atomic_store_explicit(&g_cached_method, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_place_id, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_prov_emitted, 0, memory_order_relaxed);
     atomic_store_explicit(&g_last_verdict, SOBER_PROV_GATE_VERDICT_NONE,
                           memory_order_relaxed);
     for (unsigned i = 0; i < SOBER_PG_QUAL_COUNT; ++i) {
@@ -228,6 +235,13 @@ typedef struct {
     int      caller;        /* CALLER_* */
     uintptr_t caller_off;
     uintptr_t caller_ra;    /* absolute address of the recognised caller RA   */
+    /* 1 when the frameDirectly above the notifier return is ALSO guest code.
+     * In the genuine chain the node dispatch returns to 0x27eaf34 (guest);
+     * a host-entered 0x27eaf04 (publish_default re-drive) returns into the
+     * harness instead, so this stays 0 and cannot be certified GENUINE even
+     * if the thunk/notifier RA pair happens to be present. */
+    int      guest_above_notifier;
+    uintptr_t frame_cand;    /* saved-RBP candidate when found via frame-chain */
 } ProvScan;
 
 /* Locate the guest call chain on the live stack.  We do NOT use
@@ -299,6 +313,7 @@ static void pg_scan_stack(uintptr_t base, ProvScan *out)
                     out->caller = CALLER_NOTIFIER;
                     out->caller_ra = notifier_ra;
                     out->caller_off = j;
+                    out->frame_cand = cand;
                     break;
                 }
                 if (w == appbridge_ra) {
@@ -310,6 +325,23 @@ static void pg_scan_stack(uintptr_t base, ProvScan *out)
             }
         }
         break; /* nearest thunk return site is the most relevant one */
+    }
+
+    /* The frame above the notifier return must be guest code.  A host-entered
+     * node dispatch leaves a harness return address there; rejecting it here
+     * keeps the positive credential honest independently of seeded_state. */
+    if (out->caller == CALLER_NOTIFIER) {
+        uintptr_t above = 0u;
+        if (out->frame_cand) {
+            /* Frame-chain path: the notifier RA lives at [cand+8], so the
+             * caller's return address is the next word at [cand+0x10]. */
+            above = *(const volatile uintptr_t *)(out->frame_cand + 16u);
+        } else if (out->caller_off + 1u < (uintptr_t)SOBER_PG_SCAN_WORDS) {
+            above = *(const volatile uintptr_t *)(sp0 +
+                        (out->caller_off + 1u) * sizeof(uintptr_t));
+        }
+        if (above >= base && (above - base) < (uintptr_t)SOBER_PG_TEXT_SIZE)
+            out->guest_above_notifier = 1;
     }
 }
 
@@ -326,6 +358,13 @@ static void *read_ptr(uintptr_t addr)
     void *p;
     memcpy(&p, (const void *)addr, sizeof(p));
     return p;
+}
+
+static uint64_t read_u64(uintptr_t addr)
+{
+    uint64_t v;
+    memcpy(&v, (const void *)addr, sizeof(v));
+    return v;
 }
 
 /* ---- THE HOOK ----------------------------------------------------------- */
@@ -364,10 +403,19 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
     if (sc.caller != CALLER_NONE)
         atomic_store_explicit(&g_caller_ra, sc.caller_ra, memory_order_relaxed);
 
+    /* placeId is the real jlong the guest cached from StartGameParams.placeId()
+     * at 0x2ebd86a.  A dispatch without a positive value is NOT the game-loaded
+     * callback the strict gate requires, even if the RA pair matches. */
+    const int64_t place_id = (int64_t)read_u64(
+        base + (uintptr_t)SOBER_PROV_GATE_RVA_PLACE_ID);
+    atomic_store_explicit(&g_place_id, place_id, memory_order_relaxed);
+
     const int build_ok = atomic_load_explicit(&g_build_verified,
                                               memory_order_acquire);
     const int genuine = (qi >= 0) && build_ok && class_ok && method_ok &&
-                        sc.thunk_seen && sc.caller == CALLER_NOTIFIER;
+                        place_id > 0 &&
+                        sc.thunk_seen && sc.caller == CALLER_NOTIFIER &&
+                        sc.guest_above_notifier;
     const int harness = sc.thunk_seen && sc.caller == CALLER_NONE;
     const int appbridge = sc.caller == CALLER_APPBRIDGE;
 
@@ -469,6 +517,36 @@ uintptr_t sober_provenance_gate_cached_method(void)
     return atomic_load_explicit(&g_cached_method, memory_order_relaxed);
 }
 
+int64_t sober_provenance_gate_place_id(void)
+{
+    return atomic_load_explicit(&g_place_id, memory_order_relaxed);
+}
+
+/* Gate-owned positive provenance line.  Emitted at most once and ONLY when
+ * every leg of the credential is satisfied; never on the ALT/host-thunk path
+ * and never as a decision-013 marker.  The lead calls this from the strict
+ * gate after confirming seeded_state==0. */
+int sober_provenance_gate_emit_provenance(void)
+{
+    int expected = 0;
+    int64_t pid = atomic_load_explicit(&g_place_id, memory_order_relaxed);
+
+    if (!sober_provenance_gate_enabled()) return 0;
+    if (!sober_provenance_gate_is_genuine(SOBER_PROV_GATE_QUALIFYING_NAME))
+        return 0;
+    if (pid <= 0) return 0;
+    if (!atomic_compare_exchange_strong_explicit(&g_prov_emitted, &expected, 1,
+            memory_order_relaxed, memory_order_relaxed))
+        return 0;
+
+    fprintf(stderr,
+            "[app-shell] gate provenance: notifier-driven gameLoadedCallback "
+            "at 0x27eaf6e placeId=%lld (RSI>0), class/method cached non-NULL, "
+            "return 0x27eafb3 over thunk 0x2584960 -> GENUINE\n",
+            (long long)pid);
+    return 1;
+}
+
 int sober_provenance_gate_last_verdict(void)
 {
     return atomic_load_explicit(&g_last_verdict, memory_order_relaxed);
@@ -509,6 +587,7 @@ void sober_provenance_gate_snapshot(SoberProvenanceGateSnapshot *out)
                                             memory_order_relaxed);
     out->cached_method = atomic_load_explicit(&g_cached_method,
                                              memory_order_relaxed);
+    out->place_id = atomic_load_explicit(&g_place_id, memory_order_relaxed);
     out->last_verdict = atomic_load_explicit(&g_last_verdict,
                                              memory_order_relaxed);
 }

@@ -95,6 +95,8 @@ extern uint64_t sober_frame_surface_bind_helper_calls(void);
 #define SOBER_FE_NS_PER_S 1000000000ull
 
 static void fe_maybe_emit_lines(void);  /* forward: recorders trigger it */
+static uint64_t fe_wobs_next_seq(void); /* forward: H6 sink uses these before def */
+static uint64_t fe_wobs_tid(void);
 
 /* ---- module state (process global, survives render shutdown) ------------- */
 static _Atomic uint64_t  s_seq;
@@ -148,6 +150,22 @@ static _Atomic int s_w_seq_bad;
 static _Atomic int s_lines_emitted;
 static int s_wiring_logged;   /* neutral one-shot: producer -> verdict wired */
 
+/* ---- H6: genuine FLog sink observer --------------------------------------
+ * The guest logger 0x232de10 formats the real "Created ANativeWindow ...
+ * (ID:G)" string (fmt 0x3c163c, emitted from 0x26feb0f) and dispatches it
+ * through the function-pointer global at base+0x7d8f820.  That slot is NULL in
+ * our harness, so the genuine formatted log goes nowhere.  We install a
+ * read-only observer there: it parses the REAL guest-formatted text (never
+ * synthesizes it), feeds one G8 C10 observation, and forwards to any original
+ * sink.  No guest code byte is patched; only the data pointer is chained. */
+typedef void (*fe_flog_sink_fn)(uintptr_t category, void *ctx, unsigned level,
+                                const char *text);
+static fe_flog_sink_fn s_orig_flog_sink;
+static uintptr_t       s_flog_slot;      /* absolute address of the sink slot */
+static int             s_flog_hook_installed;
+static _Atomic uint64_t s_flog_calls;    /* total real guest logs observed */
+static _Atomic uint64_t s_flog_h6;       /* real Created... logs parsed */
+
 /* ---- small atomic helpers ------------------------------------------------ */
 static void fe_max_u64(_Atomic uint64_t *p, uint64_t v)
 {
@@ -187,6 +205,139 @@ static void fe_min_uptr(_Atomic uintptr_t *p, uintptr_t v)
                memory_order_relaxed, memory_order_relaxed)) {
         /* retry */
     }
+}
+
+/* -- H6 parser: parse the REAL guest FLog string, never synthesize it. ------ *
+ * Format 0x3c163c: "[FLog::JNIAppBridge] {}: Created ANativeWindow {} (ID:{})"
+ * The guest fills {} with (name, window pointer, generation).  We extract the
+ * pointer (0x...) following "Created ANativeWindow" and the decimal after
+ * "ID:"; both come from the guest formatter, so the values are genuine. */
+static int fe_parse_created_window(const char *text, uintptr_t *window,
+                                    uint32_t *id)
+{
+    /* Full genuine format (frozen string 0x3c163c, len 0x39):
+     *   "[FLog::JNIAppBridge] {}: Created ANativeWindow {} (ID:{})"
+     * Require prefix, marker, "0x" window, " (ID:" tail and closing ')'.  The
+     * tag {} may vary; everything else is fixed by the shipped format string. */
+    static const char prefix[] = "[FLog::JNIAppBridge] ";
+    static const char mark[]   = "Created ANativeWindow ";
+    static const char idmark[] = " (ID:";
+    const char *p, *hex, *idp;
+    char *end = NULL;
+    uintptr_t w = 0;
+    uint32_t g = 0;
+    unsigned long long v64;
+    unsigned long v32;
+
+    if (!text) return 0;
+    if (strncmp(text, prefix, sizeof(prefix) - 1u) != 0) return 0;
+    p = strstr(text, mark);
+    if (!p) return 0;
+    p += sizeof(mark) - 1u;                 /* immediately after the marker */
+    if (p[0] != '0' || p[1] != 'x') return 0;/* window is the next {} token */
+    hex = p;
+    errno = 0;
+    v64 = strtoull(hex + 2, &end, 16);
+    if (end == hex + 2 || errno == ERANGE || end[0] != ' ') return 0;
+    w = (uintptr_t)v64;
+
+    idp = strstr(end, idmark);              /* " (ID:" follows the window */
+    if (!idp) return 0;
+    errno = 0;
+    v32 = strtoul(idp + sizeof(idmark) - 1u, &end, 10);
+    if (end == idp + sizeof(idmark) - 1u || errno == ERANGE) return 0;
+    if (end[0] != ')' || end[1] != '\0') return 0; /* tail is exactly ')' */
+    g = (uint32_t)v32;
+
+    if (!w || !g) return 0;
+    *window = w;
+    *id = g;
+    return 1;
+}
+
+/* Sink installed at base+0x7d8f820.  Called by the genuine guest FLog emitter
+ * with the fully formatted text in `text`. */
+static void fe_flog_sink_hook(uintptr_t category, void *ctx, unsigned level,
+                              const char *text)
+{
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    uintptr_t base = atomic_load_explicit(&s_base, memory_order_relaxed);
+    atomic_fetch_add_explicit(&s_flog_calls, 1, memory_order_relaxed);
+    /* Accept ONLY the genuine FLog emitter sink dispatch (B+0x232e080); sibling
+     * emitters share this slot and must not be mistaken for H6. */
+    if (base && ra == base + (uintptr_t)0x232e080u && text) {
+        uintptr_t w = 0;
+        uint32_t g = 0;
+        if (fe_parse_created_window(text, &w, &g)) {
+            SoberFrameWindowObservation obs;
+            memset(&obs, 0, sizeof(obs));
+            obs.kind   = SOBER_FRAME_WOBS_GUEST_LOG;
+            obs.status = 1u;
+            obs.seq    = fe_wobs_next_seq();
+            obs.tid    = fe_wobs_tid();
+            obs.ra     = ra;   /* genuine sink-dispatch RA, never fabricated */
+            obs.window = w;    /* real pointer from the guest log */
+            obs.g_now  = g;    /* real ID from the guest log */
+            (void)frame_evidence_window_observation(&obs);
+            atomic_fetch_add_explicit(&s_flog_h6, 1, memory_order_relaxed);
+            fprintf(stderr,
+                    "[frame-evidence] H6 real guest log parsed: window=%#lx "
+                    "ID=%u (text='%.96s')\n", (unsigned long)w, g, text);
+        }
+    }
+    if (s_orig_flog_sink) s_orig_flog_sink(category, ctx, level, text);
+}
+
+/* H6 FLog sink observer is OPT-IN (lead ruling): it writes a guest data pointer
+ * (B+0x7d8f820), so the default path must NOT install it — otherwise seeded_state
+ * would always be 1 and a clean decision-013 run impossible.  Install ONLY when
+ * SOBER_FRAME_FLOG_SINK=1; any other value (incl. unset / "0") keeps it off. */
+int frame_evidence_flog_killed(void)
+{
+    const char *e = getenv(SOBER_FRAME_EVIDENCE_FLOG_ENV);
+    return !(e && e[0] == '1' && (e[1] == '\0' || e[1] == ' ' || e[1] == '\t'));
+}
+
+/* Counters for the H6 observer (diagnostics / withhold reporting). */
+uint64_t frame_evidence_flog_calls(void)
+{
+    return atomic_load_explicit(&s_flog_calls, memory_order_relaxed);
+}
+
+uint64_t frame_evidence_flog_h6(void)
+{
+    return atomic_load_explicit(&s_flog_h6, memory_order_relaxed);
+}
+
+int frame_evidence_flog_installed(void)
+{
+    return s_flog_hook_installed;
+}
+
+/* Chain the read-only observer onto the guest FLog sink data pointer. */
+static int fe_install_flog_sink(uintptr_t base)
+{
+    if (s_flog_hook_installed) return 0;
+    if (!base || frame_evidence_flog_killed()) return -1;
+    s_flog_slot = base + (uintptr_t)0x7d8f820u;
+    fe_flog_sink_fn *slot = (fe_flog_sink_fn *)s_flog_slot;
+    s_orig_flog_sink = *slot;           /* NULL in our harness; chain anyway */
+    *slot = &fe_flog_sink_hook;         /* only a data pointer is written */
+    s_flog_hook_installed = 1;
+    fprintf(stderr, "[frame-evidence] H6 FLog sink observer installed at "
+                    "%#lx (orig=%p)\n", (unsigned long)s_flog_slot,
+            (void *)(uintptr_t)s_orig_flog_sink);
+    return 0;
+}
+
+static void fe_uninstall_flog_sink(void)
+{
+    if (!s_flog_hook_installed) return;
+    fe_flog_sink_fn *slot = (fe_flog_sink_fn *)s_flog_slot;
+    if (*slot == &fe_flog_sink_hook) *slot = s_orig_flog_sink;
+    s_flog_hook_installed = 0;
+    s_flog_slot = 0;
+    s_orig_flog_sink = NULL;
 }
 
 static uint64_t fe_now_ns(void)
@@ -806,6 +957,9 @@ int frame_evidence_install_window_observers(uintptr_t guest_base)
         }
     }
     s_wobs_installed = 1;
+    /* H6: chain the read-only FLog sink observer (data pointer only).  Its
+     * failure is non-fatal: G8 simply stays REJECT at C10 (fail closed). */
+    (void)fe_install_flog_sink(guest_base);
     return 0;
 }
 
@@ -816,6 +970,7 @@ void frame_evidence_uninstall_window_observers(void)
     for (i = 0u; i < FE_WOBS_SLOTS; ++i)
         (void)fe_got_write(s_wobs_slot_addr[i], s_wobs_prev[i], NULL);
     s_wobs_installed = 0;
+    fe_uninstall_flog_sink();
 }
 
 int frame_evidence_window_observers_installed(void)
@@ -845,7 +1000,15 @@ static void fe_bringup_fault_handler(int sig)
 }
 
 int sober_render_evidence_bringup_rc(void) { return s_bringup_rc; }
-int sober_frame_evidence_should_withhold(void) { return 0; }
+/* The H6 FLog sink observer writes a guest DATA pointer (B+0x7d8f820), so a
+ * run with it installed is a seeded-guest-state run: report WITHHELD honestly
+ * so the lead's withhold audit stays clean.  Installation is opt-in via
+ * SOBER_FRAME_FLOG_SINK=1, so the default path performs no guest-data mutation
+ * and a clean seeded_state==0 run remains possible. */
+int sober_frame_evidence_should_withhold(void)
+{
+    return frame_evidence_flog_installed() ? 1 : 0;
+}
 
 int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
                                   unsigned width, unsigned height)
@@ -970,12 +1133,13 @@ int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
     s_bringup_rc = 0;
     fprintf(stderr, "[frame-evidence] bringup OK: guest wrote window %#lx "
                     "gen %u->%u bind_ra_events=%llu (RA base+0x26fea7d); "
-                    "G8 window verdict=%d reason=%s (C10 guest Created-log "
-                    "has no H6 producer yet)\n",
+                    "G8 window verdict=%d reason=%s (H6 flog_calls=%llu h6=%llu)\n",
             (unsigned long)window, g0, g1,
             (unsigned long long)bind_ra_count,
             frame_evidence_window_verdict(),
-            frame_evidence_window_reject_reason());
+            frame_evidence_window_reject_reason(),
+            (unsigned long long)frame_evidence_flog_calls(),
+            (unsigned long long)frame_evidence_flog_h6());
     return s_bringup_rc;
 }
 
@@ -1101,9 +1265,36 @@ static int fe_window_check(int *reason)
          dims->ra != base + (uintptr_t)SOBER_FRAME_W_RA_GET_HEIGHT))
         FE_WREJECT(SOBER_FRAME_WR_R9);
 
-    /* C10: guest publish log on the same window with the same ID. */
-    if (!glog || glog->window != snap->window || glog->g_now != snap->g_now)
+    /* C10: exactly one guest publish log, on the same window/ID, with the
+     * genuine FLog sink-dispatch RA; duplicates/sibling emitters are rejected. */
+    {
+        unsigned glog_count = 0u;
+        for (i = 0u; i < used; ++i) {
+            if (!atomic_load_explicit(&s_wobs_ready[(size_t)i],
+                                      memory_order_acquire)) continue;
+            if (s_wobs[(size_t)i].kind == SOBER_FRAME_WOBS_GUEST_LOG)
+                ++glog_count;
+        }
+        if (glog_count == 0u || glog_count != 1u) FE_WREJECT(SOBER_FRAME_WR_R10);
+    }
+    if (!glog || glog->status != 1u ||
+        glog->ra != base + (uintptr_t)0x232e080u ||
+        !frame_evidence_ra_is_guest(glog->ra) ||
+        glog->window != snap->window || glog->g_now != snap->g_now)
         FE_WREJECT(SOBER_FRAME_WR_R10);
+    /* Pure read-only byte checks: the sink dispatch is `ff d0` at B+0x232e07e
+     * (2-byte indirect call) and the emit site is `e8 rel32` at B+0x26feb0f
+     * targeting the genuine FLog emitter B+0x232de10.  Neither guest byte is
+     * written; a mismatch fails closed. */
+    {
+        const unsigned char *sink = (const unsigned char *)
+                                    (base + (uintptr_t)0x232e07eu);
+        if (sink[0] != 0xffu || sink[1] != 0xd0u) FE_WREJECT(SOBER_FRAME_WR_R10);
+        if (!frame_evidence_verify_call_site(
+                base + (uintptr_t)0x26feb14u,          /* RA after emit call */
+                base + (uintptr_t)0x232de10u))         /* FLog emitter target */
+            FE_WREJECT(SOBER_FRAME_WR_R10);
+    }
 
 #undef FE_WREJECT
     return SOBER_FRAME_WVERDICT_ACCEPT;

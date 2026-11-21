@@ -70,7 +70,20 @@ baseline is preserved. All crashpad routes remain explicitly opt-in via
 `SOBER_FLAGS_LATCH_ROUTE` and force the marker withhold. No byte writes and no
 gate weakening.
 
-## 6. Standing verdict
+## 6. Root cause confirmed and route closure (team #495)
+
+Worker-2 reproduced the abort with an LD_PRELOAD all-stdio interposer: the last
+stdio call before `Fatal error: glibc detected an invalid stdio handle` is
+`fprintf()` on a Bionic-layout `FILE*` in the crashpad fatal path, just after
+the guest logs `crashpad handler: real crash.`. Host-side fixes were all tried
+and reverted: mapped `fprintf`/`fputs`/`vfprintf` wrappers (both in the compat
+DSO and via generator asm aliases), `__android_log_write` using raw `write(2)`,
+and abort/backtrace interposers (the guest crashpad handler replaces SIGABRT).
+No non-terminating genuine route was found: `nativeInitClientSettings` remains
+gated for every tested string, and the `0x56d*` dialog writers require a
+fabricated CppProxy. Default route stays `none`/inert; marker WITHHELD.
+
+## 7. Standing verdict
 
 Callback leg remains **0/1**. No notifier hit at `0x27eaf6e`, no RA pair
 `0x2584960 → 0x27eafb3`, no `gameLoadedCallback(J)V`. Score stays ≈61% and the

@@ -29,17 +29,23 @@ diagnostic now produces 2 guest-tagged swaps and 1 guest draw, but the callback
 leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
 (decision 013 / 038).
 
-Latest blocker (tasks #485/#486, then this team #487–#492): the singleton
-accessor blocker is fixed with the guest's own flag setter, removing fault
-`0x24ad562`. The callback path still stops at the genuine TaskScheduler
-"flags loaded" guard (`0x6caef67`, latch `0x7cdd149`). All six guest writers
-are mapped in `analysis/A15-flags-latch-route.md`; the only feasible one is the
-crashpad writer, which sets the latch and then terminates in crashpad's fatal
-path (`analysis/A14-flags-loaded-latch.md`). It is therefore opt-in only:
-`SOBER_FLAGS_LATCH_ROUTE` defaults to `none` (inert), so the honest fault
-baseline is preserved. The render leg gained a fail-closed evidence bringup and
-a genuine `Surface.mNativeObject` provider, but C10/H6 and genuine guest
-swaps/draw remain open. Marker stays WITHHELD; score unchanged.
+Latest blocker (teams #485–#492 and #493–#496): the singleton accessor blocker
+is fixed with the guest's own flag setter, removing fault `0x24ad562`. The
+callback path still stops at the genuine TaskScheduler "flags loaded" guard
+(`0x6caef67`, latch `0x7cdd149`). The crashpad writer's abort is now root-caused
+to glibc `IO_validate` on a Bionic-layout `FILE*` passed to `fprintf` in the
+crashpad fatal path; all host-side stdio-routing fixes failed, so the writer is
+opt-in only (`SOBER_FLAGS_LATCH_ROUTE` defaults to `none`) and the honest fault
+baseline is preserved. The callback credential was hardened with `placeId>0`
+from `0x72a31c0` and a guest stack frame above notifier RA `0x27eafb3`
+(`analysis/callback/task494-genuine-leg.md`). On the render side, a genuine H6
+FLog sink observer was added (opt-in `SOBER_FRAME_FLOG_SINK=1`, with the true RA
+`0x232e080` and full message-shape checks; see
+`analysis/H6_created_anw_sub.md`), but G8 still rejects at `R8_NO_ACQUIRE`: the
+guest EGL-init calls `0x649c2d6/303/30f` never run in the host-EGL harness, and
+the `JNIAppBridge` flag `0x72a3268=0x406` suppresses the level-5 window log.
+No string, handle, RA, hook or callback is fabricated. Marker stays WITHHELD;
+score unchanged.
 
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████

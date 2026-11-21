@@ -1712,8 +1712,10 @@ int guest_app_shell_run(uintptr_t base)
      * it can never justify the real marker, regardless of which callbacks the
      * bridge happened to observe. These knobs are all off by default. */
     int seeded_state = getenv("SOBER_ABRT_DIAG") ||
+                       getenv("SOBER_FRAME_FLOG_SINK") ||
                        getenv("SOBER_FLAGS_LATCH_DEFAULT") ||
                        getenv("SOBER_FLAGS_LATCH_ROUTE") ||
+                       getenv("SOBER_FLAGS_LATCH_CS_JSON") ||
                        sober_flags_latch_default_should_withhold() ||
                        sober_frame_evidence_should_withhold() ||
                        getenv("SOBER_FIELDS_NATIVE_DEFAULT") ||
@@ -1897,6 +1899,13 @@ int guest_app_shell_run(uintptr_t base)
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "
                         "seed active (no app-shell frame proven)\n");
         shell_cb = 0;
+    } else {
+        /* Worker-3 #494: emit only on a genuinely clean state.  The gate
+         * function itself is fail-closed and emits nothing unless the notifier-
+         * driven callback credential and placeId>0 are both genuine. */
+        (void)sober_provenance_gate_emit_provenance();
+        fprintf(stderr, "[app-shell] clean state: seeded_state=0 "
+                        "(all opt-ins unset)\n");
     }
     /* Persisted phase-3 flag: stays valid after the render context shuts down,
      * unlike sober_render_get_active(). */

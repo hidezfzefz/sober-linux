@@ -120,6 +120,10 @@ extern "C" {
 #define SOBER_PROV_GATE_RVA_APPBRIDGE_RET   0x2eb4bb1u  /* onAppBridgeNotification reader return */
 #define SOBER_PROV_GATE_RVA_CACHED_CLASS    0x72a2f48u  /* cached NativeGLJavaInterface jclass */
 #define SOBER_PROV_GATE_RVA_CACHED_METHOD   0x72a2fc0u  /* cached gameLoadedCallback (J)V methodID */
+/* placeId cached by nativeAppBridgeV2StartGameWithParam (0x2ebd86a).  GENUINE
+ * requires it > 0 (a real Java StartGameParams.placeId()J), never a fabricated
+ * positive value.  Read-only sample taken at dispatch time. */
+#define SOBER_PROV_GATE_RVA_PLACE_ID        0x72a31c0u
 
 /* ---- qualifying dispatch name ------------------------------------------ */
 #define SOBER_PROV_GATE_QUALIFYING_NAME     "gameLoadedCallback"
@@ -145,6 +149,7 @@ typedef struct {
     uintptr_t caller_return_addr;  /* last caller RA observed (0 if none)      */
     uintptr_t cached_class;        /* value read at base+0x72a2f48            */
     uintptr_t cached_method;       /* value read at base+0x72a2fc0            */
+    int64_t   place_id;            /* read at base+0x72a31c0 at dispatch time  */
     int       last_verdict;        /* one of SOBER_PROV_GATE_VERDICT_*         */
 } SoberProvenanceGateSnapshot;
 
@@ -208,6 +213,16 @@ SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_thunk_return_addr(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_caller_return_addr(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_class(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_method(void);
+/* placeId sampled read-only from base+0x72a31c0 at the last dispatch. */
+SOBER_PROV_GATE_API int64_t   sober_provenance_gate_place_id(void);
+
+/* Emit the gate-owned positive provenance line ONCE, and only when the full
+ * credential holds (GENUINE + placeId>0 + no harness taint).  Returns 1 when
+ * the line was emitted, 0 when withheld.  This is a diagnostic observation,
+ * NEVER a decision-013 marker and NEVER a fabricated callback: the line quotes
+ * only values actually observed by the credential.  The lead calls it from
+ * the strict gate after checking seeded_state==0. */
+SOBER_PROV_GATE_API int sober_provenance_gate_emit_provenance(void);
 SOBER_PROV_GATE_API int       sober_provenance_gate_last_verdict(void);
 SOBER_PROV_GATE_API const char *sober_provenance_gate_verdict_name(int verdict);
 SOBER_PROV_GATE_API void      sober_provenance_gate_snapshot(SoberProvenanceGateSnapshot *out);
