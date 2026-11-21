@@ -30,6 +30,8 @@
 
 typedef void (*sober_pd_dispatch_fn)(void *node, const int64_t *place_id);
 typedef long (*sober_pd_start_game_fn)(void *env, void *jclass, void *params);
+/* Genuine guest registration: register(event_id=1, &cached_slot_global). */
+typedef void (*sober_pd_register_fn)(int event_id, void *slot_global);
 
 static _Atomic uint64_t g_hits[SOBER_PD_STAGE_COUNT];
 static _Atomic uint64_t g_publish_calls;
@@ -41,6 +43,7 @@ static _Atomic uintptr_t g_node;
 static _Atomic uintptr_t g_descriptor;
 static _Atomic int       g_last_rc;
 static _Atomic int       g_verified;
+static _Atomic uint64_t  g_register_calls;
 
 /* ---- gate ---------------------------------------------------------------- */
 int sober_publish_default_enabled(void)
@@ -216,6 +219,43 @@ done:
     return rc;
 }
 
+/* ---- ensure the guest's own id=1 subscription node exists ----------------
+ * On the real app path, nativeAppBridgeV2InitWithParams (0x24abf96) registers
+ * the GameLoaded descriptor at 0x24ad6a5 via `register(1, base+0x7234520)`.
+ * That call is reached only after the app-state prerequisites (FFlag control
+ * block / singleton) exist; when they are absent, the guest never registers
+ * the node and find_node() returns NULL, so publication cannot start.
+ *
+ * We re-drive that SAME genuine guest registration function here.  The guest
+ * builds the id=1 descriptor (vptr 0x6dbbf98, slot &0x7234520) and the 0x60
+ * node with its own allocator (0x1dbab02) and inserts it into the MessageBus
+ * +0x288 list.  The host supplies only (event_id=1, &slot_global); no guest
+ * byte is written by us, no descriptor/node/vtable is fabricated, and we
+ * never call the notifier (0x27eaf6e) or thunk (0x25848e0) directly.  The
+ * guest's one-shot guard at base+0x72a31ba makes repeated calls inert. */
+static void *pd_ensure_node(unsigned char *b)
+{
+    void *node = sober_publish_default_find_node(b);
+    if (node) return node;      /* already registered by the guest */
+
+    if (!sober_publish_default_enabled()) return NULL;
+    {
+        sober_pd_register_fn reg =
+            (sober_pd_register_fn)(uintptr_t)(b + SOBER_PD_RVA_NODE_REGISTER);
+        atomic_fetch_add(&g_register_calls, 1);
+        reg(1, b + SOBER_PD_RVA_SLOT_GLOBAL);
+    }
+    node = sober_publish_default_find_node(b);
+    /* One-line diagnostic: the guest registers several MessageBus descriptors,
+     * but the id=1 GameLoaded node only exists once nativeAppBridgeV2InitWithParams
+     * reaches 0x24ad6a5 (which needs the app-state prerequisites).  Until then
+     * find_node() returns NULL and publication is WITHHELD, not fabricated. */
+    fprintf(stderr,
+            "[publish-default] guest node registration 0x253cb56(1,&0x7234520) "
+            "-> node=%p (NULL = id=1 GameLoaded node not registered yet)\n", node);
+    return node;
+}
+
 /* ---- the genuine publication --------------------------------------------- */
 int sober_publish_default_publish(void *guest_base, int64_t place_id)
 {
@@ -236,6 +276,10 @@ int sober_publish_default_publish(void *guest_base, int64_t place_id)
         atomic_store(&g_last_rc, SOBER_PD_NO_STATE);
         return SOBER_PD_NO_STATE;  /* 0 skips the guest log at 0x27eafb3 */
     }
+
+    /* Make sure the guest itself registered its id=1 subscription node before
+     * verifying the chain.  Genuine guest call; no fabricated state. */
+    (void)pd_ensure_node(b);
 
     rc = sober_publish_default_verify(b, NULL, 0);
     if (rc != SOBER_PD_OK) {
@@ -380,13 +424,14 @@ const char *sober_publish_default_describe(char *buf, size_t cap)
     if (!buf || cap == 0)
         return "";
     snprintf(buf, cap,
-             "enabled=%d gate=%s publish=%llu chain_ok=%llu "
+             "enabled=%d gate=%s publish=%llu chain_ok=%llu register=%llu "
              "hits[dispatch=%llu call=%llu invoke=%llu notifier=%llu "
              "thunk_ret=%llu callback=%llu] placeId=%lld last_rc=%d "
              "node=%p desc=%p",
              sober_publish_default_enabled(), SOBER_PUBLISH_DEFAULT_ENV,
              (unsigned long long)atomic_load(&g_publish_calls),
              (unsigned long long)atomic_load(&g_chain_ok),
+             (unsigned long long)atomic_load(&g_register_calls),
              (unsigned long long)atomic_load(&g_hits[SOBER_PD_STAGE_DISPATCH]),
              (unsigned long long)atomic_load(&g_hits[SOBER_PD_STAGE_PUBLISH_CALL]),
              (unsigned long long)atomic_load(&g_hits[SOBER_PD_STAGE_INVOKE]),
@@ -415,4 +460,5 @@ void sober_publish_default_reset(void)
     atomic_store(&g_descriptor, 0);
     atomic_store(&g_last_rc, SOBER_PD_DISABLED);
     atomic_store(&g_verified, 0);
+    atomic_store(&g_register_calls, 0);
 }

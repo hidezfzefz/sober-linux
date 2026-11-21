@@ -30,6 +30,16 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+/* Forward REAL observed swap events to frame_evidence, the sole render-leg
+ * verdict owner.  Weak so this TU still links without frame_evidence.c.
+ * Only events actually captured by the GOT observer are forwarded; the
+ * forwarding loop below never manufactures a count. */
+#if defined(__GNUC__) || defined(__clang__)
+extern void frame_evidence_record_swap(uintptr_t ra) __attribute__((weak));
+#else
+extern void frame_evidence_record_swap(uintptr_t ra);
+#endif
+
 /* ---- shared observation state (visible across the fork guard) ----------- */
 struct fd_shared {
     _Atomic uint64_t swaps_total;
@@ -37,6 +47,10 @@ struct fd_shared {
     _Atomic uint64_t swaps_host;
     _Atomic uint64_t drives;
     _Atomic uint64_t verified;
+    _Atomic uint64_t forward_guest; /* real guest-RA swap events observed     */
+    _Atomic uint64_t forward_host;  /* real host-RA swap events observed      */
+    _Atomic uintptr_t last_guest_ra;
+    _Atomic uintptr_t last_host_ra;
     _Atomic uintptr_t last_ra;      /* written directly by the GOT stub       */
     _Atomic uint64_t seq;
     uintptr_t first_ra;
@@ -47,6 +61,8 @@ struct fd_shared {
 
 /* ---- module state -------------------------------------------------------- */
 static struct fd_shared *s_shared;
+static uint64_t s_forwarded_guest;
+static uint64_t s_forwarded_host;
 static uintptr_t s_base;
 static uintptr_t s_ctx;
 static uintptr_t s_vt;
@@ -256,10 +272,16 @@ static void fd_record_evidence(uintptr_t ra)
     fd_bump(&s_shared->swaps_total);
     if (fd_in_guest(ra)) {
         fd_bump(&s_shared->swaps_guest);
+        fd_bump(&s_shared->forward_guest);   /* one real event -> one forward */
+        atomic_store_explicit(&s_shared->last_guest_ra, ra,
+                              memory_order_relaxed);
         if (s_shared->first_ra == 0u) s_shared->first_ra = ra;
         else if (s_shared->first_ra == ra) s_shared->stable_ra = 1;
     } else {
         fd_bump(&s_shared->swaps_host);
+        fd_bump(&s_shared->forward_host);    /* keep mixed evidence honest    */
+        atomic_store_explicit(&s_shared->last_host_ra, ra,
+                              memory_order_relaxed);
         /* A later host/Route-B swap must not erase the guest-RA evidence
          * already captured: counters and last_ra still record it faithfully. */
         if (s_shared->evidence.guest) return;
@@ -298,6 +320,31 @@ static void fd_record_evidence(uintptr_t ra)
 static void fd_on_swap(uintptr_t ra)
 {
     fd_record_evidence(ra);             /* shared: survives a later child fault */
+}
+
+/* Forward exactly the events the GOT observer really captured.  Called in the
+ * PARENT after fd_drive_once(), so a child fault cannot lose/corrupt the
+ * frame_evidence process-local immutable log.  The child may observe a host
+ * swap too; forwarding it keeps frame_evidence's sticky mixed taint honest. */
+static void fd_forward_evidence(void)
+{
+    void (*record)(uintptr_t) = frame_evidence_record_swap;
+    uint64_t g, h;
+    if (!record || !s_shared) return;
+    g = atomic_load_explicit(&s_shared->forward_guest, memory_order_relaxed);
+    h = atomic_load_explicit(&s_shared->forward_host, memory_order_relaxed);
+    while (s_forwarded_guest < g) {
+        uintptr_t ra = atomic_load_explicit(&s_shared->last_guest_ra,
+                                           memory_order_relaxed);
+        record(ra);
+        ++s_forwarded_guest;
+    }
+    while (s_forwarded_host < h) {
+        uintptr_t ra = atomic_load_explicit(&s_shared->last_host_ra,
+                                           memory_order_relaxed);
+        record(ra);                    /* 0 is classified as synthetic */
+        ++s_forwarded_host;
+    }
 }
 
 /* ---- shaped device object ------------------------------------------------ */
@@ -382,6 +429,8 @@ int sober_frame_dispatch_install(const struct sober_frame_dispatch_config *cfg)
         return s_last_rc;
     }
     memset(s_shared, 0, sizeof(*s_shared));
+    s_forwarded_guest = 0u;
+    s_forwarded_host = 0u;
 
     s_base = (uintptr_t)cfg->guest_base;
     s_ctx = (uintptr_t)cfg->render_ctx;
@@ -491,6 +540,7 @@ int sober_frame_dispatch_drive(unsigned count)
                 s_shared->site_rva = (uintptr_t)SOBER_FD_RVA_SWAP_CALL;
         }
     }
+    fd_forward_evidence();              /* real RA events -> sole verdict owner */
     s_withhold = 1;
     s_last_rc = (atomic_load_explicit(&s_shared->verified,
                                      memory_order_relaxed) > 0u)
@@ -540,6 +590,8 @@ int sober_frame_dispatch_is_installed(void)
 void sober_frame_dispatch_reset(void)
 {
     if (s_shared) memset(s_shared, 0, sizeof(*s_shared));
+    s_forwarded_guest = 0u;
+    s_forwarded_host = 0u;
     s_run_done = 0;
     s_withhold = 0;
     s_last_rc = fd_env_disabled() ? SOBER_FD_DISABLED : SOBER_FD_OK;

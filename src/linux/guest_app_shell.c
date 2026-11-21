@@ -8,6 +8,9 @@
  * emits the real marker.
  */
 #define _GNU_SOURCE
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "guest_app_shell.h"
 #include "bionic_bootstrap.h"
 #include "native_jni.h"
@@ -54,6 +57,19 @@
 #include "frame_surface.h"
 #include "frame_thread.h"
 #include "frame_synthetic_tag.h"
+
+/* Gated crashpoint diagnostic: report the guest latch when a guest path aborts
+ * inside the crashpad writer, without changing any guest state. */
+static uintptr_t g_abrt_base;
+static void sober_abrt_diag(int sig)
+{
+    (void)sig;
+    if (g_abrt_base)
+        fprintf(stderr, "[abrt-diag] latch=%u counter=%#x\n",
+                (unsigned)*(volatile unsigned char *)(g_abrt_base + 0x7cdd149u),
+                (unsigned)*(volatile unsigned char *)(g_abrt_base + 0x72a3710u));
+    _exit(134);
+}
 
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -943,6 +959,10 @@ static intptr_t game_params_get(void *env, void *obj, const char *name,
 
 int guest_app_shell_run(uintptr_t base)
 {
+    if (getenv("SOBER_ABRT_DIAG")) {
+        g_abrt_base = base;
+        signal(SIGABRT, sober_abrt_diag);
+    }
     SoberJniOptions opts;
     memset(&opts, 0, sizeof(opts));
     opts.app_name = "sober-native-app-shell";
@@ -991,26 +1011,10 @@ int guest_app_shell_run(uintptr_t base)
      * 0x6096928 predicate). Ensure the flag through the guest's own setter. */
     int ff_rc = sober_fflag_default_replay((void *)base);
     fprintf(stderr, "[app-shell] default FFlag ctor[0] replay -> rc=%d\n", ff_rc);
-    /* Only drive the guest flag setter when the FFlag registry actually
-     * verified. With an unbuilt control block the setter faults in the guest
-     * worker chain (0x2e5d42a family), so fail closed and let the singleton
-     * gate report SOBER_SD_GATE instead of crashing. */
-    int ff_set_rc = SOBER_CD_DISABLED;
-    if (sober_fflag_default_verify((void *)base) == SOBER_FFLAG_DEFAULT_OK) {
-        ff_set_rc = sober_controller_default_ensure_flag((void *)base);
-    }
-    fprintf(stderr, "[app-shell] controller ensure_flag -> rc=%d\n", ff_set_rc);
-
     /* Scheduler guest nesting prime: install now; the actual prime is fired
      * from on_attach("FunctionMarshaller") at the JavaVM attach site. */
     int sg_rc = sober_scheduler_guest_install((void *)base);
     fprintf(stderr, "[app-shell] scheduler guest install -> rc=%d\n", sg_rc);
-
-    /* Populated app singleton (+0x48/+0x50 service vector). Supersedes the
-     * default-OFF singleton_services/singleton_fix diagnostic modules. */
-    int sd_rc = sober_singleton_default_install((void *)base);
-    fprintf(stderr, "[app-shell] default app singleton -> rc=%d singleton=%p\n",
-            sd_rc, *(void **)(base + 0x72cb5e0u));
 
     /* Guest-tagged render path. Phase 3 already created a native context, so
      * derive the config from the active render and let the module install its
@@ -1036,29 +1040,72 @@ int guest_app_shell_run(uintptr_t base)
             (unsigned long long)sober_render_guest_swaps_guest_tagged());
 
     /* T2-5 flags-loaded latch 0x7cdd149. nativeInitClientSettings cannot set it
-     * (parse-ctx byte 0x7697d08 is 1), so replay the guest's OWN unconditional
-     * writer: CrashpadHandlerMain 0x2ec9c30(int argc, char** argv) with a native
-     * argv containing "--channel","LIVE", which stores into 0x72a3710 and then
-     * writes the latch at 0x2ec9fae. Default-ON; kill switch =0. No byte writes. */
+     * (parse-ctx byte 0x7697d08 is 1), so replay the guest's OWN latch writer
+     * 0x2ec9eed with a native argv.  Calling the full CrashpadHandlerMain
+     * 0x2ec9c30 instead would actually launch crashpad and abort the process,
+     * so only the two state-setting calls it makes are replayed here:
+     *   0x2e57c20(&0x72a3710, "LIVE")  -> crash-counter string gate
+     *   0x2ec9eed(argc, argv)          -> movb $1,0x7cdd149 @0x2ec9fae
+     * OPT-IN ONLY (SOBER_FLAGS_LATCH_CRASHPAD=1): the writer's tail still
+     * invokes crashpad's fatal-error path in our headless process, so leaving
+     * it on by default would replace an honest guest int3 with a host abort.
+     * No byte writes. */
+    const char *fljni = getenv("SOBER_FLAGS_LATCH_JNI");
+    if (fljni && fljni[0] == '1') {
+        /* Genuine JNI route (worker-1): nativeRunCrashpadHandler converts a
+         * real String[] through guest code before reaching writer 0x2ec9eed,
+         * so every argv element is consistent and the channel global is set. */
+        (void)sober_jni_arrays_install(j);  /* idempotent; needed before call */
+        const char *fl_strings[] = {
+            "--crashCounter", "LIVE",
+            "--baseUrl", "http://127.0.0.1/",
+            "--sentryUrl", "http://127.0.0.1/",
+            "--sentryDbPath", "/tmp/sober-sentry.db",
+            "--sentryLogPath", "/tmp/sober-sentry.log",
+            "entryUrl", "http://127.0.0.1/",
+            "--channel", "LIVE",
+            "--isSimulatedCrash", "1"
+        };
+        void *fl_arr = sober_jni_new_string_array(
+            j, fl_strings, (int)(sizeof(fl_strings) / sizeof(fl_strings[0])));
+        void *fl_cls = sober_jni_find_class(
+            j, "com/roblox/engine/jni/NativeSettingsInterface");
+        long fl_rc = 0;
+        if (fl_arr && fl_cls)
+            fl_rc = ((long (*)(void *, void *, void *))
+                (base + 0x2eca720u))(sober_jni_env(j), fl_cls, fl_arr);
+        fprintf(stderr, "[app-shell] nativeRunCrashpadHandler 0x2eca720 "
+                        "-> rc=%ld arr=%p flags-loaded latch=%u\n",
+                fl_rc, fl_arr,
+                (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u));
+    }
     const char *flcp = getenv("SOBER_FLAGS_LATCH_CRASHPAD");
-    if (!flcp || flcp[0] != '0') {
+    if ((!fljni || fljni[0] != '1') && flcp && flcp[0] == '1') {
         char fl_ch[] = "LIVE";
         char fl_key[] = "--channel";
-        char fl_url[] = "--baseUrl";
+        char fl_counter_key[] = "--crashCounter";
+        char fl_sim[] = "--isSimulatedCrash";
         char fl_prog[] = "crashpad";
-        /* 0x2ec9cb0 scans for "--baseUrl" and stores its value into the latch
-         * global 0x72a3710; the latch writer 0x2ec9eed re-scans for "--channel".
-         * Supply both so the single gate (non-empty 0x72a3710) is satisfied. */
-        char *fl_argv[] = { fl_prog, fl_url, fl_ch, fl_key, fl_ch, NULL };
-        ((void (*)(int, char **))(base + 0x2ec9c30u))(5, fl_argv);
-        fprintf(stderr, "[app-shell] crashpad flags latch 0x7cdd149 = %u "
-                        "channel@0x72a3710 tag=%#x (--channel=%s)\n",
+        char *fl_argv[] = { fl_prog, fl_counter_key, fl_ch, fl_key, fl_ch,
+                            fl_sim, NULL };
+        int fl_argc = 6;
+        /* CrashpadHandlerMain consumes --crashCounter before calling the
+         * writer; replay that consumption so the writer's option parser does
+         * not see an unknown key.  0x2ec9dff removes key+value from argv and
+         * returns the value pointer. */
+        char *fl_counter =
+            ((char *(*)(int *, char **, const char *))(base + 0x2ec9dffu))(
+                &fl_argc, fl_argv, fl_counter_key);
+        ((void (*)(void *, const char *))(base + 0x2e57c20u))(
+            (void *)(base + 0x72a3710u), fl_counter ? fl_counter : fl_ch);
+        ((void (*)(int, char **))(base + 0x2ec9eedu))(fl_argc, fl_argv);
+        fprintf(stderr, "[app-shell] flags-loaded latch 0x7cdd149 = %u "
+                        "counter@0x72a3710 tag=%#x (guest writer 0x2ec9eed)\n",
                 (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
-                (unsigned)*(volatile unsigned char *)(base + 0x72a3710u),
-                fl_ch);
+                (unsigned)*(volatile unsigned char *)(base + 0x72a3710u));
     } else {
-        fprintf(stderr, "[app-shell] crashpad flags latch SKIPPED "
-                        "(SOBER_FLAGS_LATCH_CRASHPAD=0)\n");
+        fprintf(stderr, "[app-shell] flags-loaded latch SKIPPED "
+                        "(SOBER_FLAGS_LATCH_CRASHPAD != 1)\n");
     }
 
     /* B3: opt-in faithful JNI array objects (GetArrayLength/GetObjectArrayElement). */
@@ -1082,10 +1129,20 @@ int guest_app_shell_run(uintptr_t base)
             "com/roblox/engine/jni/NativeGLJavaInterface");
         void *a, *b, *c;
         if (sober_jstr_enabled()) {
-            /* A3: nativeInitClientSettings' shared body 0x2eb7155 tests the
-             * jstring's low tag bit and reads +8 as a char pointer; ordinary
-             * bridge SrObjects have a zero tag and take the bypass path. */
-            a = sober_jstr_create((void *)base, "{}");
+            /* A3: 0x2315532 converts each jstring through GetStringUTFChars
+             * (fn[165] @ +0x548).  The default bridge stub does not recognise
+             * a standalone canonical handle and returns NULL, so the guest
+             * sees an empty settings string and takes the bypass path.  Install
+             * the opt-in canonical accessors into the JNIEnv table first. */
+            void *cs_env_obj = sober_jni_env(j);
+            void **cs_fn = cs_env_obj
+                ? (void **)((char *)*(void **)cs_env_obj + 0x20u) : NULL;
+            int ji_rc = sober_jstr_install(cs_fn, (void *)base);
+            fprintf(stderr, "[app-shell] canonical jstrings install -> rc=%d\n",
+                    ji_rc);
+            const char *cs_json = getenv("SOBER_SETTINGS_JSON");
+            if (!cs_json) cs_json = "{}";
+            a = sober_jstr_create((void *)base, cs_json);
             b = sober_jstr_create((void *)base, "LIVE");
             c = sober_jstr_create((void *)base, "2.740.931");
         } else {
@@ -1093,11 +1150,25 @@ int guest_app_shell_run(uintptr_t base)
             b = sober_jni_new_string_utf8(j, "LIVE");
             c = sober_jni_new_string_utf8(j, "2.740.931");
         }
+        fprintf(stderr, "[app-shell] client-settings pre: "
+                        "7697cf0=%#x 7697d08=%#x 7697d09=%#x 72a31b8=%#x "
+                        "jstr0=%p tag=%#x\n",
+                (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7697d09u),
+                (unsigned)*(volatile unsigned char *)(base + 0x72a31b8u),
+                a, a ? (unsigned)*(volatile unsigned char *)a : 0u);
         long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
             (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
         fprintf(stderr, "[app-shell] nativeInitClientSettings 0x2359277 "
-                        "-> rc=%ld, flags-loaded latch=%u\n", cs_rc,
-                (unsigned)*(unsigned char *)(base + 0x7cdd149u));
+                        "-> rc=%ld, flags-loaded latch=%u "
+                        "(7697cf0=%#x 7697d08=%#x 7697d09=%#x 72a31b8=%#x)\n",
+                cs_rc,
+                (unsigned)*(unsigned char *)(base + 0x7cdd149u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7697d09u),
+                (unsigned)*(volatile unsigned char *)(base + 0x72a31b8u));
     }
 
     /* Task #461: must land BEFORE the JNI_OnLoad/JavaVM seeds — the first
@@ -1205,6 +1276,50 @@ int guest_app_shell_run(uintptr_t base)
     if (seed_rc != SOBER_JNI_OK) {
         sober_jni_shutdown(j);
         return -3;
+    }
+
+    /* Flag setter + singleton MUST run AFTER the cached JNI IDs are seeded:
+     * the FFlag descriptor thunk 0x22e567a -> 0x227c18e performs a JNI fetch
+     * through the registry, which needs those IDs.  Drive the flag through the
+     * guest's own setter (registry created by 0x227be14 when JNI_OnLoad was
+     * skipped), then install the populated app singleton. */
+    int ff_set_rc = SOBER_CD_DISABLED;
+    if (sober_fflag_default_verify((void *)base) == SOBER_FFLAG_DEFAULT_OK)
+        ff_set_rc = sober_controller_default_ensure_flag((void *)base);
+    fprintf(stderr, "[app-shell] controller ensure_flag -> rc=%d flag=%u\n",
+            ff_set_rc, (unsigned)*(volatile unsigned char *)(base + 0x72cb648u));
+    int sd_rc = sober_singleton_default_install((void *)base);
+    fprintf(stderr, "[app-shell] default app singleton -> rc=%d singleton=%p\n",
+            sd_rc, *(void **)(base + 0x72cb5e0u));
+    if (getenv("SOBER_SD_DEBUG")) {
+        unsigned char *app = *(unsigned char **)(base + 0x72cb5e0u);
+        fprintf(stderr, "[sd-debug] app=%p", (void *)app);
+        if (app) {
+            uintptr_t vt = *(uintptr_t *)app;
+            uintptr_t slot10 = *(uintptr_t *)(vt + 0x10);
+            uintptr_t begin = *(uintptr_t *)(app + 0x48);
+            uintptr_t end = *(uintptr_t *)(app + 0x50);
+            uintptr_t desc = begin ? *(uintptr_t *)begin : 0;
+            fprintf(stderr, " vt=%p slot10=%p (expect %p) vec=%p..%p desc=%p",
+                    (void *)vt, (void *)slot10,
+                    (void *)(base + 0x6091654u),
+                    (void *)begin, (void *)end, (void *)desc);
+            if (desc)
+                fprintf(stderr, " key=%p (expect %p)",
+                        (void *)*(uintptr_t *)(desc + 0x68),
+                        (void *)(base + 0x72cb640u));
+        }
+        unsigned pred = ((unsigned (*)(void))(base + 0x6096928u))();
+        void *probe = ((void *(*)(void))(base + 0x30ef840u))();
+        fprintf(stderr,
+                " pred=%u(al=%u) gate_byte=%u migrate_flag=%u "
+                "rollout=%u bucket=%u rollout_name=%p probe=%p\n",
+                pred, pred & 0xff,
+                (unsigned)*(volatile unsigned char *)(base + 0x77979c0u),
+                (unsigned)*(volatile unsigned char *)(base + 0x7797968u),
+                *(volatile unsigned *)(base + 0x7797990u),
+                *(volatile unsigned *)(base + 0x77979b8u),
+                *(void **)(base + 0x7797998u), probe);
     }
 
     /* Task #449: opt-in seed of the JNI_OnLoad-cached JavaVM* global
@@ -1386,7 +1501,7 @@ int guest_app_shell_run(uintptr_t base)
      * +0x440 controller (which verifies both and drives the real installer). */
     void *o488 = NULL;
     int dd_rc = SOBER_CD_DISABLED, cd_rc = SOBER_CD_DISABLED;
-    if (sd_rc == SOBER_SD_OK) {
+    if (sober_singleton_default_ptr((void *)base)) {
         o488 = sober_app488_default_install_from_wrapper((void *)base);
         fprintf(stderr, "[app-shell] default app+0x488 -> %p\n", o488);
         dd_rc = sober_delegate_default_install_from_wrapper((void *)base);
@@ -1644,13 +1759,17 @@ int guest_app_shell_run(uintptr_t base)
      * the phase-7 diagnostics makes the startup state harness-manufactured, so
      * it can never justify the real marker, regardless of which callbacks the
      * bridge happened to observe. These knobs are all off by default. */
-    int seeded_state = getenv("SOBER_ALT_CALLBACK_PATH") ||
+    int seeded_state = getenv("SOBER_ABRT_DIAG") ||
+                       getenv("SOBER_FLAGS_LATCH_JNI") ||
+                       getenv("SOBER_SD_DEBUG") ||
+                       getenv("SOBER_ALT_CALLBACK_PATH") ||
                        getenv("SOBER_START_APP") ||
                        getenv("SOBER_SCHEDULE_RUNNABLE") ||
                        getenv("SOBER_SCHED_RVA") ||
                        getenv("SOBER_TLS_BYTES") ||
                        getenv("SOBER_STARTGAME_V2") ||
                        getenv("SOBER_CLIENT_SETTINGS_INIT") ||
+                       getenv("SOBER_SETTINGS_JSON") ||
                        getenv("SOBER_GAME_PARAMS") ||
                        getenv("SOBER_CANONICAL_JSTRINGS") ||
                        getenv("SOBER_SEED_USER_CONTROLLER") ||
@@ -1792,6 +1911,7 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_FIELDS_DEFAULT_HEIGHT_MM") ||
                        getenv("SOBER_JNISLOTS_DEFAULT") ||
                        getenv("SOBER_FLAGS_LATCH_CRASHPAD") ||
+                       getenv("SOBER_FLAG_REGISTRY_REPAIR") ||
                        /* Module verdicts: active manufactured state. The
                         * provenance gate is deliberately NOT here: it is the
                         * fail-closed positive credential, not a seed. */

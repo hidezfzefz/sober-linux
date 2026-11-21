@@ -13,6 +13,16 @@ No Flatpak (`791c3f9e` / 2.745) RVA is used anywhere in the shipped source.
 
 **Overall: ≈61% complete (sensitivity band 56–65%)** after the 40-agent frame push. The original 14-audit baseline was 46%, the integration team 57%. The gain is render-side only: a withheld diagnostic now drives guest code that produces 2 guest-tagged swaps (RA `0x649067e`) and 1 guest draw, but it is seeded state, not an app-shell frame. The callback leg remains 0/1, so the marker stays WITHHELD.
 
+**Follow-up (tasks #485/#486):** the singleton predicate blocker is fixed with
+genuine guest flag-setter calls, and the old fault `0x24ad562` is gone. The
+callback path now reaches the second guest guard, the flags-loaded latch
+`0x7cdd149`: `RBXCRASH ... Can't initialize the TaskScheduler before flags have
+been loaded` at `0x6caef67`. Both genuine writers reachable in this build
+(`nativeInitClientSettings 0x2359277` and the crashpad writer `0x2ec9eed`) are
+documented in `analysis/A14-flags-loaded-latch.md`; the latter aborts inside
+crashpad's fatal path, so it is opt-in only and the default path stays honest.
+No notifier hit, no `gameLoadedCallback(J)V`, no marker. Score unchanged.
+
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven
 guest→Java callback under clean state — is **NOT PROVEN**. Infrastructure is
@@ -172,8 +182,10 @@ diagnostic until the notifier leg closes.
   `+0x140` is the bound ANativeWindow data field.
 - `analysis/R9_virtual_display_path.md`: guest dispatch `0x6490488` reaches
   `call *0x18(%rax)` at `0x649067b` → `0x649d422`, guest RA `0x649067e`.
-- `analysis/P10_render_thread.md`: cleaner helper `0x6493242` with
-  `call *0x18(%rax)` at `0x649325a` → guest RA `0x649325d`; cadence comes from
+- `analysis/P10_render_thread.md` / `P4_frame_dispatch.md`: cleaner helper
+  `0x6493242` with `call *0x18(%rax)` at `0x649325a` → guest RA `0x649325d`.
+  Shape `W[0]=base+0x71908e0`, `W[0x18]=ctx` and call `base+0x6493242(W)`;
+  P4 enumerates the full 14-site dispatch family. Cadence comes from
   native `RBX IoEvLoop` (`pthread_create 0x6474599`, `timerfd`/`epoll_wait`)
   and `SurfaceController::RenderJob` (`0x276d36a`).
 - `analysis/P3_egl_proc_table.md` + F4: plain GLES draws use PLT GOTs

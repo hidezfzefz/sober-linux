@@ -3,6 +3,7 @@
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void *g_glibc;
@@ -466,6 +467,71 @@ unsigned char sober_libc_obj___stack_chk_guard[64];
         ".size " #name ", .-" #name "\n\t" \
         : : : "memory")
 
+/* Bionic stdio stream translation (__sF stride 0x98). */
+static FILE *sober_host_stdin, *sober_host_stdout, *sober_host_stderr;
+static FILE *sober_stdio_map(FILE *stream)
+{
+    unsigned char *p = (unsigned char *)stream;
+    unsigned char *base = sober_libc_obj___sF;
+    if (!p) return NULL;
+    if (p >= base && p < base + sizeof(sober_libc_obj___sF)) {
+        size_t off = (size_t)(p - base);
+        if (off < 0x98) return sober_host_stdin;
+        if (off < 0x130) return sober_host_stdout;
+        return sober_host_stderr;
+    }
+    return stream;
+}
+
+__attribute__((visibility("default")))
+int fflush(FILE *stream)
+{
+    typedef int (*sober_fflush_fn)(FILE *);
+    sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;
+    FILE *mapped = sober_stdio_map(stream);
+    const char *dbg = getenv("SOBER_STDIO_DEBUG");
+    if (dbg && dbg[0] != '0' && sober_host_stderr)
+        fprintf(sober_host_stderr,
+                "[stdio] fflush(%p) -> %p off=%ld\n",
+                (void *)stream, (void *)mapped,
+                (long)((unsigned char *)stream - sober_libc_obj___sF));
+    return real ? real(mapped) : 0;
+}
+
+__attribute__((visibility("default")))
+int fclose(FILE *stream)
+{
+    typedef int (*sober_fclose_fn)(FILE *);
+    sober_fclose_fn real = (sober_fclose_fn)sober_libc_fn_fclose;
+    const char *dbg = getenv("SOBER_STDIO_DEBUG");
+    if (dbg && dbg[0] != '0' && sober_host_stderr)
+        fprintf(sober_host_stderr, "[stdio] fclose(%p) off=%ld\n",
+                (void *)stream,
+                (long)((unsigned char *)stream - sober_libc_obj___sF));
+    /* Never close a host standard stream through a Bionic FILE*. */
+    if (sober_stdio_map(stream) != stream) return 0;
+    /* Bionic tolerates repeated fclose on the same handle; glibc aborts. */
+    static FILE *sober_closed[64]; static unsigned sober_nclosed;
+    for (unsigned i = 0; i < sober_nclosed; ++i)
+        if (sober_closed[i] == stream) return 0;
+    if (sober_nclosed < 64) sober_closed[sober_nclosed++] = stream;
+    return real ? real(stream) : 0;
+}
+
+__attribute__((visibility("default")))
+size_t fwrite(const void *buf, size_t size, size_t n, FILE *stream)
+{
+    typedef size_t (*sober_fwrite_fn)(const void *, size_t, size_t, FILE *);
+    sober_fwrite_fn real = (sober_fwrite_fn)sober_libc_fn_fwrite;
+    FILE *mapped = sober_stdio_map(stream);
+    const char *dbg = getenv("SOBER_STDIO_DEBUG");
+    if (dbg && dbg[0] != '0' && sober_host_stderr)
+        fprintf(sober_host_stderr,
+                "[stdio] fwrite(%p,size=%zu,n=%zu,stream=%p) -> %p\n",
+                buf, size, n, (void *)stream, (void *)mapped);
+    return real ? real(buf, size, n, mapped) : 0;
+}
+
 /* Bionic-compatible pthread TSD (decision 013). */
 #define SOBER_BIONIC_TSD_SLOTS 512
 static _Thread_local void *sober_bionic_tsd[SOBER_BIONIC_TSD_SLOTS];
@@ -919,6 +985,9 @@ void sober_bionic_libc_install(void)
       if (p) __builtin_memcpy(sober_libc_obj_in6addr_loopback, p, 16); }
     { void *p = native_lookup("__stack_chk_guard");
       if (p) __builtin_memcpy(sober_libc_obj___stack_chk_guard, p, 16); }
+    sober_host_stdin = *(FILE **)sober_libc_obj_stdin;
+    sober_host_stdout = *(FILE **)sober_libc_obj_stdout;
+    sober_host_stderr = *(FILE **)sober_libc_obj_stderr;
 }
 
 const char *sober_bionic_libc_backend(void)
@@ -1008,7 +1077,6 @@ void sober_bionic_libc_trampolines(void)
     TRAMP(localtime);
     TRAMP(fseek);
     TRAMP(ftell);
-    TRAMP(fclose);
     TRAMP(atan);
     TRAMP(__fread_chk);
     TRAMP(fread);
@@ -1023,8 +1091,6 @@ void sober_bionic_libc_trampolines(void)
     TRAMP(fseeko);
     TRAMP(ftello);
     TRAMP(__fwrite_chk);
-    TRAMP(fwrite);
-    TRAMP(fflush);
     TRAMP(gmtime);
     TRAMP(mktime);
     TRAMP(pipe);

@@ -29,6 +29,13 @@ diagnostic now produces 2 guest-tagged swaps and 1 guest draw, but the callback
 leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
 (decision 013 / 038).
 
+Latest blocker (tasks #485/#486): the singleton accessor blocker is fixed with
+the guest's own flag setter, removing fault `0x24ad562`. The callback path now
+stops at the genuine TaskScheduler "flags loaded" guard (`0x6caef67`, latch
+`0x7cdd149`); the only reachable guest writers either skip the write or abort
+inside crashpad, so both are opt-in diagnostics and the default path stays
+honest. See `analysis/A14-flags-loaded-latch.md`. Score is unchanged.
+
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████
 Guest constructors replayed          3618/3618        100%  ████████████████████

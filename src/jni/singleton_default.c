@@ -170,11 +170,14 @@ static int sd_gate_ok(unsigned char *b, unsigned flags)
     sd_gate_fn predicate =
         (sd_gate_fn)(uintptr_t)(b + SOBER_SD_RVA_PREDICATE);
     int p = predicate ? predicate() : 0;
-    SDV("gate: flag@0x%x=%u predicate@0x%x -> %d mirror@0x%x=%u\n",
+    /* 0x6096928 is a bool: callers test only AL (0x30ef840: test %al,%al).
+     * Upper EAX bits are stale scratch, so never treat them as truth. */
+    int p_al = p & 0xff;
+    SDV("gate: flag@0x%x=%u predicate@0x%x -> %d(al=%d) mirror@0x%x=%u\n",
         SOBER_SD_RVA_APP_BRIDGE_FLAG, (unsigned)flag,
-        SOBER_SD_RVA_PREDICATE, p, SOBER_SD_RVA_GATE_BYTE,
+        SOBER_SD_RVA_PREDICATE, p, p_al, SOBER_SD_RVA_GATE_BYTE,
         (unsigned)*(volatile unsigned char *)(b + SOBER_SD_RVA_GATE_BYTE));
-    return flag != 0 && p != 0;
+    return flag != 0 && p_al != 0;
 }
 
 /* ------------------------------------------------------------------------ */

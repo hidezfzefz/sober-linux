@@ -43,6 +43,7 @@ lines.append('/* Native Linux libc shim with Bionic version nodes (task #373). *
 lines.append("#define _GNU_SOURCE")
 lines.append("#include <dlfcn.h>")
 lines.append("#include <stdio.h>")
+lines.append("#include <stdlib.h>")
 lines.append("#include <string.h>")
 lines.append("")
 lines.append("static void *g_glibc;")
@@ -93,8 +94,8 @@ for s in funcs:
 lines.append("")
 for s in objs:
     n = cident(s["name"])
-    /* __sF must cover Bionic's FILE __sF[3] (0x198 bytes): the guest derives
-     * stdout/stderr as __sF+0x98 / __sF+0x130. */
+    # __sF must cover Bionic's FILE __sF[3] (0x198 bytes): the guest derives
+    # stdout/stderr as __sF+0x98 / __sF+0x130.
     obj_size = "0x200" if n == "__sF" else "64"
     lines.append(f"unsigned char sober_libc_obj_{n}[{obj_size}];")
 lines.append("")
@@ -112,6 +113,75 @@ lines.append('        "1: xorl %%eax, %%eax\\n\\t" \\')
 lines.append('        "ret\\n\\t" \\')
 lines.append('        ".size " #name ", .-" #name "\\n\\t" \\')
 lines.append("        : : : \"memory\")")
+lines.append("")
+
+# Bionic stdio: __sF[3] uses a Bionic FILE layout (stride 0x98), so a guest
+# fflush() on those objects must be mapped to the host streams.  glibc's
+# fflush would interpret the Bionic struct as a glibc FILE and crash.
+lines.append("/* Bionic stdio stream translation (__sF stride 0x98). */")
+lines.append("static FILE *sober_host_stdin, *sober_host_stdout, *sober_host_stderr;")
+lines.append("static FILE *sober_stdio_map(FILE *stream)")
+lines.append("{")
+lines.append("    unsigned char *p = (unsigned char *)stream;")
+lines.append("    unsigned char *base = sober_libc_obj___sF;")
+lines.append("    if (!p) return NULL;")
+lines.append("    if (p >= base && p < base + sizeof(sober_libc_obj___sF)) {")
+lines.append("        size_t off = (size_t)(p - base);")
+lines.append("        if (off < 0x98) return sober_host_stdin;")
+lines.append("        if (off < 0x130) return sober_host_stdout;")
+lines.append("        return sober_host_stderr;")
+lines.append("    }")
+lines.append("    return stream;")
+lines.append("}")
+lines.append("")
+lines.append("__attribute__((visibility(\"default\")))")
+lines.append("int fflush(FILE *stream)")
+lines.append("{")
+lines.append("    typedef int (*sober_fflush_fn)(FILE *);")
+lines.append("    sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;")
+lines.append("    FILE *mapped = sober_stdio_map(stream);")
+lines.append("    const char *dbg = getenv(\"SOBER_STDIO_DEBUG\");")
+lines.append("    if (dbg && dbg[0] != '0' && sober_host_stderr)")
+lines.append("        fprintf(sober_host_stderr,")
+lines.append("                \"[stdio] fflush(%p) -> %p off=%ld\\n\",")
+lines.append("                (void *)stream, (void *)mapped,")
+lines.append("                (long)((unsigned char *)stream - sober_libc_obj___sF));")
+lines.append("    return real ? real(mapped) : 0;")
+lines.append("}")
+lines.append("")
+lines.append("__attribute__((visibility(\"default\")))")
+lines.append("int fclose(FILE *stream)")
+lines.append("{")
+lines.append("    typedef int (*sober_fclose_fn)(FILE *);")
+lines.append("    sober_fclose_fn real = (sober_fclose_fn)sober_libc_fn_fclose;")
+lines.append("    const char *dbg = getenv(\"SOBER_STDIO_DEBUG\");")
+lines.append("    if (dbg && dbg[0] != '0' && sober_host_stderr)")
+lines.append("        fprintf(sober_host_stderr, \"[stdio] fclose(%p) off=%ld\\n\",")
+lines.append("                (void *)stream,")
+lines.append("                (long)((unsigned char *)stream - sober_libc_obj___sF));")
+lines.append("    /* Never close a host standard stream through a Bionic FILE*. */")
+lines.append("    if (sober_stdio_map(stream) != stream) return 0;")
+lines.append("    /* Bionic tolerates repeated fclose on the same handle; glibc aborts. */")
+lines.append("    static FILE *sober_closed[64]; static unsigned sober_nclosed;")
+lines.append("    for (unsigned i = 0; i < sober_nclosed; ++i)")
+lines.append("        if (sober_closed[i] == stream) return 0;")
+lines.append("    if (sober_nclosed < 64) sober_closed[sober_nclosed++] = stream;")
+lines.append("    return real ? real(stream) : 0;")
+lines.append("}")
+lines.append("")
+lines.append("__attribute__((visibility(\"default\")))")
+lines.append("size_t fwrite(const void *buf, size_t size, size_t n, FILE *stream)")
+lines.append("{")
+lines.append("    typedef size_t (*sober_fwrite_fn)(const void *, size_t, size_t, FILE *);")
+lines.append("    sober_fwrite_fn real = (sober_fwrite_fn)sober_libc_fn_fwrite;")
+lines.append("    FILE *mapped = sober_stdio_map(stream);")
+lines.append("    const char *dbg = getenv(\"SOBER_STDIO_DEBUG\");")
+lines.append("    if (dbg && dbg[0] != '0' && sober_host_stderr)")
+lines.append("        fprintf(sober_host_stderr,")
+lines.append("                \"[stdio] fwrite(%p,size=%zu,n=%zu,stream=%p) -> %p\\n\",")
+lines.append("                buf, size, n, (void *)stream, (void *)mapped);")
+lines.append("    return real ? real(buf, size, n, mapped) : 0;")
+lines.append("}")
 lines.append("")
 
 # Bionic-compatible pthread TSD (decision 013): the guest allocates small
@@ -161,6 +231,11 @@ for s in objs:
     n = cident(s["name"])
     lines.append(f'    {{ void *p = native_lookup("{s["name"]}");')
     lines.append(f'      if (p) __builtin_memcpy(sober_libc_obj_{n}, p, 16); }}')
+# Host stream targets for the Bionic stdio translation above.  The object
+# seeding just copied glibc's stdin/stdout/stderr pointers into our objects.
+lines.append("    sober_host_stdin = *(FILE **)sober_libc_obj_stdin;")
+lines.append("    sober_host_stdout = *(FILE **)sober_libc_obj_stdout;")
+lines.append("    sober_host_stderr = *(FILE **)sober_libc_obj_stderr;")
 lines.append("}")
 lines.append("")
 lines.append("const char *sober_bionic_libc_backend(void)")
@@ -182,6 +257,8 @@ lines.append("{")
 for s in funcs:
     if s["name"] in ("pthread_getspecific", "pthread_setspecific"):
         continue  # implemented above with Bionic TSD semantics
+    if s["name"] in ("fflush", "fclose", "fwrite"):
+        continue  # implemented above with Bionic __sF -> host stream mapping
     if s["name"] in ("sigaction", "sigemptyset", "sigfillset",
                      "pthread_sigmask"):
         continue  # implemented in bionic_signal.c with the Bionic ABI

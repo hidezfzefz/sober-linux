@@ -88,8 +88,8 @@ extern "C" {
 /* Frozen-engine RVAs (BuildID 204ad049..., DO NOT MODIFY). */
 #define SOBER_FFLAG_DEFAULT_RVA_CTOR0       0x2e62390u  /* init_array[0] entry      */
 #define SOBER_FFLAG_DEFAULT_RVA_GUARD       0x72a0a30u  /* once-guard object        */
-#define SOBER_FFLAG_DEFAULT_RVA_HANDLE      0x72a0520u  /* FFlag registry handle    */
-#define SOBER_FFLAG_DEFAULT_OFF_CTRL        0x38u       /* control block @handle+0x38*/
+#define SOBER_FFLAG_DEFAULT_RVA_HANDLE      0x72a0520u  /* FFlag registry GLOBAL obj*/
+#define SOBER_FFLAG_DEFAULT_OFF_CTRL        0x38u       /* ctrl blk @ GLOBAL+0x38    */
 #define SOBER_FFLAG_DEFAULT_GUARD_EXPECTED  257u        /* 0x101 after release      */
 
 /* Read-only chain anchors (evidence; this module calls only RVA_CTOR0). */

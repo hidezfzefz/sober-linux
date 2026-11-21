@@ -102,6 +102,35 @@ grep -q '^first frame rendered$' "$OUT" && [ -f "$FRAME_MARKER" ] \
 after_sha=$(sha256sum "$GUEST" | awk '{print $1}')
 [ "$before_sha" = "$after_sha" ] || { echo "FAIL: on-disk engine modified"; exit 1; }
 
+# ---------------------------------------------------------------------------
+# GREEN iff ALL of the following hold (analysis/G2_gate_test_contract.md §5,
+# analysis/T4_4_gate-tests.md §3.4). This script is deliberately RED today:
+# leg (a) and the gate-owned provenance line do not exist yet in the default
+# path, and the frame evidence ledger is fail-closed until a genuine guest
+# window bind is observed. Do NOT weaken any of these to force a green.
+#   (a) notifier-driven callback (no harness thunk, all opt-ins unset):
+#       [callback-provenance] ... notifier hit 0x27eaf6e ... placeId=[1-9]...
+#       [callback-provenance] gameLoadedCallback ... thunk_ret=...0x2584960
+#           ... notifier_ret=...0x27eafb3 ... -> GENUINE
+#       [app-shell] gate provenance: notifier-driven gameLoadedCallback at
+#           0x27eaf6e placeId=[1-9]... -> GENUINE
+#       [app-shell] clean state: seeded_state=0 (all opt-ins unset)
+#   (b) decisive render leg (frame_evidence is the sole verdict owner):
+#       [render] guest-tagged swap at 0x649d422 ra=base+0x<guest .text>
+#           tag=guest-loop | guest-tagged swaps: N | guest GLES draws between
+#           tagged swaps: M      (N>=2 with ONE recurring RA, M>=1)
+#       [render] guest render verdict: guest-tagged frame confirmed
+#           (swaps=N draws=M fromSurface=native|installed window=bound)
+#           -> GUEST-TAGGED
+#       [app-shell] render provenance: guest-tagged frame at 0x649d422
+#           (swaps=N, draws=M), phase3_done=1 -> OK
+#   (c) render_ok = guest_render_ok() == 1 (phase3_done + swaps>=2 + stable RA
+#       + bracketed guest draw + G8 guest-window provenance), seeded_state=0,
+#       and EXACTLY ONE stdout "app shell rendered" with the marker file.
+# Forbidden in a green run: ALT PATH, HONESTY NOTICE, HARNESS-THUNK,
+# "marker withheld:...", "-> ABSENT(", synthetic swap presented as proof.
+# ---------------------------------------------------------------------------
+
 echo "== 3. strict gate evidence (DECISION 013 / 038) =="
 # A pass requires a genuinely guest-driven app-shell callback AND the phase-3
 # guest render. The harness-triggered ALT thunk is diagnostic-only, never proof
@@ -131,9 +160,33 @@ if ! grep -Eq '\[app-shell\].*notifier-driven gameLoadedCallback.*0x27eaf6e.*0x2
     echo "FAIL: no native notifier-driven callback provenance (DECISION 038)"
     tail -40 "$ERR"; exit 1
 fi
+grep -Eq '\[app-shell\] clean state: seeded_state=0' "$ERR" \
+    || { echo "FAIL: clean seeded_state=0 not proven"; tail -40 "$ERR"; exit 1; }
+
+# (b) decisive render leg: frame_evidence is the sole verdict owner. N>=2
+# guest-tagged swaps with ONE recurring guest RA, M>=1 bracketed guest draw,
+# window=bound, plus the gate-owned provenance line. These are additional
+# FAIL checks (never relaxed); on the default RED path (a) above exits first.
+SWAP_LINE=$(grep -E '^\[render\] guest-tagged swap at 0x649d422 ra=base\+0x[0-9a-f]+ tag=guest-loop \| guest-tagged swaps: ' "$ERR" | head -1)
+[ -n "$SWAP_LINE" ] \
+    || { echo "FAIL: no F7 guest-tagged swap evidence line"; tail -40 "$ERR"; exit 1; }
+echo "$SWAP_LINE" | grep -Eq 'guest-tagged swaps: [2-9][0-9]* \| guest GLES draws between tagged swaps: [1-9][0-9]*$' \
+    || { echo "FAIL: guest-tagged render counts not decisive (N>=2,M>=1): $SWAP_LINE"; exit 1; }
+# Same return address must recur on >=2 tagged swaps (no single-swap green).
+RA_COUNT=$(grep -E '^\[render\] guest-tagged swap at 0x649d422 ra=base\+' "$ERR" \
+    | sed -E 's/.*ra=(base\+0x[0-9a-f]+).*/\1/' | sort -u | wc -l)
+[ "$RA_COUNT" -eq 1 ] \
+    || { echo "FAIL: guest swap return address not stable (distinct=$RA_COUNT)"; exit 1; }
+grep -Eq '^\[render\] guest render verdict: guest-tagged frame confirmed \(swaps=[2-9][0-9]*,? draws=[1-9][0-9]*,? fromSurface=(native|installed),? window=bound\) -> GUEST-TAGGED$' "$ERR" \
+    || { echo "FAIL: F7 GUEST-TAGGED verdict line missing"; tail -40 "$ERR"; exit 1; }
+grep -Eq '^\[app-shell\] render provenance: guest-tagged frame at 0x649d422 \(swaps=[2-9][0-9]*, draws=[1-9][0-9]*\), phase3_done=1 -> OK$' "$ERR" \
+    || { echo "FAIL: gate-owned render provenance -> OK line missing"; tail -40 "$ERR"; exit 1; }
 
 echo "== 4. deterministic app-shell marker =="
-if [ "$rc" -eq 0 ] && [ -f "$SHELL_MARKER" ] && grep -q '^app shell rendered$' "$OUT"; then
+MARKER_COUNT=$(grep -c '^app shell rendered$' "$OUT")
+[ "$MARKER_COUNT" -eq 1 ] \
+    || { echo "FAIL: app-shell marker count=$MARKER_COUNT (expected exactly 1)"; exit 1; }
+if [ "$rc" -eq 0 ] && [ -f "$SHELL_MARKER" ] && [ "$MARKER_COUNT" -eq 1 ]; then
     echo "app shell rendered"
 else
     echo "FAIL: no app-shell marker (rc=$rc)"; tail -40 "$ERR"; exit 1

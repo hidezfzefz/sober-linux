@@ -286,6 +286,34 @@ SOBER_FRAME_EVIDENCE_API void frame_evidence_window_set_host_publish_enabled(
 SOBER_FRAME_EVIDENCE_API int  frame_evidence_window_verdict(void);
 SOBER_FRAME_EVIDENCE_API const char *frame_evidence_window_reject_reason(void);
 
+/* ---- five-ANativeWindow-GOT observation hooks (observation only) --------- *
+ * Install chained, read-only-forwarding observers on the five imported
+ * ANativeWindow GOT JUMP_SLOTs (0x72294a8 fromSurface, 0x72294a0 release,
+ * 0x72297c0 acquire, 0x72297c8 getHeight, 0x72297d0 getWidth).  Every call is
+ * forwarded unchanged to the genuine previous target; the only side effect is
+ * one immutable G8 ledger observation per event (plus a supporting
+ * fromSurface label).  No guest code byte, object vtable or guest global is
+ * written.  This is the producer for G8 C2/C5/C7/C8/C9/C10; without it
+ * `window_bound` stays REJECT and `guest_render_ok()` stays 0 (fail closed).
+ *
+ * Returns 0 on success, negative on failure; idempotent.  Hooks must be
+ * installed TOGETHER: hooking only fromSurface corrupts the compat release
+ * path (G8 I0).  `frame_evidence_window_snapshot()` feeds the H5 gate-time
+ * W_now/G_now pair.  The caller, not this module, must declare engine/layout
+ * verified and host publish disabled via the two setters above -- claiming
+ * those without actually disabling render_guest's host stores would be a
+ * false green, so the default stays REJECT.
+ */
+SOBER_FRAME_EVIDENCE_API int  frame_evidence_install_window_observers(
+    uintptr_t guest_base);
+SOBER_FRAME_EVIDENCE_API void frame_evidence_uninstall_window_observers(void);
+SOBER_FRAME_EVIDENCE_API int  frame_evidence_window_observers_installed(void);
+SOBER_FRAME_EVIDENCE_API void frame_evidence_window_snapshot(uintptr_t guest_base);
+/* Convenience: set guest base + install the five observers.  Does NOT assert
+ * engine/layout integrity or host-publish-disabled; those remain the caller's
+ * explicit, auditable declarations. */
+SOBER_FRAME_EVIDENCE_API int  frame_evidence_attach(uintptr_t guest_base);
+
 /* ---- decisive accessors -------------------------------------------------- */
 SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_swaps_guest(void);
 SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_draws(void);

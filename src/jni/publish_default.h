@@ -158,8 +158,16 @@ typedef enum SoberPublishRva {
     /* log evidence strings (data only) */
     SOBER_PD_RVA_LOG_TAG         = 0x550ef3u, /* "rbx.jni"                    */
     SOBER_PD_RVA_LOG_FMT         = 0x36c7c9u, /* "onGameLoaded() SessionReporterState_GameLoaded placeId:%lld" */
-    /* node builder (evidence only, never called) */
-    SOBER_PD_RVA_NODE_BUILDER    = 0x253e21eu  /* fills node+0x08/+0x20/+0x50 */
+    /* node builder (evidence only, never called directly) */
+    SOBER_PD_RVA_NODE_BUILDER    = 0x253e21eu, /* fills node+0x08/+0x20/+0x50 */
+    /* Genuine guest registration entry point for the id=1 GameLoaded
+     * descriptor + subscription node.  nativeAppBridgeV2InitWithParams calls
+     * it at 0x24ad6a5 as `register(1, base+0x7234520)`.  The guest builds the
+     * descriptor (vptr 0x6dbbf98, id 1, slot &0x7234520) and the node with its
+     * OWN allocator (0x1dbab02) and inserts it into the MessageBus +0x288
+     * list.  Calling it is a genuine guest call: no host byte write, no
+     * fabricated object, no direct notifier/thunk call. */
+    SOBER_PD_RVA_NODE_REGISTER   = 0x253cb56u
 } SoberPublishRva;
 
 /* Offsets inside the MessageBus singleton / subscription node / descriptor. */

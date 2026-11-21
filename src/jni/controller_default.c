@@ -56,6 +56,16 @@ struct cd_shortstr {
  * the genuine registration helper 0x2eb6b2a. */
 #define CD_WRAPPER_SIZE 0x28u
 
+/* Follow-up #485: the accessor 0x30ef840 tests only AL of predicate
+ * 0x6096928 = (bucket < rollout) && (migrate_flag != 0).  Both values are
+ * genuine registered FFlags; replay their descriptor thunks and set them
+ * through the guest's own setter 0x23648be. */
+#define SOBER_CD_RVA_REG_MIGRATE      0x2290e17u
+#define SOBER_CD_RVA_REG_MIGRATE_PCT  0x2290df2u
+#define SOBER_CD_RVA_MIGRATE_FLAG     0x7797968u
+#define SOBER_CD_RVA_MIGRATE_ROLLOUT  0x7797990u
+#define SOBER_CD_RVA_MIGRATE_BUCKET   0x77979b8u
+
 static int cd_env_off(const char *name)
 {
     const char *v = getenv(name);
@@ -163,6 +173,26 @@ int sober_controller_default_ensure_flag(void *guest_base)
         (void)sober_fflag_default_replay(guest_base);
 
     void *reg = *(void **)(void *)(b + SOBER_CD_RVA_FLAG_REGISTRY);
+    /* JNI_OnLoad is skipped in our harness, so two prerequisites that its
+     * normal run would satisfy are missing:
+     *   (a) the native flag registry at 0x7cdd118 (sole writer 0x227c092 inside
+     *       JNI_OnLoad+0xeba / 0x227be14), and
+     *   (b) the FFlag descriptor for "EnableAppBridgeComponents" -> &flag at
+     *       0x72cb648 (registered by the guest thunk 0x22e567a -> 0x227c18e).
+     * Replay BOTH genuine guest helpers when they are missing. They allocate
+     * with the guest allocator and write only via guest code: no host byte
+     * writes, no fake vtables.  Kill switch SOBER_FLAG_REGISTRY_REPAIR=0. */
+    const char *repair = getenv("SOBER_FLAG_REGISTRY_REPAIR");
+    if (!repair || repair[0] != '0') {
+        if (!reg)
+            ((void (*)(void))(uintptr_t)(b + 0x227be14u))();
+        ((void (*)(void))(uintptr_t)(b + 0x22e567au))();
+        ((void (*)(void))(uintptr_t)(b + SOBER_CD_RVA_REG_MIGRATE))();
+        ((void (*)(void))(uintptr_t)(b + SOBER_CD_RVA_REG_MIGRATE_PCT))();
+        reg = *(void **)(void *)(b + SOBER_CD_RVA_FLAG_REGISTRY);
+        CDV("flag registry repaired (0x227be14 + 0x22e567a + "
+            "0x2290e17 + 0x2290df2): %p\n", reg);
+    }
     if (!reg) {
         CDV("flag registry @0x%llx is NULL\n",
             (unsigned long long)SOBER_CD_RVA_FLAG_REGISTRY);
@@ -170,26 +200,47 @@ int sober_controller_default_ensure_flag(void *guest_base)
     }
 
     /* Exact setter invocation from the guest's JSON member loop 0x237df3f..
-     * 0x237df9c: name "EnableAppBridgeComponents", value "True", len 1,
-     * type 4 (bool).  The short strings are read-only data supplied by us;
-     * the GUEST setter writes the FFlag byte. */
+     * 0x237df9c: name/value short strings, type 4 (bool) / type 3 (int).
+     * The short strings are read-only data supplied by us; the GUEST setter
+     * writes the FFlag value slots. */
     struct cd_shortstr name, value;
     memset(&name, 0, sizeof(name));
     memset(&value, 0, sizeof(value));
+
+    typedef int (*cd_set_flag_fn)(void *, void *, void *, unsigned,
+                                  unsigned, unsigned);
+    cd_set_flag_fn set_flag =
+        (cd_set_flag_fn)(uintptr_t)(b + SOBER_CD_RVA_FLAG_SETTER);
+
     name.flag = 1;
     name.len = strlen("EnableAppBridgeComponents");
     name.ptr = "EnableAppBridgeComponents";
     value.flag = 1;
     value.len = strlen("True");
     value.ptr = "True";
-
-    typedef int (*cd_set_flag_fn)(void *, void *, void *, unsigned,
-                                  unsigned, unsigned);
-    cd_set_flag_fn set_flag =
-        (cd_set_flag_fn)(uintptr_t)(b + SOBER_CD_RVA_FLAG_SETTER);
     int rc = set_flag(reg, &name, &value, 1u, 4u, 0u);
     CDV("guest flag setter 0x%x -> rc=%d flag=%u\n",
         SOBER_CD_RVA_FLAG_SETTER, rc, (unsigned)*flag);
+
+    /* #485: the accessor 0x30ef840 requires
+     *   (bucket 0x77979b8 < rollout 0x7797990) &&
+     *   (MigrateComponentManagerToRuntimeInjector 0x7797968 != 0).
+     * Set both through the same guest setter; 10000 == 100% rollout. */
+    name.len = strlen("MigrateComponentManagerToRuntimeInjector");
+    name.ptr = "MigrateComponentManagerToRuntimeInjector";
+    value.len = strlen("True");
+    value.ptr = "True";
+    int mrc = set_flag(reg, &name, &value, 1u, 4u, 0u);
+    name.len = strlen("MigrateComponentManagerToRuntimeInjectorHundredthPercent");
+    name.ptr = "MigrateComponentManagerToRuntimeInjectorHundredthPercent";
+    value.len = strlen("10000");
+    value.ptr = "10000";
+    int prc = set_flag(reg, &name, &value, 1u, 3u, 0u);
+    CDV("migrate flag setter -> rc=%d flag=%u rollout=rc=%d value=%u "
+        "bucket=%u\n", mrc, (unsigned)*(volatile unsigned char *)
+        (b + SOBER_CD_RVA_MIGRATE_FLAG), prc,
+        *(volatile unsigned *)(b + SOBER_CD_RVA_MIGRATE_ROLLOUT),
+        *(volatile unsigned *)(b + SOBER_CD_RVA_MIGRATE_BUCKET));
     return *flag ? SOBER_CD_OK : SOBER_CD_NO_FLAG;
 }
 

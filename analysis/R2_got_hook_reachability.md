@@ -284,12 +284,18 @@ assert on stderr, in order:
 4. `swaps(total/guest/synth)=0/0/0` immediately after `frames swapped: 1` — negative control proving the **host first-frame swap bypasses** the hook.
 5. After `guest call 0x649d422 ...`, `swaps(total/guest/synth)=1/0/1` — GOT `0x722a1a8` hit exactly once, host RA. (A *guest-tagged* hit would require `guest≥1`; its absence is correct, see R1.)
 
-**T2 — per-hook breakpoints (definitive, one shot).** Symbols are present in
-`build/guest-init-host`: `rg_hook_from_surface@0x47920`, `rg_hook_swap@0x47790`,
-`rg_hook_get_proc@0x47c20`, `sr_hook_egl_create_window_surface@0x21cd0`, compat
-trampoline `eglCreateWindowSurface@0x18161`, `sober_render_swap@0x23aa0`. Under
-`gdb -batch -x /tmp/r2_gdb_hooks.cmd ./guest-init-host <guest.so>` with
-auto-continuing `commands` blocks, expect:
+**T2 — per-hook breakpoints (definitive; NOT completed here).** Symbols are
+present in `build/guest-init-host`: `rg_hook_from_surface@0x47920`,
+`rg_hook_swap@0x47790`, `rg_hook_get_proc@0x47c20`,
+`sr_hook_egl_create_window_surface@0x21cd0`, compat trampoline
+`eglCreateWindowSurface@0x18161`, `sober_render_swap@0x23aa0`. I attempted
+`gdb -q -batch -x /tmp/r2_gdb_hooks.cmd ./guest-init-host <guest.so>` with
+auto-continuing `commands` blocks; all five breakpoints **resolved**
+(`Breakpoint 1..5 at 0x47920/0x47790/0x47c20/0x21cd0/0x23aa0`), but the
+inferior was killed (`timeout` wrapper, rc=137 = SIGKILL) during the 120 MB
+guest's `dlopen`/relocation phase, before any render hook fired — so **this run
+produced no hit data and is not evidence either way**. Re-run with a longer
+timeout / more memory, or attach after load, to obtain the expected results:
 - `rg_hook_from_surface` **2** hits (created, changed); `bt` shows RA at
   `base+0x2a20881` / `base+0x2a2090c` (the instruction after each `call`).
 - `rg_hook_get_proc` **48** hits; RAs inside `base+0x649c633..0x649d300`.

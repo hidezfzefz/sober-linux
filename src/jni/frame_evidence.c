@@ -24,6 +24,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 /* Persisted phase-3 flag from the frozen render module.  Weak so this file
  * also links into a target that omits native_render.c; absent => fail closed. */
@@ -89,6 +93,7 @@ static _Atomic int s_w_tid_mismatch;
 static _Atomic int s_w_seq_bad;
 
 static _Atomic int s_lines_emitted;
+static int s_wiring_logged;   /* neutral one-shot: producer -> verdict wired */
 
 /* ---- small atomic helpers ------------------------------------------------ */
 static void fe_max_u64(_Atomic uint64_t *p, uint64_t v)
@@ -281,6 +286,13 @@ void frame_evidence_record_swap(uintptr_t ra)
     if (guest) {
         atomic_fetch_add_explicit(&s_swaps_guest, 1u, memory_order_relaxed);
         fe_note_guest_ra(ra);
+        if (!s_wiring_logged) {
+            s_wiring_logged = 1;
+            fprintf(stderr,
+                    "[frame-evidence] wired: real guest swap observed "
+                    "ra=%#lx; verdict still requires G8 window proof\n",
+                    (unsigned long)ra);
+        }
 
         /* max positive draw delta between two tagged swaps (G2 aggregate M) */
         draws = atomic_load_explicit(&s_draws_guest, memory_order_relaxed);
@@ -478,6 +490,307 @@ void frame_evidence_window_set_host_publish_enabled(int enabled)
     atomic_store_explicit(&s_w_host_publish,
                           enabled ? 1 : 0, memory_order_relaxed);
     fe_maybe_emit_lines();
+}
+
+/* ---- five ANativeWindow GOT observation hooks (producer for G8) ---------- *
+ * The verdict module is observation-only and must stay a PURE consumer of
+ * facts.  These chained wrappers are the missing producer: they forward every
+ * real call to the genuine previous GOT target and record one immutable
+ * observation of it.  They never short-circuit with our own window, never
+ * write a guest global and never install a host pointer in a guest object.
+ */
+#define FE_WOBS_SLOTS 5u
+static uintptr_t s_wobs_slot_addr[FE_WOBS_SLOTS];
+static uintptr_t s_wobs_prev[FE_WOBS_SLOTS];
+static int       s_wobs_installed;
+static _Atomic uint64_t s_wobs_seq;
+static _Atomic uint32_t s_dim_w;
+static _Atomic uint32_t s_dim_h;
+
+/* JNIEnv view used only for the READ-ONLY mNativeObject probe (G8 C3).
+ * Indexes match the synthetic bridge's SRNativeInterface.fn[] layout;
+ * see fields_default.c: GetFieldID=90, GetIntField=96, GetFloatField=98,
+ * therefore GetLongField=97 and GetObjectClass=27 (native_jni.c:822). */
+struct fe_jni_env_view { void *functions; void *owner; };
+struct fe_jni_fn_view  { void *reserved[4]; void *fn[231]; };
+typedef uintptr_t (*fe_jni_call_fn)(void *, ...);
+
+static uint64_t fe_wobs_next_seq(void)
+{
+    return atomic_fetch_add_explicit(&s_wobs_seq, 1u,
+                                     memory_order_relaxed) + 1u;
+}
+
+static uint64_t fe_wobs_tid(void)
+{
+#ifdef SYS_gettid
+    return (uint64_t)syscall(SYS_gettid);
+#else
+    return (uint64_t)getpid();
+#endif
+}
+
+/* Best-effort, read-only mNativeObject probe.  Returns 1 only when the field
+ * was really read through JNI and yielded a non-zero value; any missing or
+ * stubbed JNI entry leaves mnative=0, so G8 rejects with R3 (fail closed). */
+static int fe_read_mnative(void *env, void *surface, uintptr_t *out)
+{
+    struct fe_jni_env_view *ev = (struct fe_jni_env_view *)env;
+    struct fe_jni_fn_view  *fv;
+    fe_jni_call_fn get_class, get_field, get_long;
+    uintptr_t clazz, field, value;
+
+    if (out) *out = 0u;
+    if (!env || !surface || !ev || !ev->functions) return 0;
+    fv = (struct fe_jni_fn_view *)ev->functions;
+    get_class = (fe_jni_call_fn)fv->fn[27];
+    get_field = (fe_jni_call_fn)fv->fn[90];
+    get_long  = (fe_jni_call_fn)fv->fn[97];
+    if (!get_class || !get_field || !get_long) return 0;
+
+    clazz = get_class(env, surface);
+    if (!clazz) return 0;
+    field = get_field(env, clazz, "mNativeObject", "J");
+    if (!field) return 0;
+    value = get_long(env, surface, (void *)field);
+    if (!value) return 0;
+    if (out) *out = value;
+    return 1;
+}
+
+static int fe_page_prot(uintptr_t page)
+{
+    FILE *f = fopen("/proc/self/maps", "r");
+    char line[512];
+    int prot = -1;
+    if (!f) return -1;
+    while (fgets(line, sizeof(line), f)) {
+        unsigned long lo = 0u, hi = 0u;
+        char perms[8] = { 0 };
+        if (sscanf(line, "%lx-%lx %4s", &lo, &hi, perms) != 3) continue;
+        if ((uintptr_t)lo <= page && page < (uintptr_t)hi) {
+            prot = 0;
+            if (perms[0] == 'r') prot |= PROT_READ;
+            if (perms[1] == 'w') prot |= PROT_WRITE;
+            if (perms[2] == 'x') prot |= PROT_EXEC;
+            break;
+        }
+    }
+    fclose(f);
+    return prot;
+}
+
+static int fe_got_write(uintptr_t slot, uintptr_t val, uintptr_t *old_out)
+{
+    long ps = sysconf(_SC_PAGESIZE);
+    uintptr_t page;
+    int prot;
+    uintptr_t old;
+    if (ps <= 0) ps = 4096;
+    page = slot & ~((uintptr_t)ps - 1u);
+    prot = fe_page_prot(page);
+    if (mprotect((void *)page, (size_t)ps, PROT_READ | PROT_WRITE) != 0)
+        return -1;
+    old = *(volatile uintptr_t *)slot;
+    *(volatile uintptr_t *)slot = val;
+    __builtin___clear_cache((char *)slot, (char *)slot + sizeof(val));
+    if (prot >= 0 && prot != (PROT_READ | PROT_WRITE))
+        (void)mprotect((void *)page, (size_t)ps, prot);
+    if (old_out) *old_out = old;
+    return 0;
+}
+
+typedef void *(*fe_anw_from_surface_fn)(void *, void *);
+typedef void  (*fe_anw_window_fn)(void *);
+typedef int   (*fe_anw_dim_fn)(void *);
+
+/* H1 - GOT 0x72294a8.  Capture RA and the window global/generation BEFORE the
+ * call, forward first (never substitute our window), then record the truth. */
+static void *fe_hook_from_surface(void *env, void *surface)
+{
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    uintptr_t w_before = 0u, mnative = 0u;
+    void *ret;
+    uint32_t g_before = 0u;
+    SoberFrameWindowObservation obs;
+    uintptr_t base = atomic_load_explicit(&s_base, memory_order_relaxed);
+
+    if (base) {
+        w_before = *(volatile uintptr_t *)(base +
+                     (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW);
+        g_before = *(volatile uint32_t *)(base +
+                     (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW_GEN);
+    }
+    (void)fe_read_mnative(env, surface, &mnative);
+
+    ret = s_wobs_prev[0]
+        ? ((fe_anw_from_surface_fn)s_wobs_prev[0])(env, surface) : (void *)NULL;
+
+    memset(&obs, 0, sizeof(obs));
+    obs.kind = SOBER_FRAME_WOBS_FROMSURFACE;
+    obs.status = 1u;                 /* the call itself was observed */
+    obs.seq = fe_wobs_next_seq();
+    obs.tid = fe_wobs_tid();
+    obs.ra = ra;
+    obs.window = (uintptr_t)ret;
+    obs.surface = (uintptr_t)surface;
+    obs.mnative = mnative;           /* 0 => G8 R3, never a false green */
+    obs.w_before = w_before;
+    obs.g_before = g_before;
+    (void)frame_evidence_window_observation(&obs);
+    frame_evidence_record_from_surface(ra);   /* supporting label only */
+    return ret;
+}
+
+/* H2 - GOT 0x72294a0. */
+static void fe_hook_release(void *window)
+{
+    SoberFrameWindowObservation obs;
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    memset(&obs, 0, sizeof(obs));
+    obs.kind = SOBER_FRAME_WOBS_RELEASE;
+    obs.status = 1u;
+    obs.seq = fe_wobs_next_seq();
+    obs.tid = fe_wobs_tid();
+    obs.ra = ra;
+    obs.window = (uintptr_t)window;
+    (void)frame_evidence_window_observation(&obs);
+    if (s_wobs_prev[1]) ((fe_anw_window_fn)s_wobs_prev[1])(window);
+}
+
+/* H3 - GOT 0x72297c0. */
+static void fe_hook_acquire(void *window)
+{
+    SoberFrameWindowObservation obs;
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    memset(&obs, 0, sizeof(obs));
+    obs.kind = SOBER_FRAME_WOBS_ACQUIRE;
+    obs.status = 1u;
+    obs.seq = fe_wobs_next_seq();
+    obs.tid = fe_wobs_tid();
+    obs.ra = ra;
+    obs.window = (uintptr_t)window;
+    (void)frame_evidence_window_observation(&obs);
+    if (s_wobs_prev[2]) ((fe_anw_window_fn)s_wobs_prev[2])(window);
+}
+
+/* H3b - GOT 0x72297c8 / 0x72297d0.  Emit ONE DIMS observation only when both
+ * dimensions are known, so G8 C9 sees a coherent {width,height,window}. */
+static void fe_note_dim(uintptr_t ra, void *window, int value, int is_width)
+{
+    uint32_t w, h;
+    SoberFrameWindowObservation obs;
+    if (is_width) {
+        atomic_store_explicit(&s_dim_w, value > 0 ? (uint32_t)value : 0u,
+                              memory_order_relaxed);
+    } else {
+        atomic_store_explicit(&s_dim_h, value > 0 ? (uint32_t)value : 0u,
+                              memory_order_relaxed);
+    }
+    w = atomic_load_explicit(&s_dim_w, memory_order_relaxed);
+    h = atomic_load_explicit(&s_dim_h, memory_order_relaxed);
+    if (!w || !h) return;
+    atomic_store_explicit(&s_dim_w, 0u, memory_order_relaxed);
+    atomic_store_explicit(&s_dim_h, 0u, memory_order_relaxed);
+    memset(&obs, 0, sizeof(obs));
+    obs.kind = SOBER_FRAME_WOBS_DIMS;
+    obs.status = 1u;
+    obs.seq = fe_wobs_next_seq();
+    obs.tid = fe_wobs_tid();
+    obs.ra = ra;
+    obs.window = (uintptr_t)window;
+    obs.width = w;
+    obs.height = h;
+    (void)frame_evidence_window_observation(&obs);
+}
+
+static int fe_hook_get_height(void *window)
+{
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    int d = s_wobs_prev[3] ? ((fe_anw_dim_fn)s_wobs_prev[3])(window) : 0;
+    fe_note_dim(ra, window, d, 0);
+    return d;
+}
+
+static int fe_hook_get_width(void *window)
+{
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    int d = s_wobs_prev[4] ? ((fe_anw_dim_fn)s_wobs_prev[4])(window) : 0;
+    fe_note_dim(ra, window, d, 1);
+    return d;
+}
+
+int frame_evidence_install_window_observers(uintptr_t guest_base)
+{
+    static const uint32_t rva[FE_WOBS_SLOTS] = {
+        SOBER_FRAME_W_GOT_FROM_SURFACE, SOBER_FRAME_W_GOT_RELEASE,
+        SOBER_FRAME_W_GOT_ACQUIRE, SOBER_FRAME_W_GOT_GET_HEIGHT,
+        SOBER_FRAME_W_GOT_GET_WIDTH
+    };
+    static const uintptr_t hook[FE_WOBS_SLOTS] = {
+        (uintptr_t)&fe_hook_from_surface, (uintptr_t)&fe_hook_release,
+        (uintptr_t)&fe_hook_acquire, (uintptr_t)&fe_hook_get_height,
+        (uintptr_t)&fe_hook_get_width
+    };
+    unsigned i;
+
+    if (!frame_evidence_enabled() || !guest_base) return -1;
+    if (s_wobs_installed) return 0;
+    if (guest_base > UINTPTR_MAX - (uintptr_t)SOBER_FRAME_W_GOT_GET_WIDTH)
+        return -1;
+    frame_evidence_set_guest_base(guest_base);
+    for (i = 0u; i < FE_WOBS_SLOTS; ++i) {
+        s_wobs_slot_addr[i] = guest_base + (uintptr_t)rva[i];
+        if (fe_got_write(s_wobs_slot_addr[i], hook[i], &s_wobs_prev[i]) != 0) {
+            while (i-- > 0u)
+                (void)fe_got_write(s_wobs_slot_addr[i], s_wobs_prev[i], NULL);
+            return -2;
+        }
+    }
+    s_wobs_installed = 1;
+    return 0;
+}
+
+void frame_evidence_uninstall_window_observers(void)
+{
+    unsigned i;
+    if (!s_wobs_installed) return;
+    for (i = 0u; i < FE_WOBS_SLOTS; ++i)
+        (void)fe_got_write(s_wobs_slot_addr[i], s_wobs_prev[i], NULL);
+    s_wobs_installed = 0;
+}
+
+int frame_evidence_window_observers_installed(void)
+{
+    return s_wobs_installed && frame_evidence_enabled();
+}
+
+int frame_evidence_attach(uintptr_t guest_base)
+{
+    int rc = frame_evidence_install_window_observers(guest_base);
+    if (rc == 0)
+        frame_evidence_window_set_integrity(0, 1, 0); /* observers complete only */
+    return rc;
+}
+
+/* H5 - gate-time read-only snapshot of W_now / G_now. */
+void frame_evidence_window_snapshot(uintptr_t guest_base)
+{
+    SoberFrameWindowObservation obs;
+    uintptr_t base = guest_base ? guest_base
+                     : atomic_load_explicit(&s_base, memory_order_relaxed);
+    if (!frame_evidence_enabled() || !base) return;
+    memset(&obs, 0, sizeof(obs));
+    obs.kind = SOBER_FRAME_WOBS_SNAPSHOT;
+    obs.status = 1u;
+    obs.seq = fe_wobs_next_seq();
+    obs.tid = fe_wobs_tid();
+    obs.ra = (uintptr_t)__builtin_return_address(0);
+    obs.window = *(volatile uintptr_t *)(base +
+                   (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW);
+    obs.g_now = *(volatile uint32_t *)(base +
+                   (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW_GEN);
+    (void)frame_evidence_window_observation(&obs);
 }
 
 /* Pure G8 verdict over the ledger.  C0-C10 in order; first failure wins. */
@@ -732,6 +1045,13 @@ static void fe_maybe_emit_lines(void)
             "(swaps=%llu draws=%llu fromSurface=%s window=bound) "
             "-> GUEST-TAGGED\n",
             (unsigned long long)n, (unsigned long long)m, mode);
+}
+
+/* Public spelling of the one-shot emitter (the static implementation above
+ * is called automatically by the recorders and by guest_render_ok()). */
+void frame_evidence_emit_lines(void)
+{
+    fe_maybe_emit_lines();
 }
 
 /* ---- raw immutable evidence accessors ------------------------------------ */

@@ -78,10 +78,18 @@ void *sober_fflag_default_handle(void *guest_base)
 
 void *sober_fflag_default_control_block(void *guest_base)
 {
-    void *h = sober_fflag_default_handle(guest_base);
-    if (!h)
+    if (!guest_base)
         return NULL;
-    return *(void *volatile *)((unsigned char *)h + SOBER_FFLAG_DEFAULT_OFF_CTRL);
+    /* The FFlag registry is a GLOBAL OBJECT at guest_base+0x72a0520, not a
+     * pointer to a heap object.  ctor[0] initialises it in place: 0x2e613fd
+     * stores the static vptr base+0x6db4008 at +0, and 0x2e5bc10 -> 0x2e7b850
+     * installs the shared_ptr control block at the GLOBAL's +0x38.  Reading
+     * *(handle_value + 0x38) is wrong: the handle value is a guest .rodata
+     * address (base+0x6db4008) whose +0x38 is read-only, so it always read 0.
+     * Read the field where the guest actually writes it. */
+    return *(void *volatile *)((unsigned char *)guest_base +
+                               SOBER_FFLAG_DEFAULT_RVA_HANDLE +
+                               SOBER_FFLAG_DEFAULT_OFF_CTRL);
 }
 
 /* Read-only verification: guard==257, handle!=0, handle+0x38 != 0. */

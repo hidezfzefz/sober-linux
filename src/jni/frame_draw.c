@@ -40,9 +40,13 @@ extern uint64_t sober_render_guest_gles_draw_calls(void)
     __attribute__((weak));
 extern uint64_t sober_render_guest_gles_draw_procs_wrapped(void)
     __attribute__((weak));
+/* Forward each genuinely observed guest draw to frame_evidence, the sole
+ * verdict owner.  Weak so this TU still links without frame_evidence.c. */
+extern void frame_evidence_record_draw(uintptr_t ra) __attribute__((weak));
 #else
 extern uint64_t sober_render_guest_gles_draw_calls(void);
 extern uint64_t sober_render_guest_gles_draw_procs_wrapped(void);
+extern void frame_evidence_record_draw(uintptr_t ra);
 #endif
 
 /* ---- frozen guest prototypes -------------------------------------------- */
@@ -168,6 +172,9 @@ static void fd_record(unsigned idx, uintptr_t slot, uintptr_t ra)
     atomic_fetch_add_explicit(&s_got_guest[idx], 1u, memory_order_relaxed);
     atomic_store_explicit(&s_last_guest_ra, ra, memory_order_relaxed);
     atomic_store_explicit(&s_last_slot, slot, memory_order_relaxed);
+    /* One accepted real event -> one decisive draw record.  Dedup above makes
+     * this exactly-once, so no decisive count is ever inflated. */
+    if (frame_evidence_record_draw) frame_evidence_record_draw(ra);
 }
 
 /* ---- the three forwarding GOT wrappers ---------------------------------- */
