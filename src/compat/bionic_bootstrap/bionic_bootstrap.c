@@ -276,34 +276,164 @@ static void *host_allocate(size_t n)
     return p;
 }
 
+/* ------------------------------------------------------------------ */
+/* default allocator contracts (spec: src/jni/alloc_default.h)         */
+/* ------------------------------------------------------------------ */
+/* Three deviations were identified in the frozen engine (A03/A07):
+ *   F1 - the header FORM discriminator is ZERO, not the allocation size.
+ *        The guest core 0x231f13a stores 0 at 0x231f1ac/0x231f243; the old
+ *        host_calloc wrote `total` into the 16-byte header, which makes the
+ *        matched special-free path 0x6a28bf4 dereference a near-zero handle.
+ *   F2 - bridge 0x253225e is a PLAIN (headerless) calloc; only 0x231f0e2 is
+ *        the 8th, header-form calloc reached through slot 0x726c0c0.
+ *   F3 - free / realloc / usable_size must subtract 0x10 ONLY for pointers
+ *        that came from the header calloc.  A tiny atomic registry of header
+ *        bases distinguishes those from plain host pointers.
+ *
+ * sober_bootstrap is linked into BOTH sober-native (no sober_jni) and
+ * guest-init-host (with sober_jni).  The canonical module is discovered at
+ * install time via dlsym(RTLD_DEFAULT); if it is not present in the link we
+ * use the local, contract-equivalent primitives below, so the engine always
+ * sees the correct behaviour.  No guest code bytes are patched here. */
+#define SOBER_BB_HEADER_SIZE 0x10u
+#define SOBER_BB_REG_BITS  13u
+#define SOBER_BB_REG_SIZE  (1u << SOBER_BB_REG_BITS)
+#define SOBER_BB_REG_MASK  ((size_t)(SOBER_BB_REG_SIZE - 1u))
+#define SOBER_BB_REG_EMPTY ((uintptr_t)0u)
+#define SOBER_BB_REG_TOMB  ((uintptr_t)UINTPTR_MAX)
+#define SOBER_BB_REG_NPOS  ((size_t)-1)
+
+static _Atomic uintptr_t s_bb_reg[SOBER_BB_REG_SIZE];
+static _Atomic uint64_t s_bb_header_allocs;
+static _Atomic uint64_t s_bb_plain_allocs;
+static _Atomic uint64_t s_bb_reg_hits;
+static _Atomic uint64_t s_bb_reg_misses;
+static _Atomic uint64_t s_bb_realloc_moves;
+static _Atomic uint64_t s_bb_reg_full;
+static int bb_reg_insert(uintptr_t base); /* fwd decl for host_calloc below */
+
+static void bb_bump(_Atomic uint64_t *c)
+{
+    atomic_fetch_add_explicit(c, 1u, memory_order_relaxed);
+}
+
+static size_t bb_reg_hash(uintptr_t p)
+{
+    uint64_t x = (uint64_t)p >> 4;
+    x ^= x >> 33; x *= 0xff51afd7ed558ccdULL;
+    x ^= x >> 33; x *= 0xc4ceb9fe1a85ec53ULL;
+    x ^= x >> 33;
+    return (size_t)x & SOBER_BB_REG_MASK;
+}
+
+static int bb_reg_insert(uintptr_t base)
+{
+    if (!base || base == SOBER_BB_REG_TOMB) return 0;
+    for (size_t attempt = 0; attempt < SOBER_BB_REG_SIZE; ++attempt) {
+        size_t idx = bb_reg_hash(base);
+        size_t first_tomb = SOBER_BB_REG_NPOS;
+        for (size_t k = 0; k < SOBER_BB_REG_SIZE; ++k) {
+            uintptr_t v = atomic_load_explicit(&s_bb_reg[idx],
+                                               memory_order_acquire);
+            if (v == base) return 1;
+            if (v == SOBER_BB_REG_EMPTY) {
+                size_t target = (first_tomb != SOBER_BB_REG_NPOS)
+                                ? first_tomb : idx;
+                uintptr_t expect = (target == idx) ? SOBER_BB_REG_EMPTY
+                    : atomic_load_explicit(&s_bb_reg[target],
+                                           memory_order_acquire);
+                if (expect != SOBER_BB_REG_EMPTY &&
+                    expect != SOBER_BB_REG_TOMB) break;
+                if (atomic_compare_exchange_strong_explicit(
+                        &s_bb_reg[target], &expect, base,
+                        memory_order_release, memory_order_acquire))
+                    return 1;
+                if (expect == base) return 1;
+                break;
+            }
+            if (v == SOBER_BB_REG_TOMB &&
+                first_tomb == SOBER_BB_REG_NPOS) first_tomb = idx;
+            idx = (idx + 1u) & SOBER_BB_REG_MASK;
+        }
+    }
+    bb_bump(&s_bb_reg_full);
+    return 0;
+}
+
+static int bb_reg_contains(uintptr_t base)
+{
+    if (!base) return 0;
+    size_t idx = bb_reg_hash(base);
+    for (size_t k = 0; k < SOBER_BB_REG_SIZE; ++k) {
+        uintptr_t v = atomic_load_explicit(&s_bb_reg[idx],
+                                           memory_order_acquire);
+        if (v == base) return 1;
+        if (v == SOBER_BB_REG_EMPTY) return 0;
+        idx = (idx + 1u) & SOBER_BB_REG_MASK;
+    }
+    return 0;
+}
+
+static void bb_reg_remove(uintptr_t base)
+{
+    if (!base) return;
+    size_t idx = bb_reg_hash(base);
+    for (size_t k = 0; k < SOBER_BB_REG_SIZE; ++k) {
+        uintptr_t v = atomic_load_explicit(&s_bb_reg[idx],
+                                           memory_order_acquire);
+        if (v == base) {
+            uintptr_t expect = base;
+            (void)atomic_compare_exchange_strong_explicit(
+                &s_bb_reg[idx], &expect, SOBER_BB_REG_TOMB,
+                memory_order_release, memory_order_acquire);
+            return;
+        }
+        if (v == SOBER_BB_REG_EMPTY) return;
+        idx = (idx + 1u) & SOBER_BB_REG_MASK;
+    }
+}
+
 static uintptr_t g_guest_base;  /* defined below; used by bridge diagnostics */
 
-/* Seventh bridge (decision 028): the guest's unpatched calloc.  Always returns
- * ZEROED memory so the lazy-link guard [handle+0x68]==0 sees zero and the
- * guest links its backing object instead of reading stale code bytes. */
+/* Eighth bridge (decision 028): fair header-form calloc.  Allocates n+0x10,
+ * returns base+0x10, and stores ZERO in the 16-byte header (F1).  The guest's
+ * own core 0x231f13a writes zero there; the old `total` value made the matched
+ * special-free path 0x6a28bf4 treat it as a custom handle.  We register `base`
+ * so the F3 bridges can apply the -0x10 correction only to header-form blocks.
+ * Zeroed payload also keeps the lazy-link guard [handle+0x68]==0 happy. */
 static void *host_calloc(size_t nmemb, size_t size)
 {
     if (!nmemb) nmemb = 1;
     if (!size) size = 1;
     if (nmemb > SIZE_MAX / size) return NULL;
     size_t n = nmemb * size;
-    /* The guest's calloc contract (FUN_0241f13a) allocates n+0x10, stores the
-     * total size in a 16-byte header, and returns base+0x10.  Its matching
-     * free thunk 0x231f53a subtracts 0x10 before calling the size-aware free.
-     * Reproduce that layout or guest frees read host malloc metadata as an
-     * allocator header and crash. */
-    if (n > SIZE_MAX - 0x10u) return NULL;
-    size_t total = n + 0x10u;
+    if (n > SIZE_MAX - SOBER_BB_HEADER_SIZE) return NULL;
+    size_t total = n + SOBER_BB_HEADER_SIZE;
     unsigned char *base = calloc(1, total);
     if (!base) return NULL;
-    *(size_t *)base = total;
-    void *p = base + 0x10u;
-    if (p && n == 0x1100u) {
+    memset(base, 0, SOBER_BB_HEADER_SIZE);   /* F1: discriminator, not size */
+    if (!bb_reg_insert((uintptr_t)base)) {   /* fail closed if registry full */
+        free(base);
+        return NULL;
+    }
+    bb_bump(&s_bb_header_allocs);
+    return base + SOBER_BB_HEADER_SIZE;
+}
+
+/* Decision-028 side effects, kept identical for both the canonical module and
+ * the local fallback path (the wrapper below calls us for either). */
+static void bb_calloc_side_effects(void *p, size_t nmemb, size_t size)
+{
+    if (!p) return;
+    if (!nmemb) nmemb = 1;
+    if (!size) size = 1;
+    size_t n = (nmemb > SIZE_MAX / size) ? 0u : nmemb * size;
+    if (n == 0x1100u) {
         sr_watch_arm(p);
         if (sober_bootstrap_calloc_handle_count < 16)
             sober_bootstrap_calloc_handles[sober_bootstrap_calloc_handle_count++] = p;
     }
-    if (p && getenv("SOBER_TRACE_CALLOC")) {
+    if (getenv("SOBER_TRACE_CALLOC")) {
         uintptr_t ret = (uintptr_t)__builtin_return_address(0);
         uintptr_t gb = (uintptr_t)g_guest_base;
         fprintf(stderr,
@@ -313,9 +443,12 @@ static void *host_calloc(size_t nmemb, size_t size)
                                      (unsigned long)(ret - gb));
         fprintf(stderr, "\n");
     }
-    return p;
 }
 
+/* F3: subtract 0x10 only for pointers that really came from the header
+ * calloc.  The guest's own thunk 0x231f53a already subtracts 0x10 and hands
+ * us `base`; because we register `base` (not base+0x10), that path also lands
+ * on the correct glibc pointer (p-0x10 is not in the set -> free as given). */
 static void host_free(void *p)
 {
     if (!p) return;
@@ -326,19 +459,61 @@ static void host_free(void *p)
         if (gb && ret >= gb) fprintf(stderr, " caller=%#lx", (unsigned long)(ret - gb));
         fprintf(stderr, "\n");
     }
+    uintptr_t base = (uintptr_t)p - (uintptr_t)SOBER_BB_HEADER_SIZE;
+    if (bb_reg_contains(base)) {
+        bb_reg_remove(base);
+        bb_bump(&s_bb_reg_hits);
+        free((void *)base);
+        return;
+    }
+    bb_bump(&s_bb_reg_misses);
     free(p);
 }
 
+/* F3: header-aware realloc.  A header-form block keeps its 16-byte prefix
+ * (zeroed again) and its registry entry after a grow/shrink, so the guest's
+ * -0x10 free thunk continues to work.  Plain pointers are passed through. */
 static void *host_reallocate(void *p, size_t n)
 {
     /* glibc realloc(p, 0) frees p and returns NULL; the guest's allocator
      * contract expects a usable pointer, so request one byte instead. */
     if (!n) n = 1;
-    size_t old = p ? malloc_usable_size(p) : 0;
-    void *q = realloc(p, n);
-    /* Zero only the newly-added region, preserving the caller's old data. */
-    if (q && n > old) memset((char *)q + old, 0, n - old);
-    return q;
+    uintptr_t base = p ? (uintptr_t)p - (uintptr_t)SOBER_BB_HEADER_SIZE : 0u;
+    int header = (p != NULL) && bb_reg_contains(base);
+    uintptr_t alloc_base = header ? base : (uintptr_t)p;
+
+    if (header && n > SIZE_MAX - SOBER_BB_HEADER_SIZE) return NULL;
+    size_t req = header ? n + SOBER_BB_HEADER_SIZE : n;
+    size_t old_usable = alloc_base ? malloc_usable_size((void *)alloc_base) : 0u;
+    void *q = realloc((void *)alloc_base, req);
+    if (!q) return NULL;
+
+    if (!header) {
+        if (n > old_usable)
+            memset((char *)q + old_usable, 0, n - old_usable);
+        return q;
+    }
+
+    bb_reg_remove(base);
+    memset(q, 0, SOBER_BB_HEADER_SIZE);   /* F1 again */
+    if (!bb_reg_insert((uintptr_t)q)) {
+        free(q);
+        return NULL;
+    }
+    if ((uintptr_t)q != base) bb_bump(&s_bb_realloc_moves);
+
+    size_t new_usable = malloc_usable_size(q);
+    size_t old_payload = old_usable > SOBER_BB_HEADER_SIZE
+                         ? old_usable - SOBER_BB_HEADER_SIZE : 0u;
+    size_t new_payload = new_usable > SOBER_BB_HEADER_SIZE
+                         ? new_usable - SOBER_BB_HEADER_SIZE : 0u;
+    if (n > old_payload && new_payload > old_payload) {
+        size_t z = n - old_payload;
+        size_t avail = new_payload - old_payload;
+        if (z > avail) z = avail;
+        memset((char *)q + SOBER_BB_HEADER_SIZE + old_payload, 0, z);
+    }
+    return (unsigned char *)q + SOBER_BB_HEADER_SIZE;
 }
 
 static void *host_aligned_allocate(size_t alignment, size_t n)
@@ -364,7 +539,119 @@ static size_t host_usable_size(void *p)
         fprintf(stderr, "\n");
     }
     if (!p) return 0;
+    /* F3: the 16 bytes at base are the header, not guest payload. */
+    uintptr_t base = (uintptr_t)p - (uintptr_t)SOBER_BB_HEADER_SIZE;
+    if (bb_reg_contains(base)) {
+        bb_bump(&s_bb_reg_hits);
+        size_t u = malloc_usable_size((void *)base);
+        return u > SOBER_BB_HEADER_SIZE ? u - SOBER_BB_HEADER_SIZE : 0u;
+    }
+    bb_bump(&s_bb_reg_misses);
     return malloc_usable_size(p);
+}
+
+/* F2: plain (headerless) calloc for bridge 0x253225e.  The guest thunk
+ * tail-jumps to memset and returns the arena block itself -- no +0x10, no
+ * registry entry. */
+static void *host_calloc_plain(size_t nmemb, size_t size)
+{
+    if (!nmemb) nmemb = 1;
+    if (!size) size = 1;
+    void *p = calloc(nmemb, size);
+    if (p) bb_bump(&s_bb_plain_allocs);
+    return p;
+}
+
+/* ---- installable ops table (layout mirrors alloc_default.h) -------------- */
+struct bb_alloc_ops {
+    void *(*allocate)(size_t);
+    void *(*alloc_small)(size_t);
+    void (*free)(void *);
+    size_t (*usable_size)(void *);
+    void *(*realloc)(void *, size_t);
+    void *(*aligned_alloc)(size_t, size_t);
+    void *(*calloc_plain)(size_t, size_t);
+    void *(*calloc_header)(size_t, size_t);
+};
+
+static struct bb_alloc_ops g_bb_ops;
+static int g_bb_ops_from_module;
+static const char *(*g_bb_describe)(char *, size_t);
+
+/* Resolve the canonical module once, at install time (normal host context,
+ * never from inside a bridge).  guest-init-host is -rdynamic and the module
+ * exports its entry points with default visibility, so dlsym finds them when
+ * they are linked in.  sober-native has no sober_jni -> local fallback. */
+static void bb_resolve_alloc_ops(void)
+{
+    static int resolved;
+    if (resolved) return;
+    resolved = 1;
+
+    g_bb_ops.allocate      = host_allocate;
+    g_bb_ops.alloc_small   = host_allocate;
+    g_bb_ops.free          = host_free;
+    g_bb_ops.usable_size   = host_usable_size;
+    g_bb_ops.realloc       = host_reallocate;
+    g_bb_ops.aligned_alloc = host_aligned_allocate;
+    g_bb_ops.calloc_plain  = host_calloc_plain;
+    g_bb_ops.calloc_header = host_calloc;
+
+    typedef const struct bb_alloc_ops *(*ops_fn)(void);
+    ops_fn fn = (ops_fn)(uintptr_t)dlsym(RTLD_DEFAULT, "sober_alloc_default_ops");
+    const struct bb_alloc_ops *o = fn ? fn() : NULL;
+    if (o) {
+        g_bb_ops = *o;
+        g_bb_ops_from_module = 1;
+        g_bb_describe = (const char *(*)(char *, size_t))(uintptr_t)
+            dlsym(RTLD_DEFAULT, "sober_alloc_default_describe");
+    } else {
+        /* Never silently mask a missing module (lead integration constraint). */
+        fprintf(stderr,
+                "[boot-alloc] WARNING: alloc_default module not present in "
+                "this image; using contract-identical local fallback "
+                "(header=0, plain@%#x, header@%#x, slot=%#x)\n",
+                SOBER_BRIDGE_CALLOC_RVA, SOBER_BRIDGE_CALLOC_RUNTIME_RVA,
+                0x726c0c0u);
+    }
+    BDEBUG("allocator contracts: %s (header=0 plain@%#x header@%#x slot=%#x)",
+           g_bb_ops_from_module ? "alloc_default module" : "local fallback",
+           SOBER_BRIDGE_CALLOC_RVA, SOBER_BRIDGE_CALLOC_RUNTIME_RVA,
+           0x726c0c0u);
+}
+
+/* Installed calloc entry point: contract implementation + the decision-028
+ * side effects (write-watch arming, handle snapshot, trace). */
+static void *bb_calloc_header_installed(size_t nmemb, size_t size)
+{
+    void *p = g_bb_ops.calloc_header(nmemb, size);
+    bb_calloc_side_effects(p, nmemb, size);
+    return p;
+}
+
+static void *bb_calloc_plain_installed(size_t nmemb, size_t size)
+{
+    return g_bb_ops.calloc_plain(nmemb, size);
+}
+
+/* One-line diagnostics; atexit so both harness binaries report it. */
+static void bb_alloc_contract_report(void)
+{
+    char buf[512];
+    if (g_bb_describe) {
+        fprintf(stderr, "[boot-alloc] %s\n", g_bb_describe(buf, sizeof(buf)));
+    } else {
+        snprintf(buf, sizeof(buf),
+                 "local header_allocs=%llu plain_allocs=%llu hits=%llu "
+                 "misses=%llu moves=%llu reg_full=%llu",
+                 (unsigned long long)s_bb_header_allocs,
+                 (unsigned long long)s_bb_plain_allocs,
+                 (unsigned long long)s_bb_reg_hits,
+                 (unsigned long long)s_bb_reg_misses,
+                 (unsigned long long)s_bb_realloc_moves,
+                 (unsigned long long)s_bb_reg_full);
+        fprintf(stderr, "[boot-alloc] %s\n", buf);
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -587,6 +874,7 @@ static int install_bridge(uintptr_t base, const struct bridge_spec *b, unsigned 
 
 static int install_bridges(uintptr_t base)
 {
+    bb_resolve_alloc_ops();
     static const uint8_t fp_alloc_small[]   = SOBER_BRIDGE_FP_ALLOC_SMALL;
     static const uint8_t fp_usable[]        = SOBER_BRIDGE_FP_USABLE_SIZE;
     static const uint8_t fp_realloc[]       = SOBER_BRIDGE_FP_REALLOCATE;
@@ -596,23 +884,25 @@ static int install_bridges(uintptr_t base)
     static const uint8_t fp_calloc[]        = SOBER_BRIDGE_FP_CALLOC;
     static const uint8_t fp_calloc_rt[]     = SOBER_BRIDGE_FP_CALLOC_RUNTIME;
 
+    /* Pointer order matches struct sober_alloc_default_ops / g_bb_ops.
+     * F2: 0x253225e is the PLAIN calloc; F1: 0x231f0e2 is the header form. */
     const struct bridge_spec bridges[] = {
-        { SOBER_BRIDGE_ALLOC_SMALL_RVA,  fp_alloc_small, (void (*)(void))host_allocate,
-          "small-allocate" },
-        { SOBER_BRIDGE_USABLE_SIZE_RVA,  fp_usable, (void (*)(void))host_usable_size,
-          "usable-size" },
-        { SOBER_BRIDGE_REALLOCATE_RVA,   fp_realloc, (void (*)(void))host_reallocate,
-          "reallocate" },
-        { SOBER_BRIDGE_ALLOCATE_RVA,     fp_alloc, (void (*)(void))host_allocate,
-          "allocate" },
-        { SOBER_BRIDGE_ALIGNED_ALLOC_RVA,fp_aligned, (void (*)(void))host_aligned_allocate,
-          "aligned-allocate-direct" },
-        { SOBER_BRIDGE_FREE_RVA,         fp_free, (void (*)(void))host_free,
-          "free" },
-        { SOBER_BRIDGE_CALLOC_RVA,       fp_calloc, (void (*)(void))host_calloc,
-          "calloc" },
-        { SOBER_BRIDGE_CALLOC_RUNTIME_RVA, fp_calloc_rt, (void (*)(void))host_calloc,
-          "calloc-runtime" },
+        { SOBER_BRIDGE_ALLOC_SMALL_RVA,  fp_alloc_small,
+          (void (*)(void))g_bb_ops.alloc_small,   "small-allocate" },
+        { SOBER_BRIDGE_USABLE_SIZE_RVA,  fp_usable,
+          (void (*)(void))g_bb_ops.usable_size,   "usable-size" },
+        { SOBER_BRIDGE_REALLOCATE_RVA,   fp_realloc,
+          (void (*)(void))g_bb_ops.realloc,       "reallocate" },
+        { SOBER_BRIDGE_ALLOCATE_RVA,     fp_alloc,
+          (void (*)(void))g_bb_ops.allocate,      "allocate" },
+        { SOBER_BRIDGE_ALIGNED_ALLOC_RVA,fp_aligned,
+          (void (*)(void))g_bb_ops.aligned_alloc, "aligned-allocate-direct" },
+        { SOBER_BRIDGE_FREE_RVA,         fp_free,
+          (void (*)(void))g_bb_ops.free,          "free" },
+        { SOBER_BRIDGE_CALLOC_RVA,       fp_calloc,
+          (void (*)(void))&bb_calloc_plain_installed,  "calloc-plain" },
+        { SOBER_BRIDGE_CALLOC_RUNTIME_RVA, fp_calloc_rt,
+          (void (*)(void))&bb_calloc_header_installed, "calloc-header" },
     };
     for (size_t i = 0; i < sizeof(bridges) / sizeof(bridges[0]); ++i)
         if (install_bridge(base, &bridges[i], (unsigned)i) != 0) return -1;
@@ -625,12 +915,14 @@ static int install_bridges(uintptr_t base)
  * zeroing host_calloc. */
 static int patch_calloc_slot(uintptr_t base)
 {
+    bb_resolve_alloc_ops();
     unsigned char *slot = (unsigned char *)(base + 0x726c0c0u);
     if (make_writable(slot, sizeof(void *), 0) != 0) return -1;
-    void *target = (void *)(uintptr_t)&host_calloc;
+    /* The slot is the runtime HEADER-form calloc (same as 0x231f0e2). */
+    void *target = (void *)(uintptr_t)&bb_calloc_header_installed;
     memcpy(slot, &target, sizeof(target));
     __builtin___clear_cache((char *)slot, (char *)slot + sizeof(target));
-    BDEBUG("calloc slot 0x726c0c0 -> %p", target);
+    BDEBUG("calloc slot 0x726c0c0 -> %p (header contract)", target);
     return 0;
 }
 
@@ -1321,6 +1613,13 @@ static int do_apply(uintptr_t base)
     }
     sober_bootstrap_phase = 1;
     if (sober_bionic_bootstrap_verify_build((void *)base) != 0) return -1;
+    {   /* default allocator contract diagnostics (one-shot) */
+        static int bb_report_registered;
+        if (!bb_report_registered) {
+            atexit(bb_alloc_contract_report);
+            bb_report_registered = 1;
+        }
+    }
     /* Phase-4 decision 019: install the writer-side handle sanitiser. */
     install_handle_sanitiser(base);
     /* Install bridges first: the data-seed initializers may allocate. */

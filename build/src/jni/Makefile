@@ -178,6 +178,54 @@ alloc_contract_fix.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/alloc_contract_fix.c.s
 .PHONY : alloc_contract_fix.c.s
 
+alloc_default.o: alloc_default.c.o
+.PHONY : alloc_default.o
+
+# target to build an object file
+alloc_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o
+.PHONY : alloc_default.c.o
+
+alloc_default.i: alloc_default.c.i
+.PHONY : alloc_default.i
+
+# target to preprocess a source file
+alloc_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.i
+.PHONY : alloc_default.c.i
+
+alloc_default.s: alloc_default.c.s
+.PHONY : alloc_default.s
+
+# target to generate assembly for a file
+alloc_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.s
+.PHONY : alloc_default.c.s
+
+app488_default.o: app488_default.c.o
+.PHONY : app488_default.o
+
+# target to build an object file
+app488_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o
+.PHONY : app488_default.c.o
+
+app488_default.i: app488_default.c.i
+.PHONY : app488_default.i
+
+# target to preprocess a source file
+app488_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/app488_default.c.i
+.PHONY : app488_default.c.i
+
+app488_default.s: app488_default.c.s
+.PHONY : app488_default.s
+
+# target to generate assembly for a file
+app488_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/app488_default.c.s
+.PHONY : app488_default.c.s
+
 app488_fix.o: app488_fix.c.o
 .PHONY : app488_fix.o
 
@@ -274,6 +322,102 @@ callback_provenance.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/callback_provenance.c.s
 .PHONY : callback_provenance.c.s
 
+controller_default.o: controller_default.c.o
+.PHONY : controller_default.o
+
+# target to build an object file
+controller_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o
+.PHONY : controller_default.c.o
+
+controller_default.i: controller_default.c.i
+.PHONY : controller_default.i
+
+# target to preprocess a source file
+controller_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/controller_default.c.i
+.PHONY : controller_default.c.i
+
+controller_default.s: controller_default.c.s
+.PHONY : controller_default.s
+
+# target to generate assembly for a file
+controller_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/controller_default.c.s
+.PHONY : controller_default.c.s
+
+delegate_default.o: delegate_default.c.o
+.PHONY : delegate_default.o
+
+# target to build an object file
+delegate_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o
+.PHONY : delegate_default.c.o
+
+delegate_default.i: delegate_default.c.i
+.PHONY : delegate_default.i
+
+# target to preprocess a source file
+delegate_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.i
+.PHONY : delegate_default.c.i
+
+delegate_default.s: delegate_default.c.s
+.PHONY : delegate_default.s
+
+# target to generate assembly for a file
+delegate_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.s
+.PHONY : delegate_default.c.s
+
+fflag_default.o: fflag_default.c.o
+.PHONY : fflag_default.o
+
+# target to build an object file
+fflag_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o
+.PHONY : fflag_default.c.o
+
+fflag_default.i: fflag_default.c.i
+.PHONY : fflag_default.i
+
+# target to preprocess a source file
+fflag_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.i
+.PHONY : fflag_default.c.i
+
+fflag_default.s: fflag_default.c.s
+.PHONY : fflag_default.s
+
+# target to generate assembly for a file
+fflag_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.s
+.PHONY : fflag_default.c.s
+
+fields_default.o: fields_default.c.o
+.PHONY : fields_default.o
+
+# target to build an object file
+fields_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o
+.PHONY : fields_default.c.o
+
+fields_default.i: fields_default.c.i
+.PHONY : fields_default.i
+
+# target to preprocess a source file
+fields_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fields_default.c.i
+.PHONY : fields_default.c.i
+
+fields_default.s: fields_default.c.s
+.PHONY : fields_default.s
+
+# target to generate assembly for a file
+fields_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fields_default.c.s
+.PHONY : fields_default.c.s
+
 game_params.o: game_params.c.o
 .PHONY : game_params.o
 
@@ -321,6 +465,30 @@ global_string_seed.s: global_string_seed.c.s
 global_string_seed.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/global_string_seed.c.s
 .PHONY : global_string_seed.c.s
+
+javavm_default.o: javavm_default.c.o
+.PHONY : javavm_default.o
+
+# target to build an object file
+javavm_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o
+.PHONY : javavm_default.c.o
+
+javavm_default.i: javavm_default.c.i
+.PHONY : javavm_default.i
+
+# target to preprocess a source file
+javavm_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.i
+.PHONY : javavm_default.c.i
+
+javavm_default.s: javavm_default.c.s
+.PHONY : javavm_default.s
+
+# target to generate assembly for a file
+javavm_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.s
+.PHONY : javavm_default.c.s
 
 javavm_semantics.o: javavm_semantics.c.o
 .PHONY : javavm_semantics.o
@@ -466,6 +634,30 @@ jni_strings.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/jni_strings.c.s
 .PHONY : jni_strings.c.s
 
+jnislots_default.o: jnislots_default.c.o
+.PHONY : jnislots_default.o
+
+# target to build an object file
+jnislots_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o
+.PHONY : jnislots_default.c.o
+
+jnislots_default.i: jnislots_default.c.i
+.PHONY : jnislots_default.i
+
+# target to preprocess a source file
+jnislots_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.i
+.PHONY : jnislots_default.c.i
+
+jnislots_default.s: jnislots_default.c.s
+.PHONY : jnislots_default.s
+
+# target to generate assembly for a file
+jnislots_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.s
+.PHONY : jnislots_default.c.s
+
 native_jni.o: native_jni.c.o
 .PHONY : native_jni.o
 
@@ -514,6 +706,30 @@ notifier_probe.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/notifier_probe.c.s
 .PHONY : notifier_probe.c.s
 
+placeid_default.o: placeid_default.c.o
+.PHONY : placeid_default.o
+
+# target to build an object file
+placeid_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o
+.PHONY : placeid_default.c.o
+
+placeid_default.i: placeid_default.c.i
+.PHONY : placeid_default.i
+
+# target to preprocess a source file
+placeid_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.i
+.PHONY : placeid_default.c.i
+
+placeid_default.s: placeid_default.c.s
+.PHONY : placeid_default.s
+
+# target to generate assembly for a file
+placeid_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.s
+.PHONY : placeid_default.c.s
+
 platform_fields.o: platform_fields.c.o
 .PHONY : platform_fields.o
 
@@ -538,6 +754,78 @@ platform_fields.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/platform_fields.c.s
 .PHONY : platform_fields.c.s
 
+provenance_gate.o: provenance_gate.c.o
+.PHONY : provenance_gate.o
+
+# target to build an object file
+provenance_gate.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o
+.PHONY : provenance_gate.c.o
+
+provenance_gate.i: provenance_gate.c.i
+.PHONY : provenance_gate.i
+
+# target to preprocess a source file
+provenance_gate.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.i
+.PHONY : provenance_gate.c.i
+
+provenance_gate.s: provenance_gate.c.s
+.PHONY : provenance_gate.s
+
+# target to generate assembly for a file
+provenance_gate.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.s
+.PHONY : provenance_gate.c.s
+
+publish_default.o: publish_default.c.o
+.PHONY : publish_default.o
+
+# target to build an object file
+publish_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o
+.PHONY : publish_default.c.o
+
+publish_default.i: publish_default.c.i
+.PHONY : publish_default.i
+
+# target to preprocess a source file
+publish_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/publish_default.c.i
+.PHONY : publish_default.c.i
+
+publish_default.s: publish_default.c.s
+.PHONY : publish_default.s
+
+# target to generate assembly for a file
+publish_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/publish_default.c.s
+.PHONY : publish_default.c.s
+
+render_guest.o: render_guest.c.o
+.PHONY : render_guest.o
+
+# target to build an object file
+render_guest.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o
+.PHONY : render_guest.c.o
+
+render_guest.i: render_guest.c.i
+.PHONY : render_guest.i
+
+# target to preprocess a source file
+render_guest.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/render_guest.c.i
+.PHONY : render_guest.c.i
+
+render_guest.s: render_guest.c.s
+.PHONY : render_guest.s
+
+# target to generate assembly for a file
+render_guest.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/render_guest.c.s
+.PHONY : render_guest.c.s
+
 scalar_returns.o: scalar_returns.c.o
 .PHONY : scalar_returns.o
 
@@ -561,6 +849,54 @@ scalar_returns.s: scalar_returns.c.s
 scalar_returns.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/scalar_returns.c.s
 .PHONY : scalar_returns.c.s
+
+scheduler_guest.o: scheduler_guest.c.o
+.PHONY : scheduler_guest.o
+
+# target to build an object file
+scheduler_guest.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o
+.PHONY : scheduler_guest.c.o
+
+scheduler_guest.i: scheduler_guest.c.i
+.PHONY : scheduler_guest.i
+
+# target to preprocess a source file
+scheduler_guest.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.i
+.PHONY : scheduler_guest.c.i
+
+scheduler_guest.s: scheduler_guest.c.s
+.PHONY : scheduler_guest.s
+
+# target to generate assembly for a file
+scheduler_guest.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.s
+.PHONY : scheduler_guest.c.s
+
+singleton_default.o: singleton_default.c.o
+.PHONY : singleton_default.o
+
+# target to build an object file
+singleton_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o
+.PHONY : singleton_default.c.o
+
+singleton_default.i: singleton_default.c.i
+.PHONY : singleton_default.i
+
+# target to preprocess a source file
+singleton_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.i
+.PHONY : singleton_default.c.i
+
+singleton_default.s: singleton_default.c.s
+.PHONY : singleton_default.s
+
+# target to generate assembly for a file
+singleton_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.s
+.PHONY : singleton_default.c.s
 
 singleton_fix.o: singleton_fix.c.o
 .PHONY : singleton_fix.o
@@ -706,6 +1042,30 @@ static_object_calls.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/static_object_calls.c.s
 .PHONY : static_object_calls.c.s
 
+tsd_default.o: tsd_default.c.o
+.PHONY : tsd_default.o
+
+# target to build an object file
+tsd_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o
+.PHONY : tsd_default.c.o
+
+tsd_default.i: tsd_default.c.i
+.PHONY : tsd_default.i
+
+# target to preprocess a source file
+tsd_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.i
+.PHONY : tsd_default.c.i
+
+tsd_default.s: tsd_default.c.s
+.PHONY : tsd_default.s
+
+# target to generate assembly for a file
+tsd_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.s
+.PHONY : tsd_default.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -720,6 +1080,12 @@ help:
 	@echo "... alloc_contract_fix.o"
 	@echo "... alloc_contract_fix.i"
 	@echo "... alloc_contract_fix.s"
+	@echo "... alloc_default.o"
+	@echo "... alloc_default.i"
+	@echo "... alloc_default.s"
+	@echo "... app488_default.o"
+	@echo "... app488_default.i"
+	@echo "... app488_default.s"
 	@echo "... app488_fix.o"
 	@echo "... app488_fix.i"
 	@echo "... app488_fix.s"
@@ -732,12 +1098,27 @@ help:
 	@echo "... callback_provenance.o"
 	@echo "... callback_provenance.i"
 	@echo "... callback_provenance.s"
+	@echo "... controller_default.o"
+	@echo "... controller_default.i"
+	@echo "... controller_default.s"
+	@echo "... delegate_default.o"
+	@echo "... delegate_default.i"
+	@echo "... delegate_default.s"
+	@echo "... fflag_default.o"
+	@echo "... fflag_default.i"
+	@echo "... fflag_default.s"
+	@echo "... fields_default.o"
+	@echo "... fields_default.i"
+	@echo "... fields_default.s"
 	@echo "... game_params.o"
 	@echo "... game_params.i"
 	@echo "... game_params.s"
 	@echo "... global_string_seed.o"
 	@echo "... global_string_seed.i"
 	@echo "... global_string_seed.s"
+	@echo "... javavm_default.o"
+	@echo "... javavm_default.i"
+	@echo "... javavm_default.s"
 	@echo "... javavm_semantics.o"
 	@echo "... javavm_semantics.i"
 	@echo "... javavm_semantics.s"
@@ -756,18 +1137,39 @@ help:
 	@echo "... jni_strings.o"
 	@echo "... jni_strings.i"
 	@echo "... jni_strings.s"
+	@echo "... jnislots_default.o"
+	@echo "... jnislots_default.i"
+	@echo "... jnislots_default.s"
 	@echo "... native_jni.o"
 	@echo "... native_jni.i"
 	@echo "... native_jni.s"
 	@echo "... notifier_probe.o"
 	@echo "... notifier_probe.i"
 	@echo "... notifier_probe.s"
+	@echo "... placeid_default.o"
+	@echo "... placeid_default.i"
+	@echo "... placeid_default.s"
 	@echo "... platform_fields.o"
 	@echo "... platform_fields.i"
 	@echo "... platform_fields.s"
+	@echo "... provenance_gate.o"
+	@echo "... provenance_gate.i"
+	@echo "... provenance_gate.s"
+	@echo "... publish_default.o"
+	@echo "... publish_default.i"
+	@echo "... publish_default.s"
+	@echo "... render_guest.o"
+	@echo "... render_guest.i"
+	@echo "... render_guest.s"
 	@echo "... scalar_returns.o"
 	@echo "... scalar_returns.i"
 	@echo "... scalar_returns.s"
+	@echo "... scheduler_guest.o"
+	@echo "... scheduler_guest.i"
+	@echo "... scheduler_guest.s"
+	@echo "... singleton_default.o"
+	@echo "... singleton_default.i"
+	@echo "... singleton_default.s"
 	@echo "... singleton_fix.o"
 	@echo "... singleton_fix.i"
 	@echo "... singleton_fix.s"
@@ -786,6 +1188,9 @@ help:
 	@echo "... static_object_calls.o"
 	@echo "... static_object_calls.i"
 	@echo "... static_object_calls.s"
+	@echo "... tsd_default.o"
+	@echo "... tsd_default.i"
+	@echo "... tsd_default.s"
 .PHONY : help
 
 

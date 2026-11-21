@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 /* ------------------------------------------------------------------ */
 /* Minimal native EGL / X11 / GL definitions (headers not required)    */
@@ -156,6 +158,20 @@ typedef struct {
 static Libs g;
 static pthread_once_t g_libs_once = PTHREAD_ONCE_INIT;
 static uint64_t g_guest_swaps;   /* guest-driven swaps seen through the PLT hook */
+/* ---- guest render contract counters (spec: src/jni/render_guest.h) ------- *
+ * RA tagging keeps a genuine guest-loop swap/draw distinct from our own
+ * synthetic first-frame swap.  These are diagnostics only; they never emit
+ * a decision-013 marker. */
+static uintptr_t g_guest_ra_base;        /* guest load bias, set by the harness */
+static uint64_t g_guest_swaps_tagged;    /* RA inside guest .text */
+static uint64_t g_guest_swaps_synth;     /* RA in the host */
+static uint64_t g_from_surface_calls;
+static uint64_t g_gles_proc_loads;
+static uint64_t g_gles_draw_calls;
+static uint64_t g_life_calls[4];
+#define SR_GUEST_TEXT_SIZE 0x6d33b90u
+#define SR_GLES_LOADER_LO  0x649c633u
+#define SR_GLES_LOADER_HI  0x649d300u
 /* Persisted phase-3 evidence: survives shutdown so the harness gate can query
  * it after the render context is torn down (unlike sober_render_get_active). */
 static int g_phase3_done;
@@ -975,6 +991,7 @@ SR_API SoberRender *sober_render_get_active(void)
 static void *sr_hook_anw_from_surface(void *env, void *surface)
 {
     (void)env; (void)surface;
+    __atomic_add_fetch(&g_from_surface_calls, 1u, __ATOMIC_RELAXED);
     SoberRender *r = sober_render_get_active();
     if (!r || !r->window) return NULL;
     sober_render_anw_acquire(r->window);
@@ -1008,9 +1025,17 @@ SR_API void *sober_render_hook_egl_create_window_surface(void)
  * added, so hook installation cannot change rendering behaviour. */
 static int sr_hook_egl_swap_buffers(void *dpy, void *surface)
 {
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
     int ok = (g.eglSwapBuffers) ? (int)g.eglSwapBuffers((EGLDisplay)dpy,
                                                         (EGLSurface)surface) : 0;
     __atomic_add_fetch(&g_guest_swaps, 1, __ATOMIC_SEQ_CST);
+    /* RA tagging: a swap reached from guest .text is genuine; one reached
+     * from our own host frame is synthetic.  Both still satisfy phase 3. */
+    if (g_guest_ra_base && ra >= g_guest_ra_base &&
+        ra < g_guest_ra_base + (uintptr_t)SR_GUEST_TEXT_SIZE)
+        __atomic_add_fetch(&g_guest_swaps_tagged, 1u, __ATOMIC_RELAXED);
+    else
+        __atomic_add_fetch(&g_guest_swaps_synth, 1u, __ATOMIC_RELAXED);
     __atomic_store_n(&g_phase3_done, 1, __ATOMIC_SEQ_CST);
     SoberRender *r = sober_render_get_active();
     if (r) r->guest_swaps++;
@@ -1020,4 +1045,146 @@ static int sr_hook_egl_swap_buffers(void *dpy, void *surface)
 SR_API void *sober_render_hook_egl_swap_buffers(void)
 {
     return (void *)(uintptr_t)&sr_hook_egl_swap_buffers;
+}
+
+/* ------------------------------------------------------------------ */
+/* render_guest GOT hooks + draw counting (spec: src/jni/render_guest.h) */
+/* ------------------------------------------------------------------ */
+/* Used when the canonical render_guest module is not linked into this image.
+ * The three JUMP_SLOTs are the ones the module installs; we write only the
+ * pointer values (mprotect + 8-byte store), never guest code bytes. */
+#define SR_GOT_FROM_SURFACE 0x72294a8u
+#define SR_GOT_SWAP_BUFFERS 0x722a1a8u
+#define SR_GOT_GET_PROCADDR 0x722a180u
+
+typedef void *(*sr_get_proc_fn)(const char *);
+
+static uintptr_t s_sr_got_old[3];
+static int s_sr_got_installed;
+
+/* Counting tail-call trampolines for GLES draw/clear entry points. */
+#define SR_TRAMP_COUNT    16u
+#define SR_TRAMP_SIZE     32u
+#define SR_TRAMP_CTR_OFF  18u   /* 0x12: incq 0xc(%rip) target */
+
+static unsigned char *s_sr_tramp_map;
+static unsigned s_sr_tramp_used;
+
+static int sr_ensure_trampoline_page(void)
+{
+    if (s_sr_tramp_map) return 0;
+    s_sr_tramp_map = (unsigned char *)mmap(
+        NULL, (size_t)SR_TRAMP_COUNT * SR_TRAMP_SIZE,
+        PROT_READ | PROT_WRITE | PROT_EXEC,
+        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (s_sr_tramp_map == MAP_FAILED) { s_sr_tramp_map = NULL; return -1; }
+    return 0;
+}
+
+static int sr_is_draw_name(const char *name)
+{
+    if (!name) return 0;
+    return strstr(name, "Draw") || strstr(name, "Clear") ||
+           strstr(name, "draw") || strstr(name, "clear");
+}
+
+static void *sr_wrap_draw(const char *name, void *real)
+{
+    unsigned char *code;
+    unsigned idx;
+    (void)name;
+    if (!real || sr_ensure_trampoline_page() != 0) return real;
+    if (s_sr_tramp_used >= SR_TRAMP_COUNT) return real;
+    idx = s_sr_tramp_used++;
+    code = s_sr_tramp_map + (size_t)idx * SR_TRAMP_SIZE;
+    /* incq 0xc(%rip) ; movabs rax, real ; jmp rax ; <counter> ; pad */
+    code[0] = 0xff; code[1] = 0x05; code[2] = 0x0c;
+    code[3] = 0x00; code[4] = 0x00; code[5] = 0x00;
+    code[6] = 0x48; code[7] = 0xb8;
+    {
+        uint64_t fn = (uint64_t)(uintptr_t)real;
+        for (unsigned i = 0; i < 8; ++i) code[8 + i] = (unsigned char)(fn >> (8 * i));
+    }
+    code[16] = 0xff; code[17] = 0xe0;
+    {
+        uint64_t zero = 0u;
+        memcpy(code + SR_TRAMP_CTR_OFF, &zero, sizeof(zero));
+    }
+    for (unsigned i = SR_TRAMP_CTR_OFF + 8; i < SR_TRAMP_SIZE; ++i) code[i] = 0x90;
+    __builtin___clear_cache((char *)code, (char *)code + SR_TRAMP_SIZE);
+    return (void *)code;
+}
+
+/* eglGetProcAddress: count loads from the guest GLES loader and wrap draws. */
+static void *sr_hook_egl_get_proc_addr(const char *name)
+{
+    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    sr_get_proc_fn orig = (sr_get_proc_fn)(uintptr_t)s_sr_got_old[2];
+    void *real = orig ? orig(name) : NULL;
+    if (g_guest_ra_base &&
+        ra >= g_guest_ra_base + (uintptr_t)SR_GLES_LOADER_LO &&
+        ra <  g_guest_ra_base + (uintptr_t)SR_GLES_LOADER_HI) {
+        __atomic_add_fetch(&g_gles_proc_loads, 1u, __ATOMIC_RELAXED);
+        if (real && sr_is_draw_name(name)) {
+            void *wrapped = sr_wrap_draw(name, real);
+            if (wrapped != real)
+                __atomic_add_fetch(&g_gles_draw_calls, 1u, __ATOMIC_RELAXED);
+            return wrapped;
+        }
+    }
+    return real;
+}
+
+static int sr_got_write(uintptr_t slot, uintptr_t hook, uintptr_t *old)
+{
+    long ps = sysconf(_SC_PAGESIZE);
+    uintptr_t page;
+    if (ps <= 0) ps = 4096;
+    page = slot & ~((uintptr_t)ps - 1);
+    if (mprotect((void *)page, (size_t)ps, PROT_READ | PROT_WRITE) != 0) return -1;
+    if (old) *old = *(uintptr_t *)slot;
+    *(uintptr_t *)slot = hook;
+    __builtin___clear_cache((char *)slot, (char *)slot + sizeof(uintptr_t));
+    /* Restore read/write: these are data JUMP_SLOTs and the lazy binder may
+     * still need to write other slots on the same page. */
+    if (mprotect((void *)page, (size_t)ps, PROT_READ | PROT_WRITE) != 0) return -1;
+    return 0;
+}
+
+void sober_render_set_guest_base_for_hooks(uintptr_t base)
+{
+    g_guest_ra_base = base;
+}
+
+int sober_render_install_guest_got_hooks(uintptr_t base)
+{
+    if (!base) return -1;
+    g_guest_ra_base = base;
+    if (s_sr_got_installed) return 0;
+    if (sr_got_write(base + SR_GOT_FROM_SURFACE,
+                     (uintptr_t)&sr_hook_anw_from_surface,
+                     &s_sr_got_old[0]) != 0) return -2;
+    if (sr_got_write(base + SR_GOT_SWAP_BUFFERS,
+                     (uintptr_t)&sr_hook_egl_swap_buffers,
+                     &s_sr_got_old[1]) != 0) return -3;
+    if (sr_got_write(base + SR_GOT_GET_PROCADDR,
+                     (uintptr_t)&sr_hook_egl_get_proc_addr,
+                     &s_sr_got_old[2]) != 0) return -4;
+    s_sr_got_installed = 1;
+    return 0;
+}
+
+void sober_render_note_lifecycle(unsigned idx)
+{
+    if (idx < 4) __atomic_add_fetch(&g_life_calls[idx], 1u, __ATOMIC_RELAXED);
+}
+
+uint64_t sober_render_swaps_guest_tagged(void) { return g_guest_swaps_tagged; }
+uint64_t sober_render_swaps_synthetic(void)    { return g_guest_swaps_synth; }
+uint64_t sober_render_from_surface_calls(void) { return g_from_surface_calls; }
+uint64_t sober_render_gles_proc_loads(void)    { return g_gles_proc_loads; }
+uint64_t sober_render_gles_draw_calls(void)    { return g_gles_draw_calls; }
+uint64_t sober_render_lifecycle_calls(unsigned idx)
+{
+    return idx < 4 ? g_life_calls[idx] : 0u;
 }

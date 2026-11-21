@@ -37,12 +37,18 @@ intentionally RED.
 | Category | Weight | Score | Contribution |
 | --- | --- | --- | --- |
 | Guest init / loader / bootstrap | 20% | 0.95 | 19.00 |
-| Native render / frame | 15% | 0.55 | 8.25 |
-| JNI bridge / typed fidelity | 15% | 0.70 | 10.50 |
-| App state (singleton, controller, delegate, params) | 20% | 0.20 | 4.00 |
+| Native render / frame | 15% | 0.60 | 9.00 |
+| JNI bridge / typed fidelity | 15% | 0.85 | 12.75 |
+| App state (singleton, controller, delegate, params) | 20% | 0.40 | 8.00 |
 | Genuine app-shell callback | 20% | 0.00 | 0.00 |
-| Gate / tests / docs / delivery | 10% | 0.45 | 4.50 |
-| **TOTAL** | **100%** | — | **46.25 ≈ 46%** |
+| Gate / tests / docs / delivery | 10% | 0.85 | 8.50 |
+| **TOTAL (after integration team)** | **100%** | — | **57.25 ≈ 57%** |
+
+The original audit was 46%. The integration team raised JNI (default slot modules
+wired, `jni_probe` PASS), render (guest GOT hooks/lifecycle installed, though
+guest-tagged swaps/draws are still zero) and gate (positive provenance wired).
+App state still faults when prerequisites are missing, and the decisive callback
+leg remains zero — so the marker is correctly WITHHELD.
 
 Even perfect scores everywhere else would reach only 60% while Callback and App
 state remain zero — those two legs carry 40% of the goal.
@@ -96,7 +102,53 @@ Effort: L=1, M=2, H=3, VH=5. Critical path: BLK‑01→02→03→04→06→07→
 | H1 | 387 generated `build/` files committed; orphan Win32 object; stale SHA | hygiene follow-up |
 | H2 | `SOBER_PROP_*` and Tier‑3 config seeds outside withhold chain | add for strict parity before any future green |
 
-## 6. Final statement
+## 6. Integration follow-up (team `TEAM-HCUY-MAGB-VPX7`)
+
+A three-worker integration team is wiring the delivered default-ON modules into
+the real default path. `analysis/MODULE_INTEGRATION.md` is the authoritative
+one-module-per-slot table and boot order; it resolves duplicate pairs
+(`fields_default` over `platform_fields`, `alloc_default` over `alloc_contract_fix`,
+`tsd_default` over the inline TSD knob, `javavm_default` over `javavm_semantics`,
+etc.). The render contract is now
+`render_ok = phase3_done && guest_tagged_render_ok()`, with a guest-tagged swap
+and counted guest draw decisive; `ANativeWindow_fromSurface` is supporting
+evidence, not a hard requirement (T3‑5 question resolved by lead).
+
+The 46% score stands until the wiring is built and A/B verified; it will be
+recomputed in the final verification task (#480). Marker stays WITHHELD.
+
+`analysis/T2_5_flags_latch.md` has now landed: the latch write at `0x2eb7520`
+is unconditional, but `nativeInitClientSettings 0x2eb7155` exits early on parse
+ctx byte `0x7697d08 == 1` (and on empty jstrings), so our calls return rc=1 with
+latch 0. The legitimate sibling writer is `CrashpadHandlerMain 0x2ec9c30(int,
+char**)`: argv `"--channel" "LIVE"` populates global `0x72a3710` and reaches
+`0x2ec9eed → 0x2ec9fae`, writing `0x7cdd149 = 1`. This was routed to worker-2
+for default-path wiring; it is guest initialization, not a crash fix, and emits
+no callback.
+
+### Worker hand-offs (2026-11-21)
+
+- **worker-2 (#477, harness)** wired all default modules in dependency order and
+  added every new knob plus four `should_withhold()` terms to `seeded_state`. Its
+  default A/B still fails: FFlag ctor[0] replay reports guard `257` but
+  `handle+0x38` control block is NULL, so the singleton gate returns `-3`, the
+  flag setter is skipped, and a late guest worker faults through
+  `0x2e5c3c1 → 0x2e5d454 → 0x2ed3ad8 → 0x6caee44 → 0x6caed7c` (the known
+  `0x2e5d42a` family). `app488` ctor `0x253c93c` also faults when the FFlag
+  control block is missing, so app-state calls are now guarded. No genuine
+  notifier callback; `guest-tagged swaps=0`; marker WITHHELD.
+- **worker-3 (#478, bootstrap/render)** wired all eight allocator bridges and
+  `render_guest` GOT hooks. Build, ctest 2/2, verify-native, guest-dlopen and
+  first-frame all PASS; engine SHA unchanged. `render_guest` reports installed
+  with context vtable `0x71912e8`, all four lifecycle thunks called once, 48
+  proc loads, 5 draw procs wrapped — but `swaps(total/guest/synth)=1/0/1` and
+  `draws=0`: the only swap is our synthetic host swap. Strict gate correctly
+  WITHHELD; fromSurface is present but not decisive per the lead contract.
+- **worker-1 (#476)** is finishing the JNI/CMake integration (one module per
+  slot, provenance dispatch hook). Until that lands, `is_genuine()` cannot fire.
+
+
+## 7. Final statement
 
 The project has built a genuinely native, translation-free host for the frozen
 Android guest, with verified init, relocation, window and render mechanics, and

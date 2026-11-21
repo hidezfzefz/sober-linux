@@ -14,6 +14,8 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_render.c.o: \
  /usr/include/bits/stdint-least.h \
  /home/user/sober-linux/src/render/native_render.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h \
+ /home/user/sober-linux/src/jni/render_guest.h /usr/include/dlfcn.h \
+ /usr/include/bits/dlfcn.h /usr/include/bits/dl_find_object.h \
  /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/fcntl-linux.h /usr/include/bits/types/struct_iovec.h \
  /usr/include/bits/cloexec.h /usr/include/linux/falloc.h \

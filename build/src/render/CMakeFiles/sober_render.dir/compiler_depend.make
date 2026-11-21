@@ -17,16 +17,26 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
   /usr/include/asm/types.h \
   /usr/include/bits/atomic_wide_counter.h \
   /usr/include/bits/byteswap.h \
+  /usr/include/bits/confname.h \
   /usr/include/bits/cpu-set.h \
   /usr/include/bits/dl_find_object.h \
   /usr/include/bits/dlfcn.h \
   /usr/include/bits/endian.h \
   /usr/include/bits/endianness.h \
+  /usr/include/bits/environments.h \
   /usr/include/bits/errno.h \
   /usr/include/bits/floatn-common.h \
   /usr/include/bits/floatn.h \
+  /usr/include/bits/getopt_core.h \
+  /usr/include/bits/getopt_posix.h \
   /usr/include/bits/libc-header-start.h \
   /usr/include/bits/long-double.h \
+  /usr/include/bits/mman-linux.h \
+  /usr/include/bits/mman-map-flags-generic.h \
+  /usr/include/bits/mman-shared.h \
+  /usr/include/bits/mman.h \
+  /usr/include/bits/mman_ext.h \
+  /usr/include/bits/posix_opt.h \
   /usr/include/bits/pthread_stack_min-dynamic.h \
   /usr/include/bits/pthreadtypes-arch.h \
   /usr/include/bits/pthreadtypes.h \
@@ -80,6 +90,9 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
   /usr/include/bits/types/timer_t.h \
   /usr/include/bits/typesizes.h \
   /usr/include/bits/uintn-identity.h \
+  /usr/include/bits/unistd-decl.h \
+  /usr/include/bits/unistd.h \
+  /usr/include/bits/unistd_ext.h \
   /usr/include/bits/waitflags.h \
   /usr/include/bits/waitstatus.h \
   /usr/include/bits/wchar.h \
@@ -91,6 +104,7 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
   /usr/include/features.h \
   /usr/include/gnu/stubs-64.h \
   /usr/include/gnu/stubs.h \
+  /usr/include/linux/close_range.h \
   /usr/include/linux/errno.h \
   /usr/include/linux/posix_types.h \
   /usr/include/linux/sched/types.h \
@@ -105,9 +119,11 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
   /usr/include/string.h \
   /usr/include/strings.h \
   /usr/include/sys/cdefs.h \
+  /usr/include/sys/mman.h \
   /usr/include/sys/select.h \
   /usr/include/sys/types.h \
   /usr/include/time.h \
+  /usr/include/unistd.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h
@@ -115,9 +131,9 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h:
+/usr/include/unistd.h:
 
-/usr/include/sys/select.h:
+/usr/include/sys/mman.h:
 
 /usr/include/sys/cdefs.h:
 
@@ -128,6 +144,8 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 /usr/include/stdint.h:
 
 /usr/include/linux/errno.h:
+
+/usr/include/linux/close_range.h:
 
 /usr/include/gnu/stubs.h:
 
@@ -143,6 +161,8 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/include/bits/waitstatus.h:
 
+/usr/include/bits/unistd-decl.h:
+
 /usr/include/stdio.h:
 
 /usr/include/bits/types/timer_t.h:
@@ -152,10 +172,6 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 /usr/include/bits/types/struct_tm.h:
 
 /usr/include/bits/types/struct_timespec.h:
-
-/usr/include/bits/waitflags.h:
-
-/usr/include/bits/types/struct_sched_param.h:
 
 /usr/include/sys/types.h:
 
@@ -173,17 +189,37 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/include/bits/types/__mbstate_t.h:
 
-/usr/include/stdc-predef.h:
+/usr/include/sched.h:
 
-/usr/include/bits/pthreadtypes-arch.h:
+/usr/include/bits/types/__locale_t.h:
 
-/usr/include/bits/string_fortified.h:
+/usr/include/bits/types/__fpos_t.h:
+
+/usr/include/bits/types/__fpos64_t.h:
+
+/usr/include/bits/types/FILE.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/time64.h:
 
 /usr/include/linux/posix_types.h:
 
 /usr/include/bits/libc-header-start.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h:
+
+/usr/include/bits/getopt_posix.h:
+
+/usr/include/linux/types.h:
+
+/usr/include/bits/thread-shared-types.h:
+
 /usr/include/bits/floatn-common.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/environments.h:
 
 /usr/include/bits/endianness.h:
 
@@ -205,15 +241,15 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/include/asm-generic/types.h:
 
+/usr/include/bits/confname.h:
+
 /usr/include/bits/byteswap.h:
 
-/usr/include/string.h:
-
-/usr/include/bits/time64.h:
-
-/usr/include/bits/pthread_stack_min-dynamic.h:
-
 /usr/include/asm-generic/bitsperlong.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/getopt_core.h:
 
 /usr/include/bits/uintn-identity.h:
 
@@ -227,6 +263,12 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /home/user/sober-linux/src/render/native_render.h:
 
+/usr/include/bits/timesize.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/bits/endian.h:
+
 /usr/include/linux/sched/types.h:
 
 /usr/include/bits/types/struct_FILE.h:
@@ -239,29 +281,19 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /home/user/sober-linux/src/render/native_render.c:
 
-/usr/include/bits/long-double.h:
-
-/usr/include/bits/select-decl.h:
-
 /usr/include/asm-generic/errno-base.h:
 
 /usr/include/asm-generic/errno.h:
-
-/usr/include/bits/types/__fpos_t.h:
 
 /usr/include/bits/types/__sigset_t.h:
 
 /usr/include/asm-generic/posix_types.h:
 
-/usr/include/bits/pthreadtypes.h:
-
-/usr/include/bits/types/locale_t.h:
-
-/usr/include/bits/stdio2.h:
-
 /usr/include/bits/strings_fortified.h:
 
 /usr/include/asm-generic/int-ll64.h:
+
+/usr/include/bits/mman.h:
 
 /usr/include/asm/bitsperlong.h:
 
@@ -271,9 +303,51 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/include/asm/posix_types.h:
 
-/usr/include/bits/select.h:
+/usr/include/bits/select-decl.h:
 
-/usr/include/bits/types/__fpos64_t.h:
+/usr/include/bits/long-double.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/bits/types/struct_sched_param.h:
+
+/usr/include/bits/mman-linux.h:
+
+/usr/include/bits/mman-map-flags-generic.h:
+
+/usr/include/time.h:
+
+/usr/include/bits/unistd.h:
+
+/usr/include/bits/stdlib-bsearch.h:
+
+/usr/include/bits/types/__FILE.h:
+
+/usr/include/bits/stdlib-float.h:
+
+/usr/include/bits/types/locale_t.h:
+
+/usr/include/bits/stdio2.h:
+
+/usr/include/bits/mman-shared.h:
+
+/usr/include/bits/types/struct_timeval.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/pthread_stack_min-dynamic.h:
+
+/usr/include/stdc-predef.h:
+
+/usr/include/bits/pthreadtypes-arch.h:
+
+/usr/include/bits/string_fortified.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/bits/select.h:
 
 /usr/include/bits/select2.h:
 
@@ -291,17 +365,13 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 
 /usr/include/bits/types/error_t.h:
 
+/usr/include/bits/mman_ext.h:
+
 /usr/include/bits/stdint-intn.h:
 
+/usr/include/bits/unistd_ext.h:
+
 /usr/include/bits/stdio.h:
-
-/usr/include/bits/types/struct_timeval.h:
-
-/usr/include/bits/stdio_lim.h:
-
-/usr/include/time.h:
-
-/usr/include/bits/stdlib-bsearch.h:
 
 /usr/include/bits/floatn.h:
 
@@ -310,25 +380,3 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: /home/user/sober-linux
 /usr/include/bits/types/time_t.h:
 
 /usr/include/bits/struct_rwlock.h:
-
-/usr/include/linux/types.h:
-
-/usr/include/bits/thread-shared-types.h:
-
-/usr/include/asm/errno.h:
-
-/usr/include/bits/endian.h:
-
-/usr/include/bits/timesize.h:
-
-/usr/include/bits/types.h:
-
-/usr/include/bits/types/FILE.h:
-
-/usr/include/bits/stdlib-float.h:
-
-/usr/include/bits/types/__FILE.h:
-
-/usr/include/sched.h:
-
-/usr/include/bits/types/__locale_t.h:

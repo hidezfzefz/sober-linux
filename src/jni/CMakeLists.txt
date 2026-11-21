@@ -32,6 +32,30 @@ add_library(sober_jni STATIC
     jni_arrays.c
     singleton_services.c
     singleton_fix.c
+
+    # ---- Phase 8 default modules -------------------------------------------
+    # All 15 delivered modules are compiled into sober_jni.  They self-gate
+    # (default-ON unless their SOBER_*_DEFAULT=0 kill switch is set); the
+    # scheduler_guest module is the one exception and is opt-in
+    # (SOBER_SCHEDULER_GUEST=1).  native_jni.c installs exactly one module per
+    # bridge responsibility -- the _default modules supersede their older
+    # opt-in counterparts (which stay here only because other harness objects
+    # still reference their symbols; they are NOT installed by native_jni.c).
+    jnislots_default.c
+    fields_default.c
+    placeid_default.c
+    javavm_default.c
+    tsd_default.c
+    fflag_default.c
+    alloc_default.c
+    singleton_default.c
+    app488_default.c
+    delegate_default.c
+    controller_default.c
+    publish_default.c
+    provenance_gate.c
+    scheduler_guest.c
+    render_guest.c
 )
 target_include_directories(sober_jni PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"

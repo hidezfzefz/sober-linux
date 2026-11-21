@@ -17,9 +17,12 @@ src/jni/CMakeFiles/sober_jni.dir/native_jni.c.o: \
  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h \
  /home/user/sober-linux/src/jni/scalar_returns.h \
  /home/user/sober-linux/src/jni/callback_provenance.h \
- /usr/include/dlfcn.h /usr/include/bits/dlfcn.h \
- /usr/include/bits/dl_find_object.h /usr/include/link.h \
- /usr/include/elf.h /usr/include/sys/types.h \
+ /home/user/sober-linux/src/jni/provenance_gate.h \
+ /home/user/sober-linux/src/jni/jnislots_default.h \
+ /home/user/sober-linux/src/jni/fields_default.h \
+ /home/user/sober-linux/src/jni/alloc_default.h /usr/include/dlfcn.h \
+ /usr/include/bits/dlfcn.h /usr/include/bits/dl_find_object.h \
+ /usr/include/link.h /usr/include/elf.h /usr/include/sys/types.h \
  /usr/include/bits/types/clock_t.h /usr/include/bits/types/clockid_t.h \
  /usr/include/bits/types/time_t.h /usr/include/bits/types/timer_t.h \
  /usr/include/endian.h /usr/include/bits/endian.h \

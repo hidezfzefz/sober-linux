@@ -380,6 +380,216 @@ src/jni/CMakeFiles/sober_jni.dir/singleton_fix.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/singleton_fix.c.s"
 	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/singleton_fix.c -o CMakeFiles/sober_jni.dir/singleton_fix.c.s
 
+src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o: /home/user/sober-linux/src/jni/jnislots_default.c
+src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o -MF CMakeFiles/sober_jni.dir/jnislots_default.c.o.d -o CMakeFiles/sober_jni.dir/jnislots_default.c.o -c /home/user/sober-linux/src/jni/jnislots_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/jnislots_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/jnislots_default.c > CMakeFiles/sober_jni.dir/jnislots_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/jnislots_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/jnislots_default.c -o CMakeFiles/sober_jni.dir/jnislots_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o: /home/user/sober-linux/src/jni/fields_default.c
+src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o -MF CMakeFiles/sober_jni.dir/fields_default.c.o.d -o CMakeFiles/sober_jni.dir/fields_default.c.o -c /home/user/sober-linux/src/jni/fields_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/fields_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/fields_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/fields_default.c > CMakeFiles/sober_jni.dir/fields_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/fields_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/fields_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/fields_default.c -o CMakeFiles/sober_jni.dir/fields_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o: /home/user/sober-linux/src/jni/placeid_default.c
+src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o -MF CMakeFiles/sober_jni.dir/placeid_default.c.o.d -o CMakeFiles/sober_jni.dir/placeid_default.c.o -c /home/user/sober-linux/src/jni/placeid_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/placeid_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/placeid_default.c > CMakeFiles/sober_jni.dir/placeid_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/placeid_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/placeid_default.c -o CMakeFiles/sober_jni.dir/placeid_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o: /home/user/sober-linux/src/jni/javavm_default.c
+src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o -MF CMakeFiles/sober_jni.dir/javavm_default.c.o.d -o CMakeFiles/sober_jni.dir/javavm_default.c.o -c /home/user/sober-linux/src/jni/javavm_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/javavm_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/javavm_default.c > CMakeFiles/sober_jni.dir/javavm_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/javavm_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/javavm_default.c -o CMakeFiles/sober_jni.dir/javavm_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni/tsd_default.c
+src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o -MF CMakeFiles/sober_jni.dir/tsd_default.c.o.d -o CMakeFiles/sober_jni.dir/tsd_default.c.o -c /home/user/sober-linux/src/jni/tsd_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/tsd_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/tsd_default.c > CMakeFiles/sober_jni.dir/tsd_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/tsd_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/tsd_default.c -o CMakeFiles/sober_jni.dir/tsd_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o: /home/user/sober-linux/src/jni/fflag_default.c
+src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o -MF CMakeFiles/sober_jni.dir/fflag_default.c.o.d -o CMakeFiles/sober_jni.dir/fflag_default.c.o -c /home/user/sober-linux/src/jni/fflag_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/fflag_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/fflag_default.c > CMakeFiles/sober_jni.dir/fflag_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/fflag_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/fflag_default.c -o CMakeFiles/sober_jni.dir/fflag_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o: /home/user/sober-linux/src/jni/alloc_default.c
+src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o -MF CMakeFiles/sober_jni.dir/alloc_default.c.o.d -o CMakeFiles/sober_jni.dir/alloc_default.c.o -c /home/user/sober-linux/src/jni/alloc_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/alloc_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/alloc_default.c > CMakeFiles/sober_jni.dir/alloc_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/alloc_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/alloc_default.c -o CMakeFiles/sober_jni.dir/alloc_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o: /home/user/sober-linux/src/jni/singleton_default.c
+src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o -MF CMakeFiles/sober_jni.dir/singleton_default.c.o.d -o CMakeFiles/sober_jni.dir/singleton_default.c.o -c /home/user/sober-linux/src/jni/singleton_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/singleton_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/singleton_default.c > CMakeFiles/sober_jni.dir/singleton_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/singleton_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/singleton_default.c -o CMakeFiles/sober_jni.dir/singleton_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o: /home/user/sober-linux/src/jni/app488_default.c
+src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building C object src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o -MF CMakeFiles/sober_jni.dir/app488_default.c.o.d -o CMakeFiles/sober_jni.dir/app488_default.c.o -c /home/user/sober-linux/src/jni/app488_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/app488_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/app488_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/app488_default.c > CMakeFiles/sober_jni.dir/app488_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/app488_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/app488_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/app488_default.c -o CMakeFiles/sober_jni.dir/app488_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o: /home/user/sober-linux/src/jni/delegate_default.c
+src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building C object src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o -MF CMakeFiles/sober_jni.dir/delegate_default.c.o.d -o CMakeFiles/sober_jni.dir/delegate_default.c.o -c /home/user/sober-linux/src/jni/delegate_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/delegate_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/delegate_default.c > CMakeFiles/sober_jni.dir/delegate_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/delegate_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/delegate_default.c -o CMakeFiles/sober_jni.dir/delegate_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o: /home/user/sober-linux/src/jni/controller_default.c
+src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building C object src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o -MF CMakeFiles/sober_jni.dir/controller_default.c.o.d -o CMakeFiles/sober_jni.dir/controller_default.c.o -c /home/user/sober-linux/src/jni/controller_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/controller_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/controller_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/controller_default.c > CMakeFiles/sober_jni.dir/controller_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/controller_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/controller_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/controller_default.c -o CMakeFiles/sober_jni.dir/controller_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o: /home/user/sober-linux/src/jni/publish_default.c
+src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building C object src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o -MF CMakeFiles/sober_jni.dir/publish_default.c.o.d -o CMakeFiles/sober_jni.dir/publish_default.c.o -c /home/user/sober-linux/src/jni/publish_default.c
+
+src/jni/CMakeFiles/sober_jni.dir/publish_default.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/publish_default.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/publish_default.c > CMakeFiles/sober_jni.dir/publish_default.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/publish_default.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/publish_default.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/publish_default.c -o CMakeFiles/sober_jni.dir/publish_default.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o: /home/user/sober-linux/src/jni/provenance_gate.c
+src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building C object src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o -MF CMakeFiles/sober_jni.dir/provenance_gate.c.o.d -o CMakeFiles/sober_jni.dir/provenance_gate.c.o -c /home/user/sober-linux/src/jni/provenance_gate.c
+
+src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/provenance_gate.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/provenance_gate.c > CMakeFiles/sober_jni.dir/provenance_gate.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/provenance_gate.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/provenance_gate.c -o CMakeFiles/sober_jni.dir/provenance_gate.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o: /home/user/sober-linux/src/jni/scheduler_guest.c
+src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building C object src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o -MF CMakeFiles/sober_jni.dir/scheduler_guest.c.o.d -o CMakeFiles/sober_jni.dir/scheduler_guest.c.o -c /home/user/sober-linux/src/jni/scheduler_guest.c
+
+src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/scheduler_guest.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/scheduler_guest.c > CMakeFiles/sober_jni.dir/scheduler_guest.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/scheduler_guest.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/scheduler_guest.c -o CMakeFiles/sober_jni.dir/scheduler_guest.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o: /home/user/sober-linux/src/jni/render_guest.c
+src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o -MF CMakeFiles/sober_jni.dir/render_guest.c.o.d -o CMakeFiles/sober_jni.dir/render_guest.c.o -c /home/user/sober-linux/src/jni/render_guest.c
+
+src/jni/CMakeFiles/sober_jni.dir/render_guest.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/render_guest.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/render_guest.c > CMakeFiles/sober_jni.dir/render_guest.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/render_guest.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/render_guest.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/render_guest.c -o CMakeFiles/sober_jni.dir/render_guest.c.s
+
 # Object files for target sober_jni
 sober_jni_OBJECTS = \
 "CMakeFiles/sober_jni.dir/native_jni.c.o" \
@@ -403,7 +613,22 @@ sober_jni_OBJECTS = \
 "CMakeFiles/sober_jni.dir/app488_inner.c.o" \
 "CMakeFiles/sober_jni.dir/jni_arrays.c.o" \
 "CMakeFiles/sober_jni.dir/singleton_services.c.o" \
-"CMakeFiles/sober_jni.dir/singleton_fix.c.o"
+"CMakeFiles/sober_jni.dir/singleton_fix.c.o" \
+"CMakeFiles/sober_jni.dir/jnislots_default.c.o" \
+"CMakeFiles/sober_jni.dir/fields_default.c.o" \
+"CMakeFiles/sober_jni.dir/placeid_default.c.o" \
+"CMakeFiles/sober_jni.dir/javavm_default.c.o" \
+"CMakeFiles/sober_jni.dir/tsd_default.c.o" \
+"CMakeFiles/sober_jni.dir/fflag_default.c.o" \
+"CMakeFiles/sober_jni.dir/alloc_default.c.o" \
+"CMakeFiles/sober_jni.dir/singleton_default.c.o" \
+"CMakeFiles/sober_jni.dir/app488_default.c.o" \
+"CMakeFiles/sober_jni.dir/delegate_default.c.o" \
+"CMakeFiles/sober_jni.dir/controller_default.c.o" \
+"CMakeFiles/sober_jni.dir/publish_default.c.o" \
+"CMakeFiles/sober_jni.dir/provenance_gate.c.o" \
+"CMakeFiles/sober_jni.dir/scheduler_guest.c.o" \
+"CMakeFiles/sober_jni.dir/render_guest.c.o"
 
 # External object files for target sober_jni
 sober_jni_EXTERNAL_OBJECTS =
@@ -430,9 +655,24 @@ src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/app488_inner.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/jni_arrays.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/singleton_services.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/singleton_fix.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/jnislots_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/placeid_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/javavm_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/alloc_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/singleton_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/app488_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/build.make
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Linking C static library libsober_jni.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Linking C static library libsober_jni.a"
 	cd /home/user/sober-linux/build/src/jni && $(CMAKE_COMMAND) -P CMakeFiles/sober_jni.dir/cmake_clean_target.cmake
 	cd /home/user/sober-linux/build/src/jni && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/sober_jni.dir/link.txt --verbose=$(VERBOSE)
 

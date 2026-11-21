@@ -60,4 +60,12 @@ src/render/CMakeFiles/sober_render.dir/native_render.c.o: \
  /usr/include/bits/types/once_flag.h /usr/include/bits/stdlib-float.h \
  /usr/include/bits/stdlib.h /usr/include/string.h /usr/include/strings.h \
  /usr/include/bits/strings_fortified.h \
- /usr/include/bits/string_fortified.h
+ /usr/include/bits/string_fortified.h /usr/include/sys/mman.h \
+ /usr/include/bits/mman.h /usr/include/bits/mman-map-flags-generic.h \
+ /usr/include/bits/mman-linux.h /usr/include/bits/mman-shared.h \
+ /usr/include/bits/mman_ext.h /usr/include/unistd.h \
+ /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
+ /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
+ /usr/include/bits/getopt_core.h /usr/include/bits/unistd.h \
+ /usr/include/bits/unistd-decl.h /usr/include/bits/unistd_ext.h \
+ /usr/include/linux/close_range.h

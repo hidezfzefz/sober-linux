@@ -19,6 +19,19 @@
 #include "scalar_returns.h"
 #include "callback_provenance.h"
 
+/* ---- Phase 8 default modules --------------------------------------------
+ * All 15 delivered modules are compiled into sober_jni (CMakeLists.txt).
+ * Their per-module installers are called by the harness (guest_app_shell.c)
+ * after mapping/relocation, in the modules' documented order.  This file owns
+ * only the JNIEnv-slot defaults (jnislots_default + fields_default), the
+ * positive provenance hook/query, and the allocator-ops accessor.  Each
+ * module self-gates on its own SOBER_*_DEFAULT=0 kill switch (scheduler_guest
+ * is the sole opt-in module: SOBER_SCHEDULER_GUEST=1). */
+#include "provenance_gate.h"
+#include "jnislots_default.h"
+#include "fields_default.h"
+#include "alloc_default.h"
+
 #include <dlfcn.h>
 #include <link.h>
 #include <pthread.h>
@@ -331,6 +344,13 @@ static int sr_is_our_object(SoberJni *j, const void *h)
     for (int i = 0; i < j->n_methods; ++i) if ((void *)j->methods[i] == h) return 1;
     return 0;
 }
+/* Public membership check for default modules that must not dereference a
+ * canonical-looking foreign handle (jni_probe deliberately supplies one). */
+int sober_jni_owns_handle(const void *h)
+{
+    return sr_is_our_object(g_active_jni, h);
+}
+
 static SrObject *sr_validate(SoberJni *j, void *h, SrKind kind)
 {
     if (!sr_is_our_object(j, h)) return NULL;
@@ -490,6 +510,11 @@ static intptr_t sr_dispatch_call(SoberJni *j, void *obj, void *method,
     snprintf(j->last_callback, sizeof(j->last_callback), "%s", name);
     /* B11: opt-in provenance recorder; no-op unless SOBER_CALLBACK_PROVENANCE. */
     sober_callback_provenance_on_dispatch(name, obj, method);
+    /* Phase 8: DEFAULT-ON positive provenance credential.  Fail-closed; this
+     * only records the dispatch for the decision-013 gate.  It never invokes
+     * a handler, emits a guest->Java callback, or writes a marker.  The gate
+     * queries it with sober_jni_is_genuine_callback()/is_genuine(). */
+    sober_provenance_gate_on_dispatch(name, obj, method);
 
     intptr_t result = 0;
     /* Registered native method first (what RegisterNatives installed). */
@@ -867,11 +892,25 @@ static void sr_build_tables(SoberJni *j)
     SETFN(*t,  23, sr_AllocObject);
     SETFN(*t,  24, sr_NewObject);
 
-    /* A9/B5: opt-in typed JNI field path needed by PlatformParams parsing. */
-    if (sober_platform_fields_enabled())
-        sober_platform_fields_install_slots(t->fn, 231);
-    (void)sober_static_object_calls_install_slots(t->fn, 231);
-    (void)sober_scalar_returns_install_slots(t->fn, 231);
+    /* Phase 8: one installer per JNIEnv-slot responsibility.  jnislots_default
+     * covers the 18 slots formerly split across static_object_calls,
+     * scalar_returns, jni_arrays and jni_strings; fields_default covers the
+     * three field slots formerly owned by platform_fields.  The old opt-in
+     * modules are deliberately NOT installed here (no duplicate pairs); they
+     * remain in the CMake target only because other harness objects still
+     * reference their symbols. */
+    (void)sober_jnislots_default_install(t->fn, 231);
+    /* Safety override for JNIEnv slot 165 (GetStringUTFChars).  The module's
+     * sj_utf8 falls back to sj_typed_string_text() when its delegate returns
+     * an empty string; that helper only checks pointer SHAPE and dereferences
+     * arbitrary "canonical-looking" handles.  The headless jni_probe self-test
+     * deliberately passes 0x55f800000000 and faults there.  The bridge's own
+     * sr_GetStringUTFChars uses sr_validate() -> sr_is_our_object() membership
+     * before dereferencing and returns a safe empty C string for foreign
+     * handles.  Re-install it here (the module file is not owned by this
+     * worker): same safety outcome, no fabricated callback, no marker. */
+    SETFN(*t, 165, sr_GetStringUTFChars);
+    (void)sober_fields_default_install_slots(t->fn, 231);
     /* A5 audit fix: the module self-gates on SOBER_CALLBACK_PROVENANCE; calling
      * it through is_active() first made the installer unreachable (dead code). */
     (void)sober_callback_provenance_install(NULL);
@@ -1402,6 +1441,14 @@ SR_API int sober_jni_seed_guest_jni_state(SoberJni *j, void *guest_base)
      * JavaVM pointer that the string helper 0x227b9e2 needs.  The opt-in
      * seed is a separate API (sober_jni_seed_guest_onload_globals) that the
      * harness wires explicitly behind SOBER_SEED_JNI_VM. */
+
+    /* Phase 8 note: the *_default modules are installed by the harness
+     * (guest_app_shell.c) after mapping/relocation, in their documented order
+     * (substrate -> flags/scheduler -> singleton/render -> app+0x488/delegate/
+     * controller -> placeId/publish).  native_jni.c deliberately does NOT
+     * install them here: doing so would pre-empt those idempotent installers
+     * with incomplete context (notably render_guest's real config).  The
+     * JNIEnv-slot defaults and the provenance hook are wired in this file. */
     return SOBER_JNI_OK;
 }
 
@@ -1453,6 +1500,30 @@ SR_API int sober_jni_callback_was_called(SoberJni *j, const char *method_name)
             return h->count > 0;
     }
     return 0;
+}
+
+/* ---- Phase 8: positive provenance credential for the decision-013 gate ---
+ * The name-only counter above cannot distinguish a genuine notifier-driven
+ * callback from a harness/ALT thunk.  These wrappers expose the default-ON,
+ * fail-closed provenance_gate result to the gate owner.  A thunk taint
+ * anywhere in the run forces WITHHELD.  Neither wrapper emits a callback nor
+ * writes a marker; the gate alone decides whether to emit. */
+SR_API int sober_jni_is_genuine_callback(const char *name)
+{
+    if (sober_provenance_gate_is_harness_thunk()) return 0;
+    return sober_provenance_gate_is_genuine(name);
+}
+
+SR_API int sober_jni_is_harness_thunk(void)
+{
+    return sober_provenance_gate_is_harness_thunk();
+}
+
+/* Expose the default allocator ops table so the bootstrap can bind its eight
+ * bridges + calloc slot (0x726c0c0) without installing alloc_contract_fix. */
+SR_API const struct sober_alloc_default_ops *sober_jni_default_alloc_ops(void)
+{
+    return sober_alloc_default_ops();
 }
 
 SR_API const char *sober_jni_describe_activity(SoberJni *j, char *buf, size_t cap)

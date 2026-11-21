@@ -30,6 +30,25 @@
 #include "native_render.h"
 #include "android_compat.h"
 
+/* ---- DEFAULT-ON module APIs (task #477) --------------------------------
+ * Implementations live in libsober_jni.a (src/jni/CMakeLists.txt, worker-1).
+ * Do NOT #include the .c files here: that would create a second copy of
+ * each module's state (notably provenance_gate), so the dispatch hook in
+ * native_jni.c and this gate would consult different instances.
+ */
+#include "tsd_default.h"
+#include "javavm_default.h"
+#include "fflag_default.h"
+#include "scheduler_guest.h"
+#include "singleton_default.h"
+#include "app488_default.h"
+#include "delegate_default.h"
+#include "controller_default.h"
+#include "placeid_default.h"
+#include "publish_default.h"
+#include "render_guest.h"
+#include "provenance_gate.h"
+
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -940,6 +959,99 @@ int guest_app_shell_run(uintptr_t base)
     }
     sober_jni_init(j);
 
+    /* ================= DEFAULT-ON module wiring (task #477) ================
+     * Dependency order (each installer self-gates on its SOBER_*_DEFAULT=0 kill
+     * switch; no getenv() needed here):
+     *   1 substrate   : TSD GOT rebind, faithful JavaVM, provenance credential
+     *   2 flags       : FFlag ctor[0] replay, then genuine flag setter
+     *   3 scheduler   : guest nesting prime (opt-in, on FunctionMarshaller attach)
+     *   4 singleton   : populated app singleton + services
+     *   5 render      : guest-tagged surface/swap path (native context already up)
+     * Later, once the app pointer exists: app+0x488, delegate, controller;
+     * then placeId before StartGame and publish after it.  Every knob/verdict
+     * of these modules forces shell_cb=0 in the seeded_state chain below, so
+     * the strict 013/038 marker stays WITHHELD unless genuine proof appears. */
+    int tsd_rc = sober_tsd_default_install();
+    fprintf(stderr, "[app-shell] default TSD GOT rebind -> rc=%d\n", tsd_rc);
+    int jvm_rc = sober_javavm_default_install(j, (void *)base);
+    fprintf(stderr, "[app-shell] default JavaVM install -> rc=%d\n", jvm_rc);
+    int pg_rc = sober_provenance_gate_install((void *)base);
+    fprintf(stderr, "[app-shell] provenance gate install -> rc=%d\n", pg_rc);
+
+    /* FFlag registry must exist before the singleton gate (0x72cb648 plus the
+     * 0x6096928 predicate). Ensure the flag through the guest's own setter. */
+    int ff_rc = sober_fflag_default_replay((void *)base);
+    fprintf(stderr, "[app-shell] default FFlag ctor[0] replay -> rc=%d\n", ff_rc);
+    /* Only drive the guest flag setter when the FFlag registry actually
+     * verified. With an unbuilt control block the setter faults in the guest
+     * worker chain (0x2e5d42a family), so fail closed and let the singleton
+     * gate report SOBER_SD_GATE instead of crashing. */
+    int ff_set_rc = SOBER_CD_DISABLED;
+    if (sober_fflag_default_verify((void *)base) == SOBER_FFLAG_DEFAULT_OK) {
+        ff_set_rc = sober_controller_default_ensure_flag((void *)base);
+    }
+    fprintf(stderr, "[app-shell] controller ensure_flag -> rc=%d\n", ff_set_rc);
+
+    /* Scheduler guest nesting prime: install now; the actual prime is fired
+     * from on_attach("FunctionMarshaller") at the JavaVM attach site. */
+    int sg_rc = sober_scheduler_guest_install((void *)base);
+    fprintf(stderr, "[app-shell] scheduler guest install -> rc=%d\n", sg_rc);
+
+    /* Populated app singleton (+0x48/+0x50 service vector). Supersedes the
+     * default-OFF singleton_services/singleton_fix diagnostic modules. */
+    int sd_rc = sober_singleton_default_install((void *)base);
+    fprintf(stderr, "[app-shell] default app singleton -> rc=%d singleton=%p\n",
+            sd_rc, *(void **)(base + 0x72cb5e0u));
+
+    /* Guest-tagged render path. Phase 3 already created a native context, so
+     * derive the config from the active render and let the module install its
+     * RA-tagged swap/draw hooks. */
+    struct sober_render_guest_config rg_cfg;
+    memset(&rg_cfg, 0, sizeof(rg_cfg));
+    SoberRender *active_r = sober_render_get_active();
+    rg_cfg.guest_base    = (void *)base;
+    rg_cfg.native_window = sober_render_native_window(active_r);
+    rg_cfg.native_handle = sober_render_native_handle(active_r);
+    rg_cfg.egl_display   = sober_render_egl_display(active_r);
+    rg_cfg.egl_surface   = sober_render_egl_surface(active_r);
+    rg_cfg.egl_context   = sober_render_egl_context(active_r);
+    sober_render_size(active_r, &rg_cfg.width, &rg_cfg.height);
+    /* Phase 3 (guest_render.c) already ran render_guest_run() with its own
+     * config; do not create a second guest context here (it re-enters 0x649c21e
+     * and faults). Just ensure the module is installed and reuse its state. */
+    int rg_rc = sober_render_guest_is_installed()
+              ? 0 : sober_render_guest_run(&rg_cfg);
+    fprintf(stderr, "[app-shell] default guest render path -> rc=%d "
+                    "(already installed=%d, guest-tagged swaps=%llu)\n",
+            rg_rc, sober_render_guest_is_installed(),
+            (unsigned long long)sober_render_guest_swaps_guest_tagged());
+
+    /* T2-5 flags-loaded latch 0x7cdd149. nativeInitClientSettings cannot set it
+     * (parse-ctx byte 0x7697d08 is 1), so replay the guest's OWN unconditional
+     * writer: CrashpadHandlerMain 0x2ec9c30(int argc, char** argv) with a native
+     * argv containing "--channel","LIVE", which stores into 0x72a3710 and then
+     * writes the latch at 0x2ec9fae. Default-ON; kill switch =0. No byte writes. */
+    const char *flcp = getenv("SOBER_FLAGS_LATCH_CRASHPAD");
+    if (!flcp || flcp[0] != '0') {
+        char fl_ch[] = "LIVE";
+        char fl_key[] = "--channel";
+        char fl_url[] = "--baseUrl";
+        char fl_prog[] = "crashpad";
+        /* 0x2ec9cb0 scans for "--baseUrl" and stores its value into the latch
+         * global 0x72a3710; the latch writer 0x2ec9eed re-scans for "--channel".
+         * Supply both so the single gate (non-empty 0x72a3710) is satisfied. */
+        char *fl_argv[] = { fl_prog, fl_url, fl_ch, fl_key, fl_ch, NULL };
+        ((void (*)(int, char **))(base + 0x2ec9c30u))(5, fl_argv);
+        fprintf(stderr, "[app-shell] crashpad flags latch 0x7cdd149 = %u "
+                        "channel@0x72a3710 tag=%#x (--channel=%s)\n",
+                (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
+                (unsigned)*(volatile unsigned char *)(base + 0x72a3710u),
+                fl_ch);
+    } else {
+        fprintf(stderr, "[app-shell] crashpad flags latch SKIPPED "
+                        "(SOBER_FLAGS_LATCH_CRASHPAD=0)\n");
+    }
+
     /* B3: opt-in faithful JNI array objects (GetArrayLength/GetObjectArrayElement). */
     int arrays_rc = sober_jni_arrays_install(j);
     fprintf(stderr, "[app-shell] faithful JNI arrays (SOBER_FAITHFUL_JNI_ARRAYS) "
@@ -1025,16 +1137,16 @@ int guest_app_shell_run(uintptr_t base)
                 (void *)*(uintptr_t *)(base + 0x72cb5e0u));
     }
 
-    /* A11: fill the app singleton's missing service vector after the singleton
-     * exists but before the flag=1 controller installer 0x24ad50a runs. */
-    int ss_rc;
+    /* The default-ON singleton_default already populated the service vector.
+     * The old singleton_fix / singleton_services modules are diagnostic
+     * alternatives and are now OFF unless explicitly opted in. */
     if (sober_singleton_fix_enabled()) {
-        ss_rc = sober_singleton_fix_populate((void *)base);
-        fprintf(stderr, "[app-shell] singleton_fix (A2 alternative) -> rc=%d\n",
+        int ss_rc = sober_singleton_fix_populate((void *)base);
+        fprintf(stderr, "[app-shell] singleton_fix (opt-in alternative) -> rc=%d\n",
                 ss_rc);
-    } else {
-        ss_rc = sober_singleton_services_install((void *)base);
-        fprintf(stderr, "[app-shell] singleton services -> rc=%d\n", ss_rc);
+    } else if (getenv("SOBER_SINGLETON_SERVICES")) {
+        int ss_rc = sober_singleton_services_install((void *)base);
+        fprintf(stderr, "[app-shell] singleton services (opt-in) -> rc=%d\n", ss_rc);
     }
 
     /* Phase-8 opt-in modules (all default OFF, each no-ops when its env var is
@@ -1063,12 +1175,15 @@ int guest_app_shell_run(uintptr_t base)
                 bytes, trc);
         if (getenv("SOBER_STUB_TSD_SEED")) seed_stub_tsd(base);  /* experimental */
     }
-    if (!getenv("SOBER_NO_SCHED_NEUTRAL")) {
+    /* Old fake seed: the scheduler "neutralize" memset corrupts the second TLS
+     * descriptor (0x722e560) and is incompatible with the genuine nesting prime.
+     * It is now OFF by default; enable only for A/B with SOBER_SCHED_NEUTRAL=1. */
+    if (getenv("SOBER_SCHED_NEUTRAL") && !getenv("SOBER_NO_SCHED_NEUTRAL")) {
         uintptr_t srva = getenv("SOBER_SCHED_RVA")
                          ? (uintptr_t)strtoull(getenv("SOBER_SCHED_RVA"), NULL, 0)
                          : 0x722e540u;
         int nrc = sober_jni_neutralize_guest_scheduler((void *)base, srva);
-        fprintf(stderr, "[app-shell] scheduler neutralize (rva 0x%lx) -> rc=%d\n",
+        fprintf(stderr, "[app-shell] scheduler neutralize (opt-in, rva 0x%lx) -> rc=%d\n",
                 (unsigned long)srva, nrc);
     }
 
@@ -1255,6 +1370,33 @@ int guest_app_shell_run(uintptr_t base)
     if (getenv("SOBER_APP_SLOT_DIAG"))
         log_app_slots(base, "after InitWithParams");
 
+    /* ---- app-pointer-dependent default modules (task #477) ----------------
+     * InitWithParams has now produced the static app wrapper, so the
+     * *_from_wrapper() installers can discover app = wrapper+0x20 themselves.
+     * Order: genuine app+0x488 object, then the +0x408 delegate, then the
+     * +0x440 controller (which verifies both and drives the real installer). */
+    void *o488 = NULL;
+    int dd_rc = SOBER_CD_DISABLED, cd_rc = SOBER_CD_DISABLED;
+    if (sd_rc == SOBER_SD_OK) {
+        o488 = sober_app488_default_install_from_wrapper((void *)base);
+        fprintf(stderr, "[app-shell] default app+0x488 -> %p\n", o488);
+        dd_rc = sober_delegate_default_install_from_wrapper((void *)base);
+        fprintf(stderr, "[app-shell] default app+0x408 delegate -> rc=%d\n", dd_rc);
+        cd_rc = sober_controller_default_install((void *)base);
+        fprintf(stderr, "[app-shell] default app+0x440 controller -> rc=%d\n", cd_rc);
+    } else {
+        /* Don't re-enter guest construction (0x253c93c / 0x24ad50a) with a
+         * NULL FFlag control block: that faults at 0x2e5d42a. */
+        fprintf(stderr, "[app-shell] default app488/delegate/controller SKIPPED: "
+                        "singleton prerequisite rc=%d\n", sd_rc);
+    }
+
+    /* Genuine scheduler nesting prime on the FunctionMarshaller attach. The
+     * module's on_attach() self-gates on SOBER_SCHEDULER_GUEST=1; the true
+     * attach-site call belongs in the JavaVM attach path (lead-owned), so this
+     * harness-side call is the earliest point available to us. */
+    sober_scheduler_guest_on_attach("FunctionMarshaller");
+
     int alt_path = getenv("SOBER_ALT_CALLBACK_PATH") != NULL;
     if (alt_path) {
         /* DECISION C: nativeAppBridgeAppStart reaches the broken 0x233319a
@@ -1378,15 +1520,22 @@ int guest_app_shell_run(uintptr_t base)
         if (!sg) {
             sg = sober_jni_new_native_object(j,
                 "com/roblox/engine/jni/autovalue/StartGameParams", 0x100, NULL);
-            (void)sober_jni_set_callback_handler(j, "gameId", game_params_get, j);
-            (void)sober_jni_set_callback_handler(j, "placeId", game_params_get, j);
-            (void)sober_jni_set_callback_handler(j, "accessCode", game_params_get, j);
-            (void)sober_jni_set_callback_handler(j, "username", game_params_get, j);
         }
+        /* Default-ON placeId bridge: register all 24 genuine StartGameParams
+         * getters (placeId()J returns a real jlong, never a jstring) as the last
+         * claim before the StartGameWithParam RVA reads them. */
+        int pid_rc = sober_placeid_default_install(j, (void *)base);
+        (void)sober_placeid_default_reclaim(j);
+        fprintf(stderr, "[app-shell] default placeId getters -> rc=%d\n", pid_rc);
         rc = ((long (*)(void *, void *, void *))(base + 0x2ebd51au))
                  (env, app_class, sg);
         fprintf(stderr, "[app-shell] guest call 0x2ebd51a "
                         "nativeAppBridgeV2StartGameWithParam -> rc=%ld\n", rc);
+        /* Default-ON MessageBus publication: genuine dispatch at 0x27eaf04
+         * drives the notifier 0x27eaf6e -> gameLoadedCallback path. The placeId
+         * comes from the guest's own cached global (0x72a31c0). */
+        int pub_rc = sober_publish_default_publish_seeded((void *)base);
+        fprintf(stderr, "[app-shell] default MessageBus publish -> rc=%d\n", pub_rc);
         void *g1 = sober_jni_new_string_utf8(j, "AppShellNotifications");
         void *g2 = sober_jni_new_string_utf8(j, "123456789");
         void *g3 = sober_jni_new_string_utf8(j, "StartConversationWithUserId");
@@ -1438,10 +1587,20 @@ int guest_app_shell_run(uintptr_t base)
     fprintf(stderr, "[app-shell] %s\n",
             sober_jni_describe_activity(j, pbuf, sizeof(pbuf)));
 
-    /* DECISION 013 gate: a genuine guest->Java callback + the phase-3 render
-     * context must both be present. A diagnostic-only mode never emits it. */
-    int shell_cb = sober_jni_callback_was_called(j, "onAppShellReloadNeeded")
-                || sober_jni_callback_was_called(j, "gameLoadedCallback");
+    /* DECISION 013/038 gate: a NOTIFIER-DRIVEN guest->Java callback plus a
+     * GUEST-TAGGED render swap must both be present. A name-only counter is no
+     * longer sufficient (decision 038 §2): the positive credential comes from
+     * the fail-closed provenance gate. The harness-thunk verdict and every
+     * manufactured-state knob disqualify the run below. */
+    int shell_cb = sober_provenance_gate_is_genuine("gameLoadedCallback")
+                || sober_provenance_gate_is_genuine("onAppShellReloadNeeded");
+    if (sober_provenance_gate_is_harness_thunk()) shell_cb = 0;
+    /* Name-only observation is kept as a diagnostic, never as proof. */
+    if (getenv("SOBER_APP_SHELL_DIAGNOSTIC"))
+        fprintf(stderr, "[app-shell] names: onAppShellReloadNeeded=%d "
+                        "gameLoadedCallback=%d\n",
+                sober_jni_callback_was_called(j, "onAppShellReloadNeeded"),
+                sober_jni_callback_was_called(j, "gameLoadedCallback"));
     /* DECISION 013 hardening (task #452): any synthetic guest-state seed from
      * the phase-7 diagnostics makes the startup state harness-manufactured, so
      * it can never justify the real marker, regardless of which callbacks the
@@ -1556,6 +1715,51 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_GUEST_PATH") ||
                        getenv("SOBER_CALLBACK_PROVENANCE_GUEST_BASE") ||
                        env_prefix_active("SOBER_PROP_") ||
+                       /* Task #477: every knob/modifier of the newly wired
+                        * default-ON modules forces a withhold. Setting any of
+                        * them means the guest state was harness-tuned, so it
+                        * can never justify the real marker. */
+                       getenv("SOBER_TSD_DEFAULT") ||
+                       getenv("SOBER_JAVAVM_DEFAULT") ||
+                       getenv("SOBER_FFLAG_DEFAULT") ||
+                       getenv("SOBER_SCHEDULER_GUEST") ||
+                       getenv("SOBER_SCHED_NEUTRAL") ||
+                       getenv("SOBER_SINGLETON_DEFAULT") ||
+                       getenv("SOBER_SINGLETON_DEFAULT_GATE") ||
+                       getenv("SOBER_SINGLETON_DEFAULT_PROBE") ||
+                       getenv("SOBER_SINGLETON_DEFAULT_FRESH") ||
+                       getenv("SOBER_SINGLETON_DEFAULT_VERBOSE") ||
+                       getenv("SOBER_APP488_DEFAULT") ||
+                       getenv("SOBER_DELEGATE_DEFAULT") ||
+                       getenv("SOBER_DELEGATE_SOURCE") ||
+                       getenv("SOBER_DELEGATE_VERIFY") ||
+                       getenv("SOBER_DELEGATE_CALL10") ||
+                       getenv("SOBER_DELEGATE_VERBOSE") ||
+                       getenv("SOBER_CONTROLLER_DEFAULT") ||
+                       getenv("SOBER_CONTROLLER_DEFAULT_VERBOSE") ||
+                       getenv("SOBER_CONTROLLER_DEFAULT_PROBE") ||
+                       getenv("SOBER_CONTROLLER_DEFAULT_WAIT_MS") ||
+                       getenv("SOBER_CONTROLLER_DEFAULT_STRICT_VPTR") ||
+                       getenv("SOBER_PLACEID_DEFAULT") ||
+                       getenv("SOBER_PLACEID_VALUE") ||
+                       getenv("SOBER_PUBLISH_DEFAULT") ||
+                       getenv("SOBER_RENDER_GUEST") ||
+                       /* Authoritative modules wired by other roles; their
+                        * knobs still force a withhold in this gate. */
+                       getenv("SOBER_ALLOC_DEFAULT") ||
+                       getenv("SOBER_FIELDS_DEFAULT") ||
+                       getenv("SOBER_FIELDS_DEFAULT_DPI") ||
+                       getenv("SOBER_FIELDS_DEFAULT_WIDTH_MM") ||
+                       getenv("SOBER_FIELDS_DEFAULT_HEIGHT_MM") ||
+                       getenv("SOBER_JNISLOTS_DEFAULT") ||
+                       getenv("SOBER_FLAGS_LATCH_CRASHPAD") ||
+                       /* Module verdicts: active manufactured state. The
+                        * provenance gate is deliberately NOT here: it is the
+                        * fail-closed positive credential, not a seed. */
+                       sober_scheduler_guest_should_withhold() ||
+                       sober_delegate_default_should_withhold() ||
+                       sober_controller_default_should_withhold() ||
+                       sober_publish_default_should_withhold() ||
                        sober_notifier_probe_should_withhold();
     if (seeded_state) {
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "
@@ -1564,7 +1768,16 @@ int guest_app_shell_run(uintptr_t base)
     }
     /* Persisted phase-3 flag: stays valid after the render context shuts down,
      * unlike sober_render_get_active(). */
-    int render_ok = sober_render_phase3_done();
+    /* Phase-3 evidence plus a swap whose return address was inside guest .text
+     * (as tagged by render_guest's eglSwapBuffers hook). A host-originated
+     * synthetic swap is explicitly not accept. */
+    /* Lead's render evidence contract (analysis/MODULE_INTEGRATION.md §2):
+     * phase-3 ancestry + a guest-tagged swap + a counted guest GLES draw + a
+     * stable ANativeWindow binding. A synthetic-only swap fails closed. */
+    int render_ok = sober_render_phase3_done()
+                 && sober_render_guest_swaps_guest_tagged() >= 1
+                 && sober_render_guest_gles_draw_calls() >= 1
+                 && *(void **)(base + 0x72a3308u) != NULL;
 
     if (!shell_cb || !render_ok) {
         fprintf(stderr,
