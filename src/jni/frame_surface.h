@@ -262,6 +262,18 @@ SOBER_FRAME_SURFACE_API uintptr_t sober_frame_surface_base(void);
 SOBER_FRAME_SURFACE_API void     *sober_frame_surface_native_data(void);
 /* Value read back from guest global base+0x72a3308 (never host-written). */
 SOBER_FRAME_SURFACE_API uintptr_t sober_frame_surface_bound_window(void);
+
+/* G8 C3/C4 contract for the mNativeObject JNI field provider (worker-1 #492):
+ *  - is_surface_token(obj): 1 when `obj` is the exact Surface handle this
+ *    module hands to the genuine guest bind helper 0x26fea5a.  No other object
+ *    is accepted.
+ *  - native_handle(): the ANativeWindow* that the GUEST publishes at
+ *    0x72a3308 via its own store at 0x26feaa0 (identical to bound_window()).
+ *    GetLongField(surface,"mNativeObject") must return THIS value so C4
+ *    (ret == mnative) is satisfied by the real guest store, never a made-up
+ *    host pointer.  Returns NULL until the genuine guest bind succeeded. */
+SOBER_FRAME_SURFACE_API int    sober_frame_surface_is_surface_token(void *obj);
+SOBER_FRAME_SURFACE_API void  *sober_frame_surface_native_handle(void);
 SOBER_FRAME_SURFACE_API uint32_t  sober_frame_surface_generation_before(void);
 SOBER_FRAME_SURFACE_API uint32_t  sober_frame_surface_generation_after(void);
 SOBER_FRAME_SURFACE_API int       sober_frame_surface_guest_store_seen(void);

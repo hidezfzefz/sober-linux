@@ -29,12 +29,17 @@ diagnostic now produces 2 guest-tagged swaps and 1 guest draw, but the callback
 leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
 (decision 013 / 038).
 
-Latest blocker (tasks #485/#486): the singleton accessor blocker is fixed with
-the guest's own flag setter, removing fault `0x24ad562`. The callback path now
-stops at the genuine TaskScheduler "flags loaded" guard (`0x6caef67`, latch
-`0x7cdd149`); the only reachable guest writers either skip the write or abort
-inside crashpad, so both are opt-in diagnostics and the default path stays
-honest. See `analysis/A14-flags-loaded-latch.md`. Score is unchanged.
+Latest blocker (tasks #485/#486, then this team #487–#492): the singleton
+accessor blocker is fixed with the guest's own flag setter, removing fault
+`0x24ad562`. The callback path still stops at the genuine TaskScheduler
+"flags loaded" guard (`0x6caef67`, latch `0x7cdd149`). All six guest writers
+are mapped in `analysis/A15-flags-latch-route.md`; the only feasible one is the
+crashpad writer, which sets the latch and then terminates in crashpad's fatal
+path (`analysis/A14-flags-loaded-latch.md`). It is therefore opt-in only:
+`SOBER_FLAGS_LATCH_ROUTE` defaults to `none` (inert), so the honest fault
+baseline is preserved. The render leg gained a fail-closed evidence bringup and
+a genuine `Surface.mNativeObject` provider, but C10/H6 and genuine guest
+swaps/draw remain open. Marker stays WITHHELD; score unchanged.
 
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████

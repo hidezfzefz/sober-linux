@@ -19,6 +19,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/user/sober-linux/src/jni/delegate_default.c" "src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o.d"
   "/home/user/sober-linux/src/jni/fflag_default.c" "src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o.d"
   "/home/user/sober-linux/src/jni/fields_default.c" "src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o.d"
+  "/home/user/sober-linux/src/jni/flags_latch_default.c" "src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.o.d"
   "/home/user/sober-linux/src/jni/frame_dispatch.c" "src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o.d"
   "/home/user/sober-linux/src/jni/frame_draw.c" "src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o.d"
   "/home/user/sober-linux/src/jni/frame_evidence.c" "src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o.d"

@@ -13,15 +13,19 @@ No Flatpak (`791c3f9e` / 2.745) RVA is used anywhere in the shipped source.
 
 **Overall: ≈61% complete (sensitivity band 56–65%)** after the 40-agent frame push. The original 14-audit baseline was 46%, the integration team 57%. The gain is render-side only: a withheld diagnostic now drives guest code that produces 2 guest-tagged swaps (RA `0x649067e`) and 1 guest draw, but it is seeded state, not an app-shell frame. The callback leg remains 0/1, so the marker stays WITHHELD.
 
-**Follow-up (tasks #485/#486):** the singleton predicate blocker is fixed with
-genuine guest flag-setter calls, and the old fault `0x24ad562` is gone. The
-callback path now reaches the second guest guard, the flags-loaded latch
-`0x7cdd149`: `RBXCRASH ... Can't initialize the TaskScheduler before flags have
-been loaded` at `0x6caef67`. Both genuine writers reachable in this build
-(`nativeInitClientSettings 0x2359277` and the crashpad writer `0x2ec9eed`) are
-documented in `analysis/A14-flags-loaded-latch.md`; the latter aborts inside
-crashpad's fatal path, so it is opt-in only and the default path stays honest.
-No notifier hit, no `gameLoadedCallback(J)V`, no marker. Score unchanged.
+**Follow-up (tasks #485/#486, then #487–#492):** the singleton predicate blocker
+is fixed with genuine guest flag-setter calls, and the old fault `0x24ad562` is
+gone. The callback path still reaches the second guest guard, the flags-loaded
+latch `0x7cdd149`: `RBXCRASH ... Can't initialize the TaskScheduler before flags
+have been loaded` at `0x6caef67`. All six guest `movb $1,0x7cdd149` writers are
+mapped in `analysis/A15-flags-latch-route.md`; the only feasible one is the
+crashpad writer `0x2ec9eed`, which sets the latch but then terminates in
+crashpad's fatal path (`analysis/A14-flags-loaded-latch.md`, lead task #491).
+It is therefore opt-in via `SOBER_FLAGS_LATCH_ROUTE`, whose default is `none`
+(inert), preserving the honest fault baseline. Render-side work added a
+fail-closed evidence bringup and a genuine `Surface.mNativeObject` provider,
+but C10/H6 window-log proof and default guest swaps/draw remain open. No
+notifier hit, no `gameLoadedCallback(J)V`, no marker. Score unchanged.
 
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven

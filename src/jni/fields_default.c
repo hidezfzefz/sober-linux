@@ -27,6 +27,10 @@
 #define _GNU_SOURCE
 #include "native_jni.h"
 #include "fields_default.h"
+/* Genuine Surface token/handle accessors (worker-3 frame_surface, #490).
+ * GetLongField derives mNativeObject from the LIVE token the guest bound; it
+ * never invents a Surface object or a host pointer. */
+#include "frame_surface.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,13 +54,18 @@ static uint64_t   g_calls_width;
 static uint64_t   g_calls_height;
 static uint64_t   g_calls_fieldid;
 static uint64_t   g_install_count;
+static uint64_t   g_calls_native;
+/* Registered genuine Surface object + handle provider (task #492). */
+static void                     *g_native_surface_obj;
+static SoberFieldsNativeHandleFn g_native_handle_fn;
+static void                     *g_native_user;
 
 /* ---- shaped, validated jfieldID tokens ---------------------------------- *
  * The guest treats jfieldID as opaque: GetFieldID's result is only ever passed
  * back to Get*Field.  A tagged static descriptor is therefore a faithful
  * stand-in and lets us reject stray pointers without touching SrObject. */
 #define FD_FID_MAGIC 0x53464444u  /* "SFDD" */
-typedef enum { FD_T_UNKNOWN = 0, FD_T_FLOAT, FD_T_INT } FdType;
+typedef enum { FD_T_UNKNOWN = 0, FD_T_FLOAT, FD_T_INT, FD_T_LONG } FdType;
 typedef struct {
     uint32_t    magic;
     uint32_t    pad;
@@ -84,6 +93,14 @@ static FdFieldId s_fid_any_float = {
 };
 static FdFieldId s_fid_any_int = {
     FD_FID_MAGIC, 0, FD_T_INT, "", SOBER_FIELDS_DEFAULT_SIG_INT
+};
+/* Genuine android/view.Surface.mNativeObject token and generic J fallback. */
+static FdFieldId s_fid_native_object = {
+    FD_FID_MAGIC, 0, FD_T_LONG,
+    SOBER_FIELDS_DEFAULT_FIELD_NATIVE, SOBER_FIELDS_DEFAULT_SIG_LONG
+};
+static FdFieldId s_fid_any_long = {
+    FD_FID_MAGIC, 0, FD_T_LONG, "", SOBER_FIELDS_DEFAULT_SIG_LONG
 };
 
 /* ---- default-on gate / defaults / init ---------------------------------- */
@@ -144,6 +161,7 @@ static void fd_init_state(void)
     fd_reset_values();
     g_nbindings = 0;
     g_calls_dpi = g_calls_width = g_calls_height = g_calls_fieldid = 0;
+    g_calls_native = 0;
 }
 
 static void fd_ensure_state(void)
@@ -195,7 +213,12 @@ void *sober_fields_default_GetFieldID(void *env, void *clazz,
 
     int is_f = (sig && sig[0] == SOBER_FIELDS_DEFAULT_SIG_FLOAT[0] && sig[1] == '\0');
     int is_i = (sig && sig[0] == SOBER_FIELDS_DEFAULT_SIG_INT[0]   && sig[1] == '\0');
+    int is_j = (sig && sig[0] == SOBER_FIELDS_DEFAULT_SIG_LONG[0]  && sig[1] == '\0');
 
+    if (name && is_j && !strcmp(name, SOBER_FIELDS_DEFAULT_FIELD_NATIVE)) {
+        g_calls_native++;
+        return (void *)&s_fid_native_object;
+    }
     if (name) {
         if (!strcmp(name, SOBER_FIELDS_DEFAULT_FIELD_DPI))
             return is_f ? (void *)&s_fid_dpi : (void *)&s_fid_any_float;
@@ -206,6 +229,7 @@ void *sober_fields_default_GetFieldID(void *env, void *clazz,
     }
     if (is_f) return (void *)&s_fid_any_float;
     if (is_i) return (void *)&s_fid_any_int;
+    if (is_j) return (void *)&s_fid_any_long;
     return (void *)&s_fid_any_int;      /* never NULL: keep the guest off a fault */
 }
 
@@ -237,6 +261,78 @@ int32_t sober_fields_default_GetIntField(void *env, void *obj, void *field_id)
     if (f == &s_fid_width) { g_calls_width++;  return v ? v->viewport_width_mm  : 0; }
     if (f == &s_fid_height) { g_calls_height++; return v ? v->viewport_height_mm : 0; }
     return 0;                           /* unknown int field: stub behaviour */
+}
+
+/* ---- native mNativeObject provider (task #492) --------------------------- */
+int sober_fields_native_enabled(void)
+{
+    const char *e = getenv(SOBER_FIELDS_NATIVE_DEFAULT_ENV);
+    if (!e) return 1;                     /* default ON */
+    if (!strcmp(e, "0") || !strcasecmp(e, "off") ||
+        !strcasecmp(e, "no") || !strcasecmp(e, "false"))
+        return 0;
+    return 1;
+}
+
+int sober_fields_native_set_provider(void *surface_obj,
+                                      SoberFieldsNativeHandleFn handle_fn,
+                                      void *user)
+{
+    fd_ensure_state();
+    if (!surface_obj || !handle_fn) return SOBER_FIELDS_DEFAULT_ERR;
+    g_native_surface_obj = surface_obj;
+    g_native_handle_fn   = handle_fn;
+    g_native_user        = user;
+    return SOBER_FIELDS_DEFAULT_OK;
+}
+
+void sober_fields_native_clear_provider(void)
+{
+    g_native_surface_obj = NULL;
+    g_native_handle_fn   = NULL;
+    g_native_user        = NULL;
+}
+
+int sober_fields_native_should_withhold(void)
+{
+    return sober_fields_native_enabled() ? 1 : 0;
+}
+
+uint64_t sober_fields_native_calls(void)
+{
+    return g_calls_native;
+}
+
+/* JNIEnv GetLongField (fn[97] / offset 0x328).  Fail closed: a genuine native
+ * handle is returned ONLY for the exact registered Surface jobject via its
+ * provider; every other object/token/sig yields 0.  Never fabricates a handle
+ * and never invents a host pointer. */
+int64_t sober_fields_default_GetLongField(void *env, void *obj, void *field_id)
+{
+    (void)env;
+    int64_t h = 0;
+    if (!sober_fields_native_enabled()) return 0;
+    fd_ensure_state();
+    FdFieldId *f = (FdFieldId *)field_id;
+    if (!f || f->magic != FD_FID_MAGIC || f->type != FD_T_LONG ||
+        f != &s_fid_native_object)
+        return 0;
+    /* Primary: the exact Surface token the guest actually bound.  The handle
+     * is the ANativeWindow* the guest itself published at 0x72a3308 — a real
+     * guest-derived pointer, never a fabricated one. */
+    if (sober_frame_surface_is_surface_token(obj)) {
+        h = (int64_t)(uintptr_t)sober_frame_surface_native_handle();
+        g_calls_native++;
+        return h;                       /* may be 0 until genuine bind succeeds */
+    }
+    /* Secondary: an explicitly registered provider (e.g. a real SrObject
+     * future Surface); fail closed when absent or for any other object. */
+    if (!g_native_surface_obj || !g_native_handle_fn || !obj ||
+        obj != g_native_surface_obj)
+        return 0;                       /* fail closed: no genuine object */
+    h = g_native_handle_fn(env, obj, g_native_user);
+    g_calls_native++;
+    return h;
 }
 
 void sober_fields_default_SetFloatField(void *env, void *obj,
@@ -290,6 +386,10 @@ int sober_fields_default_install_slots(void **env_fn, unsigned slot_count)
         (void *)(uintptr_t)&sober_fields_default_GetFieldID;
     env_fn[SOBER_FIELDS_DEFAULT_SLOT_GETINTFIELD] =
         (void *)(uintptr_t)&sober_fields_default_GetIntField;
+    /* Genuine mNativeObject provider (fail closed until a Surface is
+     * registered).  Installed with the other field slots. */
+    env_fn[SOBER_FIELDS_DEFAULT_SLOT_GETLONGFIELD] =
+        (void *)(uintptr_t)&sober_fields_default_GetLongField;
     env_fn[SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD] =
         (void *)(uintptr_t)&sober_fields_default_GetFloatField;
     g_install_count++;
@@ -306,6 +406,8 @@ int sober_fields_default_install_via(
           (void *)(uintptr_t)&sober_fields_default_GetFieldID);
     setfn(ctx, SOBER_FIELDS_DEFAULT_SLOT_GETINTFIELD,
           (void *)(uintptr_t)&sober_fields_default_GetIntField);
+    setfn(ctx, SOBER_FIELDS_DEFAULT_SLOT_GETLONGFIELD,
+          (void *)(uintptr_t)&sober_fields_default_GetLongField);
     setfn(ctx, SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD,
           (void *)(uintptr_t)&sober_fields_default_GetFloatField);
     g_install_count++;
@@ -419,7 +521,8 @@ const char *sober_fields_default_describe(char *buf, size_t cap)
     if (!buf || !cap) return "";
     fd_ensure_state();
     snprintf(buf, cap,
-             "enabled=%d init=%d bindings=%u/%u slots=%u/%u/%u "
+             "enabled=%d init=%d bindings=%u/%u slots=%u/%u/%u/%u "
+             "native=[%d registered=%d calls=%llu] "
              "vt_rva=%#x/%#x dpi=%.3f w=%d h=%d window=%p "
              "installs=%llu calls(GetFieldID=%llu,dpi=%llu,w=%llu,h=%llu) "
              "(env %s; genuine guest RVAs only)",
@@ -427,7 +530,10 @@ const char *sober_fields_default_describe(char *buf, size_t cap)
              FD_MAX_BINDINGS,
              SOBER_FIELDS_DEFAULT_SLOT_GETFIELDID,
              SOBER_FIELDS_DEFAULT_SLOT_GETINTFIELD,
+             SOBER_FIELDS_DEFAULT_SLOT_GETLONGFIELD,
              SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD,
+             sober_fields_native_enabled(), g_native_surface_obj ? 1 : 0,
+             (unsigned long long)g_calls_native,
              (unsigned)SOBER_FIELDS_DEFAULT_VT_RVA_START,
              (unsigned)SOBER_FIELDS_DEFAULT_VT_RVA_UPDATE,
              (double)g_values.dpi_scale, (int)g_values.viewport_width_mm,
@@ -442,6 +548,13 @@ const char *sober_fields_default_describe(char *buf, size_t cap)
 }
 
 /* Built-in, read-only (no guest writes) contract check. */
+/* Test-only provider callback (selftest); returns the registered user value. */
+static int64_t fd_test_handle(void *env, void *surface_obj, void *user)
+{
+    (void)env; (void)surface_obj;
+    return (int64_t)(uintptr_t)user;
+}
+
 int sober_fields_default_selftest(char *buf, size_t cap)
 {
     int fails = 0;
@@ -453,8 +566,39 @@ int sober_fields_default_selftest(char *buf, size_t cap)
         (SOBER_FIELDS_DEFAULT_OFF_GETINTFIELD / 8u - 4u) !=
             SOBER_FIELDS_DEFAULT_SLOT_GETINTFIELD ||
         (SOBER_FIELDS_DEFAULT_OFF_GETFLOATFIELD / 8u - 4u) !=
-            SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD)
+            SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD ||
+        (0x328u / 8u - 4u) != SOBER_FIELDS_DEFAULT_SLOT_GETLONGFIELD)
         fails++;
+
+    /* 1b. mNativeObject field is fail-closed unless a genuine provider is
+     *      registered for the exact Surface jobject. */
+    {
+        int dummy_surface = 0, other_surface = 0;
+        /* Preserve any real provider registered by worker-3. */
+        void *saved_obj = g_native_surface_obj;
+        SoberFieldsNativeHandleFn saved_fn = g_native_handle_fn;
+        void *saved_user = g_native_user;
+        void *fid_j = sober_fields_default_GetFieldID(
+            NULL, NULL, SOBER_FIELDS_DEFAULT_FIELD_NATIVE,
+            SOBER_FIELDS_DEFAULT_SIG_LONG);
+        if (fid_j && sober_fields_default_GetLongField(NULL, &dummy_surface, fid_j)
+                         != 0) fails++;  /* no provider -> 0 */
+        if (sober_fields_native_set_provider(
+                &dummy_surface,
+                (SoberFieldsNativeHandleFn)(uintptr_t)0, NULL) ==
+                SOBER_FIELDS_DEFAULT_OK) fails++; /* NULL fn rejected */
+        sober_fields_native_set_provider(&dummy_surface, fd_test_handle,
+                                          (void *)(uintptr_t)0x77u);
+        if (fid_j && sober_fields_default_GetLongField(NULL, &dummy_surface, fid_j)
+                         != (int64_t)0x77u) fails++;  /* exact obj -> handle */
+        if (fid_j && sober_fields_default_GetLongField(NULL, &other_surface, fid_j)
+                         != 0) fails++;               /* wrong obj -> 0 */
+        sober_fields_native_clear_provider();
+        /* Restore the genuine provider. */
+        g_native_surface_obj = saved_obj;
+        g_native_handle_fn   = saved_fn;
+        g_native_user        = saved_user;
+    }
 
     /* 2. both 0x40 payload layouts (vptr / window / typed values / flag). */
     unsigned char base[16];

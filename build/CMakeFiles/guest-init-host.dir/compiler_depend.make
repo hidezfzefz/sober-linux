@@ -12,6 +12,8 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/controller_default.h \
   /home/user/sober-linux/src/jni/delegate_default.h \
   /home/user/sober-linux/src/jni/fflag_default.h \
+  /home/user/sober-linux/src/jni/fields_default.h \
+  /home/user/sober-linux/src/jni/flags_latch_default.h \
   /home/user/sober-linux/src/jni/frame_dispatch.h \
   /home/user/sober-linux/src/jni/frame_draw.h \
   /home/user/sober-linux/src/jni/frame_evidence.h \
@@ -541,514 +543,518 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
   src/render/libsober_render.a
 
 
-libsober_platform.a:
+/usr/include/bits/time64.h:
 
-libsober_compat.a:
+/usr/include/bits/stdlib-float.h:
 
-libsober_bootstrap.a:
+/usr/include/bits/thread-shared-types.h:
 
-CMakeFiles/guest-init-host.dir/src/linux/guest_render.c.o:
+/usr/include/bits/types/time_t.h:
 
-/usr/lib64/libc_nonshared.a:
+/home/user/sober-linux/src/jni/startgame_v2.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so.1:
+/usr/include/bits/string_fortified.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a:
+/usr/include/bits/stdlib-bsearch.h:
 
-/usr/lib64/libpthread.a:
+/usr/include/bits/stdio2-decl.h:
 
-/usr/lib64/libm.so:
+/usr/include/bits/types/__mbstate_t.h:
 
-/usr/lib64/libdl.a:
+/usr/include/bits/struct_stat.h:
 
-/usr/lib64/libc.so:
+/usr/include/bits/socket2.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
+/home/user/sober-linux/src/jni/app488_default.h:
 
-/usr/lib64/crtn.o:
+/usr/include/bits/socket.h:
 
-/usr/lib64/crti.o:
+/home/user/sober-linux/src/jni/frame_surface.h:
 
-/lib64/ld-linux-x86-64.so.2:
+/usr/include/time.h:
 
-/usr/include/sched.h:
+/usr/include/bits/signum-generic.h:
 
-/usr/include/pthread.h:
+/usr/include/bits/strings_fortified.h:
 
-/usr/include/linux/sched/types.h:
+/usr/include/bits/signum-arch.h:
 
-/usr/include/execinfo.h:
+/usr/include/bits/siginfo-consts-arch.h:
 
-/usr/include/errno.h:
+/usr/include/bits/sigevent-consts.h:
 
-/usr/include/elf.h:
+/usr/include/bits/types/stack_t.h:
 
-/usr/include/bits/types/struct_statx_timestamp.h:
+/usr/include/bits/sigaction.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
+/usr/include/bits/getopt_core.h:
 
-/usr/include/bits/types/struct___jmp_buf_tag.h:
+/usr/include/bits/select2.h:
 
-/usr/include/bits/statx.h:
+/usr/include/sys/socket.h:
 
-/usr/include/bits/setjmp.h:
+/usr/include/bits/pthreadtypes.h:
 
-/usr/include/bits/pthread_stack_min-dynamic.h:
+/lib64/libmvec.so.1:
 
-/usr/include/bits/link_lavcurrent.h:
+/usr/include/bits/pthreadtypes-arch.h:
 
-/usr/include/asm-generic/errno.h:
+/usr/include/fcntl.h:
 
-/home/user/sober-linux/src/linux/android_relocs.h:
+/usr/include/gnu/stubs.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h:
+/usr/include/bits/posix_opt.h:
 
-/usr/include/bits/statx-generic.h:
+/usr/include/bits/atomic_wide_counter.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdbool.h:
+/usr/include/bits/mman.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h:
+/usr/include/link.h:
 
-/usr/include/unistd.h:
+/usr/include/bits/mman-shared.h:
 
-/usr/include/sys/types.h:
+/usr/include/bits/types/FILE.h:
 
-/usr/include/sys/select.h:
+/usr/include/linux/posix_types.h:
 
-/usr/include/sys/mman.h:
+/usr/include/bits/mman-map-flags-generic.h:
 
-/usr/include/string.h:
+/usr/include/bits/libc-header-start.h:
 
-/usr/include/stdio.h:
+/usr/include/bits/cloexec.h:
 
-/usr/include/stdint.h:
+/home/user/sober-linux/src/linux/guest_app_shell.h:
 
-/usr/include/signal.h:
+/usr/include/bits/types/struct_sched_param.h:
 
-/usr/include/linux/types.h:
+/usr/include/bits/stdio.h:
 
-/usr/include/linux/stddef.h:
+/home/user/sober-linux/src/linux/guest_dlopen_host.c:
 
-src/jni/libsober_jni.a:
+/usr/include/bits/fcntl-linux.h:
 
-/usr/include/linux/openat2.h:
+/usr/include/bits/endianness.h:
 
-/usr/include/linux/falloc.h:
+/usr/include/bits/timesize.h:
 
-/usr/include/gnu/stubs-64.h:
-
-/usr/include/features-time64.h:
-
-/usr/include/endian.h:
-
-/usr/include/bits/wordsize.h:
-
-/usr/include/bits/waitflags.h:
-
-/usr/include/bits/unistd_ext.h:
-
-/usr/include/bits/unistd.h:
-
-/usr/include/bits/elfclass.h:
-
-/usr/include/bits/unistd-decl.h:
-
-/usr/include/bits/uintn-identity.h:
-
-/usr/include/linux/stat.h:
-
-/usr/include/bits/types/timer_t.h:
-
-/usr/include/bits/types/struct_tm.h:
-
-/usr/include/bits/types/struct_timeval.h:
-
-/usr/include/bits/types/struct_timespec.h:
-
-/usr/include/bits/types/struct_sigstack.h:
-
-/usr/include/asm/errno.h:
-
-/usr/include/bits/types/struct_osockaddr.h:
-
-/usr/include/bits/types/struct_iovec.h:
-
-/usr/include/bits/sched.h:
-
-/usr/include/bits/types/siginfo_t.h:
-
-/usr/include/bits/typesizes.h:
-
-/usr/include/bits/types/sig_atomic_t.h:
-
-/usr/include/bits/types/once_flag.h:
-
-/usr/include/bits/types/cookie_io_functions_t.h:
-
-/usr/include/bits/types/clockid_t.h:
-
-/usr/include/bits/types/__sigval_t.h:
-
-/usr/include/bits/types/__sigset_t.h:
-
-/usr/include/bits/types/__locale_t.h:
-
-/usr/include/bits/types/clock_t.h:
-
-/usr/include/bits/types/__fpos_t.h:
-
-/usr/include/bits/confname.h:
-
-/home/user/sober-linux/src/jni/frame_thread.h:
-
-/usr/include/bits/link.h:
-
-/usr/include/bits/byteswap.h:
-
-/home/user/sober-linux/src/jni/jni_json_bridge.h:
-
-/usr/include/asm/bitsperlong.h:
-
-/usr/include/bits/sigcontext.h:
+/usr/include/bits/types.h:
 
 /usr/include/bits/dl_find_object.h:
 
-/usr/include/asm-generic/errno-base.h:
+/home/user/sober-linux/src/jni/delegate_default.h:
 
-/home/user/sober-linux/src/linux/guest_render.h:
+/usr/include/stdlib.h:
 
-/usr/include/asm-generic/types.h:
+/usr/include/bits/select.h:
 
-/usr/include/bits/types/sigset_t.h:
+/usr/lib64/Scrt1.o:
 
-/usr/include/asm-generic/sockios.h:
+/home/user/sober-linux/src/jni/placeid_default.h:
 
-CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
+/usr/include/bits/endian.h:
 
-/home/user/sober-linux/src/jni/notifier_probe.h:
+/home/user/sober-linux/src/compat/bionic_bootstrap/bionic_bootstrap.h:
 
-/usr/include/bits/sigthread.h:
+/usr/include/asm-generic/socket.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s_asneeded.so:
+/usr/include/bits/types/sigval_t.h:
 
-/home/user/sober-linux/src/render/native_render.h:
+/usr/include/asm-generic/posix_types.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
+/home/user/sober-linux/src/jni/frame_synthetic_tag.h:
 
-/usr/include/bits/environments.h:
+/home/user/sober-linux/src/jni/startapp_v2.h:
 
-/usr/include/bits/types/sigevent_t.h:
+/usr/include/dlfcn.h:
 
-/home/user/sober-linux/src/jni/singleton_fix.h:
+/home/user/sober-linux/src/jni/jni_strings.h:
 
-/usr/include/bits/errno.h:
+/usr/include/bits/signal_ext.h:
 
-/usr/include/bits/timex.h:
+/usr/include/stdc-predef.h:
 
-/home/user/sober-linux/src/jni/startapp_params.h:
+/usr/include/sys/ucontext.h:
 
-/usr/include/asm-generic/int-ll64.h:
+/home/user/sober-linux/src/linux/guest_app_shell.c:
 
-/usr/include/bits/fcntl-linux-fortify.h:
+/home/user/sober-linux/src/jni/frame_evidence.h:
 
-/usr/include/bits/types/error_t.h:
+/usr/include/bits/openat2.h:
 
-/home/user/sober-linux/src/jni/singleton_default.h:
+/usr/include/sys/cdefs.h:
 
-/usr/include/asm/posix_types.h:
+/home/user/sober-linux/src/jni/render_guest.h:
 
-/usr/include/asm/posix_types_64.h:
-
-/usr/include/sys/stat.h:
-
-/usr/include/bits/types/struct_FILE.h:
-
-/usr/include/bits/ss_flags.h:
-
-/home/user/sober-linux/src/linux/guest_render.c:
-
-/usr/include/bits/stat.h:
+/usr/include/asm/types.h:
 
 /home/user/sober-linux/src/jni/javavm_semantics.h:
-
-CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
-
-/home/user/sober-linux/src/jni/fflag_default.h:
-
-/usr/include/bits/types/struct_statx.h:
-
-/usr/include/bits/stdlib.h:
-
-/home/user/sober-linux/src/jni/tsd_default.h:
-
-/home/user/sober-linux/src/jni/app_singleton_bridge.h:
-
-/usr/include/bits/long-double.h:
-
-/usr/include/bits/select-decl.h:
-
-/home/user/sober-linux/src/jni/game_params.h:
-
-/usr/include/bits/types/struct_itimerspec.h:
-
-/usr/include/bits/struct_rwlock.h:
-
-/usr/include/bits/types/locale_t.h:
-
-/home/user/sober-linux/src/jni/global_string_seed.h:
-
-/home/user/sober-linux/src/jni/javavm_default.h:
-
-/home/user/sober-linux/src/jni/controller_default.h:
-
-/usr/include/bits/wchar.h:
-
-/usr/include/asm-generic/bitsperlong.h:
-
-/home/user/sober-linux/src/jni/scheduler_guest.h:
-
-/home/user/sober-linux/src/jni/jni_arrays.h:
-
-/usr/include/bits/cpu-set.h:
-
-/home/user/sober-linux/src/compat/android_compat.h:
-
-/home/user/sober-linux/src/jni/jni_native_objects.h:
-
-/usr/include/alloca.h:
-
-/usr/include/bits/mman-linux.h:
-
-/usr/include/linux/errno.h:
-
-/home/user/sober-linux/src/jni/publish_default.h:
-
-/usr/include/bits/floatn.h:
-
-/home/user/sober-linux/src/jni/app488_inner.h:
 
 /home/user/sober-linux/src/jni/frame_dispatch.h:
 
 /home/user/sober-linux/src/compat/android_types.h:
 
-/home/user/sober-linux/src/jni/app488_fix.h:
+/home/user/sober-linux/src/jni/javavm_default.h:
 
-/usr/include/bits/floatn-common.h:
+/home/user/sober-linux/src/jni/flags_latch_default.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so:
-
-/usr/include/asm/types.h:
-
-/home/user/sober-linux/src/jni/render_guest.h:
-
-/usr/include/bits/openat2.h:
-
-/home/user/sober-linux/src/jni/singleton_services.h:
-
-/home/user/sober-linux/src/jni/frame_evidence.h:
-
-/home/user/sober-linux/src/linux/guest_app_shell.c:
-
-/usr/include/sys/ucontext.h:
-
-/usr/include/bits/signal_ext.h:
-
-/home/user/sober-linux/src/jni/jni_strings.h:
-
-/usr/include/dlfcn.h:
-
-/home/user/sober-linux/src/jni/startapp_v2.h:
-
-/home/user/sober-linux/src/jni/frame_synthetic_tag.h:
-
-/usr/include/stdc-predef.h:
-
-/usr/include/asm-generic/posix_types.h:
-
-/usr/include/bits/types/sigval_t.h:
-
-/usr/include/asm-generic/socket.h:
-
-/home/user/sober-linux/src/compat/bionic_bootstrap/bionic_bootstrap.h:
-
-/usr/include/stdlib.h:
-
-/home/user/sober-linux/src/jni/delegate_default.h:
-
-/home/user/sober-linux/src/jni/placeid_default.h:
-
-/usr/lib64/Scrt1.o:
-
-/usr/include/bits/select.h:
-
-/usr/include/bits/indirect-return.h:
-
-/usr/include/asm/sockios.h:
-
-/lib64/libc.so.6:
-
-/home/user/sober-linux/src/jni/provenance_gate.h:
-
-/home/user/sober-linux/src/jni/native_jni.h:
-
-/usr/include/bits/endian.h:
-
-/usr/include/bits/waitstatus.h:
-
-/usr/include/bits/timesize.h:
-
-/usr/include/features.h:
-
-/usr/include/bits/endianness.h:
-
-/usr/include/strings.h:
-
-/usr/include/bits/fcntl-linux.h:
-
-/home/user/sober-linux/src/linux/guest_dlopen_host.c:
-
-/usr/include/bits/stdio.h:
-
-/usr/include/bits/fcntl.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic_asneeded.so:
-
-/usr/include/bits/types/struct_sched_param.h:
-
-/usr/include/bits/fcntl2.h:
-
-/home/user/sober-linux/src/linux/guest_app_shell.h:
-
-/usr/include/bits/siginfo-arch.h:
-
-/usr/include/bits/types.h:
-
-/usr/include/bits/cloexec.h:
-
-/usr/include/bits/getopt_posix.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
-
-/usr/include/bits/libc-header-start.h:
-
-/usr/include/bits/siginfo-consts.h:
-
-/usr/include/bits/mman-map-flags-generic.h:
-
-/usr/include/bits/mman-shared.h:
-
-/usr/include/bits/stdio2.h:
-
-/usr/include/link.h:
-
-/usr/include/bits/mman.h:
-
-/usr/include/bits/mman_ext.h:
-
-/usr/include/asm/socket.h:
-
-/usr/include/bits/sigstksz.h:
-
-/usr/include/linux/close_range.h:
-
-/usr/include/bits/stdint-intn.h:
-
-/lib64/libm.so.6:
-
-/usr/include/bits/atomic_wide_counter.h:
-
-/usr/include/bits/posix_opt.h:
-
-/usr/include/ucontext.h:
-
-/usr/include/gnu/stubs.h:
-
-/usr/include/fcntl.h:
-
-/usr/include/bits/pthreadtypes-arch.h:
-
-/lib64/libmvec.so.1:
-
-/usr/include/bits/pthreadtypes.h:
-
-/usr/include/sys/socket.h:
-
-/usr/include/sys/cdefs.h:
-
-/usr/include/bits/select2.h:
-
-/usr/include/bits/sigaction.h:
-
-/usr/include/bits/types/stack_t.h:
-
-/usr/include/bits/sigevent-consts.h:
-
-/usr/include/bits/getopt_core.h:
-
-/usr/include/bits/sigstack.h:
-
-/usr/include/bits/siginfo-consts-arch.h:
-
-/usr/include/bits/signum-arch.h:
-
-/usr/include/bits/strings_fortified.h:
-
-/usr/include/bits/dlfcn.h:
-
-/usr/include/bits/signum-generic.h:
-
-/usr/include/bits/sockaddr.h:
-
-/usr/include/time.h:
-
-/home/user/sober-linux/src/jni/frame_surface.h:
-
-/usr/include/bits/socket.h:
-
-/home/user/sober-linux/src/jni/app488_default.h:
+/usr/include/bits/types/struct_osockaddr.h:
 
 /usr/include/bits/stdint-uintn.h:
 
-/usr/include/linux/posix_types.h:
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
 
-/usr/include/bits/socket2.h:
+/usr/include/asm/errno.h:
 
-/usr/include/bits/types/__mbstate_t.h:
+/usr/include/bits/floatn-common.h:
 
-/usr/include/bits/time.h:
+/usr/include/linux/close_range.h:
 
-/usr/include/bits/stdio_lim.h:
+/usr/include/bits/sigstksz.h:
 
-src/render/libsober_render.a:
+/usr/include/asm/socket.h:
 
-/usr/include/bits/socket_type.h:
+/usr/include/ucontext.h:
 
-/usr/include/bits/stdint-least.h:
+/home/user/sober-linux/src/jni/app488_fix.h:
 
-/usr/include/bits/stdio2-decl.h:
+/home/user/sober-linux/src/jni/fields_default.h:
+
+/usr/include/bits/fcntl-linux-fortify.h:
+
+/home/user/sober-linux/src/jni/app488_inner.h:
+
+/usr/include/bits/floatn.h:
+
+/usr/include/bits/confname.h:
 
 /home/user/sober-linux/src/jni/frame_draw.h:
 
-/usr/include/bits/stdlib-bsearch.h:
+/home/user/sober-linux/src/jni/frame_thread.h:
+
+/home/user/sober-linux/src/jni/publish_default.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic_asneeded.so:
+
+/usr/include/linux/errno.h:
+
+/usr/include/bits/mman-linux.h:
+
+/usr/include/alloca.h:
+
+/home/user/sober-linux/src/jni/jni_native_objects.h:
+
+/home/user/sober-linux/src/compat/android_compat.h:
+
+/usr/include/bits/dlfcn.h:
+
+/usr/include/bits/cpu-set.h:
+
+/home/user/sober-linux/src/jni/jni_arrays.h:
+
+/home/user/sober-linux/src/jni/scheduler_guest.h:
+
+/home/user/sober-linux/src/jni/controller_default.h:
+
+/usr/include/bits/stat.h:
+
+/home/user/sober-linux/src/linux/guest_render.c:
+
+/usr/include/bits/ss_flags.h:
+
+/usr/include/sys/stat.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/asm/posix_types.h:
+
+/usr/include/asm/posix_types_64.h:
+
+/home/user/sober-linux/src/jni/global_string_seed.h:
+
+/usr/include/bits/types/locale_t.h:
+
+/usr/include/bits/struct_rwlock.h:
+
+/usr/include/bits/types/struct_itimerspec.h:
+
+/home/user/sober-linux/src/jni/game_params.h:
+
+/usr/include/bits/select-decl.h:
+
+/usr/include/bits/long-double.h:
+
+/usr/include/bits/stdint-least.h:
+
+/usr/include/bits/mman_ext.h:
+
+/home/user/sober-linux/src/jni/app_singleton_bridge.h:
+
+/home/user/sober-linux/src/jni/tsd_default.h:
+
+/usr/include/bits/types/struct_statx.h:
+
+CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
+
+/lib64/libc.so.6:
+
+/home/user/sober-linux/src/jni/singleton_services.h:
+
+/usr/include/asm/sockios.h:
+
+/usr/include/bits/indirect-return.h:
+
+/usr/include/bits/sockaddr.h:
+
+/usr/include/bits/siginfo-consts.h:
+
+/home/user/sober-linux/src/jni/singleton_default.h:
+
+/usr/include/bits/types/error_t.h:
+
+/usr/include/bits/stdlib.h:
+
+/usr/include/asm-generic/int-ll64.h:
+
+/home/user/sober-linux/src/jni/startapp_params.h:
+
+/usr/include/bits/timex.h:
+
+/usr/include/bits/errno.h:
+
+/home/user/sober-linux/src/jni/singleton_fix.h:
+
+/usr/include/bits/types/sigevent_t.h:
+
+/usr/include/bits/types/struct_FILE.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
+
+/home/user/sober-linux/src/render/native_render.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s_asneeded.so:
+
+/usr/include/bits/sigthread.h:
+
+/lib64/libm.so.6:
+
+/usr/include/bits/fcntl.h:
+
+/home/user/sober-linux/src/jni/notifier_probe.h:
+
+CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
+
+/usr/include/asm-generic/sockios.h:
+
+/usr/include/bits/types/sigset_t.h:
+
+/usr/include/asm-generic/bitsperlong.h:
+
+/usr/include/asm-generic/types.h:
+
+/home/user/sober-linux/src/linux/guest_render.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+/usr/include/bits/sigcontext.h:
+
+/usr/include/asm/bitsperlong.h:
+
+/home/user/sober-linux/src/jni/jni_json_bridge.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/bits/link.h:
+
+/usr/include/bits/fcntl2.h:
+
+/usr/include/bits/types/clock_t.h:
+
+/usr/include/bits/types/__locale_t.h:
+
+/usr/include/bits/types/__sigset_t.h:
+
+/usr/include/bits/stdint-intn.h:
+
+/usr/include/bits/types/clockid_t.h:
+
+/usr/include/bits/types/cookie_io_functions_t.h:
+
+/usr/include/bits/types/__fpos_t.h:
+
+/usr/include/bits/types/sig_atomic_t.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/bits/types/siginfo_t.h:
+
+/usr/include/features.h:
 
 /usr/include/bits/types/__FILE.h:
 
-/usr/include/bits/string_fortified.h:
+/usr/include/bits/sched.h:
 
-/home/user/sober-linux/src/jni/startgame_v2.h:
+/usr/include/bits/types/struct_iovec.h:
+
+/home/user/sober-linux/src/jni/provenance_gate.h:
+
+/usr/include/bits/types/struct_sigstack.h:
+
+/usr/include/bits/types/struct_timespec.h:
+
+/usr/include/bits/types/struct_timeval.h:
+
+/home/user/sober-linux/src/jni/native_jni.h:
+
+/usr/include/bits/types/struct_tm.h:
+
+/usr/include/bits/stdio2.h:
+
+/usr/include/bits/types/timer_t.h:
+
+/usr/include/linux/stat.h:
+
+/usr/include/bits/uintn-identity.h:
+
+/usr/include/bits/sigstack.h:
+
+/usr/include/bits/unistd-decl.h:
+
+/usr/include/bits/elfclass.h:
+
+/usr/include/bits/unistd.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/features-time64.h:
+
+/usr/include/bits/types/__sigval_t.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/unistd_ext.h:
+
+/usr/include/linux/falloc.h:
+
+/usr/include/linux/openat2.h:
+
+src/jni/libsober_jni.a:
+
+/usr/include/linux/stddef.h:
+
+/usr/include/linux/types.h:
+
+/usr/include/strings.h:
+
+/usr/include/signal.h:
+
+/usr/include/endian.h:
+
+/usr/include/stdint.h:
+
+/usr/include/bits/socket_type.h:
+
+/usr/include/string.h:
+
+/usr/include/sys/mman.h:
+
+/usr/include/bits/types/once_flag.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/unistd.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdbool.h:
+
+/usr/include/bits/statx-generic.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h:
+
+/home/user/sober-linux/src/linux/android_relocs.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/bits/link_lavcurrent.h:
+
+/usr/include/bits/pthread_stack_min-dynamic.h:
+
+/usr/include/bits/setjmp.h:
+
+/usr/include/bits/statx.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/bits/types/struct___jmp_buf_tag.h:
+
+/usr/include/bits/siginfo-arch.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
+
+/usr/include/bits/types/struct_statx_timestamp.h:
+
+/usr/include/elf.h:
+
+/usr/include/bits/getopt_posix.h:
+
+/usr/include/errno.h:
+
+/usr/include/execinfo.h:
+
+/usr/include/linux/sched/types.h:
+
+/usr/include/pthread.h:
+
+/usr/include/sched.h:
+
+/lib64/ld-linux-x86-64.so.2:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/stdio.h:
+
+/usr/lib64/crti.o:
+
+/usr/lib64/crtn.o:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
+
+/usr/lib64/libc.so:
+
+/usr/lib64/libdl.a:
+
+/usr/lib64/libm.so:
+
+src/render/libsober_render.a:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so:
+
+/usr/lib64/libpthread.a:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so.1:
+
+/usr/lib64/libc_nonshared.a:
 
 /usr/include/bits/struct_mutex.h:
 
-/usr/include/bits/types/time_t.h:
+CMakeFiles/guest-init-host.dir/src/linux/guest_render.c.o:
 
-/usr/include/bits/struct_stat.h:
+libsober_bootstrap.a:
 
-/usr/include/bits/thread-shared-types.h:
+/home/user/sober-linux/src/jni/fflag_default.h:
 
-/usr/include/bits/stdlib-float.h:
-
-/usr/include/bits/time64.h:
-
-/usr/include/bits/types/FILE.h:
+libsober_compat.a:
 
 /usr/include/bits/types/__fpos64_t.h:
+
+libsober_platform.a:

@@ -40,6 +40,7 @@
  * native_jni.c and this gate would consult different instances.
  */
 #include "tsd_default.h"
+#include "fields_default.h"
 #include "javavm_default.h"
 #include "fflag_default.h"
 #include "scheduler_guest.h"
@@ -57,6 +58,7 @@
 #include "frame_surface.h"
 #include "frame_thread.h"
 #include "frame_synthetic_tag.h"
+#include "flags_latch_default.h"
 
 /* Gated crashpoint diagnostic: report the guest latch when a guest path aborts
  * inside the crashpad writer, without changing any guest state. */
@@ -1039,74 +1041,24 @@ int guest_app_shell_run(uintptr_t base)
             rg_rc, sober_render_guest_is_installed(),
             (unsigned long long)sober_render_guest_swaps_guest_tagged());
 
-    /* T2-5 flags-loaded latch 0x7cdd149. nativeInitClientSettings cannot set it
-     * (parse-ctx byte 0x7697d08 is 1), so replay the guest's OWN latch writer
-     * 0x2ec9eed with a native argv.  Calling the full CrashpadHandlerMain
-     * 0x2ec9c30 instead would actually launch crashpad and abort the process,
-     * so only the two state-setting calls it makes are replayed here:
-     *   0x2e57c20(&0x72a3710, "LIVE")  -> crash-counter string gate
-     *   0x2ec9eed(argc, argv)          -> movb $1,0x7cdd149 @0x2ec9fae
-     * OPT-IN ONLY (SOBER_FLAGS_LATCH_CRASHPAD=1): the writer's tail still
-     * invokes crashpad's fatal-error path in our headless process, so leaving
-     * it on by default would replace an honest guest int3 with a host abort.
-     * No byte writes. */
-    const char *fljni = getenv("SOBER_FLAGS_LATCH_JNI");
-    if (fljni && fljni[0] == '1') {
-        /* Genuine JNI route (worker-1): nativeRunCrashpadHandler converts a
-         * real String[] through guest code before reaching writer 0x2ec9eed,
-         * so every argv element is consistent and the channel global is set. */
-        (void)sober_jni_arrays_install(j);  /* idempotent; needed before call */
-        const char *fl_strings[] = {
-            "--crashCounter", "LIVE",
-            "--baseUrl", "http://127.0.0.1/",
-            "--sentryUrl", "http://127.0.0.1/",
-            "--sentryDbPath", "/tmp/sober-sentry.db",
-            "--sentryLogPath", "/tmp/sober-sentry.log",
-            "entryUrl", "http://127.0.0.1/",
-            "--channel", "LIVE",
-            "--isSimulatedCrash", "1"
-        };
-        void *fl_arr = sober_jni_new_string_array(
-            j, fl_strings, (int)(sizeof(fl_strings) / sizeof(fl_strings[0])));
-        void *fl_cls = sober_jni_find_class(
-            j, "com/roblox/engine/jni/NativeSettingsInterface");
-        long fl_rc = 0;
-        if (fl_arr && fl_cls)
-            fl_rc = ((long (*)(void *, void *, void *))
-                (base + 0x2eca720u))(sober_jni_env(j), fl_cls, fl_arr);
-        fprintf(stderr, "[app-shell] nativeRunCrashpadHandler 0x2eca720 "
-                        "-> rc=%ld arr=%p flags-loaded latch=%u\n",
-                fl_rc, fl_arr,
-                (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u));
-    }
-    const char *flcp = getenv("SOBER_FLAGS_LATCH_CRASHPAD");
-    if ((!fljni || fljni[0] != '1') && flcp && flcp[0] == '1') {
-        char fl_ch[] = "LIVE";
-        char fl_key[] = "--channel";
-        char fl_counter_key[] = "--crashCounter";
-        char fl_sim[] = "--isSimulatedCrash";
-        char fl_prog[] = "crashpad";
-        char *fl_argv[] = { fl_prog, fl_counter_key, fl_ch, fl_key, fl_ch,
-                            fl_sim, NULL };
-        int fl_argc = 6;
-        /* CrashpadHandlerMain consumes --crashCounter before calling the
-         * writer; replay that consumption so the writer's option parser does
-         * not see an unknown key.  0x2ec9dff removes key+value from argv and
-         * returns the value pointer. */
-        char *fl_counter =
-            ((char *(*)(int *, char **, const char *))(base + 0x2ec9dffu))(
-                &fl_argc, fl_argv, fl_counter_key);
-        ((void (*)(void *, const char *))(base + 0x2e57c20u))(
-            (void *)(base + 0x72a3710u), fl_counter ? fl_counter : fl_ch);
-        ((void (*)(int, char **))(base + 0x2ec9eedu))(fl_argc, fl_argv);
-        fprintf(stderr, "[app-shell] flags-loaded latch 0x7cdd149 = %u "
-                        "counter@0x72a3710 tag=%#x (guest writer 0x2ec9eed)\n",
-                (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
-                (unsigned)*(volatile unsigned char *)(base + 0x72a3710u));
-    } else {
-        fprintf(stderr, "[app-shell] flags-loaded latch SKIPPED "
-                        "(SOBER_FLAGS_LATCH_CRASHPAD != 1)\n");
-    }
+    /* Worker-3 #490: fail-closed frame-evidence bringup.  It may only promote
+     * the render verdict after observing a genuine guest store event. */
+    int ev_rc = sober_render_evidence_bringup((uintptr_t)base,
+        sober_render_native_window(active_r),
+        (unsigned)rg_cfg.width, (unsigned)rg_cfg.height);
+    fprintf(stderr, "[app-shell] render evidence bringup rc=%d\n", ev_rc);
+
+    /* T2-5 flags-loaded latch 0x7cdd149. The module uses genuine shipped guest
+     * code only (no byte writes); its default route is nativeRunCrashpadHandler
+     * 0x2eca720 with a real String[]. Default-ON with kill switch
+     * SOBER_FLAGS_LATCH_DEFAULT=0; every attempted route forces withhold. */
+    (void)sober_jni_arrays_install(j);  /* idempotent; needed by crashpad-jni */
+    int latch_rc = sober_flags_latch_default_install(
+        (void *)base, sober_jni_env(j),
+        sober_jni_find_class(j, "com/roblox/engine/jni/NativeSettingsInterface"),
+        j);
+    fprintf(stderr, "[app-shell] flags-latch module -> rc=%d latch=%u\n",
+            latch_rc, sober_flags_latch_default_latch());
 
     /* B3: opt-in faithful JNI array objects (GetArrayLength/GetObjectArrayElement). */
     int arrays_rc = sober_jni_arrays_install(j);
@@ -1760,7 +1712,12 @@ int guest_app_shell_run(uintptr_t base)
      * it can never justify the real marker, regardless of which callbacks the
      * bridge happened to observe. These knobs are all off by default. */
     int seeded_state = getenv("SOBER_ABRT_DIAG") ||
-                       getenv("SOBER_FLAGS_LATCH_JNI") ||
+                       getenv("SOBER_FLAGS_LATCH_DEFAULT") ||
+                       getenv("SOBER_FLAGS_LATCH_ROUTE") ||
+                       sober_flags_latch_default_should_withhold() ||
+                       sober_frame_evidence_should_withhold() ||
+                       getenv("SOBER_FIELDS_NATIVE_DEFAULT") ||
+                       sober_fields_native_should_withhold() ||
                        getenv("SOBER_SD_DEBUG") ||
                        getenv("SOBER_ALT_CALLBACK_PATH") ||
                        getenv("SOBER_START_APP") ||

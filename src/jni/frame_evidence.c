@@ -25,16 +25,69 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include "frame_surface.h"
+#include "fields_default.h"
 
 /* Persisted phase-3 flag from the frozen render module.  Weak so this file
  * also links into a target that omits native_render.c; absent => fail closed. */
 #if defined(__GNUC__) || defined(__clang__)
 extern int sober_render_phase3_done(void) __attribute__((weak));
+extern int sober_bionic_bootstrap_verify_build(void *) __attribute__((weak));
+/* #492 native field provider: both entry points ignore `env`, so they work
+ * even when frame_surface passes a synthetic env token to the guest helper.
+ * Strong refs: fields_default.o is a member of the same sober_jni archive. */
+extern void *sober_fields_default_GetFieldID(void *, void *, const char *,
+                                             const char *);
+extern int64_t sober_fields_default_GetLongField(void *, void *, void *);
+/* These are STRONG references on purpose: a weak reference does not make the
+ * linker pull a member out of libsober_jni.a, so frame_surface.o / render_guest
+ * / native_render objects would be absent at runtime and bringup would always
+ * report "API unavailable".  All are published by other sober_jni members. */
+extern void *sober_render_guest_context(void);
+/* Optional: jni_probe does not link sober_render. */
+extern void *sober_render_hook_egl_create_window_surface(void)
+    __attribute__((weak));
+extern int sober_render_guest_set_host_publish(int);
+extern int sober_frame_surface_install(
+    const struct sober_frame_surface_config *);
+extern int sober_frame_surface_bind_guest_window(void);
+extern int sober_frame_surface_bind_surface(void);
+extern int sober_frame_surface_guest_store_seen(void);
+extern uintptr_t sober_frame_surface_bound_window(void);
+extern uint32_t sober_frame_surface_generation_before(void);
+extern uint32_t sober_frame_surface_generation_after(void);
+extern uint64_t sober_frame_surface_from_surface_bind_ra(void);
+extern uint64_t sober_frame_surface_from_surface_calls(void);
+extern uint64_t sober_frame_surface_from_surface_guest_ra(void);
+extern uint64_t sober_frame_surface_bind_helper_calls(void);
 #else
 extern int sober_render_phase3_done(void);
+extern int sober_bionic_bootstrap_verify_build(void *);
+extern void *sober_fields_default_GetFieldID(void *, void *, const char *,
+                                             const char *);
+extern int64_t sober_fields_default_GetLongField(void *, void *, void *);
+extern void *sober_render_guest_context(void);
+/* Optional: jni_probe does not link sober_render. */
+extern void *sober_render_hook_egl_create_window_surface(void)
+    __attribute__((weak));
+extern int sober_render_guest_set_host_publish(int);
+extern int sober_frame_surface_install(
+    const struct sober_frame_surface_config *);
+extern int sober_frame_surface_bind_guest_window(void);
+extern int sober_frame_surface_bind_surface(void);
+extern int sober_frame_surface_guest_store_seen(void);
+extern uintptr_t sober_frame_surface_bound_window(void);
+extern uint32_t sober_frame_surface_generation_before(void);
+extern uint32_t sober_frame_surface_generation_after(void);
+extern uint64_t sober_frame_surface_from_surface_bind_ra(void);
+extern uint64_t sober_frame_surface_from_surface_calls(void);
+extern uint64_t sober_frame_surface_from_surface_guest_ra(void);
+extern uint64_t sober_frame_surface_bind_helper_calls(void);
 #endif
 
 #define SOBER_FE_LOG_CAP  512u
@@ -499,7 +552,10 @@ void frame_evidence_window_set_host_publish_enabled(int enabled)
  * observation of it.  They never short-circuit with our own window, never
  * write a guest global and never install a host pointer in a guest object.
  */
-#define FE_WOBS_SLOTS 5u
+/* The fromSurface GOT is owned by frame_surface.c (it must see the TRUE guest
+ * RA), so frame_evidence observes the other four slots and receives C2 from
+ * frame_surface via frame_evidence_note_from_surface(). */
+#define FE_WOBS_SLOTS 4u
 static uintptr_t s_wobs_slot_addr[FE_WOBS_SLOTS];
 static uintptr_t s_wobs_prev[FE_WOBS_SLOTS];
 static int       s_wobs_installed;
@@ -541,7 +597,24 @@ static int fe_read_mnative(void *env, void *surface, uintptr_t *out)
     uintptr_t clazz, field, value;
 
     if (out) *out = 0u;
-    if (!env || !surface || !ev || !ev->functions) return 0;
+    if (!env || !surface) return 0;
+
+    /* Primary: the genuine #492 provider (env-independent).  This avoids the
+     * synthetic env token frame_surface must pass to the guest bind helper:
+     * GetObjectClass through that token has no SoberJni owner and returns NULL.
+     */
+    {
+        uintptr_t fid = (uintptr_t)sober_fields_default_GetFieldID(
+            env, (void *)0, "mNativeObject", "J");
+        int64_t native = fid ? sober_fields_default_GetLongField(
+            env, surface, (void *)fid) : 0;
+        if (native > 0) {
+            if (out) *out = (uintptr_t)native;
+            return 1;
+        }
+    }
+
+    if (!ev || !ev->functions) return 0;
     fv = (struct fe_jni_fn_view *)ev->functions;
     get_class = (fe_jni_call_fn)fv->fn[27];
     get_field = (fe_jni_call_fn)fv->fn[90];
@@ -600,49 +673,36 @@ static int fe_got_write(uintptr_t slot, uintptr_t val, uintptr_t *old_out)
     return 0;
 }
 
-typedef void *(*fe_anw_from_surface_fn)(void *, void *);
 typedef void  (*fe_anw_window_fn)(void *);
 typedef int   (*fe_anw_dim_fn)(void *);
 
-/* H1 - GOT 0x72294a8.  Capture RA and the window global/generation BEFORE the
- * call, forward first (never substitute our window), then record the truth. */
-static void *fe_hook_from_surface(void *env, void *surface)
+/* G8 C2 producer, called by frame_surface.c's genuine 0x72294a8 hook with the
+ * TRUE guest RA (a C observer on top would hide it).  Read-only probe only. */
+void frame_evidence_note_from_surface(uintptr_t ra, void *env, void *surface,
+                                      uintptr_t window, uintptr_t w_before,
+                                      uint32_t g_before)
 {
-    uintptr_t ra = (uintptr_t)__builtin_return_address(0);
-    uintptr_t w_before = 0u, mnative = 0u;
-    void *ret;
-    uint32_t g_before = 0u;
+    uintptr_t mnative = 0u;
     SoberFrameWindowObservation obs;
-    uintptr_t base = atomic_load_explicit(&s_base, memory_order_relaxed);
 
-    if (base) {
-        w_before = *(volatile uintptr_t *)(base +
-                     (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW);
-        g_before = *(volatile uint32_t *)(base +
-                     (uintptr_t)SOBER_FRAME_EVIDENCE_G_WINDOW_GEN);
-    }
+    if (!frame_evidence_enabled()) return;
     (void)fe_read_mnative(env, surface, &mnative);
-
-    ret = s_wobs_prev[0]
-        ? ((fe_anw_from_surface_fn)s_wobs_prev[0])(env, surface) : (void *)NULL;
-
     memset(&obs, 0, sizeof(obs));
     obs.kind = SOBER_FRAME_WOBS_FROMSURFACE;
     obs.status = 1u;                 /* the call itself was observed */
     obs.seq = fe_wobs_next_seq();
     obs.tid = fe_wobs_tid();
     obs.ra = ra;
-    obs.window = (uintptr_t)ret;
+    obs.window = window;
     obs.surface = (uintptr_t)surface;
     obs.mnative = mnative;           /* 0 => G8 R3, never a false green */
     obs.w_before = w_before;
     obs.g_before = g_before;
     (void)frame_evidence_window_observation(&obs);
     frame_evidence_record_from_surface(ra);   /* supporting label only */
-    return ret;
 }
 
-/* H2 - GOT 0x72294a0. */
+/* H2 - GOT 0x72294a0 (frame_evidence does NOT replace 0x72294a8). */
 static void fe_hook_release(void *window)
 {
     SoberFrameWindowObservation obs;
@@ -655,7 +715,7 @@ static void fe_hook_release(void *window)
     obs.ra = ra;
     obs.window = (uintptr_t)window;
     (void)frame_evidence_window_observation(&obs);
-    if (s_wobs_prev[1]) ((fe_anw_window_fn)s_wobs_prev[1])(window);
+    if (s_wobs_prev[0]) ((fe_anw_window_fn)s_wobs_prev[0])(window);
 }
 
 /* H3 - GOT 0x72297c0. */
@@ -671,7 +731,7 @@ static void fe_hook_acquire(void *window)
     obs.ra = ra;
     obs.window = (uintptr_t)window;
     (void)frame_evidence_window_observation(&obs);
-    if (s_wobs_prev[2]) ((fe_anw_window_fn)s_wobs_prev[2])(window);
+    if (s_wobs_prev[1]) ((fe_anw_window_fn)s_wobs_prev[1])(window);
 }
 
 /* H3b - GOT 0x72297c8 / 0x72297d0.  Emit ONE DIMS observation only when both
@@ -707,7 +767,7 @@ static void fe_note_dim(uintptr_t ra, void *window, int value, int is_width)
 static int fe_hook_get_height(void *window)
 {
     uintptr_t ra = (uintptr_t)__builtin_return_address(0);
-    int d = s_wobs_prev[3] ? ((fe_anw_dim_fn)s_wobs_prev[3])(window) : 0;
+    int d = s_wobs_prev[2] ? ((fe_anw_dim_fn)s_wobs_prev[2])(window) : 0;
     fe_note_dim(ra, window, d, 0);
     return d;
 }
@@ -715,7 +775,7 @@ static int fe_hook_get_height(void *window)
 static int fe_hook_get_width(void *window)
 {
     uintptr_t ra = (uintptr_t)__builtin_return_address(0);
-    int d = s_wobs_prev[4] ? ((fe_anw_dim_fn)s_wobs_prev[4])(window) : 0;
+    int d = s_wobs_prev[3] ? ((fe_anw_dim_fn)s_wobs_prev[3])(window) : 0;
     fe_note_dim(ra, window, d, 1);
     return d;
 }
@@ -723,14 +783,12 @@ static int fe_hook_get_width(void *window)
 int frame_evidence_install_window_observers(uintptr_t guest_base)
 {
     static const uint32_t rva[FE_WOBS_SLOTS] = {
-        SOBER_FRAME_W_GOT_FROM_SURFACE, SOBER_FRAME_W_GOT_RELEASE,
-        SOBER_FRAME_W_GOT_ACQUIRE, SOBER_FRAME_W_GOT_GET_HEIGHT,
-        SOBER_FRAME_W_GOT_GET_WIDTH
+        SOBER_FRAME_W_GOT_RELEASE, SOBER_FRAME_W_GOT_ACQUIRE,
+        SOBER_FRAME_W_GOT_GET_HEIGHT, SOBER_FRAME_W_GOT_GET_WIDTH
     };
     static const uintptr_t hook[FE_WOBS_SLOTS] = {
-        (uintptr_t)&fe_hook_from_surface, (uintptr_t)&fe_hook_release,
-        (uintptr_t)&fe_hook_acquire, (uintptr_t)&fe_hook_get_height,
-        (uintptr_t)&fe_hook_get_width
+        (uintptr_t)&fe_hook_release, (uintptr_t)&fe_hook_acquire,
+        (uintptr_t)&fe_hook_get_height, (uintptr_t)&fe_hook_get_width
     };
     unsigned i;
 
@@ -771,6 +829,154 @@ int frame_evidence_attach(uintptr_t guest_base)
     if (rc == 0)
         frame_evidence_window_set_integrity(0, 1, 0); /* observers complete only */
     return rc;
+}
+
+/* ---- one-shot genuine render-evidence bringup ---------------------------- */
+static int  s_bringup_done;
+static int  s_bringup_rc = -1;
+static sigjmp_buf s_bringup_jmp;
+static volatile sig_atomic_t s_bringup_faulted;
+
+static void fe_bringup_fault_handler(int sig)
+{
+    (void)sig;
+    s_bringup_faulted = 1;
+    siglongjmp(s_bringup_jmp, 1);
+}
+
+int sober_render_evidence_bringup_rc(void) { return s_bringup_rc; }
+int sober_frame_evidence_should_withhold(void) { return 0; }
+
+int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
+                                  unsigned width, unsigned height)
+{
+    struct sober_frame_surface_config cfg;
+    struct sigaction sa, old_segv, old_trap;
+    void *ctx;
+    uintptr_t window;
+    uint64_t bind_ra_count;
+    uint32_t g0, g1;
+    int have_segv = 0, have_trap = 0, rc = -1;
+
+    if (s_bringup_done) return s_bringup_rc;
+    s_bringup_done = 1;
+    s_bringup_rc = -1;
+
+    if (!frame_evidence_enabled() || !guest_base) {
+        fprintf(stderr, "[frame-evidence] bringup FAILED: disabled/base=0\n");
+        return s_bringup_rc;
+    }
+    /* C0a: engine identity must be verified by the bootstrap gate. */
+    if (!sober_bionic_bootstrap_verify_build ||
+        sober_bionic_bootstrap_verify_build((void *)guest_base) != 0) {
+        fprintf(stderr, "[frame-evidence] bringup FAILED: engine identity "
+                        "not verified (R0)\n");
+        return s_bringup_rc;
+    }
+    /* The genuine 0x48-byte guest context comes from render_guest. */
+    ctx = sober_render_guest_context();
+    if (!ctx) {
+        fprintf(stderr, "[frame-evidence] bringup FAILED: no genuine "
+                        "render context from render_guest\n");
+        return s_bringup_rc;
+    }
+
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.guest_base = (void *)guest_base;
+    cfg.context = ctx;
+    cfg.native_window = native_window;
+    cfg.width = (int)width;
+    cfg.height = (int)height;
+    if (sober_render_hook_egl_create_window_surface)
+        cfg.egl_create_window_surface =
+            sober_render_hook_egl_create_window_surface();
+    rc = sober_frame_surface_install(&cfg);
+    if (rc != SOBER_FRAME_SURFACE_OK) {
+        fprintf(stderr, "[frame-evidence] bringup FAILED: frame_surface "
+                        "install rc=%d\n", rc);
+        return s_bringup_rc;
+    }
+
+    /* Install the ledger observers ON TOP of frame_surface's GOT hook so the
+     * genuine store-tied RA is recorded and the chain stays intact. */
+    rc = frame_evidence_install_window_observers(guest_base);
+    if (rc != 0) {
+        fprintf(stderr, "[frame-evidence] bringup FAILED: observers rc=%d\n", rc);
+        return s_bringup_rc;
+    }
+
+    /* Fault guard for the genuine guest bind.  The old two-argument call
+     * faulted in the guest FLog path; frame_surface now passes the real tag.
+     * A fault here leaves every decisive declaration untouched (fail closed) */
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = fe_bringup_fault_handler;
+    sigemptyset(&sa.sa_mask);
+    s_bringup_faulted = 0;
+    if (sigaction(SIGSEGV, &sa, &old_segv) == 0) have_segv = 1;
+    if (sigaction(SIGTRAP, &sa, &old_trap) == 0) have_trap = 1;
+
+    if (sigsetjmp(s_bringup_jmp, 1) == 0 && !s_bringup_faulted) {
+        /* Only the bind helper is safe today.  frame_surface_bind_surface()
+         * faults in the guest EGL config path (0x649cf72/0x649d1c2), so C8
+         * acquire / C9 dims remain unproven; bind_native_data() would add
+         * forbidden extra lifecycle fromSurface records (R2_MIXED). */
+        rc = sober_frame_surface_bind_guest_window();
+    } else {
+        rc = -1;
+    }
+    if (have_trap) (void)sigaction(SIGTRAP, &old_trap, NULL);
+    if (have_segv) (void)sigaction(SIGSEGV, &old_segv, NULL);
+
+    if (rc != 0 || s_bringup_faulted) {
+        fprintf(stderr,
+                "[frame-evidence] bringup: genuine guest bind unavailable "
+                "(rc=%d faulted=%d W=%#lx gen %u->%u bind_ra_events=%llu "
+                "store_seen=%d fs_calls=%llu fs_guest=%llu bind_calls=%llu); "
+                "render leg stays WITHHELD\n",
+                rc, (int)s_bringup_faulted,
+                (unsigned long)sober_frame_surface_bound_window(),
+                sober_frame_surface_generation_before(),
+                sober_frame_surface_generation_after(),
+                (unsigned long long)sober_frame_surface_from_surface_bind_ra(),
+                sober_frame_surface_guest_store_seen(),
+                (unsigned long long)sober_frame_surface_from_surface_calls(),
+                (unsigned long long)sober_frame_surface_from_surface_guest_ra(),
+                (unsigned long long)sober_frame_surface_bind_helper_calls());
+        return s_bringup_rc;
+    }
+
+    g0 = sober_frame_surface_generation_before();
+    g1 = sober_frame_surface_generation_after();
+    window = sober_frame_surface_bound_window();
+    bind_ra_count = sober_frame_surface_from_surface_bind_ra();
+    if (!sober_frame_surface_guest_store_seen() || !window ||
+        g1 != (uint32_t)(g0 + 1u) || bind_ra_count == 0u) {
+        fprintf(stderr, "[frame-evidence] bringup: guest store not proven "
+                        "(w=%#lx g=%u->%u bind_ra_events=%llu "
+                        "store_seen=%d); WITHHELD\n",
+                (unsigned long)window, g0, g1,
+                (unsigned long long)bind_ra_count,
+                sober_frame_surface_guest_store_seen());
+        return s_bringup_rc;
+    }
+
+    /* The GUEST wrote the global.  Only NOW is it truthful to disable the
+     * host stores and declare host_publish=0 / integrity. */
+    (void)sober_render_guest_set_host_publish(0);
+    frame_evidence_window_set_host_publish_enabled(0);
+    frame_evidence_window_set_integrity(1, 1, 1);  /* engine/obs/layout */
+    frame_evidence_window_snapshot(guest_base);     /* H5 W_now / G_now */
+
+    s_bringup_rc = 0;
+    fprintf(stderr, "[frame-evidence] bringup OK: guest wrote window %#lx "
+                    "gen %u->%u bind_ra_events=%llu (RA base+0x26fea7d); "
+                    "G8 window verdict=%d reason=%s (C10 guest Created-log "
+                    "has no H6 producer yet)\n",
+            (unsigned long)window, g0, g1,
+            (unsigned long long)bind_ra_count,
+            frame_evidence_window_verdict(),
+            frame_evidence_window_reject_reason());
+    return s_bringup_rc;
 }
 
 /* H5 - gate-time read-only snapshot of W_now / G_now. */

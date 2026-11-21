@@ -183,6 +183,8 @@ lines.append("                buf, size, n, (void *)stream, (void *)mapped);")
 lines.append("    return real ? real(buf, size, n, mapped) : 0;")
 lines.append("}")
 lines.append("")
+lines.append("")
+lines.append("")
 
 # Bionic-compatible pthread TSD (decision 013): the guest allocates small
 # integer keys and expects its own TSD array.  glibc's key space is unrelated

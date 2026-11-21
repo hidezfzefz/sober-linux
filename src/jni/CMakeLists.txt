@@ -47,6 +47,7 @@ add_library(sober_jni STATIC
     javavm_default.c
     tsd_default.c
     fflag_default.c
+    flags_latch_default.c
     alloc_default.c
     singleton_default.c
     app488_default.c
@@ -72,4 +73,4 @@ target_include_directories(sober_jni PUBLIC
 
 # Standalone self-test / headless probe.
 add_executable(jni_probe jni_probe.c)
-target_link_libraries(jni_probe PRIVATE sober_jni)
+target_link_libraries(jni_probe PRIVATE sober_jni sober_render)

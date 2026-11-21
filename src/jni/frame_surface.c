@@ -21,6 +21,8 @@
  */
 #define _GNU_SOURCE
 #include "frame_surface.h"
+#include "frame_evidence.h"   /* G8 C2 producer (read-only ledger feed) */
+#include "fields_default.h"   /* #492 mNativeObject provider registration */
 
 #include <stdatomic.h>
 #include <stdio.h>
@@ -47,7 +49,15 @@ typedef void *(*fs_create_window_surface_fn)(void *dpy, void *cfg,
                                              void *win, const int *attribs);
 typedef int   (*fs_make_current_fn)(void *dpy, void *draw, void *read,
                                     void *ctx);
-typedef void  (*fs_bind_window_fn)(void *env, void *surface);
+/* Genuine signature (disassembly of callers 0x26fe8c5 / 0x2773220 / 0x2ebd5d0):
+ *   void helper_0x26fea5a(JNIEnv *env, jobject surface, const char *logTag);
+ * rdx is the FLog tag copied to r14; passing only 2 args leaves it garbage and
+ * faults in the guest logger. */
+typedef void  (*fs_bind_window_fn)(void *env, void *surface,
+                                   const char *log_tag);
+
+/* Forward declaration: registered as the mNativeObject provider at install. */
+static int64_t fs_native_handle_cb(void *env, void *surface_obj, void *user);
 typedef void *(*fs_config_helper_fn)(void *ctx);
 typedef void *(*fs_surface_helper_fn)(void *ctx, void *cfg);
 typedef void  (*fs_life4_fn)(void *env, void *surface, uintptr_t nd,
@@ -291,7 +301,19 @@ static void fs_assert_window_field(void)
 static void *fs_hook_from_surface(void *env, void *surface)
 {
     uintptr_t ra = (uintptr_t)__builtin_return_address(0);
+    uintptr_t w_before = 0u;
+    void *ret;
+    uint32_t g_before = 0u;
     fs_anw_from_surface_fn orig;
+
+    /* G8 C2/C5: sample the window/generation BEFORE the genuine call so the
+     * guest's own inc/store can be attributed to this exact event. */
+    if (s_base) {
+        w_before = *(volatile uintptr_t *)(s_base +
+                      (uintptr_t)SOBER_FRAME_SURFACE_RVA_G_WINDOW);
+        g_before = *(volatile uint32_t *)(s_base +
+                      (uintptr_t)SOBER_FRAME_SURFACE_RVA_G_WINDOW_GEN);
+    }
 
     fs_bump(&s_from_surface_calls);
     if (fs_in_guest(ra)) {
@@ -302,10 +324,17 @@ static void *fs_hook_from_surface(void *env, void *surface)
         /* The genuine NDK function returns a +1 reference; so do we.  The
          * compat ANativeWindow_release() decrements the plain-integer count. */
         ++s_win->refs;
-        return (void *)s_win;
+        ret = (void *)s_win;
+    } else {
+        orig = (fs_anw_from_surface_fn)(uintptr_t)s_got_old[0];
+        ret = orig ? orig(env, surface) : (void *)NULL;
     }
-    orig = (fs_anw_from_surface_fn)(uintptr_t)s_got_old[0];
-    return orig ? orig(env, surface) : NULL;
+    /* Feed the sole render verdict owner with the TRUE guest RA; do it here
+     * (not from a C observer chained on top) so the RA stays guest-classified. */
+    if (fs_in_guest(ra))
+        frame_evidence_note_from_surface(ra, env, surface, (uintptr_t)ret,
+                                         w_before, g_before);
+    return ret;
 }
 
 /* void *eglCreateWindowSurface(dpy, cfg, win, attribs) -- GOT 0x722a178.
@@ -427,6 +456,12 @@ int sober_frame_surface_install(const struct sober_frame_surface_config *cfg)
     s_makecurrent_fn = cfg->egl_make_current;
     s_token[0] = (char)(uintptr_t)s_win;
 
+    /* G8 C3: register the exact Surface token with the real mNativeObject
+     * provider.  The callback returns 0 until the GUEST has published the
+     * window, so an early/unbound read fails closed. */
+    (void)sober_fields_native_set_provider((void *)&s_token,
+                                           fs_native_handle_cb, NULL);
+
     /* Install GOT hook 1: ANativeWindow_fromSurface. */
     slot = s_base + (uintptr_t)SOBER_FRAME_SURFACE_GOT_FROM_SURFACE;
     if (fs_got_write(slot, (uintptr_t)&fs_hook_from_surface,
@@ -455,6 +490,35 @@ got_fail:
     return SOBER_FRAME_SURFACE_ERR_GOT;
 }
 
+/* ---- G8 C3/C4 handle contract for the mNativeObject provider -------------- */
+/* Registered with worker-1's #492 provider so GetLongField can return the
+ * genuine GUEST-published window for the exact Surface token we hand to
+ * 0x26fea5a.  Returns 0 (fail closed) before the guest bind or for any other
+ * object.  No host pointer is fabricated. */
+static int64_t fs_native_handle_cb(void *env, void *surface_obj, void *user)
+{
+    (void)env; (void)user;
+    if (!sober_frame_surface_is_surface_token(surface_obj)) return 0;
+    return (int64_t)(uintptr_t)sober_frame_surface_native_handle();
+}
+
+int sober_frame_surface_is_surface_token(void *obj)
+{
+    return sober_frame_surface_enabled() && obj == (void *)&s_token;
+}
+
+void *sober_frame_surface_native_handle(void)
+{
+    /* The real ANativeWindow our genuine fromSurface hook returns to the guest
+     * and that the guest then publishes at 0x72a3308.  It must be available
+     * DURING the fromSurface call (C3 reads mNativeObject at that moment),
+     * i.e. before s_guest_store_seen is set afterwards.  C4/C5 still require
+     * the guest's own ret/gen evidence, so this never sets window_bound alone. */
+    if (!sober_frame_surface_enabled() || !s_installed || !s_win)
+        return NULL;
+    return (void *)s_win;
+}
+
 /* ---- public: guest-written window provenance ----------------------------- */
 int sober_frame_surface_bind_guest_window(void)
 {
@@ -476,7 +540,10 @@ int sober_frame_surface_bind_guest_window(void)
      * and global store.  This module never writes 0x72a3308 itself. */
     bind = (fs_bind_window_fn)(uintptr_t)(s_base
              + (uintptr_t)SOBER_FRAME_SURFACE_RVA_BIND_WINDOW);
-    bind((void *)s_env, (void *)&s_token);
+    /* Third argument is the genuine FLog tag used by the guest's
+     * "Created ANativeWindow ... (ID:n)" record at 0x26feaf7. */
+    bind((void *)s_env, (void *)&s_token,
+         "nativeAppBridgeV2UpdateSurfaceAppWithPlatformParams");
     fs_bump(&s_bind_helper_calls);
 
     s_window_global_after = fs_window_global();
@@ -711,6 +778,7 @@ void sober_frame_surface_uninstall(void)
     (void)fs_got_write(s_base
         + (uintptr_t)SOBER_FRAME_SURFACE_GOT_CREATE_SURFACE,
         s_got_old[1], NULL);
+    sober_fields_native_clear_provider();
     s_installed = 0;
     /* s_win / s_nd / s_ctx / s_surface are deliberately retained: guest code
      * may still hold them.  All counters and accessors remain valid. */

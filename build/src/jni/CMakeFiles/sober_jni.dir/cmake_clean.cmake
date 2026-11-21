@@ -21,6 +21,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/sober_jni.dir/fflag_default.c.o.d"
   "CMakeFiles/sober_jni.dir/fields_default.c.o"
   "CMakeFiles/sober_jni.dir/fields_default.c.o.d"
+  "CMakeFiles/sober_jni.dir/flags_latch_default.c.o"
+  "CMakeFiles/sober_jni.dir/flags_latch_default.c.o.d"
   "CMakeFiles/sober_jni.dir/frame_dispatch.c.o"
   "CMakeFiles/sober_jni.dir/frame_dispatch.c.o.d"
   "CMakeFiles/sober_jni.dir/frame_draw.c.o"

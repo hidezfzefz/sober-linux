@@ -309,10 +309,47 @@ SOBER_FRAME_EVIDENCE_API int  frame_evidence_install_window_observers(
 SOBER_FRAME_EVIDENCE_API void frame_evidence_uninstall_window_observers(void);
 SOBER_FRAME_EVIDENCE_API int  frame_evidence_window_observers_installed(void);
 SOBER_FRAME_EVIDENCE_API void frame_evidence_window_snapshot(uintptr_t guest_base);
+
+/* Feed the one G8 C2 fromSurface observation from the module that OWNS the
+ * 0x72294a8 hook (frame_surface).  A C-level observer chained on top of that
+ * hook would hide the true guest RA from it (__builtin_return_address(0) would
+ * be the observer's host code), so the fromSurface slot is deliberately NOT
+ * replaced by frame_evidence.  `env`/`surface` are the genuine values the
+ * guest handed to ANativeWindow_fromSurface; `window` is that hook's return. */
+SOBER_FRAME_EVIDENCE_API void frame_evidence_note_from_surface(
+    uintptr_t ra, void *env, void *surface, uintptr_t window,
+    uintptr_t w_before, uint32_t g_before);
 /* Convenience: set guest base + install the five observers.  Does NOT assert
  * engine/layout integrity or host-publish-disabled; those remain the caller's
  * explicit, auditable declarations. */
 SOBER_FRAME_EVIDENCE_API int  frame_evidence_attach(uintptr_t guest_base);
+
+/* ---- one-shot genuine render-evidence bringup (lead wires this) ---------- *
+ * Call ONCE from guest_app_shell.c after render_guest is confirmed installed,
+ * passing the active native window and render size.  Idempotent; 0 on success.
+ *
+ * Sequence (all fail-closed):
+ *   1. verify the frozen engine identity (bootstrap build-ID check);
+ *   2. install frame_surface with the GENUINE 0x48-byte render context;
+ *   3. install the five frame_evidence window observers ON TOP so the chain is
+ *      FE -> frame_surface -> previous GOT target, and the store-tied
+ *      fromSurface return address (base+0x26fea7d) is really observed;
+ *   4. call the genuine guest bind helper 0x26fea5a(env, surface, logTag)
+ *      under a fault guard (three args; the old two-arg call faulted);
+ *   5. ONLY if the guest itself wrote 0x72a3308 with a +1 generation and the
+ *      store-tied RA, disable render_guest's host stores, declare integrity
+ *      (engine/observers/layout) and host_publish=0, and feed the H5 snapshot.
+ *
+ * Any failure leaves the fail-closed defaults (integrity 0, host_publish 1),
+ * so window_bound()==0 and guest_render_ok()==0.  No marker, no callback, no
+ * fabricated Surface/window/mNativeObject, no counter inflation.  Diagnostics
+ * go to stderr as neutral "[frame-evidence]" lines only.
+ */
+SOBER_FRAME_EVIDENCE_API int sober_render_evidence_bringup(
+    uintptr_t guest_base, void *native_window, unsigned width, unsigned height);
+SOBER_FRAME_EVIDENCE_API int sober_render_evidence_bringup_rc(void);
+/* 0: bringup introduces no new opt-in knob, therefore no withhold entry. */
+SOBER_FRAME_EVIDENCE_API int sober_frame_evidence_should_withhold(void);
 
 /* ---- decisive accessors -------------------------------------------------- */
 SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_swaps_guest(void);

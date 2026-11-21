@@ -264,6 +264,14 @@ SOBER_RENDER_GUEST_API uint64_t sober_render_guest_swaps_synthetic(void);
  * 2=redraw,3=destroyed.  Returns 0 for an out-of-range index. */
 SOBER_RENDER_GUEST_API uint64_t sober_render_guest_lifecycle_calls(unsigned idx);
 
+/* Host-publish control for the G8 window-provenance contract.  render_guest's
+ * three host stores to 0x72a3308 (install, republish, rollback) are ACTIVE by
+ * default.  sober_render_evidence_bringup() disables them ONLY after the real
+ * guest has written the global itself; a caller that has not proven that must
+ * leave this enabled.  Returns the previous value (0/1). */
+SOBER_RENDER_GUEST_API int sober_render_guest_set_host_publish(int enabled);
+SOBER_RENDER_GUEST_API int sober_render_guest_host_publish(void);
+
 /* One-line status dump; returns buf (buf/cap may be NULL/0 -> ""). */
 SOBER_RENDER_GUEST_API const char *sober_render_guest_describe(
     char *buf, size_t cap);

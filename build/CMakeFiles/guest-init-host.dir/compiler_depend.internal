@@ -13,6 +13,8 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /home/user/sober-linux/src/jni/controller_default.h
  /home/user/sober-linux/src/jni/delegate_default.h
  /home/user/sober-linux/src/jni/fflag_default.h
+ /home/user/sober-linux/src/jni/fields_default.h
+ /home/user/sober-linux/src/jni/flags_latch_default.h
  /home/user/sober-linux/src/jni/frame_dispatch.h
  /home/user/sober-linux/src/jni/frame_draw.h
  /home/user/sober-linux/src/jni/frame_evidence.h

@@ -45,6 +45,9 @@ static int sf_fflush(FILE *p)
 static size_t sf_fwrite(const void *buf, size_t size, size_t n, FILE *p)
 {
     FILE *h = host_stream_for(p);
+    if (getenv("SOBER_STDIO_DEBUG"))
+        fprintf(stderr, "[stdio] sf_fwrite(%p,%zu,%zu,stream=%p) -> %p\n",
+                buf, size, n, (void *)p, (void *)(h ? h : p));
     if (h) p = h;
     if (real_fwrite_fn) return real_fwrite_fn(buf, size, n, p);
     return fwrite(buf, size, n, p);

@@ -418,6 +418,30 @@ fields_default.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fields_default.c.s
 .PHONY : fields_default.c.s
 
+flags_latch_default.o: flags_latch_default.c.o
+.PHONY : flags_latch_default.o
+
+# target to build an object file
+flags_latch_default.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.o
+.PHONY : flags_latch_default.c.o
+
+flags_latch_default.i: flags_latch_default.c.i
+.PHONY : flags_latch_default.i
+
+# target to preprocess a source file
+flags_latch_default.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.i
+.PHONY : flags_latch_default.c.i
+
+flags_latch_default.s: flags_latch_default.c.s
+.PHONY : flags_latch_default.s
+
+# target to generate assembly for a file
+flags_latch_default.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.s
+.PHONY : flags_latch_default.c.s
+
 frame_dispatch.o: frame_dispatch.c.o
 .PHONY : frame_dispatch.o
 
@@ -1278,6 +1302,9 @@ help:
 	@echo "... fields_default.o"
 	@echo "... fields_default.i"
 	@echo "... fields_default.s"
+	@echo "... flags_latch_default.o"
+	@echo "... flags_latch_default.i"
+	@echo "... flags_latch_default.s"
 	@echo "... frame_dispatch.o"
 	@echo "... frame_dispatch.i"
 	@echo "... frame_dispatch.s"

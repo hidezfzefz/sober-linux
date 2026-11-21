@@ -532,6 +532,8 @@ size_t fwrite(const void *buf, size_t size, size_t n, FILE *stream)
     return real ? real(buf, size, n, mapped) : 0;
 }
 
+
+
 /* Bionic-compatible pthread TSD (decision 013). */
 #define SOBER_BIONIC_TSD_SLOTS 512
 static _Thread_local void *sober_bionic_tsd[SOBER_BIONIC_TSD_SLOTS];

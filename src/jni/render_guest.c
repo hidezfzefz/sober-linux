@@ -51,6 +51,18 @@ static uintptr_t s_base;
 static int       s_installed;
 static int       s_last_rc = SOBER_RENDER_GUEST_DISABLED;
 static SoberGuestANativeWindow *s_anw;
+/* G8: host stores to 0x72a3308 are ACTIVE until a genuine guest store is
+ * proven by sober_render_evidence_bringup().  Never set to 0 by assumption. */
+static int s_host_publish = 1;
+
+int sober_render_guest_set_host_publish(int enabled)
+{
+    int prev = s_host_publish;
+    s_host_publish = enabled ? 1 : 0;
+    return prev;
+}
+
+int sober_render_guest_host_publish(void) { return s_host_publish; }
 static uintptr_t s_ctx;
 static uintptr_t s_ctx_vt;
 static unsigned char *s_nd;                 /* nativeData (host, 0x200 bytes) */
@@ -322,8 +334,9 @@ static int rg_bind_surface(void)
     rg_bump(&s_life[3]);
 
     /* Republish: the guest's own fromSurface helper writes this global; do
-     * the same explicitly so it stays our window after the lifecycle replay. */
-    if (s_base) {
+     * the same explicitly so it stays our window after the lifecycle replay.
+     * G8: suppressed once a genuine guest store has been proven. */
+    if (s_base && s_host_publish) {
         *(volatile uintptr_t *)(s_base
             + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW) = (uintptr_t)s_anw;
     }
@@ -414,13 +427,17 @@ int sober_render_guest_install(const struct sober_render_guest_config *cfg)
         (void *)s_dummy_env;
     s_surface_token[0] = (void *)s_anw;    /* opaque token, not a real Surface */
 
-    /* Publish the window exactly where the guest's 0x26fea5a publishes it. */
+    /* Publish the window exactly where the guest's 0x26fea5a publishes it.
+     * G8: this host store is skipped once the real guest bind is proven. */
     old_window = *(volatile uintptr_t *)(s_base
         + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW);
-    *(volatile uintptr_t *)(s_base
-        + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW) = (uintptr_t)s_anw;
-    __atomic_fetch_add((uintptr_t *)(s_base
-        + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW_GEN), 1u, __ATOMIC_SEQ_CST);
+    if (s_host_publish) {
+        *(volatile uintptr_t *)(s_base
+            + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW) = (uintptr_t)s_anw;
+        __atomic_fetch_add((uintptr_t *)(s_base
+            + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW_GEN), 1u,
+            __ATOMIC_SEQ_CST);
+    }
 
     /* Let guest EGL init reach the real native drawable. */
     if (cfg->egl_create_window_surface_hook &&
@@ -458,8 +475,9 @@ int sober_render_guest_install(const struct sober_render_guest_config *cfg)
 
 got_fail:
     /* Do not leave a dangling window pointer in the guest global. */
-    *(volatile uintptr_t *)(s_base
-        + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW) = old_window;
+    if (s_host_publish)
+        *(volatile uintptr_t *)(s_base
+            + (uintptr_t)SOBER_RENDER_GUEST_G_WINDOW) = old_window;
     free(s_nd);
     s_nd = NULL;
     free(s_anw);

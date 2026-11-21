@@ -54,7 +54,23 @@ streams for `fflush`, `fclose` and `fwrite` instead of handing Bionic `FILE*`
 layouts to glibc. This is host-side ABI plumbing only; it advances the logger
 past `libc+0x7c8ff` but does not set the latch and emits no callback.
 
-## 5. Standing verdict
+## 5. Lead follow-up (#491) — crashpad route stays opt-in
+
+A/B with `SOBER_FLAGS_LATCH_ROUTE=crashpad-jni` / `narrow` confirms the writer
+sets the latch and immediately enters crashpad's fatal path: the guest logs
+`crashpad handler: real/simulated crash` and glibc validator aborts with
+`Fatal error: glibc detected an invalid stdio handle`. Host-side plumbing in
+`src/compat` (`fflush`/`fclose`/`fwrite` translation, double-close suppression,
+an attempted `fprintf` mapping) did not make the writer return; under ptrace
+the 120 MB memfd guest init does not complete within a practical trace window.
+
+Ruling: this is a genuine but **terminating** guest crash path. The default
+route is now `none` (inert, no guest call, no withhold), so the honest fault
+baseline is preserved. All crashpad routes remain explicitly opt-in via
+`SOBER_FLAGS_LATCH_ROUTE` and force the marker withhold. No byte writes and no
+gate weakening.
+
+## 6. Standing verdict
 
 Callback leg remains **0/1**. No notifier hit at `0x27eaf6e`, no RA pair
 `0x2584960 → 0x27eafb3`, no `gameLoadedCallback(J)V`. Score stays ≈61% and the

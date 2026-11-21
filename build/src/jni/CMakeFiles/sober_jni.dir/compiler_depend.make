@@ -773,6 +773,86 @@ src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o: /home/user/sober-linux/src/j
 
 src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o: /home/user/sober-linux/src/jni/fields_default.c \
   /home/user/sober-linux/src/jni/fields_default.h \
+  /home/user/sober-linux/src/jni/frame_surface.h \
+  /home/user/sober-linux/src/jni/native_jni.h \
+  /usr/include/alloca.h \
+  /usr/include/bits/atomic_wide_counter.h \
+  /usr/include/bits/byteswap.h \
+  /usr/include/bits/endian.h \
+  /usr/include/bits/endianness.h \
+  /usr/include/bits/floatn-common.h \
+  /usr/include/bits/floatn.h \
+  /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/long-double.h \
+  /usr/include/bits/pthreadtypes-arch.h \
+  /usr/include/bits/pthreadtypes.h \
+  /usr/include/bits/select-decl.h \
+  /usr/include/bits/select.h \
+  /usr/include/bits/select2.h \
+  /usr/include/bits/stdint-intn.h \
+  /usr/include/bits/stdint-least.h \
+  /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/stdio.h \
+  /usr/include/bits/stdio2-decl.h \
+  /usr/include/bits/stdio2.h \
+  /usr/include/bits/stdio_lim.h \
+  /usr/include/bits/stdlib-bsearch.h \
+  /usr/include/bits/stdlib-float.h \
+  /usr/include/bits/stdlib.h \
+  /usr/include/bits/string_fortified.h \
+  /usr/include/bits/strings_fortified.h \
+  /usr/include/bits/struct_mutex.h \
+  /usr/include/bits/struct_rwlock.h \
+  /usr/include/bits/thread-shared-types.h \
+  /usr/include/bits/time64.h \
+  /usr/include/bits/timesize.h \
+  /usr/include/bits/types.h \
+  /usr/include/bits/types/FILE.h \
+  /usr/include/bits/types/__FILE.h \
+  /usr/include/bits/types/__fpos64_t.h \
+  /usr/include/bits/types/__fpos_t.h \
+  /usr/include/bits/types/__locale_t.h \
+  /usr/include/bits/types/__mbstate_t.h \
+  /usr/include/bits/types/__sigset_t.h \
+  /usr/include/bits/types/clock_t.h \
+  /usr/include/bits/types/clockid_t.h \
+  /usr/include/bits/types/cookie_io_functions_t.h \
+  /usr/include/bits/types/locale_t.h \
+  /usr/include/bits/types/once_flag.h \
+  /usr/include/bits/types/sigset_t.h \
+  /usr/include/bits/types/struct_FILE.h \
+  /usr/include/bits/types/struct_timespec.h \
+  /usr/include/bits/types/struct_timeval.h \
+  /usr/include/bits/types/time_t.h \
+  /usr/include/bits/types/timer_t.h \
+  /usr/include/bits/typesizes.h \
+  /usr/include/bits/uintn-identity.h \
+  /usr/include/bits/waitflags.h \
+  /usr/include/bits/waitstatus.h \
+  /usr/include/bits/wchar.h \
+  /usr/include/bits/wordsize.h \
+  /usr/include/endian.h \
+  /usr/include/features-time64.h \
+  /usr/include/features.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/include/gnu/stubs.h \
+  /usr/include/stdc-predef.h \
+  /usr/include/stdint.h \
+  /usr/include/stdio.h \
+  /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
+  /usr/include/sys/cdefs.h \
+  /usr/include/sys/select.h \
+  /usr/include/sys/types.h \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h
+
+src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.o: /home/user/sober-linux/src/jni/flags_latch_default.c \
+  /home/user/sober-linux/src/jni/flags_latch_default.h \
+  /home/user/sober-linux/src/jni/jni_arrays.h \
+  /home/user/sober-linux/src/jni/jni_strings.h \
   /home/user/sober-linux/src/jni/native_jni.h \
   /usr/include/alloca.h \
   /usr/include/bits/atomic_wide_counter.h \
@@ -1070,7 +1150,9 @@ src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o: /home/user/sober-linux/src/jni/
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h
 
 src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/jni/frame_evidence.c \
+  /home/user/sober-linux/src/jni/fields_default.h \
   /home/user/sober-linux/src/jni/frame_evidence.h \
+  /home/user/sober-linux/src/jni/frame_surface.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -1101,6 +1183,21 @@ src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/
   /usr/include/bits/select-decl.h \
   /usr/include/bits/select.h \
   /usr/include/bits/select2.h \
+  /usr/include/bits/setjmp.h \
+  /usr/include/bits/setjmp2.h \
+  /usr/include/bits/sigaction.h \
+  /usr/include/bits/sigcontext.h \
+  /usr/include/bits/sigevent-consts.h \
+  /usr/include/bits/siginfo-arch.h \
+  /usr/include/bits/siginfo-consts-arch.h \
+  /usr/include/bits/siginfo-consts.h \
+  /usr/include/bits/signal_ext.h \
+  /usr/include/bits/signum-arch.h \
+  /usr/include/bits/signum-generic.h \
+  /usr/include/bits/sigstack.h \
+  /usr/include/bits/sigstksz.h \
+  /usr/include/bits/sigthread.h \
+  /usr/include/bits/ss_flags.h \
   /usr/include/bits/stdint-intn.h \
   /usr/include/bits/stdint-least.h \
   /usr/include/bits/stdint-uintn.h \
@@ -1129,15 +1226,23 @@ src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/
   /usr/include/bits/types/__locale_t.h \
   /usr/include/bits/types/__mbstate_t.h \
   /usr/include/bits/types/__sigset_t.h \
+  /usr/include/bits/types/__sigval_t.h \
   /usr/include/bits/types/clock_t.h \
   /usr/include/bits/types/clockid_t.h \
   /usr/include/bits/types/cookie_io_functions_t.h \
   /usr/include/bits/types/error_t.h \
   /usr/include/bits/types/locale_t.h \
   /usr/include/bits/types/once_flag.h \
+  /usr/include/bits/types/sig_atomic_t.h \
+  /usr/include/bits/types/sigevent_t.h \
+  /usr/include/bits/types/siginfo_t.h \
   /usr/include/bits/types/sigset_t.h \
+  /usr/include/bits/types/sigval_t.h \
+  /usr/include/bits/types/stack_t.h \
   /usr/include/bits/types/struct_FILE.h \
+  /usr/include/bits/types/struct___jmp_buf_tag.h \
   /usr/include/bits/types/struct_itimerspec.h \
+  /usr/include/bits/types/struct_sigstack.h \
   /usr/include/bits/types/struct_timespec.h \
   /usr/include/bits/types/struct_timeval.h \
   /usr/include/bits/types/struct_tm.h \
@@ -1160,6 +1265,8 @@ src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/
   /usr/include/gnu/stubs.h \
   /usr/include/linux/close_range.h \
   /usr/include/linux/errno.h \
+  /usr/include/setjmp.h \
+  /usr/include/signal.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
   /usr/include/stdio.h \
@@ -1171,6 +1278,7 @@ src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/
   /usr/include/sys/select.h \
   /usr/include/sys/syscall.h \
   /usr/include/sys/types.h \
+  /usr/include/sys/ucontext.h \
   /usr/include/time.h \
   /usr/include/unistd.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h \
@@ -1272,6 +1380,8 @@ src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o: /home/user/sober-linux/src/jn
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h
 
 src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o: /home/user/sober-linux/src/jni/frame_surface.c \
+  /home/user/sober-linux/src/jni/fields_default.h \
+  /home/user/sober-linux/src/jni/frame_evidence.h \
   /home/user/sober-linux/src/jni/frame_surface.h \
   /usr/include/alloca.h \
   /usr/include/bits/atomic_wide_counter.h \
@@ -3769,7 +3879,11 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /home/user/sober-linux/src/jni/tsd_default.c:
 
-/usr/include/bits/signal_ext.h:
+/home/user/sober-linux/src/jni/static_object_calls.c:
+
+/home/user/sober-linux/src/jni/startgame_v2.h:
+
+/home/user/sober-linux/src/jni/startgame_v2.c:
 
 /usr/include/bits/sigcontext.h:
 
@@ -3793,6 +3907,16 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /home/user/sober-linux/src/jni/startapp_params.h:
 
+/home/user/sober-linux/src/jni/jni_strings.h:
+
+/home/user/sober-linux/src/jni/flags_latch_default.h:
+
+/usr/include/bits/types/sigval_t.h:
+
+/home/user/sober-linux/src/jni/frame_surface.h:
+
+/usr/include/time.h:
+
 /home/user/sober-linux/src/jni/fflag_default.c:
 
 /home/user/sober-linux/src/jni/delegate_default.h:
@@ -3805,9 +3929,13 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /usr/include/unistd.h:
 
+/usr/include/setjmp.h:
+
 /home/user/sober-linux/src/jni/callback_provenance.h:
 
 /usr/include/asm-generic/errno-base.h:
+
+/home/user/sober-linux/src/jni/jni_arrays.h:
 
 /usr/include/bits/endian.h:
 
@@ -3901,15 +4029,9 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /usr/include/bits/struct_mutex.h:
 
-/home/user/sober-linux/src/jni/startgame_v2.h:
-
 /home/user/sober-linux/src/jni/app488_inner.c:
 
 /usr/include/bits/types/__fpos64_t.h:
-
-/usr/include/time.h:
-
-/home/user/sober-linux/src/jni/frame_surface.h:
 
 /usr/include/bits/stdlib-bsearch.h:
 
@@ -3917,15 +4039,17 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /usr/include/bits/string_fortified.h:
 
-/usr/include/sys/ucontext.h:
-
-/usr/include/stdc-predef.h:
-
 /home/user/sober-linux/src/jni/alloc_default.c:
 
 /usr/include/asm-generic/posix_types.h:
 
 /usr/include/bits/libc-header-start.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/bits/stdint-uintn.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
 
 /home/user/sober-linux/src/jni/alloc_contract_fix.h:
 
@@ -3970,14 +4094,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 /usr/include/bits/pthreadtypes.h:
 
 /usr/include/bits/thread-shared-types.h:
-
-/home/user/sober-linux/src/jni/startgame_v2.c:
-
-/usr/include/bits/stdint-uintn.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
-
-/usr/include/asm/errno.h:
 
 /usr/include/bits/timesize.h:
 
@@ -4033,6 +4149,8 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /usr/include/bits/types/struct_timespec.h:
 
+/home/user/sober-linux/src/jni/flags_latch_default.c:
+
 /usr/include/bits/types/struct_timeval.h:
 
 /usr/include/bits/types/time_t.h:
@@ -4048,6 +4166,16 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 /usr/include/endian.h:
 
 /home/user/sober-linux/src/jni/frame_dispatch.h:
+
+/home/user/sober-linux/src/jni/startapp_v2.h:
+
+/home/user/sober-linux/src/jni/static_object_calls.h:
+
+/usr/include/bits/signal_ext.h:
+
+/usr/include/stdc-predef.h:
+
+/usr/include/sys/ucontext.h:
 
 /usr/include/bits/sigstksz.h:
 
@@ -4072,8 +4200,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 /home/user/sober-linux/src/jni/singleton_fix.h:
 
 /usr/include/bits/types/siginfo_t.h:
-
-/usr/include/bits/types/sigval_t.h:
 
 /usr/include/bits/sigstack.h:
 
@@ -4121,6 +4247,16 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /home/user/sober-linux/src/jni/native_jni.c:
 
+/usr/include/bits/setjmp.h:
+
+/usr/include/bits/setjmp2.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/bits/types/struct___jmp_buf_tag.h:
+
 /home/user/sober-linux/src/jni/frame_redraw.h:
 
 /home/user/sober-linux/src/jni/alloc_contract_fix.c:
@@ -4165,14 +4301,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /usr/include/bits/cpu-set.h:
 
-/usr/include/bits/setjmp.h:
-
-/usr/include/bits/wchar.h:
-
-/usr/include/bits/waitstatus.h:
-
-/usr/include/bits/types/struct___jmp_buf_tag.h:
-
 /usr/include/bits/types/struct_sched_param.h:
 
 /usr/include/bits/mman-map-flags-generic.h:
@@ -4211,8 +4339,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /home/user/sober-linux/src/jni/singleton_default.c:
 
-/home/user/sober-linux/src/jni/jni_arrays.h:
-
 /usr/include/bits/uio_lim.h:
 
 /home/user/sober-linux/src/jni/jni_json_bridge.c:
@@ -4235,8 +4361,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 
 /home/user/sober-linux/src/jni/provenance_gate.h:
 
-/home/user/sober-linux/src/jni/jni_strings.h:
-
 /home/user/sober-linux/src/jni/delegate_default.c:
 
 /home/user/sober-linux/src/jni/jnislots_default.h:
@@ -4248,10 +4372,6 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 /home/user/sober-linux/src/jni/frame_surface.c:
 
 /usr/include/dlfcn.h:
-
-/home/user/sober-linux/src/jni/static_object_calls.h:
-
-/home/user/sober-linux/src/jni/startapp_v2.h:
 
 /usr/include/elf.h:
 
@@ -4282,5 +4402,3 @@ src/jni/CMakeFiles/sober_jni.dir/tsd_default.c.o: /home/user/sober-linux/src/jni
 /home/user/sober-linux/src/jni/singleton_services.h:
 
 /home/user/sober-linux/src/jni/startapp_v2.c:
-
-/home/user/sober-linux/src/jni/static_object_calls.c:

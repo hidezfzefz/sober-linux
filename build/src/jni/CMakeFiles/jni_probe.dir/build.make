@@ -97,6 +97,7 @@ jni_probe: src/jni/CMakeFiles/jni_probe.dir/jni_probe.c.o
 jni_probe: src/jni/CMakeFiles/jni_probe.dir/build.make
 jni_probe: src/jni/CMakeFiles/jni_probe.dir/compiler_depend.ts
 jni_probe: src/jni/libsober_jni.a
+jni_probe: src/render/libsober_render.a
 jni_probe: src/jni/CMakeFiles/jni_probe.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C executable ../../jni_probe"
 	cd /home/user/sober-linux/build/src/jni && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/jni_probe.dir/link.txt --verbose=$(VERBOSE)

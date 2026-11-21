@@ -115,6 +115,9 @@ SOBER_FIELDS_DEFAULT_API const char *sober_fields_default_env_vars(void);
 #define SOBER_FIELDS_DEFAULT_FIELD_HEIGHT "viewportHeightMm"  /* RVA 0x3897f6 */
 #define SOBER_FIELDS_DEFAULT_SIG_FLOAT    "F"                 /* RVA 0x46d6c0 */
 #define SOBER_FIELDS_DEFAULT_SIG_INT      "I"                 /* RVA 0x532c55 */
+#define SOBER_FIELDS_DEFAULT_SIG_LONG     "J"                 /* mNativeObject */
+#define SOBER_FIELDS_DEFAULT_CLASS_SURFACE "android/view/Surface"
+#define SOBER_FIELDS_DEFAULT_FIELD_NATIVE "mNativeObject"
 #define SOBER_FIELDS_DEFAULT_CLASS \
     "com/roblox/engine/jni/model/PlatformParams"
 
@@ -124,8 +127,16 @@ SOBER_FIELDS_DEFAULT_API const char *sober_fields_default_env_vars(void);
 #define SOBER_FIELDS_DEFAULT_OFF_GETFLOATFIELD 0x330u  /* guest GetFloatField   */
 #define SOBER_FIELDS_DEFAULT_SLOT_GETFIELDID   90u    /* 0x2f0/8 - 4           */
 #define SOBER_FIELDS_DEFAULT_SLOT_GETINTFIELD  96u    /* 0x320/8 - 4           */
+#define SOBER_FIELDS_DEFAULT_SLOT_GETLONGFIELD 97u    /* 0x328/8 - 4           */
 #define SOBER_FIELDS_DEFAULT_SLOT_GETFLOATFIELD 98u   /* 0x330/8 - 4           */
 #define SOBER_FIELDS_DEFAULT_ENV_SLOTS         231u   /* SRNativeInterface::fn */
+
+/* ---- native mNativeObject field provider (task #492) --------------------- *
+ * Genuine GetLongField for android/view.Surface.mNativeObject.  The owner of
+ * the real Surface object (worker-3 frame_surface) registers the object and a
+ * callback that yields its genuine native handle.  GetLongField fails closed
+ * (returns 0) unless a provider is registered and the jobject matches. */
+#define SOBER_FIELDS_NATIVE_DEFAULT_ENV "SOBER_FIELDS_NATIVE_DEFAULT"
 
 /* ---- frozen-engine RVAs (BuildID 204ad049 / SHA 3e498d6494..., READ ONLY) */
 #define SOBER_FIELDS_DEFAULT_RVA_PARSER       0x26feb9bu  /* field-reading fn  */
@@ -198,6 +209,10 @@ SOBER_FIELDS_DEFAULT_API float sober_fields_default_GetFloatField(
     void *env, void *obj, void *field_id);
 SOBER_FIELDS_DEFAULT_API int32_t sober_fields_default_GetIntField(
     void *env, void *obj, void *field_id);
+/* Genuine long field: only android/view.Surface.mNativeObject is served, and
+ * only through a registered provider (fail closed with 0 otherwise). */
+SOBER_FIELDS_DEFAULT_API int64_t sober_fields_default_GetLongField(
+    void *env, void *obj, void *field_id);
 
 /* Matching setters (not installed by default; exposed for harness tests). */
 SOBER_FIELDS_DEFAULT_API void sober_fields_default_SetFloatField(
@@ -244,6 +259,21 @@ SOBER_FIELDS_DEFAULT_API void *sober_fields_default_make_object(
  * that handle returns these values; unknown handles use module defaults. */
 SOBER_FIELDS_DEFAULT_API int sober_fields_default_bind_object(
     void *jobj, const SoberFieldsDefaultValues *v);
+
+/* ---- native mNativeObject provider API (task #492) ----------------------- *
+ * The owner of the REAL Surface jobject registers it here.  `handle_fn` is
+ * called with (jni_env, surface_obj, user) and must return the genuine native
+ * handle (or 0 if none).  GetLongField only consults this provider when the
+ * exact registered jobject is passed; otherwise it returns 0 (fail closed). */
+typedef int64_t (*SoberFieldsNativeHandleFn)(void *env, void *surface_obj,
+                                              void *user);
+SOBER_FIELDS_DEFAULT_API int sober_fields_native_enabled(void);
+SOBER_FIELDS_DEFAULT_API int sober_fields_native_set_provider(
+    void *surface_obj, SoberFieldsNativeHandleFn handle_fn, void *user);
+SOBER_FIELDS_DEFAULT_API void sober_fields_native_clear_provider(void);
+/* Non-zero while the native-field path is enabled (force-withhold signal). */
+SOBER_FIELDS_DEFAULT_API int sober_fields_native_should_withhold(void);
+SOBER_FIELDS_DEFAULT_API uint64_t sober_fields_native_calls(void);
 
 /* ---- verification counters / diagnostics -------------------------------- */
 /* Per-field read counts.  name: "dpiScale" / "viewportWidthMm" /

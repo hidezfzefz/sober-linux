@@ -89,6 +89,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /usr/include/asm/sockios.h /usr/include/asm-generic/sockios.h \
  /usr/include/bits/types/struct_osockaddr.h /usr/include/bits/socket2.h \
  /home/user/sober-linux/src/jni/tsd_default.h \
+ /home/user/sober-linux/src/jni/fields_default.h \
  /home/user/sober-linux/src/jni/javavm_default.h \
  /home/user/sober-linux/src/jni/fflag_default.h \
  /home/user/sober-linux/src/jni/scheduler_guest.h \
@@ -106,6 +107,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /home/user/sober-linux/src/jni/frame_surface.h \
  /home/user/sober-linux/src/jni/frame_thread.h \
  /home/user/sober-linux/src/jni/frame_synthetic_tag.h \
+ /home/user/sober-linux/src/jni/flags_latch_default.h \
  /usr/include/dlfcn.h /usr/include/bits/dlfcn.h \
  /usr/include/bits/dl_find_object.h /usr/include/fcntl.h \
  /usr/include/bits/fcntl.h /usr/include/bits/fcntl-linux.h \
