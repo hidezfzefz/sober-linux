@@ -111,6 +111,27 @@ extern "C" {
  * mutation), so the DEFAULT is OFF to keep seeded_state==0 on the clean path.
  * When installed it parses the REAL "Created ANativeWindow ... (ID:G)" string. */
 #define SOBER_FRAME_EVIDENCE_FLOG_ENV "SOBER_FRAME_FLOG_SINK"
+/* OPT-IN diagnostic: raise the genuine JNIAppBridge log-level flag at
+ * 0x72a3268 from 0x0406 to 0x0506 through the guest's OWN flag setter
+ * 0x23648be (registered descriptor name "JNIAppBridge" at 0x2ebc763,
+ * subtype 1 -> "high,low" decimal bytes parsed by atoi, 16-bit write at
+ * 0x2365812), then restore it after the bind.  Needed because the level-5
+ * "Created ANativeWindow" format at 0x26feb0f is gated on (low>=6 &&
+ * high>=5) and the guest's own initializer 0x1dd694b hardcodes 0x0406.
+ * Default OFF; forces seeded_state (no clean marker possible while set). */
+#define SOBER_FRAME_EVIDENCE_FLOG_ENABLE_ENV "SOBER_FRAME_FLOG_ENABLE"
+/* G8 C8/C9 producer: opt-in re-drive of the GENUINE guest EGL init
+ * (0x649c21e(window, pbuffer=0) -> 0x649c272) so the guest executes its own
+ * ANativeWindow_acquire / getWidth / getHeight calls (0x649c2d6/303/30f) with
+ * the G8 observers installed.  Phase 3 already ran that path BEFORE the
+ * observers existed, which is why G8 rejected at R8_NO_ACQUIRE.  This knob
+ * drives REAL guest code with the REAL guest-published window and REAL GOT
+ * hooks; it writes no guest byte, fabricates no observation/RA/handle/swap/
+ * draw, and is WITHHOLD-WORTHY (host-triggered guest init), so enabling it
+ * forces seeded_state via sober_frame_evidence_should_withhold().
+ * Only the exact value "1" enables it; unset/0/anything else is the kill
+ * switch and the default path performs no such call. */
+#define SOBER_FRAME_EVIDENCE_EGL_ENV  "SOBER_FRAME_EGL_INIT_DRIVE"
 /* DEFAULT ON: false only when getenv(SOBER_FRAME_EVIDENCE) is exactly "0". */
 SOBER_FRAME_EVIDENCE_API int         frame_evidence_enabled(void);
 SOBER_FRAME_EVIDENCE_API const char *frame_evidence_env_var(void);
@@ -353,8 +374,31 @@ SOBER_FRAME_EVIDENCE_API int  frame_evidence_attach(uintptr_t guest_base);
 SOBER_FRAME_EVIDENCE_API int sober_render_evidence_bringup(
     uintptr_t guest_base, void *native_window, unsigned width, unsigned height);
 SOBER_FRAME_EVIDENCE_API int sober_render_evidence_bringup_rc(void);
-/* 0: bringup introduces no new opt-in knob, therefore no withhold entry. */
+/* Withhold audit: non-zero when any guest-mutating or host-triggered evidence
+ * knob is active (the opt-in H6 FLog sink and/or the opt-in EGL-init re-drive).
+ * The lead already ORs this into the decision-013 seeded_state chain. */
 SOBER_FRAME_EVIDENCE_API int sober_frame_evidence_should_withhold(void);
+
+/* ---- opt-in genuine guest EGL-init re-drive (G8 C8/C9 producer) ----------- *
+ * See SOBER_FRAME_EVIDENCE_EGL_ENV above.  All accessors are safe before
+ * install: counters are 0 and enabled() is 0 unless the knob is exactly "1". */
+SOBER_FRAME_EVIDENCE_API int     frame_evidence_egl_drive_enabled(void);
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_egl_drive_calls(void);
+/* Real ANativeWindow_acquire GOT observations seen during the drive. */
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_egl_drive_acquire_seen(void);
+/* Real getWidth/getHeight GOT observations seen during the drive. */
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_egl_drive_dims_seen(void);
+/* TRUE return addresses observed at GOT 0x72297c0 (acquire) and 0x72297d0/c8
+ * (dims) during the drive; expect base+0x649c2db / base+0x649c308|0x649c314. */
+SOBER_FRAME_EVIDENCE_API uintptr_t frame_evidence_egl_drive_acquire_ra(void);
+SOBER_FRAME_EVIDENCE_API uintptr_t frame_evidence_egl_drive_dims_ra(void);
+/* Per-hook counts/return addresses for the two dims calls of the drive. */
+SOBER_FRAME_EVIDENCE_API uint64_t  frame_evidence_egl_drive_width_calls(void);
+SOBER_FRAME_EVIDENCE_API uint64_t  frame_evidence_egl_drive_height_calls(void);
+SOBER_FRAME_EVIDENCE_API uintptr_t frame_evidence_egl_drive_width_ra(void);
+SOBER_FRAME_EVIDENCE_API uintptr_t frame_evidence_egl_drive_height_ra(void);
+/* 1 when the genuine ctx returned by 0x649c21e had vtable base+0x71912e8. */
+SOBER_FRAME_EVIDENCE_API int      frame_evidence_egl_drive_ctx_ok(void);
 
 /* ---- decisive accessors -------------------------------------------------- */
 SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_swaps_guest(void);
@@ -399,6 +443,14 @@ SOBER_FRAME_EVIDENCE_API void frame_evidence_draw_ra_range(
  * installed when SOBER_FRAME_FLOG_SINK=1 (default OFF).  Because it writes a
  * guest data pointer, OR frame_evidence_flog_installed() into seeded_state
  * (withhold when active); default path mutates no guest data.*/
+/* 1 when the opt-in JNIAppBridge log-level raise is requested. */
+SOBER_FRAME_EVIDENCE_API int      frame_evidence_flog_enable(void);
+/* Real-event diagnostics for the guest flag-setter path. */
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_flog_raise_calls(void);
+SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_flog_raise_ok(void);
+SOBER_FRAME_EVIDENCE_API uint16_t frame_evidence_flog_level_before(void);
+SOBER_FRAME_EVIDENCE_API uint16_t frame_evidence_flog_level_after(void);
+
 SOBER_FRAME_EVIDENCE_API int      frame_evidence_flog_killed(void);
 SOBER_FRAME_EVIDENCE_API int      frame_evidence_flog_installed(void);
 SOBER_FRAME_EVIDENCE_API uint64_t frame_evidence_flog_calls(void);

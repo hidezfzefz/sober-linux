@@ -38,6 +38,10 @@ extern "C" {
 
 #define SOBER_FLAGS_LATCH_DEFAULT_ENV   "SOBER_FLAGS_LATCH_DEFAULT"
 #define SOBER_FLAGS_LATCH_ROUTE_ENV     "SOBER_FLAGS_LATCH_ROUTE"
+/* New (task #499): comma-separated argv strings for route=crashpad-valid.
+ * These are genuine JNI String[] entries handed to nativeRunCrashpadHandler;
+ * the guest converts them to the argv it passes to crashpad::HandlerMain. */
+#define SOBER_FLAGS_LATCH_ARGV_ENV      "SOBER_FLAGS_LATCH_ARGV"
 
 /* Frozen RVAs. */
 #define SOBER_FLAGS_LATCH_RVA_BYTE       0x7cdd149u  /* the latch byte        */
@@ -58,9 +62,13 @@ extern "C" {
 /* Default ON (kill switch SOBER_FLAGS_LATCH_DEFAULT=0 makes install() inert).
  * Lead ruling: the DEFAULT ROUTE is "none" -- install() is active but makes
  * NO guest call and should_withhold() stays 0 until a real route is chosen
- * via SOBER_FLAGS_LATCH_ROUTE=client-settings|crashpad-jni|crashpad-main|narrow.
- * The A15-viable crashpad routes set the latch through guest code but their
- * post-latch stdio log path aborts until lead's #491 compat fix lands.
+ * via SOBER_FLAGS_LATCH_ROUTE=client-settings|crashpad-jni|crashpad-valid|
+ * crashpad-main|narrow.
+ * The crashpad routes set the latch through guest code.  #499 refined the
+ * "fatal tail": the stdio abort is crashpad::HandlerMain's own Usage fprintf
+ * on invalid argv; route=crashpad-valid supplies genuine crashpad argv via a
+ * real JNI String[], which avoids that abort but still segfaults later inside
+ * crashpad handler setup.  No route returns cleanly yet; default stays none.
  * `jni` is the SoberJni* (void* avoids a header dependency);
  * `jni_env`/`jclass` are the real JNI handles for the JNI-export routes. */
 SOBER_FLAGS_LATCH_API int sober_flags_latch_default_install(

@@ -147,6 +147,65 @@ static _Atomic int s_w_have_seq;
 static _Atomic int s_w_tid_mismatch;
 static _Atomic int s_w_seq_bad;
 
+/* ---- opt-in genuine guest EGL-init re-drive (G8 C8/C9 producer) ----------- *
+ * Phase 3 calls guest 0x649c21e(window,0) BEFORE frame_evidence's G8 window
+ * observers exist, so the genuine ANativeWindow_acquire/getWidth/getHeight
+ * calls at 0x649c2d6/303/30f are never observed (R8_NO_ACQUIRE).  After the
+ * guest has published its window in bringup we call that SAME genuine entry
+ * point again on the published window with the observers installed.  Real
+ * guest code, real GOT hooks, real guest window; no byte patch, no synthetic
+ * observation/RA/handle/swap/draw.  All counters below are real events. */
+static _Atomic int      s_egl_drive_active;   /* scopes the hook counters */
+static _Atomic uint64_t s_egl_drive_calls;    /* 0x649c21e invocations        */
+static _Atomic uint64_t s_egl_drive_acq;      /* ACQUIRE obs during the drive */
+static _Atomic uint64_t s_egl_drive_dims;     /* DIMS obs during the drive    */
+static _Atomic uintptr_t s_egl_drive_acq_ra;  /* TRUE RA seen at GOT 0x72297c0*/
+static _Atomic uintptr_t s_egl_drive_dims_ra; /* RA on the committed DIMS obs  */
+static _Atomic uint64_t s_egl_drive_width;    /* getWidth hook hits this drive */
+static _Atomic uint64_t s_egl_drive_height;   /* getHeight hook hits this drive*/
+static _Atomic uintptr_t s_egl_drive_width_ra;  /* TRUE RA at GOT 0x72297d0 */
+static _Atomic uintptr_t s_egl_drive_height_ra; /* TRUE RA at GOT 0x72297c8 */
+static _Atomic int      s_egl_drive_ctx_ok;   /* genuine ctx vtable verified   */
+
+/* Guest entry point that allocates a 0x48-byte ctx and runs egl_init. */
+typedef uintptr_t (*fe_create_ctx_fn)(uintptr_t, uintptr_t);
+#define FE_RVA_CREATE_CONTEXT  0x649c21eu
+#define FE_RVA_EGL_VTABLE      0x71912e8u
+/* Guest "Graphics" setting (registered at JNI_OnLoad 0x228b304 under the
+ * string 0x3c5ab8 "Graphics"; initialised to 0x0300 at 0x648a041).  The genuine
+ * egl_init at 0x649c2db reads it as a version and SKIPS getWidth/getHeight
+ * unless (low byte >= 6 && (v>>8) >= 3).  The decompiled egl_init agrees:
+ *   if (2 < (byte)(g>>8) && 5 < (byte)g) { ANativeWindow_getWidth/Height ... }
+ * Bumping the guest's own setting to 0x0306 lets the real guest execute its
+ * genuine 0x649c303/0x649c30f dims calls; we restore the original after the
+ * call.  This is a guest DATA write (never a code byte patch), opt-in via the
+ * same withhold-worthy EGL-init drive knob. */
+#define FE_RVA_GRAPHICS_SETTING 0x77a3d60u
+#define FE_GRAPHICS_VER_MIN     0x0306u
+
+/* ---- opt-in JNIAppBridge log-level raise (G8 C10 producer) ---------------- *
+ * The guest's own initializer 0x1dd694b hardcodes the packed log config word
+ * at 0x72a3268 to 0x0406.  The level-5 "Created ANativeWindow ... (ID:G)"
+ * format at 0x26feb0f is gated at 0x26feab3 on (low>=6 && high>=5), so 0x406
+ * suppresses it entirely.  The guest registers this word as a native flag
+ * "JNIAppBridge" at 0x2ebc763 through 0x227cb50(subtype=1).  Its OWN flag
+ * setter 0x23648be parses a "high,low" decimal byte pair with atoi
+ * (0x2365747) and writes the 16-bit word at 0x2365812.  We raise it via that
+ * setter only; no guest byte is patched and no log/RA/window is fabricated. */
+#define FE_RVA_APPBRIDGE_LEVEL   0x72a3268u
+#define FE_RVA_FLAG_REGISTRY     0x7cdd118u
+#define FE_RVA_FLAG_SETTER       0x23648beu
+#define FE_APPBRIDGE_LEVEL_VALUE "5,6"   /* high=5 (>=5), low=6 (>=6) */
+
+static _Atomic uint64_t s_flog_raise_calls;
+static _Atomic uint64_t s_flog_raise_ok;
+static _Atomic uint16_t s_flog_level_before;
+static _Atomic uint16_t s_flog_level_after;
+/* Kept at module scope so their values survive a siglongjmp out of the bind
+ * guard (non-volatile locals modified after sigsetjmp are indeterminate). */
+static uint16_t s_flog_orig;
+static int      s_flog_raised;
+
 static _Atomic int s_lines_emitted;
 static int s_wiring_logged;   /* neutral one-shot: producer -> verdict wired */
 
@@ -222,7 +281,7 @@ static int fe_parse_created_window(const char *text, uintptr_t *window,
     static const char prefix[] = "[FLog::JNIAppBridge] ";
     static const char mark[]   = "Created ANativeWindow ";
     static const char idmark[] = " (ID:";
-    const char *p, *hex, *idp;
+    const char *p, *hex, *idp, *pfx;
     char *end = NULL;
     uintptr_t w = 0;
     uint32_t g = 0;
@@ -230,8 +289,13 @@ static int fe_parse_created_window(const char *text, uintptr_t *window,
     unsigned long v32;
 
     if (!text) return 0;
-    if (strncmp(text, prefix, sizeof(prefix) - 1u) != 0) return 0;
-    p = strstr(text, mark);
+    /* The sink receives the FULLY formatted log line, which carries the
+     * guest logger's timestamp/channel prefix before the FLog format string:
+     *   "1970-01-...Z,...,Debug [FLog::JNIAppBridge] <tag>: Created ...".
+     * Locate the literal format prefix rather than requiring it at byte 0. */
+    pfx = strstr(text, prefix);
+    if (!pfx) return 0;
+    p = strstr(pfx + sizeof(prefix) - 1u, mark);
     if (!p) return 0;
     p += sizeof(mark) - 1u;                 /* immediately after the marker */
     if (p[0] != '0' || p[1] != 'x') return 0;/* window is the next {} token */
@@ -265,6 +329,12 @@ static void fe_flog_sink_hook(uintptr_t category, void *ctx, unsigned level,
     atomic_fetch_add_explicit(&s_flog_calls, 1, memory_order_relaxed);
     /* Accept ONLY the genuine FLog emitter sink dispatch (B+0x232e080); sibling
      * emitters share this slot and must not be mistaken for H6. */
+    if (frame_evidence_flog_enable() && text) {
+        fprintf(stderr, "[frame-evidence] FLOG_ENABLE sink text: ra=%#lx "
+                        "(+%#lx) text='%.256s'\n",
+                (unsigned long)ra,
+                (unsigned long)(base ? ra - base : 0u), text);
+    }
     if (base && ra == base + (uintptr_t)0x232e080u && text) {
         uintptr_t w = 0;
         uint32_t g = 0;
@@ -282,7 +352,7 @@ static void fe_flog_sink_hook(uintptr_t category, void *ctx, unsigned level,
             atomic_fetch_add_explicit(&s_flog_h6, 1, memory_order_relaxed);
             fprintf(stderr,
                     "[frame-evidence] H6 real guest log parsed: window=%#lx "
-                    "ID=%u (text='%.96s')\n", (unsigned long)w, g, text);
+                    "ID=%u (text='%.256s')\n", (unsigned long)w, g, text);
         }
     }
     if (s_orig_flog_sink) s_orig_flog_sink(category, ctx, level, text);
@@ -296,6 +366,113 @@ int frame_evidence_flog_killed(void)
 {
     const char *e = getenv(SOBER_FRAME_EVIDENCE_FLOG_ENV);
     return !(e && e[0] == '1' && (e[1] == '\0' || e[1] == ' ' || e[1] == '\t'));
+}
+
+/* Opt-in JNIAppBridge log-level raise (default OFF). */
+int frame_evidence_flog_enable(void)
+{
+    const char *e = getenv(SOBER_FRAME_EVIDENCE_FLOG_ENABLE_ENV);
+    return e && e[0] == '1' && (e[1] == '\0' || e[1] == ' ' || e[1] == '\t');
+}
+uint64_t frame_evidence_flog_raise_calls(void)
+{
+    return atomic_load_explicit(&s_flog_raise_calls, memory_order_relaxed);
+}
+uint64_t frame_evidence_flog_raise_ok(void)
+{
+    return atomic_load_explicit(&s_flog_raise_ok, memory_order_relaxed);
+}
+uint16_t frame_evidence_flog_level_before(void)
+{
+    return atomic_load_explicit(&s_flog_level_before, memory_order_relaxed);
+}
+uint16_t frame_evidence_flog_level_after(void)
+{
+    return atomic_load_explicit(&s_flog_level_after, memory_order_relaxed);
+}
+
+/* Guest short-string ABI used by the FFlag registry setter (bit0=1 -> heap
+ * pointer at +0x10, byte length at +0x08).  Same layout worker-2 uses. */
+struct fe_flag_shortstr {
+    uint8_t  flag;
+    uint8_t  pad[7];
+    uint64_t len;
+    const char *ptr;
+};
+
+/* Raise the genuine JNIAppBridge flag via the guest's OWN setter 0x23648be.
+ * Returns 0 only when the setter returned and the word actually has high>=5
+ * and low>=6; 1 if the descriptor was unavailable / the write did not take.
+ * The caller restores `orig` on every path. */
+static int fe_raise_jniappbridge_level(uintptr_t base, uint16_t *orig_out)
+{
+    typedef int (*fe_set_flag_fn)(void *, void *, void *, unsigned,
+                                  unsigned, unsigned);
+    struct fe_flag_shortstr name, value;
+    volatile uint16_t *level;
+    void *reg;
+    fe_set_flag_fn set_flag;
+    uint16_t before, after;
+    int rc = 1;
+
+    if (!base) return 1;
+    level = (volatile uint16_t *)(base + (uintptr_t)FE_RVA_APPBRIDGE_LEVEL);
+    reg = *(void **)(base + (uintptr_t)FE_RVA_FLAG_REGISTRY);
+    *orig_out = before = *level;
+    atomic_fetch_add_explicit(&s_flog_raise_calls, 1, memory_order_relaxed);
+    atomic_store_explicit(&s_flog_level_before, before, memory_order_relaxed);
+    if (!reg) {
+        fprintf(stderr, "[frame-evidence] FLOG_ENABLE: flag registry "
+                        "(0x7cdd118) is NULL; no genuine setter call\n");
+        return 1;
+    }
+    memset(&name, 0, sizeof(name));
+    memset(&value, 0, sizeof(value));
+    name.flag = 1; name.len = strlen("JNIAppBridge");
+    name.ptr = "JNIAppBridge";
+    set_flag = (fe_set_flag_fn)(uintptr_t)(base + (uintptr_t)FE_RVA_FLAG_SETTER);
+    /* The descriptor is registered by the guest's own JNI entry
+     * getRolloutFlagsInControl at 0x2ebc75c (calls 0x227cb50 with name
+     * "JNIAppBridge", storage 0x72a3268, subtype=1).  The harness skips that
+     * JNI method, so replay the guest thunk first; without it the setter's
+     * name lookup finds no descriptor and silently returns rc=0 with no write.
+     * Both calls are genuine guest code under bringup's SIGSEGV guard. */
+    {
+        typedef void (*fe_reg_thunk_fn)(void);
+        fe_reg_thunk_fn reg_thunk = (fe_reg_thunk_fn)(uintptr_t)
+            (base + (uintptr_t)0x2ebc75cu);
+        reg_thunk();
+    }
+    value.flag = 1;
+    value.len = strlen(FE_APPBRIDGE_LEVEL_VALUE);
+    value.ptr = FE_APPBRIDGE_LEVEL_VALUE;
+    rc = set_flag(reg, &name, &value, 1u, 1u, 0u);
+    after = *level;
+    atomic_store_explicit(&s_flog_level_after, after, memory_order_relaxed);
+    fprintf(stderr, "[frame-evidence] FLOG_ENABLE: guest thunk 0x2ebc75c + "
+                    "setter 0x23648be (name='JNIAppBridge' value='%s' "
+                    "subtype=1) rc=%d level=%#x -> %#x\n",
+            FE_APPBRIDGE_LEVEL_VALUE, rc, (unsigned)before, (unsigned)after);
+    /* Honesty: accept only what the guest actually wrote.  The observed value
+     * is 0xff06 (high=0xff from the guest's own parse, low=6 from our value),
+     * which satisfies the level-5 gate; no byte is written by this module. */
+    if (after && (after >> 8) >= 5u && (after & 0xffu) >= 6u) {
+        atomic_fetch_add_explicit(&s_flog_raise_ok, 1, memory_order_relaxed);
+        return 0;
+    }
+    return 1;
+}
+
+static void fe_restore_jniappbridge_level(uintptr_t base, uint16_t orig)
+{
+    if (!base) return;
+    *(volatile uint16_t *)(base + (uintptr_t)FE_RVA_APPBRIDGE_LEVEL) = orig;
+    atomic_store_explicit(&s_flog_level_after,
+                          *(volatile uint16_t *)(base
+                              + (uintptr_t)FE_RVA_APPBRIDGE_LEVEL),
+                          memory_order_relaxed);
+    fprintf(stderr, "[frame-evidence] FLOG_ENABLE: JNIAppBridge level "
+                    "restored to %#x\n", (unsigned)orig);
 }
 
 /* Counters for the H6 observer (diagnostics / withhold reporting). */
@@ -882,6 +1059,10 @@ static void fe_hook_acquire(void *window)
     obs.ra = ra;
     obs.window = (uintptr_t)window;
     (void)frame_evidence_window_observation(&obs);
+    if (atomic_load_explicit(&s_egl_drive_active, memory_order_relaxed)) {
+        atomic_fetch_add_explicit(&s_egl_drive_acq, 1, memory_order_relaxed);
+        atomic_store_explicit(&s_egl_drive_acq_ra, ra, memory_order_relaxed);
+    }
     if (s_wobs_prev[1]) ((fe_anw_window_fn)s_wobs_prev[1])(window);
 }
 
@@ -913,12 +1094,20 @@ static void fe_note_dim(uintptr_t ra, void *window, int value, int is_width)
     obs.width = w;
     obs.height = h;
     (void)frame_evidence_window_observation(&obs);
+    if (atomic_load_explicit(&s_egl_drive_active, memory_order_relaxed)) {
+        atomic_fetch_add_explicit(&s_egl_drive_dims, 1, memory_order_relaxed);
+        atomic_store_explicit(&s_egl_drive_dims_ra, ra, memory_order_relaxed);
+    }
 }
 
 static int fe_hook_get_height(void *window)
 {
     uintptr_t ra = (uintptr_t)__builtin_return_address(0);
     int d = s_wobs_prev[2] ? ((fe_anw_dim_fn)s_wobs_prev[2])(window) : 0;
+    if (atomic_load_explicit(&s_egl_drive_active, memory_order_relaxed)) {
+        atomic_fetch_add_explicit(&s_egl_drive_height, 1, memory_order_relaxed);
+        atomic_store_explicit(&s_egl_drive_height_ra, ra, memory_order_relaxed);
+    }
     fe_note_dim(ra, window, d, 0);
     return d;
 }
@@ -927,6 +1116,10 @@ static int fe_hook_get_width(void *window)
 {
     uintptr_t ra = (uintptr_t)__builtin_return_address(0);
     int d = s_wobs_prev[3] ? ((fe_anw_dim_fn)s_wobs_prev[3])(window) : 0;
+    if (atomic_load_explicit(&s_egl_drive_active, memory_order_relaxed)) {
+        atomic_fetch_add_explicit(&s_egl_drive_width, 1, memory_order_relaxed);
+        atomic_store_explicit(&s_egl_drive_width_ra, ra, memory_order_relaxed);
+    }
     fe_note_dim(ra, window, d, 1);
     return d;
 }
@@ -1000,14 +1193,155 @@ static void fe_bringup_fault_handler(int sig)
 }
 
 int sober_render_evidence_bringup_rc(void) { return s_bringup_rc; }
-/* The H6 FLog sink observer writes a guest DATA pointer (B+0x7d8f820), so a
- * run with it installed is a seeded-guest-state run: report WITHHELD honestly
- * so the lead's withhold audit stays clean.  Installation is opt-in via
- * SOBER_FRAME_FLOG_SINK=1, so the default path performs no guest-data mutation
- * and a clean seeded_state==0 run remains possible. */
+
+/* ---- opt-in EGL-init re-drive: gate, accessors and guarded driver --------- */
+int frame_evidence_egl_drive_enabled(void)
+{
+    const char *e = getenv(SOBER_FRAME_EVIDENCE_EGL_ENV);
+    return e && e[0] == '1' && (e[1] == '\0' || e[1] == ' ' || e[1] == '\t');
+}
+uint64_t frame_evidence_egl_drive_calls(void)
+{
+    return atomic_load_explicit(&s_egl_drive_calls, memory_order_relaxed);
+}
+uint64_t frame_evidence_egl_drive_acquire_seen(void)
+{
+    return atomic_load_explicit(&s_egl_drive_acq, memory_order_relaxed);
+}
+uint64_t frame_evidence_egl_drive_dims_seen(void)
+{
+    return atomic_load_explicit(&s_egl_drive_dims, memory_order_relaxed);
+}
+uintptr_t frame_evidence_egl_drive_acquire_ra(void)
+{
+    return atomic_load_explicit(&s_egl_drive_acq_ra, memory_order_relaxed);
+}
+uintptr_t frame_evidence_egl_drive_dims_ra(void)
+{
+    return atomic_load_explicit(&s_egl_drive_dims_ra, memory_order_relaxed);
+}
+uint64_t frame_evidence_egl_drive_width_calls(void)
+{
+    return atomic_load_explicit(&s_egl_drive_width, memory_order_relaxed);
+}
+uint64_t frame_evidence_egl_drive_height_calls(void)
+{
+    return atomic_load_explicit(&s_egl_drive_height, memory_order_relaxed);
+}
+uintptr_t frame_evidence_egl_drive_width_ra(void)
+{
+    return atomic_load_explicit(&s_egl_drive_width_ra, memory_order_relaxed);
+}
+uintptr_t frame_evidence_egl_drive_height_ra(void)
+{
+    return atomic_load_explicit(&s_egl_drive_height_ra, memory_order_relaxed);
+}
+int frame_evidence_egl_drive_ctx_ok(void)
+{
+    return atomic_load_explicit(&s_egl_drive_ctx_ok, memory_order_relaxed);
+}
+
+/* Call the genuine guest 0x649c21e(window, pbuffer=0).  The guest allocates
+ * its real 0x48-byte ctx, installs vtable 0x71912e8 and executes the window
+ * path: ANativeWindow_acquire at 0x649c2d6 (RA 0x649c2db), getWidth at
+ * 0x649c303 (RA 0x649c308), getHeight at 0x649c30f (RA 0x649c314).  Our G8
+ * observers are chained on those GOT slots, so each produces one immutable
+ * observation with the TRUE guest return address and the TRUE window arg. */
+static int fe_drive_guest_egl_init(uintptr_t base, uintptr_t window)
+{
+    fe_create_ctx_fn create;
+    uintptr_t ctx, vt;
+
+    if (!base || !window) return -1;
+    if (base > UINTPTR_MAX - (uintptr_t)FE_RVA_CREATE_CONTEXT) return -1;
+    create = (fe_create_ctx_fn)(uintptr_t)(base + (uintptr_t)FE_RVA_CREATE_CONTEXT);
+    atomic_fetch_add_explicit(&s_egl_drive_calls, 1, memory_order_relaxed);
+    atomic_store_explicit(&s_egl_drive_active, 1, memory_order_relaxed);
+    ctx = create(window, 0u);     /* pbuffer MUST be 0 (else 0x649cf9a faults) */
+    atomic_store_explicit(&s_egl_drive_active, 0, memory_order_relaxed);
+    if (!ctx) {
+        fprintf(stderr, "[frame-evidence] EGL-init drive: guest 0x649c21e "
+                        "returned NULL\n");
+        return -1;
+    }
+    vt = *(volatile uintptr_t *)ctx;
+    if (vt == base + (uintptr_t)FE_RVA_EGL_VTABLE)
+        atomic_store_explicit(&s_egl_drive_ctx_ok, 1, memory_order_relaxed);
+    fprintf(stderr, "[frame-evidence] EGL-init drive: genuine guest "
+                    "0x649c21e(%#lx, pbuffer=0) -> ctx=%#lx vt=%#lx "
+                    "(expect=%#lx) acq=%llu dims=%llu\n",
+            (unsigned long)window, (unsigned long)ctx, (unsigned long)vt,
+            (unsigned long)(base + (uintptr_t)FE_RVA_EGL_VTABLE),
+            (unsigned long long)frame_evidence_egl_drive_acquire_seen(),
+            (unsigned long long)frame_evidence_egl_drive_dims_seen());
+    return 0;
+}
+
+/* Guard the (opt-in) guest call: a fault in the guest's EGL config/surface
+ * path must NOT roll back the already-proven bind or the committed G8 ledger
+ * observations.  The acquire/dims calls run at the top of egl_init, so they
+ * are committed before any later fault can occur. */
+static void fe_drive_egl_guarded(uintptr_t base, uintptr_t window)
+{
+    struct sigaction sa, old_segv, old_trap;
+    volatile uint16_t *setting;
+    volatile uint16_t orig, want;  /* volatile: survive siglongjmp in guard */
+    int have_segv = 0, have_trap = 0;
+
+    setting = (volatile uint16_t *)(base + (uintptr_t)FE_RVA_GRAPHICS_SETTING);
+    orig = *setting;
+    want = (uint16_t)((orig & 0xff00u) | (FE_GRAPHICS_VER_MIN & 0xffu));
+    if ((want >> 8) < ((FE_GRAPHICS_VER_MIN >> 8) & 0xffu))
+        want = (uint16_t)FE_GRAPHICS_VER_MIN;
+    *setting = want;   /* guest DATA only; restored below on every path */
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = fe_bringup_fault_handler;
+    sigemptyset(&sa.sa_mask);
+    s_bringup_faulted = 0;
+    if (sigaction(SIGSEGV, &sa, &old_segv) == 0) have_segv = 1;
+    if (sigaction(SIGTRAP, &sa, &old_trap) == 0) have_trap = 1;
+
+    if (sigsetjmp(s_bringup_jmp, 1) == 0 && !s_bringup_faulted) {
+        (void)fe_drive_guest_egl_init(base, window);
+    } else {
+        atomic_store_explicit(&s_egl_drive_active, 0, memory_order_relaxed);
+        fprintf(stderr, "[frame-evidence] EGL-init drive faulted in guest "
+                        "(bind/G8 observations already committed stay valid)\n");
+    }
+    *setting = orig;   /* restore the guest's own setting (normal + fault) */
+    fprintf(stderr, "[frame-evidence] EGL-init drive: Graphics setting "
+                    "%#x -> %#x -> %#x (restored)\n",
+            (unsigned)orig, (unsigned)want, (unsigned)*setting);
+    fprintf(stderr, "[frame-evidence] EGL-init RAs: acquire=%llu @ +%#lx "
+                    "getWidth=%llu @ +%#lx getHeight=%llu @ +%#lx "
+                    "(base=%#lx; C8/C9 require +0x649c2db/+0x649c308|0x649c314)\n",
+            (unsigned long long)frame_evidence_egl_drive_acquire_seen(),
+            (unsigned long)(frame_evidence_egl_drive_acquire_ra()
+                            ? frame_evidence_egl_drive_acquire_ra() - base : 0u),
+            (unsigned long long)frame_evidence_egl_drive_width_calls(),
+            (unsigned long)(frame_evidence_egl_drive_width_ra()
+                            ? frame_evidence_egl_drive_width_ra() - base : 0u),
+            (unsigned long long)frame_evidence_egl_drive_height_calls(),
+            (unsigned long)(frame_evidence_egl_drive_height_ra()
+                            ? frame_evidence_egl_drive_height_ra() - base : 0u),
+            (unsigned long)base);
+    if (have_trap) (void)sigaction(SIGTRAP, &old_trap, NULL);
+    if (have_segv) (void)sigaction(SIGSEGV, &old_segv, NULL);
+}
+
+/* The H6 FLog sink observer writes a guest DATA pointer (B+0x7d8f820), the
+ * opt-in EGL-init drive is a host-triggered guest call, and the opt-in FLog
+ * enable raises a guest settings word through its own setter.  All are seeded
+ * guest state under decision 013: report WITHHELD honestly so the lead's
+ * withhold audit stays clean.  All are opt-in (FLOG_SINK=1 / EGL_INIT_DRIVE=1
+ * / FLOG_ENABLE=1), so the default path mutates nothing and a clean
+ * seeded_state==0 run remains possible. */
 int sober_frame_evidence_should_withhold(void)
 {
-    return frame_evidence_flog_installed() ? 1 : 0;
+    return (frame_evidence_flog_installed() ||
+            frame_evidence_egl_drive_enabled() ||
+            frame_evidence_flog_enable()) ? 1 : 0;
 }
 
 int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
@@ -1079,6 +1413,13 @@ int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
     if (sigaction(SIGTRAP, &sa, &old_trap) == 0) have_trap = 1;
 
     if (sigsetjmp(s_bringup_jmp, 1) == 0 && !s_bringup_faulted) {
+        /* OPT-IN (SOBER_FRAME_FLOG_ENABLE=1): raise the genuine JNIAppBridge
+         * log-level flag through the guest's OWN setter BEFORE the bind emits
+         * the "Created ANativeWindow" record.  No log/RA/window is fabricated;
+         * the H6 sink observer (SOBER_FRAME_FLOG_SINK=1) parses the real text. */
+        if (frame_evidence_flog_enable())
+            s_flog_raised = (fe_raise_jniappbridge_level(guest_base,
+                                                        &s_flog_orig) == 0);
         /* Only the bind helper is safe today.  frame_surface_bind_surface()
          * faults in the guest EGL config path (0x649cf72/0x649d1c2), so C8
          * acquire / C9 dims remain unproven; bind_native_data() would add
@@ -1087,6 +1428,7 @@ int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
     } else {
         rc = -1;
     }
+    if (s_flog_raised) fe_restore_jniappbridge_level(guest_base, s_flog_orig);
     if (have_trap) (void)sigaction(SIGTRAP, &old_trap, NULL);
     if (have_segv) (void)sigaction(SIGSEGV, &old_segv, NULL);
 
@@ -1130,16 +1472,49 @@ int sober_render_evidence_bringup(uintptr_t guest_base, void *native_window,
     frame_evidence_window_set_integrity(1, 1, 1);  /* engine/obs/layout */
     frame_evidence_window_snapshot(guest_base);     /* H5 W_now / G_now */
 
+    /* OPT-IN (SOBER_FRAME_EGL_INIT_DRIVE=1): re-drive the genuine guest EGL
+     * init on the window the guest just published, now that the G8 ANativeWindow
+     * observers are installed.  Guarded: a fault in the later EGL config/swap
+     * path cannot roll back the bind or the C8/C9 observations already made. */
+    if (frame_evidence_egl_drive_enabled())
+        fe_drive_egl_guarded(guest_base, window);
+
     s_bringup_rc = 0;
     fprintf(stderr, "[frame-evidence] bringup OK: guest wrote window %#lx "
                     "gen %u->%u bind_ra_events=%llu (RA base+0x26fea7d); "
-                    "G8 window verdict=%d reason=%s (H6 flog_calls=%llu h6=%llu)\n",
+                    "G8 window verdict=%d reason=%s (H6 flog_calls=%llu h6=%llu) "
+                    "EGL-drive=%d calls=%llu acq=%llu dims=%llu ctx_ok=%d "
+                    "acq_ra=%#lx(+%#lx) dims_ra=%#lx(+%#lx) "
+                    "flog_enable=%d raise=%llu/%llu floglevel=%#x->%#x "
+                    "withhold=%d (0x77a3d60=%#x)\n",
             (unsigned long)window, g0, g1,
             (unsigned long long)bind_ra_count,
             frame_evidence_window_verdict(),
             frame_evidence_window_reject_reason(),
             (unsigned long long)frame_evidence_flog_calls(),
-            (unsigned long long)frame_evidence_flog_h6());
+            (unsigned long long)frame_evidence_flog_h6(),
+            frame_evidence_egl_drive_enabled(),
+            (unsigned long long)frame_evidence_egl_drive_calls(),
+            (unsigned long long)frame_evidence_egl_drive_acquire_seen(),
+            (unsigned long long)frame_evidence_egl_drive_dims_seen(),
+            frame_evidence_egl_drive_ctx_ok(),
+            (unsigned long)frame_evidence_egl_drive_acquire_ra(),
+            (unsigned long)(frame_evidence_egl_drive_acquire_ra()
+                            ? frame_evidence_egl_drive_acquire_ra()
+                              - (uintptr_t)guest_base : 0u),
+            (unsigned long)frame_evidence_egl_drive_dims_ra(),
+            (unsigned long)(frame_evidence_egl_drive_dims_ra()
+                            ? frame_evidence_egl_drive_dims_ra()
+                              - (uintptr_t)guest_base : 0u),
+            frame_evidence_flog_enable(),
+            (unsigned long long)frame_evidence_flog_raise_calls(),
+            (unsigned long long)frame_evidence_flog_raise_ok(),
+            (unsigned)frame_evidence_flog_level_before(),
+            (unsigned)frame_evidence_flog_level_after(),
+            sober_frame_evidence_should_withhold(),
+            frame_evidence_egl_drive_enabled()
+                ? (unsigned)*(volatile uint32_t *)(guest_base + 0x77a3d60u)
+                : 0u);
     return s_bringup_rc;
 }
 

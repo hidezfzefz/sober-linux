@@ -23,29 +23,34 @@ audits, weighted score and roadmap. Regenerate badges/map:
 
 **Honest headline:** native init, window and a guest-driven first frame work; the
 real login/app-shell frame is **not** proven. Overall project progress after the
-40-agent frame push is **≈61%** (56–65% band: init 95%, render 85% as a withheld
-diagnostic, JNI 85%, app state 40%, callback 0%, gate/tests/docs 85%). A seeded
-diagnostic now produces 2 guest-tagged swaps and 1 guest draw, but the callback
-leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
+latest wave is **≈62%** (57–66% band: init 95%, render 95% as a withheld
+seeded diagnostic with G8 C0–C10 ACCEPT, JNI 85%, app state 40%, callback 0%,
+gate/tests/docs 85%). The default path is unchanged; a seeded diagnostic proves
+the render leg but the callback leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
 (decision 013 / 038).
 
-Latest blocker (teams #485–#492 and #493–#496): the singleton accessor blocker
+Latest blocker (teams #485–#496 and #497–#501): the singleton accessor blocker
 is fixed with the guest's own flag setter, removing fault `0x24ad562`. The
 callback path still stops at the genuine TaskScheduler "flags loaded" guard
-(`0x6caef67`, latch `0x7cdd149`). The crashpad writer's abort is now root-caused
-to glibc `IO_validate` on a Bionic-layout `FILE*` passed to `fprintf` in the
-crashpad fatal path; all host-side stdio-routing fixes failed, so the writer is
-opt-in only (`SOBER_FLAGS_LATCH_ROUTE` defaults to `none`) and the honest fault
-baseline is preserved. The callback credential was hardened with `placeId>0`
-from `0x72a31c0` and a guest stack frame above notifier RA `0x27eafb3`
-(`analysis/callback/task494-genuine-leg.md`). On the render side, a genuine H6
-FLog sink observer was added (opt-in `SOBER_FRAME_FLOG_SINK=1`, with the true RA
-`0x232e080` and full message-shape checks; see
-`analysis/H6_created_anw_sub.md`), but G8 still rejects at `R8_NO_ACQUIRE`: the
-guest EGL-init calls `0x649c2d6/303/30f` never run in the host-EGL harness, and
-the `JNIAppBridge` flag `0x72a3268=0x406` suppresses the level-5 window log.
-No string, handle, RA, hook or callback is fabricated. Marker stays WITHHELD;
-score unchanged.
+(`0x6caef67`, latch `0x7cdd149`). The crashpad abort was re-root-caused: it is
+crashpad's OWN `HandlerMain` argv validation (`fprintf(stderr,"Usage: ...")` via
+the Bionic `__sF+0x130` FILE*), not an intrinsic crash or host stdio bug. A real
+JNI `String[]` with `argv[0]` plus valid generic options removes the stdio abort,
+but `HandlerMain` still does not return cleanly; all latch routes remain opt-in
+and `SOBER_FLAGS_LATCH_ROUTE` defaults to `none`. The callback credential and
+latch-ready prerequisites were hardened (`analysis/callback/task494-genuine-leg.md`,
+`task500-latch-ready-prereqs.md`).
+
+On the render side a seeded diagnostic now reaches **G8 verdict=1 ACCEPT**
+(C0–C10 all pass): opt-in `SOBER_FRAME_EGL_INIT_DRIVE=1` re-drives genuine guest
+EGL init so real ACQUIRE/DIMS RAs appear, `SOBER_FRAME_FLOG_SINK=1` observes the
+guest log, and `SOBER_FRAME_FLOG_ENABLE=1` raises the JNIAppBridge log level via
+the guest's own registration thunk and setter, then restores it. The real H6
+text is formatted by the guest and parsed with the true sink RA `0x232e080`
+(`analysis/H6_created_anw_sub.md`). The DEFAULT path is unchanged (G8
+`R8_NO_ACQUIRE`, no withhold). Every such run is seeded and force-WITHHELD, so
+the strict `app shell rendered` marker is still unemitted and the callback leg
+remains 0/1. No string, handle, RA, hook, swap or callback is fabricated.
 
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████
@@ -55,7 +60,7 @@ Native init + window + first frame       3/3          100%  ██████�
 JNIEnv function table built           231/231         100%  ████████████████████
 Cached jmethodIDs seeded                49/49         100%  ████████████████████
 Verification (verify-native + ctest)     2/2          100%  ████████████████████
-Weighted goal completion                    61%           61%  ████████████░░░░░░░░
+Weighted goal completion                    62%           62%  ████████████░░░░░░░░
 Decision-013 gate enforced               1/1          100%  ████████████████████
 Genuine app-shell callback observed       0/1            0%  ░░░░░░░░░░░░░░░░░░░░
 app shell rendered marker                WITHHELD          ░░░░░░░░░░░░░░░░░░░░

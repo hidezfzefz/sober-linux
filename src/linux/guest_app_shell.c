@@ -1610,6 +1610,15 @@ int guest_app_shell_run(uintptr_t base)
         /* Default-ON MessageBus publication: genuine dispatch at 0x27eaf04
          * drives the notifier 0x27eaf6e -> gameLoadedCallback path. The placeId
          * comes from the guest's own cached global (0x72a31c0). */
+        /* Worker-3 #500: read-only latch-ready prerequisite report and
+         * app+0x488 readiness query; neither seeds state nor emits a marker. */
+        char prereq_buf[256];
+        int prereq_rc = sober_publish_default_prereqs(
+            (void *)base, NULL, prereq_buf, sizeof(prereq_buf));
+        fprintf(stderr, "[app-shell] MessageBus prereqs -> rc=%d %s\n",
+                prereq_rc, prereq_buf);
+        fprintf(stderr, "[app-shell] app+0x488 ready -> %d\n",
+                sober_app_singleton_app488_ready((void *)base));
         int pub_rc = sober_publish_default_publish_seeded((void *)base);
         fprintf(stderr, "[app-shell] default MessageBus publish -> rc=%d\n", pub_rc);
         void *g1 = sober_jni_new_string_utf8(j, "AppShellNotifications");
@@ -1712,10 +1721,13 @@ int guest_app_shell_run(uintptr_t base)
      * it can never justify the real marker, regardless of which callbacks the
      * bridge happened to observe. These knobs are all off by default. */
     int seeded_state = getenv("SOBER_ABRT_DIAG") ||
+                       getenv("SOBER_FRAME_EGL_INIT_DRIVE") ||
+                       getenv("SOBER_FRAME_FLOG_ENABLE") ||
                        getenv("SOBER_FRAME_FLOG_SINK") ||
                        getenv("SOBER_FLAGS_LATCH_DEFAULT") ||
                        getenv("SOBER_FLAGS_LATCH_ROUTE") ||
                        getenv("SOBER_FLAGS_LATCH_CS_JSON") ||
+                       getenv("SOBER_FLAGS_LATCH_ARGV") ||
                        sober_flags_latch_default_should_withhold() ||
                        sober_frame_evidence_should_withhold() ||
                        getenv("SOBER_FIELDS_NATIVE_DEFAULT") ||
@@ -1860,6 +1872,7 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_PLACEID_DEFAULT") ||
                        getenv("SOBER_PLACEID_VALUE") ||
                        getenv("SOBER_PUBLISH_DEFAULT") ||
+                       getenv("SOBER_PUBLISH_NODE_REDRIVE") ||
                        getenv("SOBER_RENDER_GUEST") ||
                        /* Authoritative modules wired by other roles; their
                         * knobs still force a withhold in this gate. */

@@ -118,6 +118,12 @@ extern "C" {
 /* Kill switch env var (default-ON; exact "0"/off/no/false disables). */
 #define SOBER_PUBLISH_DEFAULT_ENV "SOBER_PUBLISH_DEFAULT"
 
+/* Kill switch for the DIAGNOSTIC 0x253cb56 registration re-drive only
+ * (default ENABLED to preserve existing behaviour; exact "0"/off/no/false
+ * disables it).  The re-drive seeds guest state, so it is NOT proof and stays
+ * in the forced-withhold chain via sober_publish_default_should_withhold(). */
+#define SOBER_PUBLISH_NODE_REDRIVE_ENV "SOBER_PUBLISH_NODE_REDRIVE"
+
 /* ---- result codes -------------------------------------------------------- */
 typedef enum SoberPublishResult {
     SOBER_PD_OK          =   0,  /* chain verified; genuine dispatch driven   */
@@ -167,7 +173,17 @@ typedef enum SoberPublishRva {
      * OWN allocator (0x1dbab02) and inserts it into the MessageBus +0x288
      * list.  Calling it is a genuine guest call: no host byte write, no
      * fabricated object, no direct notifier/thunk call. */
-    SOBER_PD_RVA_NODE_REGISTER   = 0x253cb56u
+    SOBER_PD_RVA_NODE_REGISTER   = 0x253cb56u,
+    /* One-shot guard consumed at the TOP of 0x253cb56 (test 0x253cb84, set
+     * 0x253cb91), BEFORE any descriptor/node is registered.  If it is already
+     * 1 while no id=1 node exists, the guest's single registration attempt ran
+     * before its prerequisites were ready and a re-drive is permanently inert.
+     * Read-only here; this module never writes it. */
+    SOBER_PD_RVA_NODE_GUARD      = 0x72a31bau,
+    /* App singleton read by the 0x30ef840 accessor on the game-load path. */
+    SOBER_PD_RVA_APP_SINGLETON   = 0x72cb5e0u,
+    /* GL capability predicate at the head of 0x30ef840 (0x6096928). */
+    SOBER_PD_RVA_GL_PREDICATE    = 0x6096928u
 } SoberPublishRva;
 
 /* Offsets inside the MessageBus singleton / subscription node / descriptor. */
@@ -209,6 +225,31 @@ typedef struct SoberPublishSnapshot {
     int        verified;          /* 1 when the last verify() passed        */
 } SoberPublishSnapshot;
 
+/* ---- latch-ready prerequisite report (task #500) ------------------------ *
+ * Read-only discovery of every upstream condition the genuine chain needs.
+ * No guest calls, no guest writes, no callbacks: it is a diagnostic query,
+ * not a publish.  It is deliberately separate from verify() so a missing
+ * upstream prerequisite cannot be confused with a broken APS2 relocation. */
+#define SOBER_PD_PREREQ_CHAIN     (1u << 0)  /* canary + APS2 relocs live       */
+#define SOBER_PD_PREREQ_JNI       (1u << 1)  /* cached class + method non-NULL */
+#define SOBER_PD_PREREQ_BUS       (1u << 2)  /* MessageBus guards + object live*/
+#define SOBER_PD_PREREQ_NODE      (1u << 3)  /* genuine id=1 node registered   */
+#define SOBER_PD_PREREQ_PLACE_ID  (1u << 4)  /* guest placeId 0x72a31c0 > 0    */
+#define SOBER_PD_PREREQ_APP       (1u << 5)  /* app singleton 0x72cb5e0 non-NULL*/
+#define SOBER_PD_PREREQ_ALL       0x3fu
+
+typedef struct SoberPublishPrereqs {
+    uint32_t  flags;          /* bitmask of SOBER_PD_PREREQ_* met             */
+    uint8_t   node_guard;     /* raw 0x72a31ba one-shot guard                */
+    uint8_t   bus_guard_a;    /* raw 0x72cc270 (MessageBus ctor guard A)     */
+    uint8_t   bus_guard_b;    /* raw 0x72cc718 (MessageBus ctor guard B)     */
+    void     *bus;            /* 0x72cbdd0 default MessageBus object          */
+    void     *app;            /* 0x72cb5e0 app singleton                      */
+    void     *node;           /* discovered id=1 node (NULL when absent)      */
+    int64_t   place_id;       /* sampled 0x72a31c0                            */
+    int       rc;             /* first failing SoberPublishResult, or OK      */
+} SoberPublishPrereqs;
+
 /* ---- gate / diagnostics -------------------------------------------------- */
 /* Default ON: disabled only by a falsy SOBER_PUBLISH_DEFAULT. */
 SOBER_PD_API int         sober_publish_default_enabled(void);
@@ -227,6 +268,17 @@ SOBER_PD_API int sober_publish_default_verify(void *guest_base,
 /* Locate the genuine id=1 subscription node in the MessageBus +0x288 list
  * (default and mode-3 singletons).  Read-only.  Returns NULL when absent. */
 SOBER_PD_API void *sober_publish_default_find_node(void *guest_base);
+
+/* Latch-ready prerequisite report (task #500).  Read-only: no guest call, no
+ * guest write, no callback and no publish.  Returns SOBER_PD_OK only when all
+ * SOBER_PD_PREREQ_* flags are set; otherwise the first failing result code.
+ * `out` may be NULL; `buf` receives a one-line diagnostic when non-NULL. */
+SOBER_PD_API int sober_publish_default_prereqs(void *guest_base,
+                                               SoberPublishPrereqs *out,
+                                               char *buf, size_t cap);
+
+/* Kill-switch name for the diagnostic 0x253cb56 re-drive (report to lead). */
+SOBER_PD_API const char *sober_publish_default_node_redrive_env(void);
 
 /* Read-only component accessors (0/NULL with a NULL base or missing node). */
 SOBER_PD_API void  *sober_publish_default_descriptor(void *guest_base, void *node);

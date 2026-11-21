@@ -54,6 +54,24 @@ void *sober_app_singleton_ptr(void *guest_base)
     return *(void **)((unsigned char *)guest_base + SOBER_ASB_RVA_APP_SINGLETON);
 }
 
+/* ---- latch-ready prerequisite query (task #500) ------------------------
+ * The game-load consumer at 0x320b0ba reads the FIRST word of app+0x488 as
+ * its `inner` object and faults at 0x31a1360 when it is NULL.  This helper is
+ * purely read-only: it never constructs, patches or installs anything, so it
+ * needs no knob and cannot seed decision-013 state. */
+void *sober_app_singleton_app488_inner(void *guest_base)
+{
+    void *app = sober_app_singleton_ptr(guest_base);
+    if (!app) return NULL;
+    return *(void **)((unsigned char *)app + SOBER_ASB_RVA_APP_FIELD_488);
+}
+
+int sober_app_singleton_app488_ready(void *guest_base)
+{
+    return sober_app_singleton_ptr(guest_base) != NULL &&
+           sober_app_singleton_app488_inner(guest_base) != NULL;
+}
+
 const char *sober_app_singleton_describe(void *guest_base, char *buf, size_t cap)
 {
     if (!buf || cap == 0) return "";
@@ -64,8 +82,10 @@ const char *sober_app_singleton_describe(void *guest_base, char *buf, size_t cap
     void *app = sober_app_singleton_ptr(guest_base);
     snprintf(buf, cap,
              "app@0x72cb5e0=%p fflag_guard@0x72a0a30=%u registry@0x72a0520=%p "
-             "calls=%lu replay=%lu slice=%lu",
-             app, (unsigned)guard, registry, asb_calls, asb_replays, asb_slices);
+             "calls=%lu replay=%lu slice=%lu app488_inner=%p app488_ready=%d",
+             app, (unsigned)guard, registry, asb_calls, asb_replays, asb_slices,
+             sober_app_singleton_app488_inner(guest_base),
+             sober_app_singleton_app488_ready(guest_base));
     return buf;
 }
 

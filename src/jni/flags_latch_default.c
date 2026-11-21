@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "native_jni.h"
 #include "jni_arrays.h"
@@ -38,7 +40,8 @@ int sober_flags_latch_default_enabled(void)
 
 const char *sober_flags_latch_default_env_vars(void)
 {
-    return SOBER_FLAGS_LATCH_DEFAULT_ENV "," SOBER_FLAGS_LATCH_ROUTE_ENV;
+    return SOBER_FLAGS_LATCH_DEFAULT_ENV "," SOBER_FLAGS_LATCH_ROUTE_ENV ","
+           SOBER_FLAGS_LATCH_ARGV_ENV;
 }
 
 int sober_flags_latch_default_should_withhold(void)
@@ -106,6 +109,74 @@ static int route_crashpad_jni(void *j, void *base, void *env, void *cls)
                     "channel_tag=%u latch=%u\n",
             (unsigned)*(volatile unsigned char *)(b + 0x72a3710u),
             sober_flags_latch_default_latch());
+    return 0;
+}
+
+/* Route 5 (task #499 NEW): the "crashpad fatal tail" was root-caused to crashpad
+ * HandlerMain's own argv validation at 0x2a32890: on missing mandatory options
+ * it does fprintf(stderr="__sF+0x130", "Usage: %s [OPTION]...") at 0x2a328a7,
+ * and glibc IO_validate aborts on the Bionic-layout FILE*.  The latch is set
+ * earlier at 0x2ec9fae, so if the guest is given a *valid* crashpad argv the
+ * usage path is never entered.  Hand the guest a real JNI String[] whose
+ * entries are genuine crashpad handler options (converted to char** by the
+ * guest's own JNI walk at 0x2eca8d3 -> 0x2315532).  No host byte write, no
+ * fabricated callback.  Default argv satisfies "--database is required" and
+ * "--initial-client-fd is required"; override with SOBER_FLAGS_LATCH_ARGV. */
+static int route_crashpad_valid(void *j, void *base, void *env, void *cls)
+{
+    unsigned char *b = (unsigned char *)base;
+    static char channel[] = "LIVE";
+    char buf[1024];
+    const char *spec = getenv(SOBER_FLAGS_LATCH_ARGV_ENV);
+    const char *args[16];
+    int n = 0;
+    int sp[2] = { -1, -1 };
+
+    /* Gate: channel string at 0x72a3718 must be non-NULL (0x2ec9f2e).  Seed it
+     * with the guest's own std::string setter, exactly like crashpad-jni. */
+    ((void (*)(void *, const char *))((unsigned char *)base + 0x2e57c20u))
+        (b + 0x72a3710u, channel);
+
+    if (!spec || !*spec)
+        spec = "crashpad-handler,--database=/tmp/sober-crashpad-db,"
+               "--initial-client-fd=3,--no-periodic-tasks,--no-rate-limit";
+    strncpy(buf, spec, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    char *p = buf;
+    while (n < (int)(sizeof(args) / sizeof(args[0])) - 1) {
+        args[n++] = p;
+        char *comma = strchr(p, ',');
+        if (!comma) break;
+        *comma = '\0';
+        p = comma + 1;
+    }
+    /* Optional genuine IPC: a literal "@SOCK@" spec token is replaced by a
+     * real AF_UNIX socketpair fd handed to --initial-client-fd, and the peer
+     * is closed so crashpad observes EOF.  This is host-side IPC plumbing,
+     * not a guest byte write or fabricated callback. */
+    if (strstr(spec, "@SOCK@") && socketpair(AF_UNIX, SOCK_STREAM, 0, sp) == 0) {
+        for (int i = 0; i < n; ++i) {
+            const char *at = strstr(args[i], "@SOCK@");
+            if (at) {
+                char tmp[64];
+                snprintf(tmp, sizeof(tmp), "%.*s%d%s",
+                         (int)(at - args[i]), args[i], sp[0],
+                         at + strlen("@SOCK@"));
+                /* args[] points into buf; copy into a safe static slot. */
+                static char sockarg[64];
+                snprintf(sockarg, sizeof(sockarg), "%s", tmp);
+                args[i] = sockarg;
+            }
+        }
+        close(sp[1]);
+    }
+    void *arr = sober_jni_new_string_array(j, args, (size_t)n);
+    if (arr && env && cls)
+        ((void (*)(void *, void *, void *))
+            ((unsigned char *)base + SOBER_FLAGS_LATCH_RVA_CRASHPAD_JNI))
+            (env, cls, arr);
+    fprintf(stderr, "[flags-latch] crashpad-valid 0x2eca720 argv=%d "
+                    "latch=%u\n", n, sober_flags_latch_default_latch());
     return 0;
 }
 
@@ -177,6 +248,8 @@ int sober_flags_latch_default_install(void *guest_base, void *jni_env,
         route_client_settings(jni, guest_base, jni_env, jclass);
     else if (!strcmp(route, "crashpad-jni"))
         route_crashpad_jni(jni, guest_base, jni_env, jclass);
+    else if (!strcmp(route, "crashpad-valid"))
+        route_crashpad_valid(jni, guest_base, jni_env, jclass);
     else if (!strcmp(route, "crashpad-main"))
         route_crashpad_main(guest_base);
     else if (!strcmp(route, "narrow"))

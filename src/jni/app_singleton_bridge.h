@@ -87,7 +87,11 @@ enum {
     SOBER_ASB_RVA_GUEST_ALLOC      = 0x1dbab02u, /* guest allocator (0xa8)   */
     SOBER_ASB_RVA_HELPER_GET       = 0x1dd55f2u, /* guest helper/vptr getter  */
     SOBER_ASB_RVA_SINGLETON_CTOR   = 0x608f85au, /* sole singleton ctor       */
-    SOBER_ASB_RVA_TMP_RELEASE      = 0x30efe88u  /* temp shared_ptr release   */
+    SOBER_ASB_RVA_TMP_RELEASE      = 0x30efe88u, /* temp shared_ptr release   */
+    /* Game-load consumer fields (task #500, read-only prerequisites). */
+    SOBER_ASB_RVA_APP_ACCESSOR     = 0x30ef840u, /* 0x30ef840 app getter      */
+    SOBER_ASB_RVA_GL_PREDICATE     = 0x6096928u, /* predicate at head of getter*/
+    SOBER_ASB_RVA_APP_FIELD_488    = 0x488u      /* app+0x488 consumer slot   */
 };
 
 typedef struct SoberJni SoberJni;
@@ -130,6 +134,12 @@ int sober_app_singleton_populate_auto(SoberJni *j, void *guest_base);
 
 /* Read-only helpers (safe with a NULL base). */
 void       *sober_app_singleton_ptr(void *guest_base);
+/* Latch-ready prerequisite query (task #500).  Read-only: returns 1 only when
+ * BOTH the app singleton at 0x72cb5e0 and the inner object consumed from
+ * app+0x488 (guest 0x320b0ba) are non-NULL.  No guest call, no write, no knob
+ * and no state change -- it is a diagnostic predicate, safe to call anytime. */
+int         sober_app_singleton_app488_ready(void *guest_base);
+void       *sober_app_singleton_app488_inner(void *guest_base);
 const char *sober_app_singleton_describe(void *guest_base,
                                          char *buf, size_t cap);
 void        sober_app_singleton_reset(void);  /* reset module counters only */

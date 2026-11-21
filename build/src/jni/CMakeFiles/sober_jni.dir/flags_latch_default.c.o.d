@@ -42,7 +42,21 @@ src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.o: \
  /usr/include/bits/stdlib-float.h /usr/include/bits/stdlib.h \
  /usr/include/string.h /usr/include/strings.h \
  /usr/include/bits/strings_fortified.h \
- /usr/include/bits/string_fortified.h \
+ /usr/include/bits/string_fortified.h /usr/include/sys/socket.h \
+ /usr/include/bits/types/struct_iovec.h /usr/include/bits/socket.h \
+ /usr/include/bits/socket_type.h /usr/include/bits/sockaddr.h \
+ /usr/include/asm/socket.h /usr/include/asm-generic/socket.h \
+ /usr/include/linux/posix_types.h /usr/include/linux/stddef.h \
+ /usr/include/asm/posix_types.h /usr/include/asm/posix_types_64.h \
+ /usr/include/asm-generic/posix_types.h /usr/include/asm/bitsperlong.h \
+ /usr/include/asm-generic/bitsperlong.h /usr/include/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h \
+ /usr/include/bits/types/struct_osockaddr.h /usr/include/bits/socket2.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/environments.h /usr/include/bits/confname.h \
+ /usr/include/bits/getopt_posix.h /usr/include/bits/getopt_core.h \
+ /usr/include/bits/unistd.h /usr/include/bits/unistd-decl.h \
+ /usr/include/bits/unistd_ext.h /usr/include/linux/close_range.h \
  /home/user/sober-linux/src/jni/native_jni.h \
  /home/user/sober-linux/src/jni/jni_arrays.h \
  /home/user/sober-linux/src/jni/jni_strings.h

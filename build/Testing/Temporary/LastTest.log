@@ -1,10 +1,10 @@
-Start testing: Nov 21 12:40 -00
+Start testing: Nov 21 13:22 -00
 ----------------------------------------------------------
 1/2 Testing: sober_native_check
 1/2 Test: sober_native_check
 Command: "/home/user/sober-linux/build/sober-native" "--check"
 Directory: /home/user/sober-linux/build
-"sober_native_check" start time: Nov 21 12:40 -00
+"sober_native_check" start time: Nov 21 13:22 -00
 Output:
 ----------------------------------------------------------
 [INFO/sober-android] native NDK/Bionic shim initialised (no Android runtime)
@@ -12,15 +12,15 @@ sober-native 0.1.0 | native Linux ELF | no translation layer
 compat backend: native-linux/posix (epoll+mmap+pthread+dlopen NDK shim)
 gfx backend: native libEGL + libGLESv2 (dlopen)
 native graphics libraries (dlopen): X11 Wayland OpenGL Vulkan
-native monotonic clock (s): 138871
+native monotonic clock (s): 141436
 command line: /usr/bin/ctest
 NDK/Bionic shim entries: 268 | GL/EGL trampolines: 91
 sober-native self-check: OK
 <end of output>
-Test time =   0.01 sec
+Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"sober_native_check" end time: Nov 21 12:40 -00
+"sober_native_check" end time: Nov 21 13:22 -00
 "sober_native_check" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -28,7 +28,7 @@ Test Passed.
 2/2 Test: sober_native_version
 Command: "/home/user/sober-linux/build/sober-native" "--version"
 Directory: /home/user/sober-linux/build
-"sober_native_version" start time: Nov 21 12:40 -00
+"sober_native_version" start time: Nov 21 13:22 -00
 Output:
 ----------------------------------------------------------
 [INFO/sober-android] native NDK/Bionic shim initialised (no Android runtime)
@@ -40,8 +40,8 @@ sober-native 0.1.0
 Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"sober_native_version" end time: Nov 21 12:40 -00
+"sober_native_version" end time: Nov 21 13:22 -00
 "sober_native_version" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Nov 21 12:40 -00
+End testing: Nov 21 13:22 -00

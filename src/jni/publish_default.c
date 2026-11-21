@@ -59,7 +59,24 @@ int sober_publish_default_enabled(void)
 
 const char *sober_publish_default_env_vars(void)
 {
-    return SOBER_PUBLISH_DEFAULT_ENV;
+    return SOBER_PUBLISH_DEFAULT_ENV "," SOBER_PUBLISH_NODE_REDRIVE_ENV;
+}
+
+/* Kill switch for the DIAGNOSTIC 0x253cb56 re-drive.  Default ENABLED so
+ * existing behaviour is preserved; an exact falsy value makes pd_ensure_node
+ * an inert no-op.  The re-drive still seeds state and stays force-withheld. */
+static int pd_node_redrive_enabled(void)
+{
+    const char *e = getenv(SOBER_PUBLISH_NODE_REDRIVE_ENV);
+    if (!e)
+        return 1;
+    return !(strcmp(e, "0") == 0 || strcasecmp(e, "off") == 0 ||
+             strcasecmp(e, "no") == 0 || strcasecmp(e, "false") == 0);
+}
+
+const char *sober_publish_default_node_redrive_env(void)
+{
+    return SOBER_PUBLISH_NODE_REDRIVE_ENV;
 }
 
 int sober_publish_default_should_withhold(void)
@@ -153,6 +170,100 @@ int64_t sober_publish_default_seeded_place_id(void *guest_base)
         return 0;
     return (int64_t)pd_u64((unsigned char *)guest_base,
                            SOBER_PD_RVA_PLACE_ID_GLOBAL);
+}
+
+/* ---- latch-ready prerequisite report (task #500) ------------------------
+ * Read-only: no guest call, no write, no callback, no publish.  The id=1
+ * registration at 0x253cb56 consumes its one-shot guard 0x72a31ba at function
+ * entry, BEFORE it registers any descriptor.  If the guard is spent while the
+ * node is still absent, the guest's only registration attempt ran too early
+ * and no host-side re-drive can recover it.  This report makes that exact
+ * condition visible instead of collapsing everything into NO_NODE. */
+int sober_publish_default_prereqs(void *guest_base, SoberPublishPrereqs *out,
+                                  char *buf, size_t cap)
+{
+    unsigned char *b = (unsigned char *)guest_base;
+    SoberPublishPrereqs local;
+    SoberPublishPrereqs *p = out ? out : &local;
+    uint32_t flags = 0u;
+    int rc = SOBER_PD_OK;
+
+    memset(p, 0, sizeof(*p));
+    if (buf && cap)
+        buf[0] = '\0';
+    if (!b) {
+        p->rc = SOBER_PD_ERR;
+        return SOBER_PD_ERR;
+    }
+
+    /* 1. APS2-relocated virtual / slot / notifier chain + dispatch canary. */
+    if (pd_ptr(b, SOBER_PD_RVA_CANARY_GLOBAL) &&
+        pd_ptr(b, SOBER_PD_RVA_INVOKE_SLOT) ==
+            (void *)(b + SOBER_PD_RVA_DESC_INVOKE) &&
+        pd_ptr(b, SOBER_PD_RVA_SLOT_GLOBAL) ==
+            (void *)(b + SOBER_PD_RVA_NOTIFIER_TABLE) &&
+        pd_ptr(b, SOBER_PD_RVA_NOTIFIER_TABLE) ==
+            (void *)(b + SOBER_PD_RVA_NOTIFIER))
+        flags |= SOBER_PD_PREREQ_CHAIN;
+    else if (rc == SOBER_PD_OK)
+        rc = SOBER_PD_BAD_CHAIN;
+
+    /* 2. Cached JNI class/method the notifier 0x27eaf6e dereferences. */
+    if (pd_ptr(b, SOBER_PD_RVA_CLASS_GLOBAL) &&
+        pd_ptr(b, SOBER_PD_RVA_METHOD_GLOBAL))
+        flags |= SOBER_PD_PREREQ_JNI;
+    else if (rc == SOBER_PD_OK)
+        rc = SOBER_PD_NO_STATE;
+
+    /* 3. MessageBus singleton: guards 0x72cc270/0x72cc718 armed (the guest's
+     * 0x24a8e44(4) constructor path) and the default bus object present. */
+    p->bus_guard_a = *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_A);
+    p->bus_guard_b = *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_B);
+    p->bus = pd_ptr(b, SOBER_PD_RVA_BUS_DEFAULT);
+    if (p->bus_guard_a && p->bus_guard_b && p->bus)
+        flags |= SOBER_PD_PREREQ_BUS;
+    else if (rc == SOBER_PD_OK)
+        rc = SOBER_PD_NO_NODE;
+
+    /* 4. Genuine registered id=1 GameLoaded node (descriptor vptr/id/slot). */
+    p->node = sober_publish_default_find_node(b);
+    if (p->node)
+        flags |= SOBER_PD_PREREQ_NODE;
+
+    /* 5. Guest-seeded placeId from StartGameWithParam (0x2ebd86a -> 0x72a31c0). */
+    p->place_id = (int64_t)pd_u64(b, SOBER_PD_RVA_PLACE_ID_GLOBAL);
+    if (p->place_id > 0)
+        flags |= SOBER_PD_PREREQ_PLACE_ID;
+    else if (rc == SOBER_PD_OK)
+        rc = SOBER_PD_NO_STATE;
+
+    /* 6. App singleton the closure 0x2ec1340 reads via 0x30ef840. */
+    p->app = pd_ptr(b, SOBER_PD_RVA_APP_SINGLETON);
+    if (p->app)
+        flags |= SOBER_PD_PREREQ_APP;
+    else if (rc == SOBER_PD_OK)
+        rc = SOBER_PD_NO_STATE;
+
+    /* Always report the one-shot guard, even when everything else is ready. */
+    p->node_guard = *(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD);
+    p->flags = flags;
+    p->rc = rc;
+
+    if (buf && cap)
+        snprintf(buf, cap,
+                 "chain=%u jni=%u bus=%u node=%u placeId=%u app=%u "
+                 "guard@0x72a31ba=%u bus_guards=%u/%u bus=%p app=%p node=%p "
+                 "placeId=%lld -> flags=0x%x rc=%d",
+                 !!(flags & SOBER_PD_PREREQ_CHAIN),
+                 !!(flags & SOBER_PD_PREREQ_JNI),
+                 !!(flags & SOBER_PD_PREREQ_BUS),
+                 !!(flags & SOBER_PD_PREREQ_NODE),
+                 !!(flags & SOBER_PD_PREREQ_PLACE_ID),
+                 !!(flags & SOBER_PD_PREREQ_APP),
+                 (unsigned)p->node_guard, (unsigned)p->bus_guard_a,
+                 (unsigned)p->bus_guard_b, p->bus, p->app, p->node,
+                 (long long)p->place_id, flags, rc);
+    return rc;
 }
 
 int sober_publish_default_verify(void *guest_base, char *buf, size_t cap)
@@ -249,9 +360,33 @@ done:
 static void *pd_ensure_node(unsigned char *b)
 {
     void *node = sober_publish_default_find_node(b);
+    uint8_t guard;
+
     if (node) return node;      /* already registered by the guest */
 
     if (!sober_publish_default_enabled()) return NULL;
+    if (!pd_node_redrive_enabled()) {
+        fprintf(stderr,
+                "[publish-default] 0x253cb56 re-drive disabled by %s=0 "
+                "(diagnostic seed stays WITHHELD)\n",
+                SOBER_PUBLISH_NODE_REDRIVE_ENV);
+        return NULL;
+    }
+
+    /* FAULT FIX (#500): 0x253cb56 spends its one-shot guard at 0x253cb91,
+     * BEFORE registering the id=1 descriptor at 0x253d06e.  If the guard is
+     * already 1 while no node exists, the guest's single attempt ran before
+     * its prerequisites were ready; a re-drive would just hit 0x253d1b7 and
+     * do nothing.  Detect that here instead of silently retrying forever. */
+    guard = *(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD);
+    if (guard) {
+        fprintf(stderr,
+                "[publish-default] id=1 node absent but one-shot guard@0x72a31ba=1: "
+                "guest registration 0x253cb56(1,&0x7234520) already spent before "
+                "prerequisites were ready; re-drive INERT (WITHHELD, no fabricated node)\n");
+        return NULL;
+    }
+
     {
         sober_pd_register_fn reg =
             (sober_pd_register_fn)(uintptr_t)(b + SOBER_PD_RVA_NODE_REGISTER);
@@ -440,7 +575,7 @@ const char *sober_publish_default_describe(char *buf, size_t cap)
              "enabled=%d gate=%s publish=%llu chain_ok=%llu register=%llu "
              "hits[dispatch=%llu call=%llu invoke=%llu notifier=%llu "
              "thunk_ret=%llu callback=%llu] placeId=%lld last_rc=%d "
-             "node=%p desc=%p",
+             "node=%p desc=%p redrive=%d",
              sober_publish_default_enabled(), SOBER_PUBLISH_DEFAULT_ENV,
              (unsigned long long)atomic_load(&g_publish_calls),
              (unsigned long long)atomic_load(&g_chain_ok),
@@ -454,7 +589,8 @@ const char *sober_publish_default_describe(char *buf, size_t cap)
              (long long)atomic_load(&g_last_place_id),
              atomic_load(&g_last_rc),
              (void *)(uintptr_t)atomic_load(&g_node),
-             (void *)(uintptr_t)atomic_load(&g_descriptor));
+             (void *)(uintptr_t)atomic_load(&g_descriptor),
+             pd_node_redrive_enabled());
     return buf;
 }
 
