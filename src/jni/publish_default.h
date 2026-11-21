@@ -440,6 +440,53 @@ SOBER_PD_API void     sober_publish_default_snapshot(SoberPublishSnapshot *out);
 SOBER_PD_API const char *sober_publish_default_describe(char *buf, size_t cap);
 SOBER_PD_API void     sober_publish_default_reset(void);
 
+/* ---- task #534: authoritative-DEX Java->JNI boot order --------------------
+ * DECLARATIVE DATA ONLY.  This table is a machine-readable copy of the real
+ * call order derived from the SHA-matched base.apk
+ * (114a6f8ed6f0f974cf632a9cbec2f5cd45e1d85d7ed251db4f3920140bc6ead4)
+ * with Craft Anything 0.6.1 DEX tools, cross-checked against the frozen
+ * libroblox.so (3e498d64.../BuildID 204ad049) with nm -D and objdump.
+ * Full evidence: analysis/w6-01-node-sequence.md.
+ *
+ * No entry here is executed by this module: no guest call, no guest write,
+ * no callback, no gate change.  It exists so the lead's wiring cannot drift
+ * from the DEX evidence.  `rva` is 0 for the guest-internal id=1 registration
+ * stage (it is reached only from inside nativeAppBridgeV2InitWithParams).
+ */
+typedef enum SoberBootStageId {
+    SOBER_BOOT_SET_DEVICE_INFO = 0,   /* nativeSetDeviceInfo 0x2479c55        */
+    SOBER_BOOT_SET_INIT_PARAMS,       /* nativeAppBridgeSetInitParams 0x2edcf18 */
+    SOBER_BOOT_APP_BRIDGE_START,      /* nativeAppBridgeAppStart 0x247dc8d    */
+    SOBER_BOOT_APP_BRIDGE_STARTED,    /* guest uh/e.f (internal, not a JNI export) */
+    SOBER_BOOT_GAME_GLOBAL_INIT,      /* nativeGameGlobalInit 0x233762c       */
+    SOBER_BOOT_UPDATE_ADAPTER_INIT,   /* nativeUpdateAdapterInit 0x234df63    */
+    SOBER_BOOT_SET_IMPLEMENTATION,    /* NativeGLJavaInterface.setImplementation */
+    SOBER_BOOT_INIT_WITH_PARAMS,      /* nativeAppBridgeV2InitWithParams 0x24abf96 */
+    SOBER_BOOT_ID1_REGISTER,          /* guest call 0x24ad6a5 -> 0x253cb56    */
+    SOBER_BOOT_START_APP_WITH_PARAMS, /* nativeAppBridgeV2StartAppWithParams 0x26fe80f */
+    SOBER_BOOT_START_LUA_APP_DM,      /* nativeAppBridgeStartLuaAppDM 0x25448f6 */
+    SOBER_BOOT_START_GAME_WITH_PARAM, /* nativeAppBridgeV2StartGameWithParam 0x2ebd51a */
+    SOBER_BOOT_SEND_GAME_LOADED,      /* nativeAppBridgeV2SendAppEventOnGameLoaded 0x2ebca9e */
+    SOBER_BOOT_POST_CLIENT_SETTINGS,  /* nativePostClientSettings...3 0x2383c18 */
+    SOBER_BOOT_STAGE_COUNT
+} SoberBootStageId;
+
+typedef struct SoberBootStep {
+    SoberBootStageId id;
+    uint32_t    rva;           /* frozen-engine RVA (0 = guest-internal)      */
+    int         is_jni_export; /* 1 = callable JNI export, 0 = internal/data  */
+    const char *export_name;   /* short JNI symbol / internal helper name     */
+    const char *java_caller;   /* authoritative-DEX class->method             */
+    const char *dex_offset;    /* invoke offset inside that caller            */
+    const char *role;          /* why it is in the order                      */
+} SoberBootStep;
+
+/* Returns a pointer to a static, ordered, read-only table of
+ * SOBER_BOOT_STAGE_COUNT entries; writes the count to `count` when non-NULL. */
+SOBER_PD_API const SoberBootStep *sober_publish_default_boot_order(unsigned *count);
+/* Stable short name for a stage id ("" for an out-of-range id). */
+SOBER_PD_API const char *sober_publish_default_boot_order_name(SoberBootStageId id);
+
 #ifdef __cplusplus
 }
 #endif

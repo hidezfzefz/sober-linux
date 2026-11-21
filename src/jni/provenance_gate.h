@@ -156,6 +156,8 @@ extern "C" {
  * reaches the thunk.  Read-only sample: a NULL global can only REMOVE a
  * credential (fail closed), never manufacture one. */
 #define SOBER_PROV_GATE_RVA_JAVA_VM         0x7cdec78u
+/* Guest JavaVM vtable slot +0x30 (GetEnv) - fail-closed identity check. */
+#define SOBER_PROV_GATE_RVA_JAVAVM_GETENV   0x6c8e8a8u
 
 /* ---- qualifying dispatch name ------------------------------------------ */
 #define SOBER_PROV_GATE_QUALIFYING_NAME     "gameLoadedCallback"

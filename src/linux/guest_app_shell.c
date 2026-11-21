@@ -1089,9 +1089,15 @@ int guest_app_shell_run(uintptr_t base)
      * loaded" int3 at 0x6caef66. Real JNI call, 3 non-empty strings. */
     if (getenv("SOBER_CLIENT_SETTINGS_INIT")) {
         void *cs_env = sober_jni_env(j);
+        /* Wave6 #550 authoritative DEX fidelity: real owner is NativeGLInterface
+         * and args are (settings path, external JSON override,
+         * "GoogleAndroidApp") - our old slot order/class were from a modded
+         * mini APK and are wrong. */
         void *cs_cls = sober_jni_find_class(j,
-            "com/roblox/engine/jni/NativeGLJavaInterface");
+            "com/roblox/engine/jni/NativeGLInterface");
         void *a, *b, *c;
+        const char *cs_json = getenv("SOBER_SETTINGS_JSON");
+        if (!cs_json) cs_json = "{}";
         if (sober_jstr_enabled()) {
             /* A3: 0x2315532 converts each jstring through GetStringUTFChars
              * (fn[165] @ +0x548).  The default bridge stub does not recognise
@@ -1104,15 +1110,15 @@ int guest_app_shell_run(uintptr_t base)
             int ji_rc = sober_jstr_install(cs_fn, (void *)base);
             fprintf(stderr, "[app-shell] canonical jstrings install -> rc=%d\n",
                     ji_rc);
-            const char *cs_json = getenv("SOBER_SETTINGS_JSON");
-            if (!cs_json) cs_json = "{}";
-            a = sober_jstr_create((void *)base, cs_json);
-            b = sober_jstr_create((void *)base, "LIVE");
-            c = sober_jstr_create((void *)base, "2.740.931");
+            a = sober_jstr_create((void *)base,
+                "/data/local/tmp/ClientAppSettings.json");
+            b = sober_jstr_create((void *)base, cs_json);
+            c = sober_jstr_create((void *)base, "GoogleAndroidApp");
         } else {
-            a = sober_jni_new_string_utf8(j, "{}");
-            b = sober_jni_new_string_utf8(j, "LIVE");
-            c = sober_jni_new_string_utf8(j, "2.740.931");
+            a = sober_jni_new_string_utf8(j,
+                "/data/local/tmp/ClientAppSettings.json");
+            b = sober_jni_new_string_utf8(j, cs_json);
+            c = sober_jni_new_string_utf8(j, "GoogleAndroidApp");
         }
         fprintf(stderr, "[app-shell] client-settings pre: "
                         "7697cf0=%#x 7697d08=%#x 7697d09=%#x 72a31b8=%#x "

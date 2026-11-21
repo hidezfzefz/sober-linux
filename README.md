@@ -42,6 +42,15 @@ was rigorously proven impossible (`analysis/task510-dialog-cppproxy-route.md`).
 A MessageBus pre-init wrapper (`SOBER_MESSAGEBUS_PREINIT`, opt-in) is wired but
 not yet exercised cleanly (`analysis/wave4-messagebus-preinit.md`).
 
+Wave 6 (another 20-agent fan-out, one Craft Anything CLI, authoritative
+SHA-matched DEX only) used a research-only Android emulator oracle and found:
+main-process boot sets the TaskScheduler latch without crashpad, default surface
+lifecycle goes through `ActivityNativeMain`/`RBXSurfaceView` → JNIAppBridge (not
+AGDK thunks), and MessageBus event-1 still has no DEX publisher. The gate was
+hardened with a JavaVM vtable identity check and corrected
+`nativeInitClientSettings` argument/class fidelity. Marker stays WITHHELD; the
+emulator is never part of the final runtime.
+
 Wave 5 (20 agents, shared Obsidian vault `/home/user/sober-vault`) reached an
 honest terminal finding: the three clean prerequisites are impossible in this
 native harness without a forbidden Android runtime or a withhold-worthy seed —

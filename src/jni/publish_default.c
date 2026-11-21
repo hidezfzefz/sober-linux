@@ -772,3 +772,78 @@ void sober_publish_default_reset(void)
     atomic_store(&g_register_calls, 0);
     atomic_store(&g_bus_preinit_calls, 0);
 }
+
+/* ---- task #534: authoritative-DEX Java->JNI boot order (declarative) ------
+ * Static DATA, never executed: no guest call/write, no callback, no gate
+ * change.  Every row is an OBSERVED DEX invoke in the SHA-matched base.apk
+ * (114a6f8e...) cross-checked with nm -D on the frozen libroblox.so.  See
+ * analysis/w6-01-node-sequence.md for the evidence IDs and the guard detail.
+ */
+static const SoberBootStep s_boot_order[SOBER_BOOT_STAGE_COUNT] = {
+    { SOBER_BOOT_SET_DEVICE_INFO, 0x2479c55u, 1,
+      "NativeSettingsInterface_nativeSetDeviceInfo",
+      "MainGameActivity.E2", "0x16",
+      "early device params; setInitParamsForEngine" },
+    { SOBER_BOOT_SET_INIT_PARAMS, 0x2edcf18u, 1,
+      "MainGameActivity_nativeAppBridgeSetInitParams",
+      "MainGameActivity$Companion.e", "0x00 (called from E2 @0x5e)",
+      "seeds native InitParams state before the app-shell manager" },
+    { SOBER_BOOT_APP_BRIDGE_START, 0x247dc8du, 1,
+      "NativeAppBridgeInterface_nativeAppBridgeAppStart",
+      "NativeAppBridgeInterface.a", "0x07 (called from yj/k0.P @0xa6)",
+      "direct JNI route to 0x24a8e44(4); sets appBridgeStarted" },
+    { SOBER_BOOT_APP_BRIDGE_STARTED, 0u, 0,
+      "uh/e.f (guest flag)", "uh/e.D", "0x01 (called from yj/k0.P @0xb7)",
+      "MUST be set before InitWithParams when CrashWhenAppBridgeNotStarted" },
+    { SOBER_BOOT_GAME_GLOBAL_INIT, 0x233762cu, 1,
+      "NativeGLInterface_nativeGameGlobalInit", "uh/e.E", "0x50 (P2 @0x0b)",
+      "ASMA.setup() engine-global init" },
+    { SOBER_BOOT_UPDATE_ADAPTER_INIT, 0x234df63u, 1,
+      "NativeGLInterface_nativeUpdateAdapterInit", "uh/e.E", "0x5d (P2 @0x0b)",
+      "ASMA.setup() update-adapter init" },
+    { SOBER_BOOT_SET_IMPLEMENTATION, 0u, 0,
+      "NativeGLJavaInterface.setImplementation", "uh/e.g", "0x04 (j @0x44)",
+      "installs EngineJavaCallback2 before InitWithParams" },
+    { SOBER_BOOT_INIT_WITH_PARAMS, 0x24abf96u, 1,
+      "NativeGLInterface_nativeAppBridgeV2InitWithParams", "uh/e.j", "0xdd (P2 @0x16)",
+      "contains the single guest id=1 registration call" },
+    { SOBER_BOOT_ID1_REGISTER, 0x24ad6a5u, 0,
+      "guest register(1, base+0x7234520)", "native 0x24abf96", "0x24ad6a5",
+      "call 0x253cb56; spends guard 0x72a31ba; builds node on bus 0x72cbdd0" },
+    { SOBER_BOOT_START_APP_WITH_PARAMS, 0x26fe80fu, 1,
+      "NativeGLInterface_nativeAppBridgeV2StartAppWithParams", "uh/e.F", "0x55",
+      "app-shell start after InitWithParams (surface-driven)" },
+    { SOBER_BOOT_START_LUA_APP_DM, 0x25448f6u, 1,
+      "NativeGLInterface_nativeAppBridgeStartLuaAppDM", "ActivityNativeMain.P2", "0x4d",
+      "Lua/app DM start (indirect bus getter via vtable 0x6dbc9a0)" },
+    { SOBER_BOOT_START_GAME_WITH_PARAM, 0x2ebd51au, 1,
+      "NativeGLInterface_nativeAppBridgeV2StartGameWithParam", "uh/h0.C", "0xe0",
+      "game join; caches placeId at 0x72a31c0" },
+    { SOBER_BOOT_SEND_GAME_LOADED, 0x2ebca9eu, 1,
+      "NativeGLInterface_nativeAppBridgeV2SendAppEventOnGameLoaded", "uh/e.z", "0x12 (A @0x05)",
+      "game-loaded app event (separate from the notifier chain)" },
+    { SOBER_BOOT_POST_CLIENT_SETTINGS, 0x2383c18u, 1,
+      "NativeGLInterface_nativePostClientSettingsLoadedInitialization3",
+      "uh/e$f.b", "0x0e",
+      "sole writer of app singleton 0x72cb5e0 (app_singleton_bridge)" }
+};
+
+const SoberBootStep *sober_publish_default_boot_order(unsigned *count)
+{
+    if (count)
+        *count = (unsigned)SOBER_BOOT_STAGE_COUNT;
+    return s_boot_order;
+}
+
+const char *sober_publish_default_boot_order_name(SoberBootStageId id)
+{
+    static const char *const names[SOBER_BOOT_STAGE_COUNT] = {
+        "set_device_info", "set_init_params", "app_bridge_start",
+        "app_bridge_started", "game_global_init", "update_adapter_init",
+        "set_implementation", "init_with_params", "id1_register",
+        "start_app_with_params", "start_lua_app_dm", "start_game_with_param",
+        "send_game_loaded", "post_client_settings"
+    };
+    return (id >= 0 && (unsigned)id < (unsigned)SOBER_BOOT_STAGE_COUNT)
+               ? names[id] : "";
+}

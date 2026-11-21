@@ -474,6 +474,15 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
      * task #531 readiness leg explicit and can only fail closed. */
     void *java_vm = read_ptr(base + (uintptr_t)SOBER_PROV_GATE_RVA_JAVA_VM);
     atomic_store_explicit(&g_java_vm, (uintptr_t)java_vm, memory_order_relaxed);
+    /* Wave6 F6: identity, not just non-NULL.  JavaVM* is a pointer to a vtable
+     * pointer; GetEnv is slot +0x30.  A host/stock JVM JNIEnv cannot satisfy
+     * this leg, so a forged clean state stays fail-closed. */
+    void *vm_vtable = java_vm
+        ? read_ptr((uintptr_t)java_vm) : NULL;
+    void *vm_getenv = vm_vtable
+        ? read_ptr((uintptr_t)vm_vtable + 0x30u) : NULL;
+    const int java_vm_ok = vm_getenv ==
+        (void *)(base + (uintptr_t)SOBER_PROV_GATE_RVA_JAVAVM_GETENV);
 
     const int build_ok = atomic_load_explicit(&g_build_verified,
                                               memory_order_acquire);
@@ -485,7 +494,7 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
      * guest_above_notifier is the last two checks; if either fails the dispatch
      * is UNCLASSIFIED, never GENUINE. */
     const int genuine = (qi >= 0) && build_ok && class_ok && method_ok &&
-                        place_id > 0 && java_vm != NULL &&
+                        place_id > 0 && java_vm_ok &&
                         sc.thunk_seen && sc.caller == CALLER_NOTIFIER &&
                         sc.guest_above_notifier;
     const int harness = sc.thunk_seen && sc.caller == CALLER_NONE;

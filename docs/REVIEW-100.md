@@ -65,6 +65,15 @@ clean render green is impossible without real Java surface lifecycle; worker-5's
 N1–N9 negative audit stayed fail-closed and residual withhold gaps were closed.
 Score ≈66%.
 
+**Wave 6 (20 agents, one Craft Anything CLI, authoritative SHA-matched DEX):**
+a research-only AVD oracle showed main-process boot sets the flags-loaded latch
+without crashpad, that authoritative default surface lifecycle uses
+`ActivityNativeMain`/`RBXSurfaceView` → JNIAppBridge (not AGDK thunks), and that
+MessageBus event-1 has no DEX publisher. The gate gained a JavaVM vtable
+identity leg and `nativeInitClientSettings` fidelity was corrected from the
+authoritative DEX. The exact in-process latch writer is still being isolated;
+none of this makes a clean callback pass. Marker stays WITHHELD.
+
 **Wave 5 (20 agents, shared Obsidian vault `/home/user/sober-vault`):** the clean
 path was exhaustively investigated and found unavailable in this harness. The
 flags latch is process-local and only written by the crash-handler subprocess;
