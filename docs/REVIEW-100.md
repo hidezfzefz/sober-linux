@@ -11,7 +11,7 @@ No Flatpak (`791c3f9e` / 2.745) RVA is used anywhere in the shipped source.
 
 ## 1. Headline verdict
 
-**Overall: ≈46% complete (sensitivity band 43–52%).**
+**Overall: ≈61% complete (sensitivity band 56–65%)** after the 40-agent frame push. The original 14-audit baseline was 46%, the integration team 57%. The gain is render-side only: a withheld diagnostic now drives guest code that produces 2 guest-tagged swaps (RA `0x649067e`) and 1 guest draw, but it is seeded state, not an app-shell frame. The callback leg remains 0/1, so the marker stays WITHHELD.
 
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven
@@ -125,6 +125,89 @@ char**)`: argv `"--channel" "LIVE"` populates global `0x72a3710` and reaches
 `0x2ec9eed → 0x2ec9fae`, writing `0x7cdd149 = 1`. This was routed to worker-2
 for default-path wiring; it is guest initialization, not a crash fix, and emits
 no callback.
+
+### Frame root cause (40-agent push)
+
+`analysis/R1_zero_tagged_swaps.md`, `R3_guest_egl_context.md`, `R6_swap_provenance.md`
+and `P8_anw_guest_consumption.md` agree: `render_guest` creates a genuine guest
+EGL context (`ctx+0 = base+0x71912e8`, swap slot `[3] = 0x649d422`) but stops at
+context creation. The only swap traverses guest GOT `0x722a1a8` from the host
+Route-B call at `guest_render.c:354`; `0x649d422` is a tail-jump, so its RA is
+correctly classified host/synthetic. `nativeData[+0x98]` (and `+0x88`/`+0xa0`)
+are NULL, so redraw thunk `0x2a20a00` early-returns before `jmp *%rax` at
+`0x2a20a20`; the guest draw dispatcher `0x6496d0c` and render loop never run.
+Fixing this needs genuine JNI-installed callbacks plus the app-start/game-loaded
+chain and notifier `0x27eaf6e` — all currently absent. Guest-tagged=0 is correct,
+not a counter bug. `analysis/R5_gles_draw_procs.md` adds a counter blind spot:
+plain GLES PLT GOTs `0x7229fc8` (glClear), `0x722a040` (glDrawElements) and
+`0x722a048` (glDrawArrays) are not hooked, only the instanced extension procs,
+so a real plain-draw frame would still report `draws=0` until those are wrapped.
+`analysis/R10_render_log_evidence.md` confirms no guest surface-accept log
+(`Created ANativeWindow …` at `0x26feaf7`) has ever appeared. `analysis/R4_surface_lifecycle.md`
+adds the byte-level reason: the four thunks consult `nativeData+0x88/+0x90/+0x98/+0xa0`,
+all NULL in our synthetic 0x200 nativeData, so the frame trigger `jmp` at
+`0x2a20a20` never executes. The fix is to use the guest's own 0x278-byte nativeData
+from `initializeNativeCode 0x2a1fe80` (AGDK callbacks) rather than hand-building it.
+
+### Guest frame dispatch discovered (40-agent push)
+
+`analysis/R9_virtual_display_path.md` located the real guest frame dispatch:
+graphics-device routine `0x6490488` calls `call *0x18(%rax)` at `0x649067b`
+through render vtable `0x7191300` → `0x649d422`, with guest RA `base+0x649067e`.
+Driving that site with a shaped ~0x400-byte device object (`+0x160=ctx`,
+`+0x260=1`, `+0x180==+0x188=0`, `+0x22f=0`, `+0x288=1`, `+0x298=0`) should make
+`swaps(total/guest/synth)` move from `1/0/1` toward `3/2/1` with a wrapped GLES
+draw between swaps. `analysis/G1_gate_guest_render.md` specifies the gate edit
+(`render_ok = phase3_done && guest_render_ok()`), and `G7`/`F10` define the
+unforgeable discriminator and false-green tests (RA interval + indirect-dispatch
+byte pattern + stable recurrence + bracketed draw + guest-window provenance +
+mixed-evidence taint + BuildID guard). Any success here stays a withhold
+diagnostic until the notifier leg closes.
+
+### Exact guest frame hooks (40-agent push)
+
+- `analysis/P5_surface_callbacks.md`: the AGDK installer `0x2a23001` fills
+  nativeData callbacks `+0x88=0x2a23a10`, `+0x90=0x2a23cc0`,
+  `+0x98=0x2a23c40` (redraw/frame trigger), `+0xa0=0x2a23b60`;
+  `+0x140` is the bound ANativeWindow data field.
+- `analysis/R9_virtual_display_path.md`: guest dispatch `0x6490488` reaches
+  `call *0x18(%rax)` at `0x649067b` → `0x649d422`, guest RA `0x649067e`.
+- `analysis/P10_render_thread.md`: cleaner helper `0x6493242` with
+  `call *0x18(%rax)` at `0x649325a` → guest RA `0x649325d`; cadence comes from
+  native `RBX IoEvLoop` (`pthread_create 0x6474599`, `timerfd`/`epoll_wait`)
+  and `SurfaceController::RenderJob` (`0x276d36a`).
+- `analysis/P3_egl_proc_table.md` + F4: plain GLES draws use PLT GOTs
+  `0x7229fc8`, `0x722a040`, `0x722a048`; instanced draws use extension slots
+  `0x77a4fe0/8`. Counting requires guest RA at `0x6496d75/0x6496dec/0x6496e1a`
+  etc., not proc loads.
+
+All of these remain **withhold diagnostics**: executing real guest code against
+a synthetic device object is observability, not app-shell proof.
+
+### Stop condition (40-agent push, `analysis/G10_final_honesty.md`)
+
+The marker may be emitted only on a default-path run reproduced twice with:
+notifier-driven `gameLoadedCallback(J)V` (`0x27eaf6e`, `placeId≠0`, RA pair
+`0x2584960 → 0x27eafb3`, cached IDs), guest-tagged swap with stable RA across
+≥2 swaps plus a counted guest draw and guest-bound window, `seeded_state==0`,
+and all invariants green. Any render-only or seed-only signal keeps the gate
+RED. Standby honest sentence if the callback remains absent:
+
+> No notifier-driven `gameLoadedCallback(J)V` was observed — the guest never
+> entered notifier `0x27eaf6e` with `placeId != 0`, and the required return-address
+> pair (`base+0x2584960` → `base+0x27eafb3`) is absent — so the callback leg remains
+> 0/1 and, with guest-tagged render evidence also unproven, the strict
+> decision-013/038 gate correctly withholds `app shell rendered`; no login/app-shell
+> frame is proven and no success is claimed.
+
+### Frame work scoring policy (40-agent push)
+
+Per `analysis/G6_progress_score.md`, the standing score remains **57%** until
+real A/B counter logs justify a change. Projections: frame modules failing → 57%;
+one guest render signal positive → ≈59%; guest-tagged swap + counted guest draw
+but seeded/host-written state → ≈61%. All scenarios keep the callback leg at
+0.00 and the marker WITHHELD. Tagging the host Route-B swap as guest would be a
+false green (`analysis/R1_zero_tagged_swaps.md`, `analysis/R6_swap_provenance.md`).
 
 ### Worker hand-offs (2026-11-21)
 

@@ -79,21 +79,28 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /home/user/sober-linux/src/jni/placeid_default.h \
  /home/user/sober-linux/src/jni/publish_default.h \
  /home/user/sober-linux/src/jni/render_guest.h \
- /home/user/sober-linux/src/jni/provenance_gate.h /usr/include/dlfcn.h \
- /usr/include/bits/dlfcn.h /usr/include/bits/dl_find_object.h \
- /usr/include/fcntl.h /usr/include/bits/fcntl.h \
- /usr/include/bits/fcntl-linux.h /usr/include/bits/cloexec.h \
- /usr/include/linux/falloc.h /usr/include/linux/openat2.h \
- /usr/include/linux/types.h /usr/include/asm/types.h \
- /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h \
- /usr/include/bits/openat2.h /usr/include/bits/fcntl-linux-fortify.h \
- /usr/include/bits/stat.h /usr/include/bits/struct_stat.h \
- /usr/include/bits/fcntl2.h /usr/include/stdlib.h \
- /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
- /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
- /usr/include/alloca.h /usr/include/bits/stdlib-bsearch.h \
- /usr/include/bits/types/once_flag.h /usr/include/bits/stdlib-float.h \
- /usr/include/bits/stdlib.h /usr/include/string.h /usr/include/strings.h \
+ /home/user/sober-linux/src/jni/provenance_gate.h \
+ /home/user/sober-linux/src/jni/frame_evidence.h \
+ /home/user/sober-linux/src/jni/frame_dispatch.h \
+ /home/user/sober-linux/src/jni/frame_draw.h \
+ /home/user/sober-linux/src/jni/frame_surface.h \
+ /home/user/sober-linux/src/jni/frame_thread.h \
+ /home/user/sober-linux/src/jni/frame_synthetic_tag.h \
+ /usr/include/dlfcn.h /usr/include/bits/dlfcn.h \
+ /usr/include/bits/dl_find_object.h /usr/include/fcntl.h \
+ /usr/include/bits/fcntl.h /usr/include/bits/fcntl-linux.h \
+ /usr/include/bits/cloexec.h /usr/include/linux/falloc.h \
+ /usr/include/linux/openat2.h /usr/include/linux/types.h \
+ /usr/include/asm/types.h /usr/include/asm-generic/types.h \
+ /usr/include/asm-generic/int-ll64.h /usr/include/bits/openat2.h \
+ /usr/include/bits/fcntl-linux-fortify.h /usr/include/bits/stat.h \
+ /usr/include/bits/struct_stat.h /usr/include/bits/fcntl2.h \
+ /usr/include/stdlib.h /usr/include/bits/waitflags.h \
+ /usr/include/bits/waitstatus.h /usr/include/bits/types/locale_t.h \
+ /usr/include/bits/types/__locale_t.h /usr/include/alloca.h \
+ /usr/include/bits/stdlib-bsearch.h /usr/include/bits/types/once_flag.h \
+ /usr/include/bits/stdlib-float.h /usr/include/bits/stdlib.h \
+ /usr/include/string.h /usr/include/strings.h \
  /usr/include/bits/strings_fortified.h \
  /usr/include/bits/string_fortified.h /usr/include/sys/mman.h \
  /usr/include/bits/mman.h /usr/include/bits/mman-map-flags-generic.h \

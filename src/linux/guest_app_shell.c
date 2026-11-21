@@ -48,6 +48,12 @@
 #include "publish_default.h"
 #include "render_guest.h"
 #include "provenance_gate.h"
+#include "frame_evidence.h"
+#include "frame_dispatch.h"
+#include "frame_draw.h"
+#include "frame_surface.h"
+#include "frame_thread.h"
+#include "frame_synthetic_tag.h"
 
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -959,6 +965,9 @@ int guest_app_shell_run(uintptr_t base)
     }
     sober_jni_init(j);
 
+    /* F7: bind the immutable render-evidence recorder to the frozen base. */
+    frame_evidence_set_guest_base((uintptr_t)base);
+
     /* ================= DEFAULT-ON module wiring (task #477) ================
      * Dependency order (each installer self-gates on its SOBER_*_DEFAULT=0 kill
      * switch; no getenv() needed here):
@@ -1545,6 +1554,36 @@ int guest_app_shell_run(uintptr_t base)
                         "nativeAppBridgeV2SendAppEventOnGameLoaded\n");
     }
 
+    /* WITHHELD DIAGNOSTIC: drive the guest's own frame-dispatch helper
+     * (0x6493242 / 0x6490488) so guest-tagged swaps and GLES draws can be
+     * observed. This executes real guest instructions against a synthetic
+     * device object; it is NOT app-shell proof. */
+    if (getenv("SOBER_FRAME_DRIVE")) {
+        /* F5 guest window publish is not wired here: in this configuration it
+         * faults at 0x2e5c3c1 before the frame-drive diagnostic. Keep it as an
+         * opt-in module for a separate A/B; the render gate stays fail-closed. */
+        struct sober_frame_dispatch_config fd;
+        memset(&fd, 0, sizeof(fd));
+        fd.guest_base = (void *)base;
+        fd.render_ctx = sober_render_guest_context();
+        int frc = sober_frame_dispatch_install(&fd);
+        if (!frc) frc = sober_frame_dispatch_run(2);
+        fprintf(stderr, "[app-shell] frame dispatch -> rc=%d\n", frc);
+        int drc = sober_frame_draw_install((uintptr_t)base);
+        if (!drc) drc = sober_frame_draw_run((uintptr_t)base, NULL);
+        struct SoberFrameDispatchRaEvidence fe;
+        memset(&fe, 0, sizeof(fe));
+        sober_frame_dispatch_ra_evidence(&fe);
+        fprintf(stderr, "[app-shell] frame draw -> rc=%d\n", drc);
+        fprintf(stderr,
+                "[app-shell] frame counters: dispatch swaps total=%llu guest=%llu "
+                "ra_rva=%#lx expected=%d | draw guest=%llu\n",
+                (unsigned long long)sober_frame_dispatch_swaps_total(),
+                (unsigned long long)sober_frame_dispatch_swaps_guest_tagged(),
+                (unsigned long)fe.ra_rva, fe.expected_ra,
+                (unsigned long long)sober_frame_draw_guest_draws());
+    }
+
     /* Engine worker threads may deliver the real app-shell callback after the
      * startup entry points return.  Keep the bridge alive and report arrivals. */
     const char *wait_s = getenv("SOBER_APP_SHELL_WAIT_MS");
@@ -1760,7 +1799,23 @@ int guest_app_shell_run(uintptr_t base)
                        sober_delegate_default_should_withhold() ||
                        sober_controller_default_should_withhold() ||
                        sober_publish_default_should_withhold() ||
-                       sober_notifier_probe_should_withhold();
+                       sober_notifier_probe_should_withhold() ||
+                       /* G3: frame injector knobs and verdict drivers. */
+                       getenv("SOBER_RENDER_FRAME_EVIDENCE") ||
+                       getenv("SOBER_EVIDENCE_SURFACE") ||
+                       getenv("SOBER_EVIDENCE_DEVICE") ||
+                       getenv("SOBER_EVIDENCE_REDRAW") ||
+                       getenv("SOBER_RENDER_SUPPRESS_SYNTHETIC") ||
+                       getenv("SOBER_FRAME_DRIVE") ||
+                       getenv("SOBER_FRAME_DISPATCH") ||
+                       getenv("SOBER_FRAME_DRAW") ||
+                       getenv("SOBER_FRAME_REDRAW") ||
+                       getenv("SOBER_FRAME_SURFACE") ||
+                       getenv("SOBER_EVIDENCE_FRAME") ||
+                       getenv("SOBER_FRAME_REDRAW_DRIVE") ||
+                       env_prefix_active("SOBER_EVIDENCE_") ||
+                       sober_frame_thread_should_withhold() ||
+                       sober_frame_dispatch_should_withhold();
     if (seeded_state) {
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "
                         "seed active (no app-shell frame proven)\n");
@@ -1774,10 +1829,9 @@ int guest_app_shell_run(uintptr_t base)
     /* Lead's render evidence contract (analysis/MODULE_INTEGRATION.md §2):
      * phase-3 ancestry + a guest-tagged swap + a counted guest GLES draw + a
      * stable ANativeWindow binding. A synthetic-only swap fails closed. */
-    int render_ok = sober_render_phase3_done()
-                 && sober_render_guest_swaps_guest_tagged() >= 1
-                 && sober_render_guest_gles_draw_calls() >= 1
-                 && *(void **)(base + 0x72a3308u) != NULL;
+    /* F7/frame_evidence is the sole render verdict owner: phase3 ancestry,
+     * stable guest-RA swap recurrence, bracketed guest draw, G8 window proof. */
+    int render_ok = guest_render_ok();
 
     if (!shell_cb || !render_ok) {
         fprintf(stderr,

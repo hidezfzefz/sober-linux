@@ -61,7 +61,30 @@ Rules:
    `publish_default_publish_seeded(base)` after `StartGameWithParam 0x2ebd51a`.
 7. `render_guest_install/run(cfg)` after surface/params are live.
 
-## 4. Open item
+## 4. Frame-module consolidation (F9, 40-agent push)
+
+Only three new frame modules are authoritative; the rest are retired labels or
+merged into `render_guest`:
+
+- **Keep F6 `frame_thread`** — distinct render-loop driver calling genuine redraw
+  thunk `0x2a20a00` on a dedicated thread. Wire only in the withheld late
+  frame-drive position; not merged into `scheduler_guest`.
+- **Keep F7 `frame_evidence`** — sole owner of `guest_render_ok()` / verdict;
+  emits per-swap RA, stable-RA recurrence, draw count and window verdict.
+- **Keep F8 `frame_synthetic_tag`** — 3-line scope around host Route-B swap plus
+  `rg_hook_swap()` check; additive defence, not a second counter.
+- **Merge** guest-RA draw-site wrappers into `render_guest`; **delete** labels
+  F1 callbacks, F3 dispatch, F5 surface (all covered by `render_guest` + F6/F7).
+- Install GOT hooks early (before `0x649d422`); drive the guest frame late;
+  read verdict at the gate. `render_ok = phase3_done && guest_render_ok()`.
+- Add withhold knobs: `SOBER_RENDER_FRAME_EVIDENCE`, `SOBER_EVIDENCE_SURFACE`,
+  `SOBER_EVIDENCE_DEVICE`, `SOBER_EVIDENCE_REDRAW`,
+  `SOBER_RENDER_SUPPRESS_SYNTHETIC`, `SOBER_FRAME_THREAD` and
+  `sober_frame_thread_should_withhold()`. Do NOT withhold fail-safe kill switches
+  (`SOBER_FRAME_EVIDENCE=0`, `SOBER_FRAME_SYNTH_TAG=0`, `SOBER_PROVENANCE_GATE=0`)
+  or the required `SOBER_RENDER`/`SOBER_APP_SHELL`.
+
+## 5. Open item
 
 `analysis/T2_5_flags_latch.md` (real path to set `0x7cdd149` without byte writes)
 had not landed when this table was written; the flags-loaded latch remains the

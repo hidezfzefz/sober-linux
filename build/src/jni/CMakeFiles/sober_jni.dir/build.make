@@ -590,6 +590,104 @@ src/jni/CMakeFiles/sober_jni.dir/render_guest.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/render_guest.c.s"
 	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/render_guest.c -o CMakeFiles/sober_jni.dir/render_guest.c.s
 
+src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o: /home/user/sober-linux/src/jni/frame_synthetic_tag.c
+src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o -MF CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o.d -o CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o -c /home/user/sober-linux/src/jni/frame_synthetic_tag.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_synthetic_tag.c > CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_synthetic_tag.c -o CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: /home/user/sober-linux/src/jni/frame_evidence.c
+src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o -MF CMakeFiles/sober_jni.dir/frame_evidence.c.o.d -o CMakeFiles/sober_jni.dir/frame_evidence.c.o -c /home/user/sober-linux/src/jni/frame_evidence.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_evidence.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_evidence.c > CMakeFiles/sober_jni.dir/frame_evidence.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_evidence.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_evidence.c -o CMakeFiles/sober_jni.dir/frame_evidence.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o: /home/user/sober-linux/src/jni/frame_dispatch.c
+src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o -MF CMakeFiles/sober_jni.dir/frame_dispatch.c.o.d -o CMakeFiles/sober_jni.dir/frame_dispatch.c.o -c /home/user/sober-linux/src/jni/frame_dispatch.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_dispatch.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_dispatch.c > CMakeFiles/sober_jni.dir/frame_dispatch.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_dispatch.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_dispatch.c -o CMakeFiles/sober_jni.dir/frame_dispatch.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o: /home/user/sober-linux/src/jni/frame_draw.c
+src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o -MF CMakeFiles/sober_jni.dir/frame_draw.c.o.d -o CMakeFiles/sober_jni.dir/frame_draw.c.o -c /home/user/sober-linux/src/jni/frame_draw.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_draw.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_draw.c > CMakeFiles/sober_jni.dir/frame_draw.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_draw.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_draw.c -o CMakeFiles/sober_jni.dir/frame_draw.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o: /home/user/sober-linux/src/jni/frame_surface.c
+src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o -MF CMakeFiles/sober_jni.dir/frame_surface.c.o.d -o CMakeFiles/sober_jni.dir/frame_surface.c.o -c /home/user/sober-linux/src/jni/frame_surface.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_surface.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_surface.c > CMakeFiles/sober_jni.dir/frame_surface.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_surface.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_surface.c -o CMakeFiles/sober_jni.dir/frame_surface.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o: /home/user/sober-linux/src/jni/frame_thread.c
+src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o -MF CMakeFiles/sober_jni.dir/frame_thread.c.o.d -o CMakeFiles/sober_jni.dir/frame_thread.c.o -c /home/user/sober-linux/src/jni/frame_thread.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_thread.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_thread.c > CMakeFiles/sober_jni.dir/frame_thread.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_thread.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_thread.c -o CMakeFiles/sober_jni.dir/frame_thread.c.s
+
+src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o: src/jni/CMakeFiles/sober_jni.dir/flags.make
+src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o: /home/user/sober-linux/src/jni/frame_redraw.c
+src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o: src/jni/CMakeFiles/sober_jni.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building C object src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o -MF CMakeFiles/sober_jni.dir/frame_redraw.c.o.d -o CMakeFiles/sober_jni.dir/frame_redraw.c.o -c /home/user/sober-linux/src/jni/frame_redraw.c
+
+src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/sober_jni.dir/frame_redraw.c.i"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/user/sober-linux/src/jni/frame_redraw.c > CMakeFiles/sober_jni.dir/frame_redraw.c.i
+
+src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/sober_jni.dir/frame_redraw.c.s"
+	cd /home/user/sober-linux/build/src/jni && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/user/sober-linux/src/jni/frame_redraw.c -o CMakeFiles/sober_jni.dir/frame_redraw.c.s
+
 # Object files for target sober_jni
 sober_jni_OBJECTS = \
 "CMakeFiles/sober_jni.dir/native_jni.c.o" \
@@ -628,7 +726,14 @@ sober_jni_OBJECTS = \
 "CMakeFiles/sober_jni.dir/publish_default.c.o" \
 "CMakeFiles/sober_jni.dir/provenance_gate.c.o" \
 "CMakeFiles/sober_jni.dir/scheduler_guest.c.o" \
-"CMakeFiles/sober_jni.dir/render_guest.c.o"
+"CMakeFiles/sober_jni.dir/render_guest.c.o" \
+"CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o" \
+"CMakeFiles/sober_jni.dir/frame_evidence.c.o" \
+"CMakeFiles/sober_jni.dir/frame_dispatch.c.o" \
+"CMakeFiles/sober_jni.dir/frame_draw.c.o" \
+"CMakeFiles/sober_jni.dir/frame_surface.c.o" \
+"CMakeFiles/sober_jni.dir/frame_thread.c.o" \
+"CMakeFiles/sober_jni.dir/frame_redraw.c.o"
 
 # External object files for target sober_jni
 sober_jni_EXTERNAL_OBJECTS =
@@ -670,9 +775,16 @@ src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/publish_default.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/provenance_gate.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/scheduler_guest.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/render_guest.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o
+src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/build.make
 src/jni/libsober_jni.a: src/jni/CMakeFiles/sober_jni.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Linking C static library libsober_jni.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/user/sober-linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Linking C static library libsober_jni.a"
 	cd /home/user/sober-linux/build/src/jni && $(CMAKE_COMMAND) -P CMakeFiles/sober_jni.dir/cmake_clean_target.cmake
 	cd /home/user/sober-linux/build/src/jni && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/sober_jni.dir/link.txt --verbose=$(VERBOSE)
 

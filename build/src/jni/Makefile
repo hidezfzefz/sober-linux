@@ -418,6 +418,174 @@ fields_default.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/fields_default.c.s
 .PHONY : fields_default.c.s
 
+frame_dispatch.o: frame_dispatch.c.o
+.PHONY : frame_dispatch.o
+
+# target to build an object file
+frame_dispatch.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.o
+.PHONY : frame_dispatch.c.o
+
+frame_dispatch.i: frame_dispatch.c.i
+.PHONY : frame_dispatch.i
+
+# target to preprocess a source file
+frame_dispatch.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.i
+.PHONY : frame_dispatch.c.i
+
+frame_dispatch.s: frame_dispatch.c.s
+.PHONY : frame_dispatch.s
+
+# target to generate assembly for a file
+frame_dispatch.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_dispatch.c.s
+.PHONY : frame_dispatch.c.s
+
+frame_draw.o: frame_draw.c.o
+.PHONY : frame_draw.o
+
+# target to build an object file
+frame_draw.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.o
+.PHONY : frame_draw.c.o
+
+frame_draw.i: frame_draw.c.i
+.PHONY : frame_draw.i
+
+# target to preprocess a source file
+frame_draw.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.i
+.PHONY : frame_draw.c.i
+
+frame_draw.s: frame_draw.c.s
+.PHONY : frame_draw.s
+
+# target to generate assembly for a file
+frame_draw.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_draw.c.s
+.PHONY : frame_draw.c.s
+
+frame_evidence.o: frame_evidence.c.o
+.PHONY : frame_evidence.o
+
+# target to build an object file
+frame_evidence.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.o
+.PHONY : frame_evidence.c.o
+
+frame_evidence.i: frame_evidence.c.i
+.PHONY : frame_evidence.i
+
+# target to preprocess a source file
+frame_evidence.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.i
+.PHONY : frame_evidence.c.i
+
+frame_evidence.s: frame_evidence.c.s
+.PHONY : frame_evidence.s
+
+# target to generate assembly for a file
+frame_evidence.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_evidence.c.s
+.PHONY : frame_evidence.c.s
+
+frame_redraw.o: frame_redraw.c.o
+.PHONY : frame_redraw.o
+
+# target to build an object file
+frame_redraw.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.o
+.PHONY : frame_redraw.c.o
+
+frame_redraw.i: frame_redraw.c.i
+.PHONY : frame_redraw.i
+
+# target to preprocess a source file
+frame_redraw.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.i
+.PHONY : frame_redraw.c.i
+
+frame_redraw.s: frame_redraw.c.s
+.PHONY : frame_redraw.s
+
+# target to generate assembly for a file
+frame_redraw.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_redraw.c.s
+.PHONY : frame_redraw.c.s
+
+frame_surface.o: frame_surface.c.o
+.PHONY : frame_surface.o
+
+# target to build an object file
+frame_surface.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.o
+.PHONY : frame_surface.c.o
+
+frame_surface.i: frame_surface.c.i
+.PHONY : frame_surface.i
+
+# target to preprocess a source file
+frame_surface.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.i
+.PHONY : frame_surface.c.i
+
+frame_surface.s: frame_surface.c.s
+.PHONY : frame_surface.s
+
+# target to generate assembly for a file
+frame_surface.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_surface.c.s
+.PHONY : frame_surface.c.s
+
+frame_synthetic_tag.o: frame_synthetic_tag.c.o
+.PHONY : frame_synthetic_tag.o
+
+# target to build an object file
+frame_synthetic_tag.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.o
+.PHONY : frame_synthetic_tag.c.o
+
+frame_synthetic_tag.i: frame_synthetic_tag.c.i
+.PHONY : frame_synthetic_tag.i
+
+# target to preprocess a source file
+frame_synthetic_tag.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.i
+.PHONY : frame_synthetic_tag.c.i
+
+frame_synthetic_tag.s: frame_synthetic_tag.c.s
+.PHONY : frame_synthetic_tag.s
+
+# target to generate assembly for a file
+frame_synthetic_tag.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_synthetic_tag.c.s
+.PHONY : frame_synthetic_tag.c.s
+
+frame_thread.o: frame_thread.c.o
+.PHONY : frame_thread.o
+
+# target to build an object file
+frame_thread.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.o
+.PHONY : frame_thread.c.o
+
+frame_thread.i: frame_thread.c.i
+.PHONY : frame_thread.i
+
+# target to preprocess a source file
+frame_thread.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.i
+.PHONY : frame_thread.c.i
+
+frame_thread.s: frame_thread.c.s
+.PHONY : frame_thread.s
+
+# target to generate assembly for a file
+frame_thread.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_thread.c.s
+.PHONY : frame_thread.c.s
+
 game_params.o: game_params.c.o
 .PHONY : game_params.o
 
@@ -1110,6 +1278,27 @@ help:
 	@echo "... fields_default.o"
 	@echo "... fields_default.i"
 	@echo "... fields_default.s"
+	@echo "... frame_dispatch.o"
+	@echo "... frame_dispatch.i"
+	@echo "... frame_dispatch.s"
+	@echo "... frame_draw.o"
+	@echo "... frame_draw.i"
+	@echo "... frame_draw.s"
+	@echo "... frame_evidence.o"
+	@echo "... frame_evidence.i"
+	@echo "... frame_evidence.s"
+	@echo "... frame_redraw.o"
+	@echo "... frame_redraw.i"
+	@echo "... frame_redraw.s"
+	@echo "... frame_surface.o"
+	@echo "... frame_surface.i"
+	@echo "... frame_surface.s"
+	@echo "... frame_synthetic_tag.o"
+	@echo "... frame_synthetic_tag.i"
+	@echo "... frame_synthetic_tag.s"
+	@echo "... frame_thread.o"
+	@echo "... frame_thread.i"
+	@echo "... frame_thread.s"
 	@echo "... game_params.o"
 	@echo "... game_params.i"
 	@echo "... game_params.s"

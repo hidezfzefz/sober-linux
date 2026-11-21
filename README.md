@@ -23,9 +23,11 @@ audits, weighted score and roadmap. Regenerate badges/map:
 
 **Honest headline:** native init, window and a guest-driven first frame work; the
 real login/app-shell frame is **not** proven. Overall project progress after the
-integration team is **≈57%** (52–60% band: init 95%, render 60%, JNI 85%, app state
-40%, callback 0%, gate/tests/docs 85%). The strict `app shell rendered` marker
-stays **WITHHELD** (decision 013 / 038).
+40-agent frame push is **≈61%** (56–65% band: init 95%, render 85% as a withheld
+diagnostic, JNI 85%, app state 40%, callback 0%, gate/tests/docs 85%). A seeded
+diagnostic now produces 2 guest-tagged swaps and 1 guest draw, but the callback
+leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
+(decision 013 / 038).
 
 ```text
 Engine identity (BuildID 204ad049 / SHA 3e498d6494…)  100%  ████████████████████
@@ -35,7 +37,7 @@ Native init + window + first frame       3/3          100%  ██████�
 JNIEnv function table built           231/231         100%  ████████████████████
 Cached jmethodIDs seeded                49/49         100%  ████████████████████
 Verification (verify-native + ctest)     2/2          100%  ████████████████████
-Weighted goal completion                    57%           57%  ███████████░░░░░░░░░
+Weighted goal completion                    61%           61%  ████████████░░░░░░░░
 Decision-013 gate enforced               1/1          100%  ████████████████████
 Genuine app-shell callback observed       0/1            0%  ░░░░░░░░░░░░░░░░░░░░
 app shell rendered marker                WITHHELD          ░░░░░░░░░░░░░░░░░░░░
@@ -66,7 +68,7 @@ count. All opt-ins are **OFF by default**.
 | Path | Role | Status | SHA-256 (prefix) |
 | --- | --- | --- | --- |
 | `build/sober-native` | shipped native ELF | ✅ libc-only | `7647f6d60c521…` |
-| `build/guest-init-host` | full harness (init/render/JNI) | ✅ builds | `8a58144715c4…` |
+| `build/guest-init-host` | full harness (init/render/JNI) | ✅ builds | `50510a6e846e…` |
 | `build/ndk-stubs/libc.so` | versioned native Bionic shim | ✅ builds | `d131185d781f…` |
 | guest `libroblox.so` (external) | frozen target, never modified | ✅ identity | `3e498d649421…` |
 

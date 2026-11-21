@@ -56,6 +56,15 @@ add_library(sober_jni STATIC
     provenance_gate.c
     scheduler_guest.c
     render_guest.c
+
+    # ---- 40-agent frame push (all default-ON, fail-closed) ----------------
+    frame_synthetic_tag.c
+    frame_evidence.c
+    frame_dispatch.c
+    frame_draw.c
+    frame_surface.c
+    frame_thread.c
+    frame_redraw.c
 )
 target_include_directories(sober_jni PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
