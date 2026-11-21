@@ -6,6 +6,11 @@
  * module itself performs NO byte write to 0x7cdd149, no code patch, no fake
  * vtable and no callback fabrication.  All attempted routes are opt-in
  * modifiers of an otherwise inert default run and force the marker withhold.
+ *
+ * Task #510 finding (analysis/task510-dialog-cppproxy-route.md): no shipped
+ * JNI export yields a real IPlatformSystemDialogHandler$CppProxy/nativeRef,
+ * so no route via open()/dismissAll() to the 0x56d* latch writers exists.
+ * Default route stays "none"; route=* remains diagnostic/withheld only.
  */
 #define _GNU_SOURCE
 #include "flags_latch_default.h"

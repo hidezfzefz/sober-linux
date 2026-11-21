@@ -11,7 +11,7 @@ No Flatpak (`791c3f9e` / 2.745) RVA is used anywhere in the shipped source.
 
 ## 1. Headline verdict
 
-**Overall: ≈62% complete (sensitivity band 57–66%)** after the latest wave. The original 14-audit baseline was 46%, the integration team 57%, the 40-agent frame push 61%. The gain is still render-side only: a seeded diagnostic now reaches full G8 window ACCEPT (C0–C10) with real guest EGL ACQUIRE/DIMS RAs and a real guest-formatted `Created ANativeWindow` log, but it is seeded state, not an app-shell frame. The callback leg remains 0/1, so the marker stays WITHHELD.
+**Overall: ≈64% complete (sensitivity band 59–68%)** after wave 4. The original 14-audit baseline was 46%, the integration team 57%, the 40-agent frame push 61%, wave 3 62%. A seeded diagnostic reaches full G8 window ACCEPT (C0–C10), and wave 4 additionally sets the flags-loaded latch genuinely through a real crashpad IPC return so the whole app-shell phase completes in an opt-in run. This is still seeded state, not a clean app-shell frame; the callback leg remains 0/1 (id=1 MessageBus node is not registered), so the marker stays WITHHELD.
 
 **Follow-up (teams #485–#496 and #497–#501):** the singleton predicate blocker
 is fixed with genuine guest flag-setter calls, and the old fault `0x24ad562` is
@@ -36,7 +36,21 @@ real H6 text is guest-formatted and parsed with the true sink RA `0x232e080`
 (`analysis/H6_created_anw_sub.md`). The default path is unchanged
 (`R8_NO_ACQUIRE`, withhold=0). Every accepting run is seeded and force-WITHHELD;
 no string, handle, RA, hook, swap or callback is fabricated. No notifier hit, no
-`gameLoadedCallback(J)V`, no marker, no fabricated evidence. Score unchanged.
+`gameLoadedCallback(J)V`, no marker, no fabricated evidence.
+
+**Wave 4 (#507–#510, #516):** the flags-loaded latch is now genuinely set in an
+opt-in run. `src/jni/crashpad_return.c` supplies real AF_UNIX `SOCK_SEQPACKET`
+IPC with `SO_PASSCRED`, a 32-byte `CheckCredentials` server-peer message and a
+Bionic `__sF+0x130` `fputs`/`fflush` bridge; `nativeRunCrashpadHandler 0x2eca720`
+then returns normally with `latch=1` (verified `crashpad handler: succeed`, exit
+13 withhold, no SIGSEGV). The app-shell phase completes: singleton, app+0x408 and
+app+0x488 are installed, all JNI exports run. The dialog-writer latch route is
+proven impossible (`analysis/task510-dialog-cppproxy-route.md`). A MessageBus
+pre-init wrapper is wired but not yet exercised cleanly
+(`analysis/wave4-messagebus-preinit.md`). The remaining callback blocker is the
+id=1 MessageBus node: `publish_seeded` reports NO_NODE with guard
+`0x72a31ba=0`, so no notifier-driven `gameLoadedCallback(J)V`. Marker still
+WITHHELD; score ≈64%.
 
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven

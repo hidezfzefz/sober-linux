@@ -15,6 +15,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/sober_jni.dir/callback_provenance.c.o.d"
   "CMakeFiles/sober_jni.dir/controller_default.c.o"
   "CMakeFiles/sober_jni.dir/controller_default.c.o.d"
+  "CMakeFiles/sober_jni.dir/crashpad_return.c.o"
+  "CMakeFiles/sober_jni.dir/crashpad_return.c.o.d"
   "CMakeFiles/sober_jni.dir/delegate_default.c.o"
   "CMakeFiles/sober_jni.dir/delegate_default.c.o.d"
   "CMakeFiles/sober_jni.dir/fflag_default.c.o"

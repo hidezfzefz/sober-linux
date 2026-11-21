@@ -22,24 +22,25 @@ audits, weighted score and roadmap. Regenerate badges/map:
 `python3 tools/gen_progress.py`.
 
 **Honest headline:** native init, window and a guest-driven first frame work; the
-real login/app-shell frame is **not** proven. Overall project progress after the
-latest wave is **≈62%** (57–66% band: init 95%, render 95% as a withheld
-seeded diagnostic with G8 C0–C10 ACCEPT, JNI 85%, app state 40%, callback 0%,
-gate/tests/docs 85%). The default path is unchanged; a seeded diagnostic proves
-the render leg but the callback leg is still 0/1; the strict `app shell rendered` marker stays **WITHHELD**
-(decision 013 / 038).
+real login/app-shell frame is **not** proven. Overall project progress after wave
+4 is **≈64%** (59–68% band: init 95%, render 95% seeded G8 ACCEPT, JNI 90%,
+app state 60% with a genuine flags-loaded latch, callback 0%, gate/tests/docs
+85%). The default path is unchanged; the strict `app shell rendered` marker stays
+**WITHHELD** (decision 013 / 038).
 
-Latest blocker (teams #485–#496 and #497–#501): the singleton accessor blocker
-is fixed with the guest's own flag setter, removing fault `0x24ad562`. The
-callback path still stops at the genuine TaskScheduler "flags loaded" guard
-(`0x6caef67`, latch `0x7cdd149`). The crashpad abort was re-root-caused: it is
-crashpad's OWN `HandlerMain` argv validation (`fprintf(stderr,"Usage: ...")` via
-the Bionic `__sF+0x130` FILE*), not an intrinsic crash or host stdio bug. A real
-JNI `String[]` with `argv[0]` plus valid generic options removes the stdio abort,
-but `HandlerMain` still does not return cleanly; all latch routes remain opt-in
-and `SOBER_FLAGS_LATCH_ROUTE` defaults to `none`. The callback credential and
-latch-ready prerequisites were hardened (`analysis/callback/task494-genuine-leg.md`,
-`task500-latch-ready-prereqs.md`).
+Wave 4 (#507–#510, #516): the flags-loaded latch `0x7cdd149` is now genuinely
+set and the whole app-shell phase runs to completion in an opt-in diagnostic.
+Worker-2 root-caused the remaining crashpad fault to `UnixCredentialSocket::RecvMsg`
+needing `SCM_CREDENTIALS` plus a 32-byte `CheckCredentials` message, and to the
+Bionic `__sF+0x130` `fputs`/`fflush` bridge. `src/jni/crashpad_return.c` supplies
+a real AF_UNIX `SOCK_SEQPACKET` socketpair with `SO_PASSCRED`, a server-peer
+thread, and the stdio bridge; `nativeRunCrashpadHandler 0x2eca720` then returns
+normally with `latch=1` and no SIGSEGV. With
+`SOBER_CRASHPAD_RETURN=1 SOBER_FAITHFUL_JNI_ARRAYS=1`, the singleton builds,
+app+0x408/+0x488 are installed, and all JNI exports run. The dialog-writer route
+was rigorously proven impossible (`analysis/task510-dialog-cppproxy-route.md`).
+A MessageBus pre-init wrapper (`SOBER_MESSAGEBUS_PREINIT`, opt-in) is wired but
+not yet exercised cleanly (`analysis/wave4-messagebus-preinit.md`).
 
 On the render side a seeded diagnostic now reaches **G8 verdict=1 ACCEPT**
 (C0–C10 all pass): opt-in `SOBER_FRAME_EGL_INIT_DRIVE=1` re-drives genuine guest
@@ -60,7 +61,7 @@ Native init + window + first frame       3/3          100%  ██████�
 JNIEnv function table built           231/231         100%  ████████████████████
 Cached jmethodIDs seeded                49/49         100%  ████████████████████
 Verification (verify-native + ctest)     2/2          100%  ████████████████████
-Weighted goal completion                    62%           62%  ████████████░░░░░░░░
+Weighted goal completion                    64%           64%  █████████████░░░░░░░
 Decision-013 gate enforced               1/1          100%  ████████████████████
 Genuine app-shell callback observed       0/1            0%  ░░░░░░░░░░░░░░░░░░░░
 app shell rendered marker                WITHHELD          ░░░░░░░░░░░░░░░░░░░░

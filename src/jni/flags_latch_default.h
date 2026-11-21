@@ -16,9 +16,13 @@
  *              0x2eca720 or CrashpadHandlerMain 0x2ec9c30); writes the latch
  *              but its tail launches the crashpad fatal path.
  *   0x56d31a3 / 0x56d3386 / 0x56d6a4b / 0x56d6b80  (crash-dispatch family).
- * A route that sets the latch and returns cleanly is still being established
- * (worker-1 #487 / analysis A15).  Every attempted route is gated by an env
- * knob and forces the marker withhold while active.
+ * Task #510 (analysis/task510-dialog-cppproxy-route.md) verified the 0x56d*
+ * family has NO genuine CppProxy route: the four writers live in internal
+ * functions 0x56d2d35 / 0x56d6779 that the CppProxy JNI exports never call;
+ * native never NewObject's the CppProxy class (private <init>(J)V throws
+ * "nativeRef is zero"), and the only export reaching a writer (nativePassKeyEvent
+ * -> 0x56d2d35) hardcodes r9=0 so the store is skipped.  No new route added.
+ * Every attempted route is gated by an env knob and forces marker withhold.
  */
 #ifndef SOBER_FLAGS_LATCH_DEFAULT_H
 #define SOBER_FLAGS_LATCH_DEFAULT_H

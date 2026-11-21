@@ -16,6 +16,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/user/sober-linux/src/jni/app_singleton_bridge.c" "src/jni/CMakeFiles/sober_jni.dir/app_singleton_bridge.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/app_singleton_bridge.c.o.d"
   "/home/user/sober-linux/src/jni/callback_provenance.c" "src/jni/CMakeFiles/sober_jni.dir/callback_provenance.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/callback_provenance.c.o.d"
   "/home/user/sober-linux/src/jni/controller_default.c" "src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/controller_default.c.o.d"
+  "/home/user/sober-linux/src/jni/crashpad_return.c" "src/jni/CMakeFiles/sober_jni.dir/crashpad_return.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/crashpad_return.c.o.d"
   "/home/user/sober-linux/src/jni/delegate_default.c" "src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/delegate_default.c.o.d"
   "/home/user/sober-linux/src/jni/fflag_default.c" "src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/fflag_default.c.o.d"
   "/home/user/sober-linux/src/jni/fields_default.c" "src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o" "gcc" "src/jni/CMakeFiles/sober_jni.dir/fields_default.c.o.d"

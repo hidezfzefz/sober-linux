@@ -346,6 +346,30 @@ controller_default.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/controller_default.c.s
 .PHONY : controller_default.c.s
 
+crashpad_return.o: crashpad_return.c.o
+.PHONY : crashpad_return.o
+
+# target to build an object file
+crashpad_return.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/crashpad_return.c.o
+.PHONY : crashpad_return.c.o
+
+crashpad_return.i: crashpad_return.c.i
+.PHONY : crashpad_return.i
+
+# target to preprocess a source file
+crashpad_return.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/crashpad_return.c.i
+.PHONY : crashpad_return.c.i
+
+crashpad_return.s: crashpad_return.c.s
+.PHONY : crashpad_return.s
+
+# target to generate assembly for a file
+crashpad_return.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/crashpad_return.c.s
+.PHONY : crashpad_return.c.s
+
 delegate_default.o: delegate_default.c.o
 .PHONY : delegate_default.o
 
@@ -1293,6 +1317,9 @@ help:
 	@echo "... controller_default.o"
 	@echo "... controller_default.i"
 	@echo "... controller_default.s"
+	@echo "... crashpad_return.o"
+	@echo "... crashpad_return.i"
+	@echo "... crashpad_return.s"
 	@echo "... delegate_default.o"
 	@echo "... delegate_default.i"
 	@echo "... delegate_default.s"

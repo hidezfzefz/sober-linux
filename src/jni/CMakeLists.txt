@@ -32,6 +32,7 @@ add_library(sober_jni STATIC
     jni_arrays.c
     singleton_services.c
     singleton_fix.c
+    crashpad_return.c
 
     # ---- Phase 8 default modules -------------------------------------------
     # All 15 delivered modules are compiled into sober_jni.  They self-gate

@@ -59,6 +59,7 @@
 #include "frame_thread.h"
 #include "frame_synthetic_tag.h"
 #include "flags_latch_default.h"
+#include "crashpad_return.h"
 
 /* Gated crashpoint diagnostic: report the guest latch when a guest path aborts
  * inside the crashpad writer, without changing any guest state. */
@@ -1065,6 +1066,16 @@ int guest_app_shell_run(uintptr_t base)
     fprintf(stderr, "[app-shell] faithful JNI arrays (SOBER_FAITHFUL_JNI_ARRAYS) "
                     "-> rc=%d\n", arrays_rc);
 
+    /* Worker-2 #509: opt-in clean-return crashpad route.  Real AF_UNIX IPC and
+     * host-side Bionic __sF fputs/fflush bridging let the genuine latch writer
+     * 0x2ec9eed return with latch=1.  Every active run is seeded/WITHHELD. */
+    int cr_rc = sober_crashpad_return_install(
+        (void *)base, sober_jni_env(j),
+        sober_jni_find_class(j, "com/roblox/engine/jni/NativeSettingsInterface"),
+        j);
+    fprintf(stderr, "[app-shell] crashpad-return module -> rc=%d latch=%u\n",
+            cr_rc, sober_crashpad_return_latch());
+
     /* C13: opt-in, fail-closed notifier-hit instrumentation. Patches guest
      * bytes only after exact prologue checks; force-withheld below. */
     int np_rc = sober_notifier_probe_install((void *)base);
@@ -1439,6 +1450,21 @@ int guest_app_shell_run(uintptr_t base)
         fprintf(stderr, "[app-shell] gseed diag: global@0x72a0520 = %p\n",
                 (void *)*(uintptr_t *)(base + 0x72a0520u));
 
+    /* Lead #516: MessageBus pre-init.  The real driver inside
+     * nativeAppBridgeStartLuaAppDM 0x25448f6 reaches the mode-4 accessor
+     * 0x24a8e44(4), which CONSTRUCTS the MessageBus singleton 0x72cbdd0 before
+     * the id=1 registration at 0x24ad699 -> 0x253cb56 consumes its one-shot
+     * guard 0x72a31ba.  Calling it earlier through genuine guest code avoids
+     * spending that guard while the bus is uninitialised.  Opt-in/diagnostic:
+     * it seeds guest state and forces the marker withhold. */
+    if (getenv("SOBER_MESSAGEBUS_PREINIT")) {
+        ((void (*)(void *, void *))(base + 0x25448f6u))(env, app_class);
+        fprintf(stderr, "[app-shell] MessageBus pre-init via 0x25448f6 "
+                        "-> bus=%p guard=%u\n",
+                (void *)*(uintptr_t *)(base + 0x72cbdd0u),
+                (unsigned)*(volatile unsigned char *)(base + 0x72a31bau));
+    }
+
     rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
              (env, app_class, param_obj);
     fprintf(stderr, "[app-shell] guest call 0x24abf96 nativeAppBridgeV2InitWithParams"
@@ -1721,6 +1747,12 @@ int guest_app_shell_run(uintptr_t base)
      * it can never justify the real marker, regardless of which callbacks the
      * bridge happened to observe. These knobs are all off by default. */
     int seeded_state = getenv("SOBER_ABRT_DIAG") ||
+                       getenv("SOBER_CRASHPAD_RETURN") ||
+                       getenv("SOBER_CRASHPAD_RETURN_ARGV") ||
+                       getenv("SOBER_CRASHPAD_RETURN_PASSCRED") ||
+                       getenv("SOBER_CRASHPAD_RETURN_STDIO") ||
+                       sober_crashpad_return_should_withhold() ||
+                       getenv("SOBER_MESSAGEBUS_PREINIT") ||
                        getenv("SOBER_FRAME_EGL_INIT_DRIVE") ||
                        getenv("SOBER_FRAME_FLOG_ENABLE") ||
                        getenv("SOBER_FRAME_FLOG_SINK") ||

@@ -10,6 +10,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/app488_inner.h \
   /home/user/sober-linux/src/jni/app_singleton_bridge.h \
   /home/user/sober-linux/src/jni/controller_default.h \
+  /home/user/sober-linux/src/jni/crashpad_return.h \
   /home/user/sober-linux/src/jni/delegate_default.h \
   /home/user/sober-linux/src/jni/fflag_default.h \
   /home/user/sober-linux/src/jni/fields_default.h \
@@ -543,6 +544,8 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
   src/render/libsober_render.a
 
 
+src/jni/libsober_jni.a:
+
 /usr/include/bits/time64.h:
 
 /usr/include/bits/stdlib-float.h:
@@ -612,12 +615,6 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
 /usr/include/link.h:
 
 /usr/include/bits/mman-shared.h:
-
-/usr/include/bits/types/FILE.h:
-
-/usr/include/linux/posix_types.h:
-
-/usr/include/bits/mman-map-flags-generic.h:
 
 /usr/include/bits/libc-header-start.h:
 
@@ -693,8 +690,6 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
 
 /home/user/sober-linux/src/compat/android_types.h:
 
-/home/user/sober-linux/src/jni/javavm_default.h:
-
 /home/user/sober-linux/src/jni/flags_latch_default.h:
 
 /usr/include/bits/types/struct_osockaddr.h:
@@ -704,6 +699,8 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
 
 /usr/include/asm/errno.h:
+
+/home/user/sober-linux/src/jni/javavm_default.h:
 
 /usr/include/bits/floatn-common.h:
 
@@ -795,6 +792,8 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
 
 CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
 
+/home/user/sober-linux/src/jni/crashpad_return.h:
+
 /lib64/libc.so.6:
 
 /home/user/sober-linux/src/jni/singleton_services.h:
@@ -869,6 +868,12 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/bits/link.h:
 
+/usr/include/linux/posix_types.h:
+
+/usr/include/bits/mman-map-flags-generic.h:
+
+/usr/include/bits/types/FILE.h:
+
 /usr/include/bits/fcntl2.h:
 
 /usr/include/bits/types/clock_t.h:
@@ -940,8 +945,6 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 /usr/include/linux/falloc.h:
 
 /usr/include/linux/openat2.h:
-
-src/jni/libsober_jni.a:
 
 /usr/include/linux/stddef.h:
 
