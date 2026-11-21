@@ -21,6 +21,7 @@
  */
 #define _GNU_SOURCE
 #include "publish_default.h"
+#include "app_singleton_bridge.h"
 
 #include <stdatomic.h>
 #include <stdio.h>
@@ -44,6 +45,7 @@ static _Atomic uintptr_t g_descriptor;
 static _Atomic int       g_last_rc;
 static _Atomic int       g_verified;
 static _Atomic uint64_t  g_register_calls;
+static _Atomic uint64_t  g_bus_preinit_calls;   /* genuine 0x24a8e44(4) primes */
 
 /* ---- gate ---------------------------------------------------------------- */
 int sober_publish_default_enabled(void)
@@ -59,7 +61,8 @@ int sober_publish_default_enabled(void)
 
 const char *sober_publish_default_env_vars(void)
 {
-    return SOBER_PUBLISH_DEFAULT_ENV "," SOBER_PUBLISH_NODE_REDRIVE_ENV;
+    return SOBER_PUBLISH_DEFAULT_ENV "," SOBER_PUBLISH_NODE_REDRIVE_ENV
+           "," SOBER_PREINIT_BUS_ENV;
 }
 
 /* Kill switch for the DIAGNOSTIC 0x253cb56 re-drive.  Default ENABLED so
@@ -79,6 +82,92 @@ const char *sober_publish_default_node_redrive_env(void)
     return SOBER_PUBLISH_NODE_REDRIVE_ENV;
 }
 
+/* ---- task #507: pre-init MessageBus prime -------------------------------- */
+/* The prime is OPT-IN (default OFF).  An exact falsy value is the kill switch.
+ * Setting it drives genuine guest state, so it stays in the forced-withhold
+ * chain and must be reported to the lead for seeded_state. */
+static int pd_preinit_bus_enabled(void)
+{
+    const char *e = getenv(SOBER_PREINIT_BUS_ENV);
+    if (!e)
+        return 0;                       /* default OFF: no state seeded */
+    if (strcmp(e, "0") == 0 || strcasecmp(e, "off") == 0 ||
+        strcasecmp(e, "no") == 0 || strcasecmp(e, "false") == 0)
+        return 0;                       /* KILL SWITCH */
+    return 1;                           /* 1 / true / on / yes / any other */
+}
+
+const char *sober_publish_default_preinit_env(void)
+{
+    return SOBER_PREINIT_BUS_ENV;
+}
+
+/* Read-only: both MessageBus services are constructed (guard bytes armed) and
+ * the id=1 registration one-shot at 0x72a31ba is still CLEAR, i.e. the single
+ * guest call from 0x24ad6a5 has not been spent yet.  No guest call or write. */
+int sober_publish_default_bus_ready(void *guest_base)
+{
+    unsigned char *b = (unsigned char *)guest_base;
+
+    if (!b)
+        return 0;
+    return *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_A) != 0 &&
+           *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_B) != 0 &&
+           *(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD) == 0;
+}
+
+/* Read-only superset: MessageBus prime-safe + EnableAppBridgeComponents flag
+ * + app singleton 0x72cb5e0 and its app+0x488 inner object present.  The flag
+ * and singleton/app488 are the app-state prerequisites the real Java order
+ * (nativePreloadFlagOverrides 0x2edd859 + nativeRetryInit 0x2edd739, then
+ * nativePostClientSettings / InitWithParams) establishes.  No guest call. */
+int sober_publish_default_preinit_ready(void *guest_base)
+{
+    unsigned char *b = (unsigned char *)guest_base;
+
+    if (!sober_publish_default_bus_ready(b))
+        return 0;
+    if (*(volatile uint8_t *)(b + SOBER_PD_RVA_APPBRIDGE_FFLAG) == 0)
+        return 0;
+    return sober_app_singleton_app488_ready(guest_base);
+}
+
+/* OPT-IN guest-state seed: call the genuine MessageBus service getter with
+ * service id 4 (default bus 0x72cbdd0).  This is the SAME guest helper the
+ * registration function 0x253cb56 calls at 0x253cb9d immediately after it
+ * spends its guard; doing it BEFORE 0x24abf96 removes that step from inside
+ * the one-shot registration path.  Idempotent: guards make a second call a
+ * no-op.  No byte write, no fabricated node/callback. */
+int sober_publish_default_preinit_bus(void *guest_base)
+{
+    unsigned char *b = (unsigned char *)guest_base;
+    uintptr_t (*bus_getter)(int);
+    uintptr_t bus;
+
+    if (!sober_publish_default_enabled())
+        return SOBER_PD_DISABLED;
+    if (!b)
+        return SOBER_PD_ERR;
+    if (!pd_preinit_bus_enabled())
+        return SOBER_PD_DISABLED;       /* default OFF / kill switch: inert */
+    if (sober_publish_default_bus_ready(b))
+        return SOBER_PD_OK;             /* already primed (guards armed) */
+
+    bus_getter = (uintptr_t (*)(int))(uintptr_t)
+                     (b + SOBER_PD_RVA_BUS_GETTER);
+    atomic_fetch_add(&g_bus_preinit_calls, 1);
+    bus = bus_getter(4);                /* service 4 -> default bus 0x72cbdd0 */
+    fprintf(stderr,
+            "[publish-default] preinit 0x24a8e44(4) -> bus=%p "
+            "guardA@0x72cc270=%u guardB@0x72cc718=%u node_guard@0x72a31ba=%u "
+            "(guest-state seed, WITHHELD)\n",
+            (void *)bus,
+            (unsigned)*(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_A),
+            (unsigned)*(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_B),
+            (unsigned)*(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD));
+    return sober_publish_default_bus_ready(b) ? SOBER_PD_OK : SOBER_PD_NO_STATE;
+}
+
 int sober_publish_default_should_withhold(void)
 {
     /* Decision 013: the re-drive is a diagnostic seed and stays force-withheld,
@@ -87,6 +176,10 @@ int sober_publish_default_should_withhold(void)
      * clean path structurally unreachable.  Once it has re-driven (or a hit
      * was recorded) it is withheld for the rest of the run. */
     if (!sober_publish_default_enabled()) return 0;
+    /* The pre-init MessageBus prime drives genuine guest state, so a run that
+     * used it is a seeded run: keep the marker WITHHELD for that run. */
+    if (atomic_load_explicit(&g_bus_preinit_calls, memory_order_relaxed) != 0u)
+        return 1;
     if (atomic_load_explicit(&g_register_calls, memory_order_relaxed) != 0u)
         return 1;
     if (atomic_load_explicit(&g_publish_calls, memory_order_relaxed) != 0u)
@@ -137,6 +230,7 @@ void *sober_publish_default_find_node(void *guest_base)
     unsigned char *b = (unsigned char *)guest_base;
     unsigned char *buses[2];
     size_t i, nbus = 0;
+    unsigned n;
 
     if (!b)
         return NULL;
@@ -148,9 +242,22 @@ void *sober_publish_default_find_node(void *guest_base)
         buses[nbus++] = b + SOBER_PD_RVA_BUS_MODE3;
 
     for (i = 0; i < nbus; ++i) {
-        unsigned char *cur =
+        /* TASK #524 root cause: bus+0x288 is a SLOT holding a pointer to the
+         * 0x18-byte intrusive-list CONTAINER (0x23172ce/0x2317354), NOT the
+         * subscription node.  The real 0x60-byte node is linked at
+         * container+0x08 (0x2317766) and chained via node+0x10 (0x231778d).
+         * The old finder compared container+0x08 (a heap pointer) with the
+         * dispatch function base+0x27eaf04 and walked container+0x20 out of
+         * bounds, so it could NEVER see a genuinely registered node.
+         * Read-only: this is one extra guest-pointer dereference, no write,
+         * no guest call, no fabricated node/descriptor/vtable. */
+        unsigned char *hdr =
             *(void *volatile *)(buses[i] + SOBER_PD_OFF_BUS_LIST);
-        unsigned n;
+        unsigned char *cur;
+
+        if (!hdr)
+            continue;
+        cur = *(void *volatile *)(hdr + SOBER_PD_OFF_LIST_HDR_FIRST);
 
         for (n = 0; cur && n < SOBER_PD_MAX_NODE_WALK; ++n) {
             void *dispatch =
@@ -394,13 +501,25 @@ static void *pd_ensure_node(unsigned char *b)
         reg(1, b + SOBER_PD_RVA_SLOT_GLOBAL);
     }
     node = sober_publish_default_find_node(b);
-    /* One-line diagnostic: the guest registers several MessageBus descriptors,
-     * but the id=1 GameLoaded node only exists once nativeAppBridgeV2InitWithParams
-     * reaches 0x24ad6a5 (which needs the app-state prerequisites).  Until then
-     * find_node() returns NULL and publication is WITHHELD, not fabricated. */
-    fprintf(stderr,
-            "[publish-default] guest node registration 0x253cb56(1,&0x7234520) "
-            "-> node=%p (NULL = id=1 GameLoaded node not registered yet)\n", node);
+    /* TASK #524 evidence, all read-only: the one-shot guard is spent by the
+     * guest at 0x253cb91; bus+0x288 holds the 0x18-byte list container whose
+     * +0x08 points at the real 0x60-byte node.  Reporting these three words
+     * makes the "NO_NODE" result distinguish a missed registration from the
+     * old finder's missed container indirection.  No guest byte is written. */
+    {
+        void *hdr = *(void *volatile *)(b + SOBER_PD_RVA_BUS_DEFAULT +
+                                        SOBER_PD_OFF_BUS_LIST);
+        void *first = hdr ? *(void *volatile *)
+                                ((unsigned char *)hdr + SOBER_PD_OFF_LIST_HDR_FIRST)
+                          : NULL;
+        fprintf(stderr,
+                "[publish-default] guest node registration 0x253cb56(1,&0x7234520) "
+                "-> node=%p guard@0x72a31ba=%u hdr@0x72cbdd0+0x288=%p "
+                "hdr+8=%p (read-only discovery; no fabricated node)\n",
+                node,
+                (unsigned)*(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD),
+                hdr, first);
+    }
     return node;
 }
 
@@ -575,7 +694,7 @@ const char *sober_publish_default_describe(char *buf, size_t cap)
              "enabled=%d gate=%s publish=%llu chain_ok=%llu register=%llu "
              "hits[dispatch=%llu call=%llu invoke=%llu notifier=%llu "
              "thunk_ret=%llu callback=%llu] placeId=%lld last_rc=%d "
-             "node=%p desc=%p redrive=%d",
+             "node=%p desc=%p redrive=%d preinit=%llu preinit_env=%s",
              sober_publish_default_enabled(), SOBER_PUBLISH_DEFAULT_ENV,
              (unsigned long long)atomic_load(&g_publish_calls),
              (unsigned long long)atomic_load(&g_chain_ok),
@@ -590,7 +709,9 @@ const char *sober_publish_default_describe(char *buf, size_t cap)
              atomic_load(&g_last_rc),
              (void *)(uintptr_t)atomic_load(&g_node),
              (void *)(uintptr_t)atomic_load(&g_descriptor),
-             pd_node_redrive_enabled());
+             pd_node_redrive_enabled(),
+             (unsigned long long)atomic_load(&g_bus_preinit_calls),
+             SOBER_PREINIT_BUS_ENV);
     return buf;
 }
 
@@ -610,4 +731,5 @@ void sober_publish_default_reset(void)
     atomic_store(&g_last_rc, SOBER_PD_DISABLED);
     atomic_store(&g_verified, 0);
     atomic_store(&g_register_calls, 0);
+    atomic_store(&g_bus_preinit_calls, 0);
 }

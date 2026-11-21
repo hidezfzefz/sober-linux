@@ -1330,7 +1330,58 @@ static void fe_drive_egl_guarded(uintptr_t base, uintptr_t window)
     if (have_segv) (void)sigaction(SIGSEGV, &old_segv, NULL);
 }
 
-/* The H6 FLog sink observer writes a guest DATA pointer (B+0x7d8f820), the
+/* TASK #523 DETERMINATION (worker-3; frozen BuildID 204ad049 / SHA 3e498d64;
+ * every claim below is guest-derived and A/B-reproduced on this harness with
+ * SOBER_RENDER=1 SOBER_APP_SHELL=1, engine SHA/BuildID unchanged):
+ * ---------------------------------------------------------------------------
+ * Empirical A/B:
+ *   DEFAULT (all opt-ins unset): guest bind IS proven (store-tied RA
+ *     base+0x26fea7d, generation 1->2) but the G8 verdict is 0 / R8_NO_ACQUIRE,
+ *     with acq=0 dims=0 flog_calls=0 h6=0 flog_enable=0 and withhold=0.
+ *   ALL THREE OPT-INS: G8 verdict=1 ACCEPT (C0-C10), real ACQUIRE RA
+ *     base+0x649c2db, real DIMS RAs base+0x649c308/0x649c314, real guest H6
+ *     text via the true sink RA base+0x232e080, withhold=1.  Dropping only
+ *     FLOG_ENABLE gives R10_NO_LOG (h6=0).  Each knob is necessary; jointly
+ *     they are sufficient for the WINDOW verdict.
+ *
+ * Why the honest default path (seeded_state==0) CANNOT reach ACCEPT:
+ *  - C8/C9: the sole guest emitter of ANativeWindow_acquire (0x649c2d6) and
+ *    getWidth/getHeight (0x649c303 / 0x649c30f) is guest egl_init at 0x649c21e.
+ *    On the default path that runs in phase 3 BEFORE these observers exist and
+ *    on the host shim window, so no ACQUIRE/DIMS observation lands on W_now;
+ *    the getWidth/getHeight leg is additionally gated on the guest graphics
+ *    setting 0x77a3d60 low byte >= 6 (default 0x300 fails it).  The guest
+ *    re-runs egl_init on a published window only via the real Java surface
+ *    lifecycle: nativeAppBridgeV2UpdateSurfaceAppWithPlatformParams 0x2773194
+ *    -> app-event bus 0x2eb6b2a -> SurfaceController/RenderJob 0x276d36a ->
+ *    TaskScheduler/IoEvLoop frame loop, which needs fully backed JNI getters,
+ *    the flags-loaded latch 0x7cdd149, live event registration and a running
+ *    render thread.  The native-only harness has none of these, so the only
+ *    post-bind egl_init on W_now is the host-triggered fe_drive_guest_egl_init
+ *    (EGL_INIT_DRIVE), which also writes 0x77a3d60 to enable dims: seeded.
+ *  - C10: the guest's own initializer hardcodes JNIAppBridge config 0x72a3268
+ *    = 0x0406 (high byte 4 < the requested level 5), so 0x26feb0f formats NO
+ *    "Created ANativeWindow" text at all by default.  Producing it needs the
+ *    FLOG_ENABLE guest-setter raise (thunk 0x2ebc75c + setter 0x23648be,
+ *    0x406 -> 0xff06, restored after bind) and observing it needs the
+ *    FLOG_SINK chain on the NULL sink pointer 0x7d8f820: both seeded guest
+ *    writes.  The log tag itself is a host-supplied string (frame_surface.c),
+ *    so even H6 does not prove the real 0x2773194 entry ran.
+ *  - Render leg: guest-tagged swaps/draws come only from the guest frame loop
+ *    (or the host-triggered dispatch-helper diagnostic); the same missing
+ *    surface lifecycle leaves guest_render_ok()==0 on the default path.
+ *
+ * CONCLUSION: a clean seeded_state==0 render green is NOT achievable with this
+ * harness.  The exact remaining prerequisite is genuine, guest-state-machine
+ * driven surface-lifecycle/redraw delivery (0x2773194 with a live
+ * SurfaceController/RenderJob/IoEvLoop) plus the real app flag path raising
+ * JNIAppBridge >= 5, all with every opt-in unset.  That needs a real Java/ART
+ * activity (Surface, looper, render thread, flag overrides) the native harness
+ * cannot provide without seeding.  The correct default result stays REJECT
+ * (R8_NO_ACQUIRE), the marker stays WITHHELD under decisions 013/038, and this
+ * must NOT be "fixed" by synthesizing observations or weakening C0-C10.
+ * ---------------------------------------------------------------------------
+ * The H6 FLog sink observer writes a guest DATA pointer (B+0x7d8f820), the
  * opt-in EGL-init drive is a host-triggered guest call, and the opt-in FLog
  * enable raises a guest settings word through its own setter.  All are seeded
  * guest state under decision 013: report WITHHELD honestly so the lead's

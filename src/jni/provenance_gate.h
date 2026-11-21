@@ -26,10 +26,16 @@
  *     (3) the class/method handles passed to the dispatcher are exactly the
  *         guest's cached globals at base + 0x72a2f48 / base + 0x72a2fc0;
  *     (4) the frozen engine build ID matches 204ad049... (fail closed);
- *     (5) the dispatch name is a qualifying name ("gameLoadedCallback").
+ *     (5) the dispatch name is a qualifying name ("gameLoadedCallback");
+ *     (6) the FULL guest dispatch chain is live (task #522): walking the frame
+ *         chain from the notifier return site must find the descriptor-invoke
+ *         return base+0x27eaf32 (the `call [rax+0x30]` at 0x27eaf2f; the
+ *         invoke at 0x27eaf4c tail-jmps to the notifier) AND the node dispatch
+ *         0x27eaf04 must itself have been entered from guest .text, not from
+ *         host code (a host-entered re-drive leaves a harness return address).
  *
  * Classification is fail-closed and disjoint:
- *   GENUINE          -> (1)+(2)+(3)+(4)+(5): real notifier-driven callback.
+ *   GENUINE          -> (1)+(2)+(3)+(4)+(5)+(6): real notifier-driven callback.
  *   HARNESS_THUNK    -> (1) present but (2) is a HOST/unknown return address:
  *                       the ALT thunk called directly from host code.  Never
  *                       genuine; sets a global sticky taint flag.
@@ -114,7 +120,27 @@ extern "C" {
 #define SOBER_PROV_GATE_SHA256_HEX \
     "3e498d649421115bdbebaa69f78e2b818d4351d8990db60e232d2aef5b741335"
 
-/* ---- frozen guest RVAs (relative to the load bias) ---------------------- */
+/* ---- frozen guest RVAs (relative to the load bias) ---------------------- *
+ * Full id=1 MessageBus dispatch chain, verified by raw disassembly of the
+ * frozen image (first R E PT_LOAD has RVA == file offset):
+ *   0x27eaf04  subscription node dispatch entry
+ *   0x27eaf2f  `call QWORD PTR [rax+0x30]` -> descriptor invoke
+ *   0x27eaf32  RETURN SITE of that call (proof that leg 0x27eaf04->0x27eaf4c
+ *              ran; the invoke tail-jmps to the notifier so the word stays live)
+ *   0x27eaf4c  id=1 descriptor invoke (`jmp rcx` at 0x27eaf6b)
+ *   0x27eaf6e  notifier entry (loads the cached class/method globals)
+ *   0x27eafae  `call 0x25848e0` inside the notifier
+ *   0x27eafb3  return site of that call (high word of the RA pair)
+ *   0x25848e0  generic JNI thunk entry
+ *   0x258495a  `call *0x470(%rax)` (JNI slot 142 = CallStaticVoidMethodV)
+ *   0x2584960  return site of that call (low word of the RA pair)
+ */
+#define SOBER_PROV_GATE_RVA_NODE_DISPATCH   0x27eaf04u
+#define SOBER_PROV_GATE_RVA_PUBLISH_CALL    0x27eaf2fu
+#define SOBER_PROV_GATE_RVA_DISPATCH_RET    0x27eaf32u
+#define SOBER_PROV_GATE_RVA_DESCRIPTOR_INVOKE 0x27eaf4cu
+#define SOBER_PROV_GATE_RVA_NOTIFIER        0x27eaf6eu
+#define SOBER_PROV_GATE_RVA_THUNK_ENTRY     0x25848e0u
 #define SOBER_PROV_GATE_RVA_THUNK_CALL_RET  0x2584960u  /* CallStaticVoidMethodV return */
 #define SOBER_PROV_GATE_RVA_NOTIFIER_RET    0x27eafb3u  /* gameLoadedCallback notifier return */
 #define SOBER_PROV_GATE_RVA_APPBRIDGE_RET   0x2eb4bb1u  /* onAppBridgeNotification reader return */
@@ -147,6 +173,9 @@ typedef struct {
     uint64_t  appbridge_count;     /* onAppBridgeNotification observations     */
     uintptr_t thunk_return_addr;   /* last base+0x2584960 observed (0 if none) */
     uintptr_t caller_return_addr;  /* last caller RA observed (0 if none)      */
+    uintptr_t node_caller_addr;    /* node dispatch 0x27eaf04 caller RA: guest
+                                    * .text on a genuine MessageBus dispatch,
+                                    * host code on a host-entered re-drive     */
     uintptr_t cached_class;        /* value read at base+0x72a2f48            */
     uintptr_t cached_method;       /* value read at base+0x72a2fc0            */
     int64_t   place_id;            /* read at base+0x72a31c0 at dispatch time  */
@@ -211,6 +240,10 @@ SOBER_PROV_GATE_API uint64_t  sober_provenance_gate_appbridge_count(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_guest_base(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_thunk_return_addr(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_caller_return_addr(void);
+/* Return address of whoever entered node dispatch 0x27eaf04 (the guest
+ * MessageBus dispatcher on the genuine chain, host code on a re-drive).
+ * 0 when no complete notifier->dispatch frame chain was observed. */
+SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_node_caller_return_addr(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_class(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_method(void);
 /* placeId sampled read-only from base+0x72a31c0 at the last dispatch. */

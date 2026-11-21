@@ -23,6 +23,15 @@
  * "nativeRef is zero"), and the only export reaching a writer (nativePassKeyEvent
  * -> 0x56d2d35) hardcodes r9=0 so the store is skipped.  No new route added.
  * Every attempted route is gated by an env knob and forces marker withhold.
+ *
+ * Task #525 addendum: the shipped DEX was checked for a clean Java route to
+ * the crashpad latch writer.  nativeRunCrashpadHandler (0x2eca720) has exactly
+ * one Java caller — CrashpadHandler.main(String[]), the crash-handler
+ * SUBPROCESS entry — and boot only calls nativeInitCrashpad (0x232d6b8), which
+ * cannot write 0x7cdd149.  So there is no opt-in-free Java boot route to any
+ * crashpad latch writer.  The default route therefore stays "none"; adding a
+ * default-ON crashpad route here would be a host-initiated seed and must remain
+ * in the seeded_state/WITHHELD chain (it can never justify a clean marker).
  */
 #ifndef SOBER_FLAGS_LATCH_DEFAULT_H
 #define SOBER_FLAGS_LATCH_DEFAULT_H

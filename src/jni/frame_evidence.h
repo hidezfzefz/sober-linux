@@ -130,7 +130,12 @@ extern "C" {
  * draw, and is WITHHOLD-WORTHY (host-triggered guest init), so enabling it
  * forces seeded_state via sober_frame_evidence_should_withhold().
  * Only the exact value "1" enables it; unset/0/anything else is the kill
- * switch and the default path performs no such call. */
+ * switch and the default path performs no such call.
+ * TASK #523: the honest default path cannot supply C8/C9/C10 (it rejects at
+ * R8_NO_ACQUIRE, then R10_NO_LOG); this knob plus FLOG_SINK/FLOG_ENABLE are
+ * each necessary and jointly sufficient for the G8 verdict, but all are seeded
+ * guest state.  A clean seeded_state==0 render is impossible in this harness
+ * (needs the real Java surface-lifecycle/redraw delivery); marker WITHHELD. */
 #define SOBER_FRAME_EVIDENCE_EGL_ENV  "SOBER_FRAME_EGL_INIT_DRIVE"
 /* DEFAULT ON: false only when getenv(SOBER_FRAME_EVIDENCE) is exactly "0". */
 SOBER_FRAME_EVIDENCE_API int         frame_evidence_enabled(void);

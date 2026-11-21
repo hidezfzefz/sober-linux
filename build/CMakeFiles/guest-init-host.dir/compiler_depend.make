@@ -15,6 +15,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/fflag_default.h \
   /home/user/sober-linux/src/jni/fields_default.h \
   /home/user/sober-linux/src/jni/flags_latch_default.h \
+  /home/user/sober-linux/src/jni/frame_callbacks.h \
   /home/user/sober-linux/src/jni/frame_dispatch.h \
   /home/user/sober-linux/src/jni/frame_draw.h \
   /home/user/sober-linux/src/jni/frame_evidence.h \
@@ -634,10 +635,6 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/timesize.h:
 
-/usr/include/bits/types.h:
-
-/usr/include/bits/dl_find_object.h:
-
 /home/user/sober-linux/src/jni/delegate_default.h:
 
 /usr/include/stdlib.h:
@@ -746,7 +743,15 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/cpu-set.h:
 
+/usr/include/bits/byteswap.h:
+
+/usr/include/bits/link.h:
+
+/home/user/sober-linux/src/jni/jni_json_bridge.h:
+
 /home/user/sober-linux/src/jni/jni_arrays.h:
+
+/home/user/sober-linux/src/jni/frame_callbacks.h:
 
 /home/user/sober-linux/src/jni/scheduler_guest.h:
 
@@ -862,17 +867,19 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/asm/bitsperlong.h:
 
-/home/user/sober-linux/src/jni/jni_json_bridge.h:
+/usr/include/bits/dl_find_object.h:
 
-/usr/include/bits/byteswap.h:
-
-/usr/include/bits/link.h:
+/usr/include/bits/types.h:
 
 /usr/include/linux/posix_types.h:
 
 /usr/include/bits/mman-map-flags-generic.h:
 
 /usr/include/bits/types/FILE.h:
+
+libsober_platform.a:
+
+/usr/include/bits/types/__fpos64_t.h:
 
 /usr/include/bits/fcntl2.h:
 
@@ -1057,7 +1064,3 @@ libsober_bootstrap.a:
 /home/user/sober-linux/src/jni/fflag_default.h:
 
 libsober_compat.a:
-
-/usr/include/bits/types/__fpos64_t.h:
-
-libsober_platform.a:

@@ -44,6 +44,55 @@
  *
  * LEAD: add SOBER_CRASHPAD_RETURN* to the seeded_state chain in
  * guest_app_shell.c and OR in sober_crashpad_return_should_withhold().
+ *
+ * TASK #525 — IS THERE A CLEAN (OPT-IN-FREE) JAVA BOOT PATH TO 0x2eca720?
+ * ------------------------------------------------------------------------
+ * NO.  Static REA/JADX analysis of the shipped DEX (classes2.dex; the same
+ * object the frozen engine was extracted from) gives an unambiguous call
+ * graph for the Java declaration of this guest entry:
+ *
+ *   nativeRunCrashpadHandler([Ljava/lang/String;)I
+ *     declared: com/roblox/engine/jni/NativeSettingsInterface.smali
+ *     EXACTLY ONE Java caller (REA trace_android_references, total=1):
+ *       com.roblox.client.analytics.CrashpadHandler.main(String[])
+ *       -> System.load(libroblox.so) then
+ *          NativeSettingsInterface.nativeRunCrashpadHandler(argv)
+ *       -> logs "Crash handling succeed" / "failed with result %d".
+ *     CrashpadHandler.main is a standalone JAVA PROCESS ENTRY POINT (`main`),
+ *     launched only when the native crash runtime starts the crash-handler
+ *     subprocess.  It is NOT on the Application/Activity boot path.
+ *
+ *   The real boot path registers that handler class but never runs it:
+ *     MainGameActivity / ExperienceSession / uh.f
+ *       -> rg.a1.W0 -> X0 -> h0()
+ *       -> NativeSettingsInterface.nativeInitCrashpad(
+ *              NativeInitCrashpadParams.builder()
+ *                .i(CrashpadHandler.class.getCanonicalName()) ... )
+ *     nativeInitCrashpad is guest export 0x232d6b8; its disassembly contains
+ *     NO call to 0x2eca720 / 0x2ec9eed and NO `movb $1,0x7cdd149`
+ *     (cross-check analysis/A15-flags-latch-route.md §2, task510 §4).
+ *     It only *installs* the handler; the latch writer runs later, in the
+ *     handler subprocess, on an actual crash.
+ *
+ *   Therefore no unmodified Java boot step reaches the latch writer
+ *   0x2ec9fae.  The Java-side step that *would* reach it is exactly
+ *   CrashpadHandler.main(String[]) — but that is the crash-handler
+ *   subprocess, not boot; replaying it from the harness is a host-initiated
+ *   seed, by definition NOT a clean app-shell boot.  No default-ON path is
+ *   added here for that reason. LEAD: any run that reaches 0x2eca720 (with or
+ *   without this module) is seeded/WITHHELD under decision 013/038.
+ *
+ * EXACT PREREQUISITES for the (always-withheld) clean-return route:
+ *   1. reach the app-shell phase: SOBER_APP_SHELL=1 and SOBER_RENDER=1.
+ *   2. SOBER_CRASHPAD_RETURN=1           master kill switch (default OFF).
+ *   3. SOBER_FAITHFUL_JNI_ARRAYS=1       the guest's JNI String[] walk uses
+ *      fn[167]/fn[169]; with the default stubs it sees length 0 and crashpad
+ *      takes its fatal Usage path. install() now FAILS CLOSED if this is not
+ *      active (so a missing opt-in can never masquerade as a clean run).
+ *   4. optional SOBER_CRASHPAD_RETURN_ARGV / _PASSCRED / _STDIO (sub-knobs).
+ *   All of the above are already in the guest_app_shell.c seeded_state chain
+ *   (SOBER_CRASHPAD_RETURN* at 1750-1754, SOBER_FAITHFUL_JNI_ARRAYS at 1856,
+ *   plus sober_crashpad_return_should_withhold() at 1754).  Marker: WITHHELD.
  */
 #ifndef SOBER_CRASHPAD_RETURN_H
 #define SOBER_CRASHPAD_RETURN_H
@@ -100,6 +149,18 @@ SOBER_CRASHPAD_RETURN_API unsigned sober_crashpad_return_latch(void);
 
 /* Diagnostic: the env-var names this module reads (comma-separated). */
 SOBER_CRASHPAD_RETURN_API const char *sober_crashpad_return_env_vars(void);
+
+/* Task #525 read-only verdict: 0 — the unmodified Java boot path has no step
+ * that reaches nativeRunCrashpadHandler 0x2eca720 / latch writer 0x2ec9fae.
+ * The sole Java caller is the crash-handler SUBPROCESS main(); boot only calls
+ * nativeInitCrashpad 0x232d6b8 (install, no latch write).  A non-zero return
+ * would mean a genuine boot route had been found; it has not.  Never use this
+ * to relax the withhold chain. */
+SOBER_CRASHPAD_RETURN_API int sober_crashpad_return_java_boot_reachable(void);
+
+/* Task #525 read-only: the exact prerequisites for the always-withheld route
+ * (static, comma-separated text; no state is read or mutated). */
+SOBER_CRASHPAD_RETURN_API const char *sober_crashpad_return_prereqs(void);
 
 #ifdef __cplusplus
 }

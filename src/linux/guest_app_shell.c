@@ -58,6 +58,7 @@
 #include "frame_surface.h"
 #include "frame_thread.h"
 #include "frame_synthetic_tag.h"
+#include "frame_callbacks.h"
 #include "flags_latch_default.h"
 #include "crashpad_return.h"
 
@@ -1465,6 +1466,17 @@ int guest_app_shell_run(uintptr_t base)
                 (unsigned)*(volatile unsigned char *)(base + 0x72a31bau));
     }
 
+    /* Scale-wave: prime the MessageBus service directly through the guest's
+     * OWN internal accessor 0x24a8e44(4) before InitWithParams spends the id=1
+     * registration guard.  The real Java path primes it via nativeAppBridgeAppStart
+     * 0x247dc8d, which our harness previously called too late.  Opt-in/withheld. */
+    if (getenv("SOBER_MESSAGEBUS_PRIME")) {
+        void *bus = ((void *(*)(int))(base + 0x24a8e44u))(4);
+        fprintf(stderr, "[app-shell] MessageBus prime 0x24a8e44(4) -> %p "
+                        "guard=%u\n", bus,
+                (unsigned)*(volatile unsigned char *)(base + 0x72a31bau));
+    }
+
     rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
              (env, app_class, param_obj);
     fprintf(stderr, "[app-shell] guest call 0x24abf96 nativeAppBridgeV2InitWithParams"
@@ -1753,6 +1765,12 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_CRASHPAD_RETURN_STDIO") ||
                        sober_crashpad_return_should_withhold() ||
                        getenv("SOBER_MESSAGEBUS_PREINIT") ||
+                       getenv("SOBER_MESSAGEBUS_PRIME") ||
+                       getenv("SOBER_PREINIT_BUS") ||
+                       getenv("SOBER_PROVENANCE_GATE_GUEST_BASE") ||
+                       getenv("SOBER_FRAME_CALLBACKS") ||
+                       getenv("SOBER_FRAME_CALLBACKS_GUEST_ND") ||
+                       sober_frame_callbacks_should_withhold() ||
                        getenv("SOBER_FRAME_EGL_INIT_DRIVE") ||
                        getenv("SOBER_FRAME_FLOG_ENABLE") ||
                        getenv("SOBER_FRAME_FLOG_SINK") ||

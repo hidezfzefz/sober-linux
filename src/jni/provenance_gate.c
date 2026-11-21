@@ -66,6 +66,7 @@ static _Atomic int      g_harness;         /* sticky global taint               
 static _Atomic int      g_appbridge;       /* sticky appbridge-seen flag          */
 static _Atomic uintptr_t g_thunk_ra;       /* last base+0x2584960 observed        */
 static _Atomic uintptr_t g_caller_ra;      /* last caller return address observed */
+static _Atomic uintptr_t g_node_caller_ra; /* who entered node dispatch 0x27eaf04 */
 static _Atomic uintptr_t g_cached_class;   /* value read at base+0x72a2f48       */
 static _Atomic uintptr_t g_cached_method;  /* value read at base+0x72a2fc0       */
 static _Atomic int64_t  g_place_id;        /* read at base+0x72a31c0              */
@@ -188,6 +189,7 @@ void sober_provenance_gate_reset(void)
     atomic_store_explicit(&g_appbridge, 0, memory_order_release);
     atomic_store_explicit(&g_thunk_ra, 0, memory_order_relaxed);
     atomic_store_explicit(&g_caller_ra, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_node_caller_ra, 0, memory_order_relaxed);
     atomic_store_explicit(&g_cached_class, 0, memory_order_relaxed);
     atomic_store_explicit(&g_cached_method, 0, memory_order_relaxed);
     atomic_store_explicit(&g_place_id, 0, memory_order_relaxed);
@@ -235,14 +237,69 @@ typedef struct {
     int      caller;        /* CALLER_* */
     uintptr_t caller_off;
     uintptr_t caller_ra;    /* absolute address of the recognised caller RA   */
-    /* 1 when the frameDirectly above the notifier return is ALSO guest code.
-     * In the genuine chain the node dispatch returns to 0x27eaf34 (guest);
-     * a host-entered 0x27eaf04 (publish_default re-drive) returns into the
-     * harness instead, so this stays 0 and cannot be certified GENUINE even
-     * if the thunk/notifier RA pair happens to be present. */
+    /* 1 only when the full 3-frame guest walk succeeds: the notifier's
+     * `call [rax+0x30]` return (base+0x27eaf32) is live above the notifier RA
+     * AND node dispatch 0x27eaf04 was itself entered from guest .text.  A
+     * host-entered 0x27eaf04 (publish_default re-drive) leaves a harness
+     * return address as the node dispatch's caller, so this stays 0 and
+     * cannot be certified GENUINE even if the thunk/notifier RA pair is
+     * present. */
     int      guest_above_notifier;
+    uintptr_t node_caller_ra; /* node dispatch caller RA (guest or host)      */
     uintptr_t frame_cand;    /* saved-RBP candidate when found via frame-chain */
 } ProvScan;
+
+/* Walk from the notifier's `call 0x25848e0` return slot up through the guest
+ * frames and verify the COMPLETE id=1 dispatch chain (task #522):
+ *
+ *   notifier_slot = stack address holding base+0x27eafb3
+ *   rbp_th        = notifier_slot - 8        (`push rbp` in thunk 0x25848e0)
+ *   rbp_not       = [rbp_th]                 (saved notifier frame pointer)
+ *   [rbp_not+8]   == base+0x27eaf32           (`call [rax+0x30]` @0x27eaf2f;
+ *                                              invoke 0x27eaf4c tail-jmps to
+ *                                              the notifier, so this word is
+ *                                              still live while it runs)
+ *   rbp_node      = [rbp_not]                 (saved node-dispatch rbp)
+ *   node_caller_ra= [rbp_node+8]              (who entered 0x27eaf04)
+ *
+ * Returns 1 only when the invoke return matches AND node_caller_ra is guest
+ * .text.  Only the MessageBus dispatcher leaves a guest return address there;
+ * a host-entered 0x27eaf04 (publish_default re-drive) leaves a host return
+ * address and is rejected.  This fails closed independently of seeded_state.
+ * *out_caller_ra is written (0 on an incomplete walk) for diagnostics. */
+static int pg_walk_notifier_to_dispatch(uintptr_t base, uintptr_t notifier_slot,
+                                        uintptr_t frame_cand,
+                                        uintptr_t *out_caller_ra)
+{
+    *out_caller_ra = 0u;
+
+    /* The frame-chain path already found the thunk frame pointer (the saved
+     * RBP whose +8 word was the notifier RA).  The fixed-offset path derives
+     * it from the notifier RA slot: `push rbp` wrote at that slot - 8. */
+    const uintptr_t rbp_th = frame_cand ? frame_cand : (notifier_slot - 8u);
+    if (!rbp_th || (rbp_th & 7u) != 0u) return 0;
+    if (notifier_slot <= rbp_th || (notifier_slot - rbp_th) > (1u << 20))
+        return 0;
+
+    const uintptr_t rbp_not = *(const volatile uintptr_t *)rbp_th;
+    if (!rbp_not || (rbp_not & 7u) != 0u) return 0;
+    if (rbp_not <= rbp_th || (rbp_not - rbp_th) > (1u << 20)) return 0;
+
+    /* Leg 0x27eaf2f -> 0x27eaf4c -> 0x27eaf6e must be live. */
+    const uintptr_t invoke_ret =
+        *(const volatile uintptr_t *)(rbp_not + sizeof(uintptr_t));
+    if (invoke_ret != base + (uintptr_t)SOBER_PROV_GATE_RVA_DISPATCH_RET)
+        return 0;
+
+    const uintptr_t rbp_node = *(const volatile uintptr_t *)rbp_not;
+    if (!rbp_node || (rbp_node & 7u) != 0u) return 0;
+    if (rbp_node <= rbp_not || (rbp_node - rbp_not) > (1u << 20)) return 0;
+
+    const uintptr_t caller =
+        *(const volatile uintptr_t *)(rbp_node + sizeof(uintptr_t));
+    *out_caller_ra = caller;
+    return caller >= base && (caller - base) < (uintptr_t)SOBER_PG_TEXT_SIZE;
+}
 
 /* Locate the guest call chain on the live stack.  We do NOT use
  * __builtin_return_address(N) across our own (possibly frame-pointer-less)
@@ -327,21 +384,17 @@ static void pg_scan_stack(uintptr_t base, ProvScan *out)
         break; /* nearest thunk return site is the most relevant one */
     }
 
-    /* The frame above the notifier return must be guest code.  A host-entered
-     * node dispatch leaves a harness return address there; rejecting it here
-     * keeps the positive credential honest independently of seeded_state. */
+    /* Task #522: verify the FULL guest dispatch chain, not just the RA pair.
+     * The old check read the word at [notifier_RA + 8], which in the genuine
+     * frame layout is r14 (the va_list where 0x227b9e2 stored a HOST JNIEnv
+     * pointer) -- it could never be guest .text, so a genuine chain was never
+     * certified.  Walk the real frame chain instead; this also rejects a
+     * host-entered 0x27eaf04 whose node-dispatch caller is harness code. */
     if (out->caller == CALLER_NOTIFIER) {
-        uintptr_t above = 0u;
-        if (out->frame_cand) {
-            /* Frame-chain path: the notifier RA lives at [cand+8], so the
-             * caller's return address is the next word at [cand+0x10]. */
-            above = *(const volatile uintptr_t *)(out->frame_cand + 16u);
-        } else if (out->caller_off + 1u < (uintptr_t)SOBER_PG_SCAN_WORDS) {
-            above = *(const volatile uintptr_t *)(sp0 +
-                        (out->caller_off + 1u) * sizeof(uintptr_t));
-        }
-        if (above >= base && (above - base) < (uintptr_t)SOBER_PG_TEXT_SIZE)
-            out->guest_above_notifier = 1;
+        const uintptr_t notifier_slot =
+            sp0 + (uintptr_t)out->caller_off * sizeof(uintptr_t);
+        out->guest_above_notifier = pg_walk_notifier_to_dispatch(
+            base, notifier_slot, out->frame_cand, &out->node_caller_ra);
     }
 }
 
@@ -402,6 +455,9 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
                               memory_order_relaxed);
     if (sc.caller != CALLER_NONE)
         atomic_store_explicit(&g_caller_ra, sc.caller_ra, memory_order_relaxed);
+    if (sc.node_caller_ra)
+        atomic_store_explicit(&g_node_caller_ra, sc.node_caller_ra,
+                              memory_order_relaxed);
 
     /* placeId is the real jlong the guest cached from StartGameParams.placeId()
      * at 0x2ebd86a.  A dispatch without a positive value is NOT the game-loaded
@@ -412,6 +468,12 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
 
     const int build_ok = atomic_load_explicit(&g_build_verified,
                                               memory_order_acquire);
+    /* READINESS PREDICATE (fail-closed, task #522): every leg must hold at the
+     * same dispatch -- qualifying name + frozen build + cached class/method
+     * identity + placeId>0 + thunk RA 0x2584960 + notifier RA 0x27eafb3 above
+     * it + descriptor-invoke RA 0x27eaf32 + node 0x27eaf04 entered from guest
+     * .text.  guest_above_notifier is the last two checks; if either fails the
+     * dispatch is UNCLASSIFIED, never GENUINE. */
     const int genuine = (qi >= 0) && build_ok && class_ok && method_ok &&
                         place_id > 0 &&
                         sc.thunk_seen && sc.caller == CALLER_NOTIFIER &&
@@ -507,6 +569,11 @@ uintptr_t sober_provenance_gate_caller_return_addr(void)
     return atomic_load_explicit(&g_caller_ra, memory_order_relaxed);
 }
 
+uintptr_t sober_provenance_gate_node_caller_return_addr(void)
+{
+    return atomic_load_explicit(&g_node_caller_ra, memory_order_relaxed);
+}
+
 uintptr_t sober_provenance_gate_cached_class(void)
 {
     return atomic_load_explicit(&g_cached_class, memory_order_relaxed);
@@ -542,7 +609,8 @@ int sober_provenance_gate_emit_provenance(void)
     fprintf(stderr,
             "[app-shell] gate provenance: notifier-driven gameLoadedCallback "
             "at 0x27eaf6e placeId=%lld (RSI>0), class/method cached non-NULL, "
-            "return 0x27eafb3 over thunk 0x2584960 -> GENUINE\n",
+            "return 0x27eafb3 over thunk 0x2584960, dispatch 0x27eaf04 "
+            "guest-entered via 0x27eaf2f/0x27eaf4c -> GENUINE\n",
             (long long)pid);
     return 1;
 }
@@ -583,6 +651,8 @@ void sober_provenance_gate_snapshot(SoberProvenanceGateSnapshot *out)
                                                   memory_order_relaxed);
     out->caller_return_addr = atomic_load_explicit(&g_caller_ra,
                                                   memory_order_relaxed);
+    out->node_caller_addr = atomic_load_explicit(&g_node_caller_ra,
+                                                 memory_order_relaxed);
     out->cached_class = atomic_load_explicit(&g_cached_class,
                                             memory_order_relaxed);
     out->cached_method = atomic_load_explicit(&g_cached_method,
@@ -598,7 +668,7 @@ const char *sober_provenance_gate_describe(char *buf, size_t cap)
     snprintf(buf, cap,
              "provenance-gate: enabled=%d installed=%d build=%d base=0x%llx "
              "dispatches=%llu genuine=%llu harness=%llu appbridge=%llu "
-             "thunk_ret=0x%llx caller_ret=0x%llx verdict=%s "
+             "thunk_ret=0x%llx caller_ret=0x%llx node_ret=0x%llx verdict=%s "
              "class=%p method=%p",
              atomic_load_explicit(&g_enabled, memory_order_acquire),
              atomic_load_explicit(&g_installed, memory_order_acquire),
@@ -616,6 +686,8 @@ const char *sober_provenance_gate_describe(char *buf, size_t cap)
              (unsigned long long)atomic_load_explicit(&g_thunk_ra,
                                                       memory_order_relaxed),
              (unsigned long long)atomic_load_explicit(&g_caller_ra,
+                                                      memory_order_relaxed),
+             (unsigned long long)atomic_load_explicit(&g_node_caller_ra,
                                                       memory_order_relaxed),
              sober_provenance_gate_verdict_name(
                  atomic_load_explicit(&g_last_verdict, memory_order_relaxed)),

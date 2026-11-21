@@ -11,7 +11,7 @@ No Flatpak (`791c3f9e` / 2.745) RVA is used anywhere in the shipped source.
 
 ## 1. Headline verdict
 
-**Overall: ≈64% complete (sensitivity band 59–68%)** after wave 4. The original 14-audit baseline was 46%, the integration team 57%, the 40-agent frame push 61%, wave 3 62%. A seeded diagnostic reaches full G8 window ACCEPT (C0–C10), and wave 4 additionally sets the flags-loaded latch genuinely through a real crashpad IPC return so the whole app-shell phase completes in an opt-in run. This is still seeded state, not a clean app-shell frame; the callback leg remains 0/1 (id=1 MessageBus node is not registered), so the marker stays WITHHELD.
+**Overall: ≈66% complete (sensitivity band 61–70%)** after the scale wave. The original 14-audit baseline was 46%, the integration team 57%, the 40-agent frame push 61%, wave 3 62%, wave 4 64%. A seeded diagnostic reaches full G8 window ACCEPT (C0–C10) and now also drives the genuine MessageBus/notifier chain to `gameLoadedCallback`. The id=1 node discovery bug was a host-side missing indirection (`bus+0x288` is a list container, node at `+0x08`), fixed read-only. The provenance gate was strengthened to require guest-entered node dispatch, so the host-triggered re-drive is correctly rejected and the clean callback leg remains 0/1. Clean `seeded_state==0` render green is proven impossible without real Java surface lifecycle. Marker stays WITHHELD.
 
 **Follow-up (teams #485–#496 and #497–#501):** the singleton predicate blocker
 is fixed with genuine guest flag-setter calls, and the old fault `0x24ad562` is
@@ -51,6 +51,19 @@ pre-init wrapper is wired but not yet exercised cleanly
 id=1 MessageBus node: `publish_seeded` reports NO_NODE with guard
 `0x72a31ba=0`, so no notifier-driven `gameLoadedCallback(J)V`. Marker still
 WITHHELD; score ≈64%.
+
+**Scale wave (#522–#527 + 3 parallel analyses):** the NO_NODE blocker was a
+host-side discovery bug, not a missing guest prerequisite. `bus+0x288` holds a
+0x18-byte intrusive-list container; the 0x60-byte id=1 node is linked at
+`container+0x08` (`analysis/scale-a1-node-registration.md`). `publish_default`
+now dereferences one extra level read-only, and a seeded run reaches
+`gameLoadedCallback` (`MessageBus publish rc=0`, `callbacks=25`). The provenance
+gate was strengthened with a 3-frame stack walk (`[rbp_not+8]==base+0x27eaf32`
+and node dispatch entered from guest `.text`), so the host-triggered re-drive is
+correctly rejected; `callback=0` and the marker stays WITHHELD. Worker-3 proved a
+clean render green is impossible without real Java surface lifecycle; worker-5's
+N1–N9 negative audit stayed fail-closed and residual withhold gaps were closed.
+Score ≈66%.
 
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven

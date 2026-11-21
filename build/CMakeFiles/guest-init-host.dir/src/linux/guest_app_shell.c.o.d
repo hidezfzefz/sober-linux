@@ -107,6 +107,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /home/user/sober-linux/src/jni/frame_surface.h \
  /home/user/sober-linux/src/jni/frame_thread.h \
  /home/user/sober-linux/src/jni/frame_synthetic_tag.h \
+ /home/user/sober-linux/src/jni/frame_callbacks.h \
  /home/user/sober-linux/src/jni/flags_latch_default.h \
  /home/user/sober-linux/src/jni/crashpad_return.h /usr/include/dlfcn.h \
  /usr/include/bits/dlfcn.h /usr/include/bits/dl_find_object.h \

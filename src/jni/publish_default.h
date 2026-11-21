@@ -124,6 +124,17 @@ extern "C" {
  * in the forced-withhold chain via sober_publish_default_should_withhold(). */
 #define SOBER_PUBLISH_NODE_REDRIVE_ENV "SOBER_PUBLISH_NODE_REDRIVE"
 
+/* Kill switch / enable for the pre-init MessageBus prime (task #507).
+ * Default OFF (opt-in).  Set to 1/true/on/yes to call the genuine guest
+ * MessageBus service getter at RVA 0x24a8e44 with service id 4 BEFORE the
+ * 0x24abf96 InitWithParams call; an exact falsy value is the KILL SWITCH.
+ * The call arms guards 0x72cc270/0x72cc718 and constructs the default bus
+ * 0x72cbdd0 with guest code, so it is a guest-state seed: enabling it is
+ * force-withheld via sober_publish_default_should_withhold() and MUST be
+ * reported to the lead for `seeded_state` (see analysis/callback/
+ * task507-preinit-ordering.md). */
+#define SOBER_PREINIT_BUS_ENV "SOBER_PREINIT_BUS"
+
 /* ---- result codes -------------------------------------------------------- */
 typedef enum SoberPublishResult {
     SOBER_PD_OK          =   0,  /* chain verified; genuine dispatch driven   */
@@ -183,13 +194,42 @@ typedef enum SoberPublishRva {
     /* App singleton read by the 0x30ef840 accessor on the game-load path. */
     SOBER_PD_RVA_APP_SINGLETON   = 0x72cb5e0u,
     /* GL capability predicate at the head of 0x30ef840 (0x6096928). */
-    SOBER_PD_RVA_GL_PREDICATE    = 0x6096928u
+    SOBER_PD_RVA_GL_PREDICATE    = 0x6096928u,
+    /* Genuine MessageBus service getter (internal helper of the
+     * nativeAppBridgeAppStart export 0x247dc8d).  One int argument: service
+     * id 4 selects the default bus 0x72cbdd0; id 3 selects mode-3 0x72cc278.
+     * First call arms one-shot guards 0x72cc270 / 0x72cc718 and runs the
+     * guest's own guard-init (0x2a0d6c0 / 0x2a0d7d0) and bus ctor (0x30f9aae).
+     * Called with edi=4 at 0x24a8daf (export 0x247dc8d), 0x2544ac8 and
+     * 0x25451af (export 0x25448f6), and 15x inside 0x253cb56 itself. */
+    SOBER_PD_RVA_BUS_GETTER      = 0x24a8e44u,
+    /* FFlag EnableAppBridgeComponents, set by the real Java-order sequence
+     * nativePreloadFlagOverrides 0x2edd859 + nativeRetryInit 0x2edd739. */
+    SOBER_PD_RVA_APPBRIDGE_FFLAG = 0x72cb648u
 } SoberPublishRva;
 
-/* Offsets inside the MessageBus singleton / subscription node / descriptor. */
-#define SOBER_PD_OFF_BUS_LIST        0x288u  /* list head in singleton        */
+/* Offsets inside the MessageBus singleton / subscription node / descriptor.
+ *
+ * TASK #524 — the missed indirection (frozen BuildID 204ad049):
+ * bus+0x288 does NOT hold the subscription node.  0x253e126 -> 0x253e180 calls
+ * 0x23172ce, which allocates a 0x18-byte intrusive-list CONTAINER at that slot
+ * (0x231731a: edi=0x18 -> 0x2317426; 0x231732e/31/39 initialise
+ * [hdr+0]=0x100000000, [hdr+8]=NULL, [hdr+0x10]=0x7fffffff; 0x2317354 stores
+ * hdr into *(bus+0x288)).  The genuine 0x60-byte node is then linked ONE LEVEL
+ * DOWN: 0x231772c: 0x2317752 reads old = [hdr+8], 0x2317766 stores
+ * [hdr+8] = node, and 0x231778d stores [node+0x10] = old (forward link).
+ * 0x253e21e confirms node+0x08 = 0x27eaf04 (dispatch) and node+0x20 = hdr
+ * (owner back-pointer, NOT the next node).  The dispatcher 0x27eaf1f reads the
+ * descriptor from node+0x50.  So the walk is:
+ *     hdr = *(bus + 0x288); node = *(hdr + 0x08);
+ *     next = *(node + 0x10);   // until NULL
+ */
+#define SOBER_PD_OFF_BUS_LIST        0x288u  /* slot -> 0x18-byte list CONTAINER */
+#define SOBER_PD_OFF_LIST_HDR_FIRST  0x08u   /* container -> first node (hdr+8) */
 #define SOBER_PD_NODE_OFF_DISPATCH   0x08u   /* node -> dispatch fn ptr       */
-#define SOBER_PD_NODE_OFF_NEXT       0x20u   /* node -> next (intrusive)      */
+#define SOBER_PD_NODE_OFF_NEXT       0x10u   /* node -> next (0x231778d);
+                                             * 0x20 is the owner back-ptr     */
+#define SOBER_PD_NODE_OFF_OWNER      0x20u   /* node -> container back-pointer */
 #define SOBER_PD_NODE_OFF_DESC_SELF  0x50u   /* node -> descriptor self ptr   */
 #define SOBER_PD_NODE_SIZE           0x60u   /* guest alloc size @0x253e1ac   */
 #define SOBER_PD_DESC_OFF_VPTR       0x00u
@@ -279,6 +319,50 @@ SOBER_PD_API int sober_publish_default_prereqs(void *guest_base,
 
 /* Kill-switch name for the diagnostic 0x253cb56 re-drive (report to lead). */
 SOBER_PD_API const char *sober_publish_default_node_redrive_env(void);
+/* Kill-switch name for the pre-init bus prime (report to lead for seeded_state). */
+SOBER_PD_API const char *sober_publish_default_preinit_env(void);
+
+/* ---- task #507 pre-init MessageBus / app-state ordering ------------------- *
+ * Fault F1: 0x253cb56 sets the one-shot guard 0x72a31ba at FUNCTION ENTRY
+ * (test 0x253cb84, set 0x253cb91) before it builds the id=1 descriptor at
+ * 0x253d06e.  Its single genuine call from 0x24ad6a5 inside InitWithParams
+ * 0x24abf96 must therefore run ONCE with everything already ready.  If the
+ * MessageBus/app prerequisites do not exist at that moment, the guard is spent
+ * and the node is never registered; no re-drive can recover it.
+ *
+ * Readiness predicates (read-only, no guest call, no write, safe anytime):
+ *   sober_publish_default_bus_ready()      -> both MessageBus guards armed and
+ *                                             the id=1 registration guard still
+ *                                             CLEAR (safe to run 0x24abf96).
+ *   sober_publish_default_preinit_ready()  -> bus_ready + FFlag 0x72cb648==1 +
+ *                                             app singleton 0x72cb5e0 and its
+ *                                             app+0x488 inner object present.
+ *
+ * Prime action (opt-in, SOBER_PREINIT_BUS=1):
+ *   sober_publish_default_preinit_bus()    -> call the genuine guest helper
+ *                                             base+0x24a8e44 with service id 4.
+ *                                             Idempotent; no byte write, no
+ *                                             fabricated node/callback.  It is
+ *                                             a guest-state SEED -> force
+ *                                             withheld, reported to lead.
+ *
+ * EXACT WIRING (lead-owned guest_app_shell.c, immediately BEFORE the 0x24abf96
+ * call, after real_appstate_prepare() + 0x233762c):
+ *     #include "publish_default.h"
+ *     (void)sober_publish_default_preinit_bus((void *)base);   // opt-in
+ *     int ready = sober_publish_default_preinit_ready((void *)base);
+ *     if (!ready) { ...log WITHHELD / seed diagnostic; do not claim gate... }
+ *     // then the existing call_jni_static(base + 0x24abf96u, ...) at line 1442
+ *
+ * Export alternative if a JNI export is required instead of the internal
+ * helper: nativeAppBridgeStartLuaAppDM 0x25448f6(env, clazz) reaches the SAME
+ * 0x24a8e44(4) at 0x2544ac8; it must be run BEFORE 0x24abf96 (it is currently
+ * after it).  nativeAppBridgeAppStart 0x247dc8d also reaches it at 0x24a8daf
+ * but re-enters the broken 0x233319a path (decision C) - avoid.  Both are heavy
+ * drivers; the minimal, side-effect-free prime is the direct 0x24a8e44(4) call. */
+SOBER_PD_API int         sober_publish_default_preinit_bus(void *guest_base);
+SOBER_PD_API int         sober_publish_default_bus_ready(void *guest_base);
+SOBER_PD_API int         sober_publish_default_preinit_ready(void *guest_base);
 
 /* Read-only component accessors (0/NULL with a NULL base or missing node). */
 SOBER_PD_API void  *sober_publish_default_descriptor(void *guest_base, void *node);

@@ -20,7 +20,11 @@
  * It then classifies the dispatch:
  *   - GENUINE: notifier 0x27eaf6e -> thunk 0x25848e0 -> JNI slot 142, i.e. both
  *     return sites are on the stack (0x2584960 nearer the dispatch than
- *     0x27eafb3) and the class/method pointers are the cached guest ones.
+ *     0x27eafb3), the class/method pointers are the cached guest ones, AND
+ *     (task #522) the full guest chain 0x27eaf04 -> 0x27eaf2f -> 0x27eaf4c ->
+ *     0x27eaf6e is live: the descriptor-invoke return base+0x27eaf32 is above
+ *     the notifier RA and node dispatch 0x27eaf04 was entered from guest .text
+ *     (a host-entered re-drive leaves a harness return address there).
  *   - HARNESS THUNK: the thunk return site 0x2584960 is present but the
  *     notifier return 0x27eafb3 is not -- i.e. `SOBER_ALT_CALLBACK_PATH` called
  *     base+0x25848e0 directly from host code (guest_app_shell.c).
@@ -97,6 +101,10 @@ SOBER_PROV_API uint64_t   sober_callback_provenance_dispatch_count(void);
 SOBER_PROV_API uintptr_t  sober_callback_provenance_guest_base(void);
 SOBER_PROV_API uintptr_t  sober_callback_provenance_thunk_ret(void);
 SOBER_PROV_API uintptr_t  sober_callback_provenance_notifier_ret(void);
+/* Return address of whoever entered node dispatch 0x27eaf04: guest MessageBus
+ * dispatcher on the genuine chain, host code on an entered re-drive.  0 when
+ * no complete notifier->dispatch frame chain was observed (task #522). */
+SOBER_PROV_API uintptr_t  sober_callback_provenance_node_caller_ret(void);
 SOBER_PROV_API uintptr_t  sober_callback_provenance_observed_class(void);
 SOBER_PROV_API uintptr_t  sober_callback_provenance_observed_method(void);
 

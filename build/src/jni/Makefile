@@ -466,6 +466,30 @@ flags_latch_default.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/flags_latch_default.c.s
 .PHONY : flags_latch_default.c.s
 
+frame_callbacks.o: frame_callbacks.c.o
+.PHONY : frame_callbacks.o
+
+# target to build an object file
+frame_callbacks.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_callbacks.c.o
+.PHONY : frame_callbacks.c.o
+
+frame_callbacks.i: frame_callbacks.c.i
+.PHONY : frame_callbacks.i
+
+# target to preprocess a source file
+frame_callbacks.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_callbacks.c.i
+.PHONY : frame_callbacks.c.i
+
+frame_callbacks.s: frame_callbacks.c.s
+.PHONY : frame_callbacks.s
+
+# target to generate assembly for a file
+frame_callbacks.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/frame_callbacks.c.s
+.PHONY : frame_callbacks.c.s
+
 frame_dispatch.o: frame_dispatch.c.o
 .PHONY : frame_dispatch.o
 
@@ -1332,6 +1356,9 @@ help:
 	@echo "... flags_latch_default.o"
 	@echo "... flags_latch_default.i"
 	@echo "... flags_latch_default.s"
+	@echo "... frame_callbacks.o"
+	@echo "... frame_callbacks.i"
+	@echo "... frame_callbacks.s"
 	@echo "... frame_dispatch.o"
 	@echo "... frame_dispatch.i"
 	@echo "... frame_dispatch.s"

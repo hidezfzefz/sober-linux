@@ -23,10 +23,10 @@ audits, weighted score and roadmap. Regenerate badges/map:
 
 **Honest headline:** native init, window and a guest-driven first frame work; the
 real login/app-shell frame is **not** proven. Overall project progress after wave
-4 is **≈64%** (59–68% band: init 95%, render 95% seeded G8 ACCEPT, JNI 90%,
-app state 60% with a genuine flags-loaded latch, callback 0%, gate/tests/docs
-85%). The default path is unchanged; the strict `app shell rendered` marker stays
-**WITHHELD** (decision 013 / 038).
+the scale wave is **≈66%** (61–70% band: init 95%, render 95% seeded G8 ACCEPT,
+JNI 90%, app state 70%, callback 0% clean / chain proven in seeded diagnostic,
+gate/tests/docs 90%). The default path is unchanged; the strict `app shell rendered`
+marker stays **WITHHELD** (decision 013 / 038).
 
 Wave 4 (#507–#510, #516): the flags-loaded latch `0x7cdd149` is now genuinely
 set and the whole app-shell phase runs to completion in an opt-in diagnostic.
@@ -41,6 +41,20 @@ app+0x408/+0x488 are installed, and all JNI exports run. The dialog-writer route
 was rigorously proven impossible (`analysis/task510-dialog-cppproxy-route.md`).
 A MessageBus pre-init wrapper (`SOBER_MESSAGEBUS_PREINIT`, opt-in) is wired but
 not yet exercised cleanly (`analysis/wave4-messagebus-preinit.md`).
+
+Scale wave (#522–#527, plus three parallel analyses): the id=1 GameLoaded node
+discovery bug was fixed — `bus+0x288` holds a 0x18-byte list container and the
+node is at `container+0x08` (`analysis/scale-a1-node-registration.md`,
+`analysis/callback/task520-node-registration.md`). With the seeded latch and
+`publish_default` re-drive, the genuine guest chain now reaches
+`gameLoadedCallback` (`callbacks=25`, `MessageBus publish rc=0`). The provenance
+gate was also strengthened with a 3-frame stack walk requiring the node dispatch
+to be entered from guest `.text`; a host-entered `0x27eaf04` re-drive is therefore
+correctly rejected, so `callback=0` and the marker remains WITHHELD. Worker-3
+proved a clean `seeded_state==0` render green is not achievable without real Java
+surface-lifecycle/redraw delivery, and worker-5's negative A/B audit (N1–N9)
+confirmed all fail-closed; the residual withhold-chain gaps (frame callbacks,
+preinit bus, provenance base env) were closed.
 
 On the render side a seeded diagnostic now reaches **G8 verdict=1 ACCEPT**
 (C0–C10 all pass): opt-in `SOBER_FRAME_EGL_INIT_DRIVE=1` re-drives genuine guest
@@ -61,7 +75,7 @@ Native init + window + first frame       3/3          100%  ██████�
 JNIEnv function table built           231/231         100%  ████████████████████
 Cached jmethodIDs seeded                49/49         100%  ████████████████████
 Verification (verify-native + ctest)     2/2          100%  ████████████████████
-Weighted goal completion                    64%           64%  █████████████░░░░░░░
+Weighted goal completion                    66%           66%  ██████████████░░░░░░
 Decision-013 gate enforced               1/1          100%  ████████████████████
 Genuine app-shell callback observed       0/1            0%  ░░░░░░░░░░░░░░░░░░░░
 app shell rendered marker                WITHHELD          ░░░░░░░░░░░░░░░░░░░░

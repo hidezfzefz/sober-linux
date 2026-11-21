@@ -81,6 +81,29 @@ const char *sober_crashpad_return_env_vars(void)
            SOBER_CRASHPAD_RETURN_PASSCRED_ENV "," SOBER_CRASHPAD_RETURN_STDIO_ENV;
 }
 
+/* Task #525 — read-only verdict.  The shipped DEX has exactly one Java caller
+ * of nativeRunCrashpadHandler: CrashpadHandler.main(String[]), the entry point
+ * of the crash-handler SUBPROCESS.  Boot (rg.a1.h0 -> nativeInitCrashpad
+ * 0x232d6b8) only registers that class; it never runs it and cannot write the
+ * latch.  So there is no opt-in-free Java boot path to 0x2eca720 / 0x2ec9fae.
+ * This function intentionally returns 0 and must never be used to weaken the
+ * seeded_state withhold chain. */
+int sober_crashpad_return_java_boot_reachable(void)
+{
+    return 0;
+}
+
+/* Task #525 — exact prerequisites for the (always WITHHELD) clean-return
+ * route.  Static text; it reads no state and performs no guest call. */
+const char *sober_crashpad_return_prereqs(void)
+{
+    return "SOBER_APP_SHELL=1,SOBER_RENDER=1,"
+           SOBER_CRASHPAD_RETURN_ENV "=1," SOBER_FAITHFUL_JNI_ARRAYS_ENV "=1"
+           " (optional " SOBER_CRASHPAD_RETURN_ARGV_ENV ","
+           SOBER_CRASHPAD_RETURN_PASSCRED_ENV ","
+           SOBER_CRASHPAD_RETURN_STDIO_ENV ")";
+}
+
 /* ------------------------------------------------------------------------ */
 /* Host-side Bionic __sF stdio bridge (fputs + fflush)                       */
 /* ------------------------------------------------------------------------ */
@@ -180,6 +203,21 @@ int sober_crashpad_return_install(void *guest_base, void *jni_env,
         return SOBER_CRASHPAD_RETURN_DISABLED;
     }
     if (!guest_base) return SOBER_CRASHPAD_RETURN_ERR;
+
+    /* Task #525: fail closed unless the faithful JNI array bridge is active.
+     * The guest walks the argv String[] through JNIEnv fn[167]/fn[169]; with
+     * the default stubs (GetArrayLength -> 0, GetObjectArrayElement -> NULL)
+     * it sees an empty argv and crashpad takes its fatal "Usage" path instead
+     * of a clean return.  Requiring the bridge makes SOBER_FAITHFUL_JNI_ARRAYS
+     * an EXPLICIT prerequisite and stops a missing opt-in from producing a
+     * misleading crash.  This does not touch guest state and never weakens a
+     * gate: the route stays a host-initiated seed and forces WITHHELD. */
+    if (!sober_jni_arrays_is_active()) {
+        fprintf(stderr, "[crashpad-return] refusing: faithful JNI arrays "
+                        "inactive (set %s=1); clean return needs a real "
+                        "String[] walk\n", SOBER_FAITHFUL_JNI_ARRAYS_ENV);
+        return SOBER_CRASHPAD_RETURN_ERR;
+    }
 
     g_guest_base = guest_base;
     /* Opt-in stdio bridge: must be live before guest crashpad logging runs. */
