@@ -42,6 +42,16 @@ was rigorously proven impossible (`analysis/task510-dialog-cppproxy-route.md`).
 A MessageBus pre-init wrapper (`SOBER_MESSAGEBUS_PREINIT`, opt-in) is wired but
 not yet exercised cleanly (`analysis/wave4-messagebus-preinit.md`).
 
+Wave 5 (20 agents, shared Obsidian vault `/home/user/sober-vault`) reached an
+honest terminal finding: the three clean prerequisites are impossible in this
+native harness without a forbidden Android runtime or a withhold-worthy seed —
+the latch is subprocess-only, `0x27eaf04` has no static caller and needs the
+guest lifecycle event, and the surface-lifecycle/render chain needs real
+Android `Surface`/AGDK/IoEvLoop/FFlag state. All N1–N20 negative controls fail
+closed. The gate-owned render-provenance emitter was added, SKIP now exits 1,
+and inherited `SOBER_*` seeds are scrubbed in `tests/app-shell.sh`, so the
+positive assertions stay structurally fail-closed. Marker remains WITHHELD.
+
 Scale wave (#522–#527, plus three parallel analyses): the id=1 GameLoaded node
 discovery bug was fixed — `bus+0x288` holds a 0x18-byte list container and the
 node is at `container+0x08` (`analysis/scale-a1-node-registration.md`,

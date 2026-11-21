@@ -368,6 +368,44 @@ SOBER_PD_API int         sober_publish_default_preinit_ready(void *guest_base);
 SOBER_PD_API void  *sober_publish_default_descriptor(void *guest_base, void *node);
 SOBER_PD_API int64_t sober_publish_default_seeded_place_id(void *guest_base);
 
+/* ---- task #530: read-only guest self-registration probe ------------------
+ * {FROZEN 204ad049} The ONLY guest call to the id=1 registration helper is
+ * 0x24ad6a5: `lea rsi,[0x7234520]; mov edi,1; call 0x253cb56`, inside internal
+ * function 0x24ad50a.  0x24ad50a is not called directly anywhere in .text: it
+ * is vtable slot +0x30 of the DataModel lifecycle-listener vtable 0x6dbc7c8,
+ * i.e. the APS2 slot 0x6dbc7f8 holds (base+0x24ad50a) at runtime.  The guest
+ * reaches 0x253cb56 only when its own lifecycle listener fires; host code can
+ * only re-drive 0x253cb56 directly, which spends the guard but leaves a host
+ * return address and is correctly rejected by the provenance gate.
+ *
+ * This probe is READ-ONLY: no guest call, no guest write, no knob, no
+ * seeded_state impact.  It reports the one-shot guard, the MessageBus guards,
+ * a genuinely discovered id=1 node, and the relocated listener slot, so a
+ * caller can distinguish "guest self-registered" (guard=1 AND node!=NULL with
+ * a guest entered 0x253cb56) from "host re-driven" (guard=1 from our seed).
+ */
+#define SOBER_PD_RVA_LIFECYCLE_VTABLE   0x6dbc7c8u /* listener object vtable  */
+#define SOBER_PD_OFF_LIFECYCLE_REGISTER 0x30u      /* slot +0x30 -> 0x24ad50a */
+#define SOBER_PD_RVA_REGISTER_FN        0x24ad50au /* contains 0x24ad6a5      */
+
+typedef struct SoberPublishSelfReg {
+    uint8_t  guard;            /* raw 0x72a31ba (one-shot registration guard) */
+    uint8_t  bus_guard_a;      /* raw 0x72cc270                              */
+    uint8_t  bus_guard_b;      /* raw 0x72cc718                              */
+    void    *node;             /* genuine id=1 node, or NULL                 */
+    void    *listener_slot;    /* *(base+0x6dbc7f8), expected base+0x24ad50a */
+    uint64_t host_redrive_calls; /* our own 0x253cb56 re-drive count         */
+    int      node_present;     /* 1 iff a genuine node is discoverable       */
+    /* 1 only when a node exists AND the guard is spent AND WE never drove
+     * 0x253cb56 - i.e. the node can only have come from the guest's own
+     * lifecycle listener.  Node presence alone is NOT proof of guest entry. */
+    int      guest_self_registered;
+} SoberPublishSelfReg;
+
+SOBER_PD_API void sober_publish_default_selfreg_probe(void *guest_base,
+                                                      SoberPublishSelfReg *out,
+                                                      char *buf, size_t cap);
+
 /* ---- lead-facing publish API -------------------------------------------- */
 /* Drive the genuine subscription-node dispatch (real guest code) with an
  * explicit positive placeId.  Verifies the chain first; on success returns

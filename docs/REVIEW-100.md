@@ -65,6 +65,18 @@ clean render green is impossible without real Java surface lifecycle; worker-5's
 N1–N9 negative audit stayed fail-closed and residual withhold gaps were closed.
 Score ≈66%.
 
+**Wave 5 (20 agents, shared Obsidian vault `/home/user/sober-vault`):** the clean
+path was exhaustively investigated and found unavailable in this harness. The
+flags latch is process-local and only written by the crash-handler subprocess;
+`0x27eaf04` has no static caller and requires a guest DataModel lifecycle event
+the harness never produces; and clean render needs real Android `Surface`,
+AGDK nativeData callbacks, IoEvLoop/RenderJob and FFlag state that a stock native
+JVM cannot supply. A01–A14 vault notes and worker reports N1–N20 confirm every
+alternative either requires a forbidden runtime or is a withhold-worthy seed.
+Fail-closed improvements: gate-only render-provenance emitter, SKIP exit 1,
+inherited `SOBER_*` scrub. No gate condition was relaxed. Marker stays WITHHELD;
+score ≈66%.
+
 The original goal — a native Linux ELF running the real Roblox client with a
 genuinely rendered login/app-shell frame witnessed by a notifier-driven
 guest→Java callback under clean state — is **NOT PROVEN**. Infrastructure is

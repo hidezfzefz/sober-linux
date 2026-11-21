@@ -17,7 +17,7 @@ SHELL_MARKER="/tmp/sober-app-shell.marker"
 BUILD_ID="204ad049599c96afb75b8a21d5051063e821d6c9"
 WINDOW_TITLE="SoberNativeRenderPhase3"
 
-if [ ! -f "$GUEST" ]; then echo "SKIP: guest engine not extracted at $GUEST"; exit 0; fi
+if [ ! -f "$GUEST" ]; then echo "SKIP: guest engine not extracted at $GUEST"; exit 1; fi
 
 # Rebuild when ANY phase-3/4 source or header is newer than the harness.
 # (The old guard only checked guest_app_shell.c, so changes in src/jni/,
@@ -65,7 +65,14 @@ fi
 echo "== 1. app-shell startup (native JNI bridge, REAL path) =="
 # Phase 6: no harness-triggered thunk bypass; the callback must arise from the
 # real nativeAppBridgeAppStart 0x247dc8d path.
-unset SOBER_ALT_CALLBACK_PATH
+# Scrub every guest-mutating SOBER_* variable so an inherited seed cannot fake
+# a clean run.  Only timing/diagnostic vars (and our own marker path) survive.
+for _v in $(compgen -e | grep '^SOBER_' || true); do
+    case "$_v" in
+        SOBER_SHELL_MARKER|SOBER_WINDOW_HOLD_MS|SOBER_APP_SHELL_WAIT_MS|SOBER_JNI_VERBOSE|SOBER_APP_SHELL_DIAGNOSTIC) ;;
+        *) unset "$_v" ;;
+    esac
+done
 rm -f "$INIT_MARKER" "$FRAME_MARKER" "$SHELL_MARKER" "$OUT" "$ERR"
 HOLD_MS=9000
 EGL_PLATFORM=x11 LIBGL_ALWAYS_SOFTWARE=1 \

@@ -70,6 +70,7 @@ static _Atomic uintptr_t g_node_caller_ra; /* who entered node dispatch 0x27eaf0
 static _Atomic uintptr_t g_cached_class;   /* value read at base+0x72a2f48       */
 static _Atomic uintptr_t g_cached_method;  /* value read at base+0x72a2fc0       */
 static _Atomic int64_t  g_place_id;        /* read at base+0x72a31c0              */
+static _Atomic uintptr_t g_java_vm;        /* read at base+0x7cdec78              */
 static _Atomic int      g_prov_emitted;    /* one-shot gate provenance line       */
 static _Atomic int      g_last_verdict;    /* SOBER_PROV_GATE_VERDICT_*           */
 
@@ -193,6 +194,7 @@ void sober_provenance_gate_reset(void)
     atomic_store_explicit(&g_cached_class, 0, memory_order_relaxed);
     atomic_store_explicit(&g_cached_method, 0, memory_order_relaxed);
     atomic_store_explicit(&g_place_id, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_java_vm, 0, memory_order_relaxed);
     atomic_store_explicit(&g_prov_emitted, 0, memory_order_relaxed);
     atomic_store_explicit(&g_last_verdict, SOBER_PROV_GATE_VERDICT_NONE,
                           memory_order_relaxed);
@@ -466,16 +468,24 @@ void sober_provenance_gate_on_dispatch(const char *name, void *clazz,
         base + (uintptr_t)SOBER_PROV_GATE_RVA_PLACE_ID);
     atomic_store_explicit(&g_place_id, place_id, memory_order_relaxed);
 
+    /* JavaVM* at 0x7cdec78 must be live: the notifier's 0x227b9e2 GetEnv
+     * dereferences it before 0x27eafae, so a dispatch that reached the thunk
+     * already implies a non-NULL global.  Sampling it read-only here makes the
+     * task #531 readiness leg explicit and can only fail closed. */
+    void *java_vm = read_ptr(base + (uintptr_t)SOBER_PROV_GATE_RVA_JAVA_VM);
+    atomic_store_explicit(&g_java_vm, (uintptr_t)java_vm, memory_order_relaxed);
+
     const int build_ok = atomic_load_explicit(&g_build_verified,
                                               memory_order_acquire);
-    /* READINESS PREDICATE (fail-closed, task #522): every leg must hold at the
-     * same dispatch -- qualifying name + frozen build + cached class/method
-     * identity + placeId>0 + thunk RA 0x2584960 + notifier RA 0x27eafb3 above
-     * it + descriptor-invoke RA 0x27eaf32 + node 0x27eaf04 entered from guest
-     * .text.  guest_above_notifier is the last two checks; if either fails the
-     * dispatch is UNCLASSIFIED, never GENUINE. */
+    /* READINESS PREDICATE (fail-closed, task #522 / #531): every leg must hold
+     * at the same dispatch -- qualifying name + frozen build + cached
+     * class/method identity + placeId>0 + live JavaVM 0x7cdec78 + thunk RA
+     * 0x2584960 + notifier RA 0x27eafb3 above it + descriptor-invoke RA
+     * 0x27eaf32 + node 0x27eaf04 entered from guest .text.
+     * guest_above_notifier is the last two checks; if either fails the dispatch
+     * is UNCLASSIFIED, never GENUINE. */
     const int genuine = (qi >= 0) && build_ok && class_ok && method_ok &&
-                        place_id > 0 &&
+                        place_id > 0 && java_vm != NULL &&
                         sc.thunk_seen && sc.caller == CALLER_NOTIFIER &&
                         sc.guest_above_notifier;
     const int harness = sc.thunk_seen && sc.caller == CALLER_NONE;
@@ -589,6 +599,63 @@ int64_t sober_provenance_gate_place_id(void)
     return atomic_load_explicit(&g_place_id, memory_order_relaxed);
 }
 
+uintptr_t sober_provenance_gate_java_vm_global(void)
+{
+    return atomic_load_explicit(&g_java_vm, memory_order_relaxed);
+}
+
+/* Clean-state readiness: read-only sample of the five statically observable
+ * legs.  Dispatch-only legs are intentionally excluded (see header).  This is
+ * a diagnostic for the lead; it never emits a provenance line or a marker. */
+uint32_t sober_provenance_gate_readiness(char *buf, size_t cap)
+{
+    if (!atomic_load_explicit(&g_enabled, memory_order_acquire) ||
+        !atomic_load_explicit(&g_installed, memory_order_acquire)) {
+        if (sober_provenance_gate_install(NULL) != SOBER_PROV_GATE_OK) {
+            /* kill switch or unresolvable base: every leg fails closed */
+        }
+    }
+
+    const uintptr_t base = atomic_load_explicit(&g_base, memory_order_acquire);
+    const int enabled = atomic_load_explicit(&g_enabled, memory_order_acquire);
+    const int build = atomic_load_explicit(&g_build_verified, memory_order_acquire);
+    uintptr_t vm = 0, cls = 0, mid = 0;
+    int64_t pid = 0;
+
+    if (base) {
+        vm  = (uintptr_t)read_ptr(base + (uintptr_t)SOBER_PROV_GATE_RVA_JAVA_VM);
+        cls = (uintptr_t)read_ptr(base + (uintptr_t)SOBER_PROV_GATE_RVA_CACHED_CLASS);
+        mid = (uintptr_t)read_ptr(base + (uintptr_t)SOBER_PROV_GATE_RVA_CACHED_METHOD);
+        pid = (int64_t)read_u64(base + (uintptr_t)SOBER_PROV_GATE_RVA_PLACE_ID);
+    }
+
+    uint32_t mask = 0u;
+    if (base)       mask |= SOBER_PROV_GATE_READY_BASE;
+    if (build)      mask |= SOBER_PROV_GATE_READY_BUILD;
+    if (vm)         mask |= SOBER_PROV_GATE_READY_JAVAVM;
+    if (cls)        mask |= SOBER_PROV_GATE_READY_CACHED_CLASS;
+    if (mid)        mask |= SOBER_PROV_GATE_READY_CACHED_METHOD;
+    if (pid > 0)    mask |= SOBER_PROV_GATE_READY_PLACE_ID;
+
+    if (buf && cap) {
+        snprintf(buf, cap,
+                 "readiness: enabled=%d base=0x%llx build=%d "
+                 "jvm(0x7cdec78)=%s cached_class(0x72a2f48)=%s "
+                 "cached_method(0x72a2fc0)=%s placeId(0x72a31c0)=%lld(%s) "
+                 "static=%u/%u [dispatch-only: RA pair 0x2584960/0x27eafb3, "
+                 "invoke 0x27eaf32, node 0x27eaf04 guest-entered] "
+                 "%s",
+                 enabled, (unsigned long long)base, build,
+                 vm ? "live" : "NULL", cls ? "live" : "NULL",
+                 mid ? "live" : "NULL", (long long)pid,
+                 pid > 0 ? "ok" : "not-positive",
+                 __builtin_popcount(mask), 6u,
+                 mask == SOBER_PROV_GATE_READY_ALL
+                     ? "STATIC-READY" : "BLOCKED");
+    }
+    return mask;
+}
+
 /* Gate-owned positive provenance line.  Emitted at most once and ONLY when
  * every leg of the credential is satisfied; never on the ALT/host-thunk path
  * and never as a decision-013 marker.  The lead calls this from the strict
@@ -658,6 +725,7 @@ void sober_provenance_gate_snapshot(SoberProvenanceGateSnapshot *out)
     out->cached_method = atomic_load_explicit(&g_cached_method,
                                              memory_order_relaxed);
     out->place_id = atomic_load_explicit(&g_place_id, memory_order_relaxed);
+    out->java_vm_global = atomic_load_explicit(&g_java_vm, memory_order_relaxed);
     out->last_verdict = atomic_load_explicit(&g_last_verdict,
                                              memory_order_relaxed);
 }
@@ -669,7 +737,7 @@ const char *sober_provenance_gate_describe(char *buf, size_t cap)
              "provenance-gate: enabled=%d installed=%d build=%d base=0x%llx "
              "dispatches=%llu genuine=%llu harness=%llu appbridge=%llu "
              "thunk_ret=0x%llx caller_ret=0x%llx node_ret=0x%llx verdict=%s "
-             "class=%p method=%p",
+             "class=%p method=%p jvm=0x%llx placeId=%lld",
              atomic_load_explicit(&g_enabled, memory_order_acquire),
              atomic_load_explicit(&g_installed, memory_order_acquire),
              atomic_load_explicit(&g_build_verified, memory_order_acquire),
@@ -692,6 +760,10 @@ const char *sober_provenance_gate_describe(char *buf, size_t cap)
              sober_provenance_gate_verdict_name(
                  atomic_load_explicit(&g_last_verdict, memory_order_relaxed)),
              (void *)atomic_load_explicit(&g_cached_class, memory_order_relaxed),
-             (void *)atomic_load_explicit(&g_cached_method, memory_order_relaxed));
+             (void *)atomic_load_explicit(&g_cached_method, memory_order_relaxed),
+             (unsigned long long)atomic_load_explicit(&g_java_vm,
+                                                     memory_order_relaxed),
+             (long long)atomic_load_explicit(&g_place_id,
+                                            memory_order_relaxed));
     return buf;
 }

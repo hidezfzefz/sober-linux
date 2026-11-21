@@ -150,6 +150,12 @@ extern "C" {
  * requires it > 0 (a real Java StartGameParams.placeId()J), never a fabricated
  * positive value.  Read-only sample taken at dispatch time. */
 #define SOBER_PROV_GATE_RVA_PLACE_ID        0x72a31c0u
+/* JavaVM* cached by the skipped guest JNI_OnLoad at base+0x7cdec78 (the
+ * 0x227b8fb/0x227b92d store).  The notifier's helper 0x227b9e2 calls GetEnv
+ * (+0x30) on this pointer; if it is NULL the chain faults before 0x27eafae
+ * reaches the thunk.  Read-only sample: a NULL global can only REMOVE a
+ * credential (fail closed), never manufacture one. */
+#define SOBER_PROV_GATE_RVA_JAVA_VM         0x7cdec78u
 
 /* ---- qualifying dispatch name ------------------------------------------ */
 #define SOBER_PROV_GATE_QUALIFYING_NAME     "gameLoadedCallback"
@@ -179,6 +185,7 @@ typedef struct {
     uintptr_t cached_class;        /* value read at base+0x72a2f48            */
     uintptr_t cached_method;       /* value read at base+0x72a2fc0            */
     int64_t   place_id;            /* read at base+0x72a31c0 at dispatch time  */
+    uintptr_t java_vm_global;      /* value read at base+0x7cdec78            */
     int       last_verdict;        /* one of SOBER_PROV_GATE_VERDICT_*         */
 } SoberProvenanceGateSnapshot;
 
@@ -248,6 +255,35 @@ SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_class(void);
 SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_cached_method(void);
 /* placeId sampled read-only from base+0x72a31c0 at the last dispatch. */
 SOBER_PROV_GATE_API int64_t   sober_provenance_gate_place_id(void);
+/* JavaVM* sampled read-only from base+0x7cdec78 (0 = not live/not sampled). */
+SOBER_PROV_GATE_API uintptr_t sober_provenance_gate_java_vm_global(void);
+
+/* ---- clean-state readiness (read-only, dispatch-independent) ------------ */
+/* Bitmask of the STATICALLY observable legs of the task #531 readiness
+ * predicate.  The remaining legs -- thunk RA 0x2584960 + notifier RA
+ * 0x27eafb3, descriptor-invoke RA 0x27eaf32 and node dispatch 0x27eaf04
+ * entered from guest .text -- exist only on a live dispatch and are certified
+ * per-call by on_dispatch()/is_genuine(); they are deliberately NOT asserted
+ * here, so a readiness PASS can never be mistaken for a callback credential. */
+#define SOBER_PROV_GATE_READY_BASE        (1u << 0) /* base resolved            */
+#define SOBER_PROV_GATE_READY_BUILD       (1u << 1) /* frozen BuildID verified  */
+#define SOBER_PROV_GATE_READY_JAVAVM      (1u << 2) /* 0x7cdec78 non-NULL       */
+#define SOBER_PROV_GATE_READY_CACHED_CLASS  (1u << 3) /* 0x72a2f48 non-NULL     */
+#define SOBER_PROV_GATE_READY_CACHED_METHOD (1u << 4) /* 0x72a2fc0 non-NULL     */
+#define SOBER_PROV_GATE_READY_PLACE_ID     (1u << 5) /* 0x72a31c0 > 0           */
+#define SOBER_PROV_GATE_READY_ALL  (SOBER_PROV_GATE_READY_BASE | \
+                                   SOBER_PROV_GATE_READY_BUILD | \
+                                   SOBER_PROV_GATE_READY_JAVAVM | \
+                                   SOBER_PROV_GATE_READY_CACHED_CLASS | \
+                                   SOBER_PROV_GATE_READY_CACHED_METHOD | \
+                                   SOBER_PROV_GATE_READY_PLACE_ID)
+/* Lazily installs (auto-discovers the base), samples the five globals
+ * read-only, fills buf (when given) with a neutral one-line leg-by-leg report
+ * and returns the bitmask above.  NEVER emits a marker/provenance line, never
+ * calls into the guest and never fabricates a value.  A kill switch or missing
+ * base simply clears the corresponding bits. */
+SOBER_PROV_GATE_API uint32_t sober_provenance_gate_readiness(char *buf,
+                                                            size_t cap);
 
 /* Emit the gate-owned positive provenance line ONCE, and only when the full
  * credential holds (GENUINE + placeId>0 + no harness taint).  Returns 1 when

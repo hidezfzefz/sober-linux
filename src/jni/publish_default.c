@@ -667,6 +667,45 @@ int sober_publish_default_last_rc(void)
     return atomic_load(&g_last_rc);
 }
 
+/* ---- task #530: read-only guest self-registration probe ------------------ */
+void sober_publish_default_selfreg_probe(void *guest_base,
+                                         SoberPublishSelfReg *out,
+                                         char *buf, size_t cap)
+{
+    unsigned char *b = (unsigned char *)guest_base;
+    SoberPublishSelfReg local;
+    SoberPublishSelfReg *p = out ? out : &local;
+
+    memset(p, 0, sizeof(*p));
+    if (buf && cap)
+        buf[0] = '\0';
+    if (!b)
+        return;
+
+    p->guard = *(volatile uint8_t *)(b + SOBER_PD_RVA_NODE_GUARD);
+    p->bus_guard_a = *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_A);
+    p->bus_guard_b = *(volatile uint8_t *)(b + SOBER_PD_RVA_BUS_GUARD_B);
+    p->node = sober_publish_default_find_node(b);
+    p->listener_slot = *(void *volatile *)(b + SOBER_PD_RVA_LIFECYCLE_VTABLE +
+                                           SOBER_PD_OFF_LIFECYCLE_REGISTER);
+    p->host_redrive_calls = atomic_load_explicit(&g_register_calls,
+                                                 memory_order_relaxed);
+    p->node_present = p->node != NULL;
+    p->guest_self_registered = p->node_present && p->guard &&
+                               p->host_redrive_calls == 0u;
+
+    if (buf && cap)
+        snprintf(buf, cap,
+                 "guard@0x72a31ba=%u bus_guards=%u/%u node=%p "
+                 "listener_slot@0x6dbc7f8=%p (expect %p=base+0x24ad50a) "
+                 "host_redrive=%llu node_present=%d guest_self_registered=%d",
+                 (unsigned)p->guard, (unsigned)p->bus_guard_a,
+                 (unsigned)p->bus_guard_b, p->node, p->listener_slot,
+                 b + SOBER_PD_RVA_REGISTER_FN,
+                 (unsigned long long)p->host_redrive_calls,
+                 p->node_present, p->guest_self_registered);
+}
+
 void sober_publish_default_snapshot(SoberPublishSnapshot *out)
 {
     unsigned i;

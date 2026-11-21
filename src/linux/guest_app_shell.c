@@ -1982,6 +1982,17 @@ int guest_app_shell_run(uintptr_t base)
      * stable guest-RA swap recurrence, bracketed guest draw, G8 window proof. */
     int render_ok = guest_render_ok();
 
+    /* Gate-owned render provenance (wave5 F4).  Emitted ONLY on a fully clean,
+     * genuine pass; seeded diagnostics never produce this line, so the strict
+     * test's positive assertion cannot be satisfied by a withheld run. */
+    if (!seeded_state && shell_cb && render_ok) {
+        fprintf(stderr,
+                "[app-shell] render provenance: guest-tagged frame at 0x649d422 "
+                "(swaps=%llu, draws=%llu), phase3_done=1 -> OK\n",
+                (unsigned long long)sober_frame_dispatch_swaps_guest_tagged(),
+                (unsigned long long)sober_frame_draw_guest_draws());
+    }
+
     if (!shell_cb || !render_ok) {
         fprintf(stderr,
                 "[app-shell] marker withheld: callback=%d render=%d "
