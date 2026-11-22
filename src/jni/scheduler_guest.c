@@ -14,6 +14,7 @@
 #include "scheduler_guest.h"
 #include "tsd_default.h"
 
+#include <dirent.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -118,6 +119,24 @@ int sober_scheduler_guest_install(void *guest_base)
                 fp = *(void *const *)((const unsigned char *)obj + 0x40u);
             fprintf(stderr, "[sg-diag]   obj@0x%x = %p  +0x40 = %p\n",
                     rvas[i], obj, fp);
+        }
+        char early_stats[768];
+        sober_scheduler_guest_stats(early_stats, sizeof(early_stats));
+        fprintf(stderr, "[sg-diag] early stats: %s\n", early_stats);
+        /* Read-only dump of the gate string at 0x7697cf0 (libc++ std::string:
+         * CF0 header, D00 heap pointer, D08 length).  Identifies what the
+         * harness leaves resident where AVD has an empty string. */
+        unsigned char h = *(const volatile unsigned char *)(q + 0x7697cf0u);
+        const void *sp = *(void *const *)(q + 0x7697d00u);
+        unsigned char slen = *(const volatile unsigned char *)(q + 0x7697d08u);
+        fprintf(stderr,
+                "[sg-diag] gate string: hdr(CF0)=%#x ptr(D00)=%p len(D08)=%u\n",
+                h, sp, slen);
+        if (sp && (uintptr_t)sp > 0x10000u) {
+            char sbuf[64] = {0};
+            size_t n = slen < sizeof(sbuf) - 1u ? slen : sizeof(sbuf) - 1u;
+            memcpy(sbuf, sp, n);
+            fprintf(stderr, "[sg-diag]   text='%s'\n", sbuf);
         }
     }
     return SOBER_SG_OK;
@@ -247,11 +266,45 @@ void sober_scheduler_guest_stats(char *buf, size_t cap)
             desc2b = *(const unsigned char *)
                      ((const unsigned char *)k3state + (size_t)idx * 8u + 8u);
     }
+    /* The one-shot task object stores the pthread_t returned by guest
+     * pthread_create@0x2a16a4a at +0x2098 (guest 0x2a16a5b).  A non-zero value
+     * is read-only proof that the FunctionMarshaller worker thread EXISTS,
+     * without invoking any guest function. */
+    void *worker_handle = NULL;
+    if (sg_base && sober_tsd_default_verify_build(sg_base)) {
+        void *task = *(void *const *)((const unsigned char *)sg_base + 0x729d688u);
+        if (task && (uintptr_t)task > 0x10000u)
+            worker_handle = *(void *const *)
+                ((const unsigned char *)task + 0x2098u);
+    }
+    /* /proc thread names are read-only; a live "FunctionMarshaller"/" RBX Worker"
+     * comm would independently confirm the worker. */
+    char threads[192] = {0};
+    size_t tn = 0;
+    DIR *td = opendir("/proc/self/task");
+    if (td) {
+        struct dirent *de;
+        while ((de = readdir(td)) && tn + 32 < sizeof(threads)) {
+            if (de->d_name[0] < '0' || de->d_name[0] > '9') continue;
+            char path[320], comm[64] = {0};
+            snprintf(path, sizeof(path), "/proc/self/task/%s/comm", de->d_name);
+            FILE *f = fopen(path, "r");
+            if (!f) continue;
+            if (fgets(comm, sizeof(comm), f)) {
+                comm[strcspn(comm, "\n")] = '\0';
+                tn += (size_t)snprintf(threads + tn, sizeof(threads) - tn,
+                                       "%s|", comm);
+            }
+            fclose(f);
+        }
+        closedir(td);
+    }
     snprintf(buf, cap,
              "enabled=%d active=%d primed=%d attach=%ld worker=%ld "
              "prime=%ld skip=%ld main_reject=%ld tsd_reject=%ld verify_err=%ld "
              "reads=%ld read_err=%ld last_c=%ld "
-             "oneshot(0x729d680)=%ld taskobj=%p desc2_byte=%d "
+             "oneshot(0x729d680)=%ld taskobj=%p worker_handle=%p "
+             "desc2_byte=%d threads=[%s] "
              "enter_rva=0x%x tls_rva=0x%x base=%p",
              sober_scheduler_guest_enabled(), sg_installed,
              sober_scheduler_guest_is_primed(),
@@ -261,7 +314,7 @@ void sober_scheduler_guest_stats(char *buf, size_t cap)
              sg_get(&sg_verify_errors),
              sg_get(&sg_nesting_reads), sg_get(&sg_nesting_errors),
              sg_get(&sg_last_nesting),
-             oneshot, taskobj, desc2b,
+             oneshot, taskobj, worker_handle, desc2b, threads,
              SOBER_SG_RVA_GUARD_ENTER, SOBER_SG_RVA_TLS_ACCESSOR, sg_base);
 }
 

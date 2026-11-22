@@ -1,27 +1,25 @@
-# Worker-scoped prime / FLog stream — ordered RAs + first divergence
+# Latch prerequisite — authoritative DEX + native chain (read-only)
 
 Engine `3e498d64…335` / BuildID `204ad049…d6c9`; base.apk `114a6f8e…ead4`.
-Files: `scheduler_guest.c/.h`, `tsd_default.c/.h`, `bionic_libc.c`,
-`bionic_sf_full.c`, `javavm_semantics.c`. No guest code-byte patch, no fabricated
-guest object, no clean-path seed, no gate change. Marker WITHHELD.
+No guest byte patch, no host-triggered guest call on the clean path, no gate
+weakening, no edit to `guest_app_shell.c`. Marker WITHHELD.
 
-## A. Reference ordered RA list (AVD chain; re-verified on frozen engine)
+## Ordered RA list + gate
+`uh/e$f.a()` (DEX `classes2.dex`, AsyncTask) → `NativeGLInterface.nativeInitClientSettings(String,String,String)` → native `0x2359277`: converts 3 jstrings via `GetStringUTFChars 0x2315532` into std::strings at `-0x80/-0x98/-0xb0(%rbp)` → `call 0x2eb7155` at `0x235933d` (rdi = string#1) → `0x2eb7198 test len(s1),len(s1)`: non-empty → `0x2eb71a1 movb $0, D08@0x7697d08` → `0x2eb71de call 0x235a58c` → gate `0x2eb71e8` (`D08==0 → je 0x2eb72bd → … → 0x2eb7520 movb $1,0x7cdd149`) ; empty s1 → `je 0x2eb7225` skips the whole block. `0x2eb7520` is INSIDE `0x2eb7155` (function start `0x2eb7155` after `call 0x2ea6a10` at `0x2eb7150`), i.e. **latch is written inside the same nativeInitClientSettings call**, after the gate.
 
-`0x2a0de60 → 0x2ea6440(desc2 0x722e560) → getspecific@plt 0x6d322e0 / GOT 0x72298b0` (key3 `0x72a1b08`) → one-shot `0x2a0ded0` (sole caller `0x2a0de78`) → ctor `0x2a168b0` (sole caller `0x2a0df01`, `[task+0x10]=0x2a18270`) → `pthread_create@0x2a16a4a` → thunk `0x2a0daa0` → enter-hook RA `0x2a0daf0` → guest `0x2a132c0(1)` → `call *0x10(%rbx)@0x2a0daf7` → `0x2a18270` (`orq $1,0x20(%r13)`, RA `0x2a0dafa`) → FunctionMarshaller attach → `0x235a58c` → gate `0x2eb71e8` → latch `0x2eb7520` → guard `0x23862b0`.
+## (1) Genuine AVD caller / strings
+`uh/e$f.a()` smali line 159: `invoke-static {v0, v1, p1}, NativeGLInterface->nativeInitClientSettings(String,String,String)I`
+- `v0 = com/roblox/client/startup/b$b.d()` (field `b`) = **settings path**; the same method checks `v0 == null || v0.isEmpty()` and returns 1 early, so on AVD this string is guaranteed **non-empty** (real path, e.g. `/data/local/tmp/ClientAppSettings.json`; its exact runtime value is a field, not a DEX constant).
+- `v1` = override payload from `uj/a(RobloxApplication.f()).a()` or `com/roblox/client/startup/a.o()`.
+- `p1` (third) = `Lrg/w0.M()`. (If `rh/h.z5()` is true, the 4-arg `nativeInitClientSettingsSigned` is used instead.)
 
-## B. FLog `obj+0x40` writer (genuine guest code)
+## (2) Latch timing
+Written at `0x2eb7520` in the callee `0x2eb7155`, reached from `0x235933d` within the same `nativeInitClientSettings` call — only when string#1 is non-empty AND the gate at `0x2eb71e8` sees `D08 == 0`. `CF0=0x21/D08=1` are left by the `0x235a58c` call at `0x2eb71de`; the gate reads them immediately afterwards.
 
-Caller `0x2e613cb/0x2e613d7`: `rsi = [GOT 0x72281d8] + 0x130` (Bionic stderr).
-Callee ctor `0x2e61750`: `mov %r15,0x40(%rbx)` at `0x2e61772` (also `0x2e617e0+0x22` for `+0x98` stdout). FLog writer `0x2e61ca0` uses `obj+0x40` as FILE* for `fwrite@plt 0x6d32010` (`0x2e61cee`) and `fflush@plt 0x6d32020` (`0x2e61d13`).
+## (3) What the harness must supply (not fabricate)
+The guest's **own Java startup** must reach `uh/e$f.a()` and deliver a non-empty real settings path plus real override payload through faithful JNI (`GetStringUTFChars` at `0x2315532`), with the settings file actually readable so `0x235a58c` leaves `D08 == 0` at the gate. FFlags are not the switch (`0x72a31b8` stays 0). A host call to `0x2359277`, a synthetic jstring, a seeded `CF0/D08` or a patched gate would all be fabricated state and are forbidden. The clean harness has no Java caller, hence the gate branch that writes the latch is unreachable today.
 
-**Missing prerequisite:** `fwrite@plt` / `fflush@plt` GOT (`0x7229748` / `0x7229750`) resolve to glibc, so the zeroed Bionic `__sF+0x130` buffer (`_lock @+0x88 == NULL`) reaches glibc `_IO_fflush` directly at `libc+0x7c8e8/0x7c8ff`; `SOBER_BIONIC_SF_FULL`'s `sf_fflush` bridge was never in the path.
+## First divergence
+`0x6caef67` — `RBXCRASH "Can't initialize the TaskScheduler before flags have been loaded"`, `0x7cdd149 == NULL`, downstream of the `0x2eb76bd` gate branch. Worker `" RBX Worker A"` exists; FLog `_IO_fflush` divergence stays fixed by the stdio-GOT rebind; `0x2a0daf7`/attach remain unreached.
 
-**Minimal shim fix (`bionic_sf_full.c`):** inside the existing `SOBER_BIONIC_SF_FULL`-gated installer, rebind only those two GOT slots to the stub's own `fwrite@@LIBC`/`fflush@@LIBC`, resolved with `dlvsym(libc.so, ..., "LIBC")` (plain `&fflush` is interposed by the `-rdynamic` host). The stub forwarders then reach `sf_fflush/sf_fwrite`, which map `__sF+0x130/+0x98` to the **real host `stderr`/`stdout` FILE***. No new knob (existing env already in the withhold chain), no guest object fabricated, clean path untouched.
-
-## C. Ordered RA list (harness, opt-in stack + fix) and first divergence
-
-`guest init complete` → `first frame rendered` → TSD GOT rc=0 (build-ID memfd discovery fix) → `scheduler guest install rc=0`; no `AttachCurrentThread` anywhere → prime=0, main_reject=1 → FLog `sf_fflush` now reached, **no SIGSEGV** → guest `int3` at `0x6caef67` (RBXCRASH terminal, gated by `0x7cdd149`/`0x7cef650`).
-
-**First divergence:** previously `0x2e61d13` (`_IO_fflush` on zeroed Bionic FILE*); with the shim it advances to **`0x6caef67`**. The nominal gate `0x2eb71e8`, `0x2a0ded0`/`0x2a168b0`, the FunctionMarshaller attach and `0x2a0daf7` remain unreached. No host-triggered call to `0x2a0ded0` added; its only honest entry is a genuine `0x2a0de60` call with desc2 byte0 bit0 clear.
-
-Verification: `-Werror` selftest OK, build OK, engine SHA unchanged, marker WITHHELD.
+Verification: engine SHA unchanged, marker WITHHELD.
