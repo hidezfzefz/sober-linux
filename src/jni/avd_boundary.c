@@ -97,9 +97,15 @@ int sober_avd_boundary_load(char **buf, size_t *len)
     *buf = NULL; *len = 0;
     if (!sober_avd_boundary_enabled()) return -2;
 
-    FILE *f = fopen(SOBER_AVD_BOUNDARY_PATH, "rb");
-    if (!f) { fprintf(stderr, "[avd-boundary] open failed: %s\n",
-                      SOBER_AVD_BOUNDARY_PATH); return -3; }
+    int modified = getenv(SOBER_AVD_BOUNDARY_UNVERIFIED) != NULL;
+    const char *path = modified ? getenv(SOBER_AVD_BOUNDARY_PATH_ENV) : NULL;
+    if (!path || !*path) path = SOBER_AVD_BOUNDARY_PATH;
+    if (modified)
+        fprintf(stderr, "[avd-boundary] MODIFIED INPUT, diagnostic only: %s "
+                        "(never counts toward any checkpoint rung)\n", path);
+
+    FILE *f = fopen(path, "rb");
+    if (!f) { fprintf(stderr, "[avd-boundary] open failed: %s\n", path); return -3; }
     if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return -4; }
     long sz = ftell(f);
     if (sz <= 0 || fseek(f, 0, SEEK_SET) != 0) { fclose(f); return -5; }
@@ -116,14 +122,15 @@ int sober_avd_boundary_load(char **buf, size_t *len)
     for (int i = 0; i < 32; ++i) snprintf(hex + i*2, 3, "%02x", digest[i]);
     hex[64] = '\0';
 
-    if (strcmp(hex, SOBER_AVD_BOUNDARY_SHA256) != 0) {
+    if (!modified && strcmp(hex, SOBER_AVD_BOUNDARY_SHA256) != 0) {
         fprintf(stderr, "[avd-boundary] SHA-256 MISMATCH got=%s want=%s\n",
                 hex, SOBER_AVD_BOUNDARY_SHA256);
         free(data);
         return -8;
     }
-    fprintf(stderr, "[avd-boundary] verified %s bytes sha256=%s\n",
-            SOBER_AVD_BOUNDARY_PATH, hex);
+    fprintf(stderr, "[avd-boundary] %s %s bytes sha256=%s%s\n",
+            modified ? "MODIFIED INPUT, diagnostic only" : "verified",
+            path, hex, modified ? " (UNVERIFIED, not a rung)" : "");
     *buf = data; *len = (size_t)sz;
     return 0;
 }

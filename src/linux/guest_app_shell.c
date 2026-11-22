@@ -9,6 +9,7 @@
  */
 #define _GNU_SOURCE
 #include <signal.h>
+#include <sys/prctl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "guest_app_shell.h"
@@ -41,6 +42,7 @@
  */
 #include "tsd_default.h"
 #include "avd_boundary.h"
+#include "hw_breakpoint.h"
 #include "fields_default.h"
 #include "javavm_default.h"
 #include "fflag_default.h"
@@ -1140,6 +1142,29 @@ int guest_app_shell_run(uintptr_t base)
                     (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
                     (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
                     fflag_ctx, fflag_obj);
+            /* W15 diagnostic: in-process perf hardware write-watchpoint on
+             * the guest stack slot read at 0x23121ae. Address is supplied by
+             * the caller (ASLR-off runs give a deterministic slot). */
+            if (getenv("SOBER_HW_WATCH")) {
+                const char *a = getenv("SOBER_HW_WATCH_ADDR");
+                uintptr_t hf = (uintptr_t)__builtin_frame_address(0);
+                uintptr_t wa = a ? strtoull(a, NULL, 0) : hf - 0x1dd8u;
+                fprintf(stderr, "[HWBP] host_frame=%p watch=%p\n",
+                        __builtin_frame_address(0), (void *)wa);
+                (void)sober_hw_watch_install((void *)wa);
+            }
+            /* W15 diagnostic: stop here so gdb can attach to an ALREADY
+             * loaded process and watch the guest stack slot without paying
+             * the 120 MB dlopen cost under ptrace. No guest state is changed. */
+            if (getenv("SOBER_STOP_BEFORE_SETTINGS")) {
+                fprintf(stderr, "[app-shell] SIGSTOP before 0x2359277 "
+                                "(gdb attach point)\n");
+                fflush(stderr);
+                /* ptrace_scope=1: allow this diagnostic attach without
+                 * changing any system setting or guest state. */
+                (void)prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
+                raise(SIGSTOP);
+            }
             long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
                 (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
             g_ck_rung1_returned = 1;
@@ -1935,6 +1960,12 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_JAVAVM_DEFAULT") ||
                        getenv("SOBER_FFLAG_DEFAULT") ||
                        getenv("SOBER_SCHEDULER_GUEST") ||
+                       getenv("SOBER_AVD_BOUNDARY_REPLAY") ||
+                       getenv("SOBER_AVD_BOUNDARY_UNVERIFIED") ||
+                       getenv("SOBER_AVD_BOUNDARY_PATH") ||
+                       getenv("SOBER_STOP_BEFORE_SETTINGS") ||
+                       getenv("SOBER_HW_WATCH") ||
+                       getenv("SOBER_HW_WATCH_ADDR") ||
                        getenv("SOBER_SCHED_DIAG") ||
                        getenv("SOBER_SCHED_NEUTRAL") ||
                        getenv("SOBER_SINGLETON_DEFAULT") ||

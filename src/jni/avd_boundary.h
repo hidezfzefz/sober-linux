@@ -14,6 +14,9 @@
 
 #define SOBER_AVD_BOUNDARY_ENV     "SOBER_AVD_BOUNDARY_REPLAY"
 #define SOBER_AVD_BOUNDARY_PATH    "/tmp/opencode/w11-arg0.json"
+/* Diagnostic bisect only. Never counts toward a checkpoint rung. */
+#define SOBER_AVD_BOUNDARY_UNVERIFIED "SOBER_AVD_BOUNDARY_UNVERIFIED"
+#define SOBER_AVD_BOUNDARY_PATH_ENV   "SOBER_AVD_BOUNDARY_PATH"
 #define SOBER_AVD_BOUNDARY_SHA256  "8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b"
 #define SOBER_AVD_BOUNDARY_SESSION "AVD emulator-5556 / frida 17.19.0 / w11-hook-settings / 2026-11-22"
 #define SOBER_AVD_BOUNDARY_CLASS   "AVD-captured boundary input"
