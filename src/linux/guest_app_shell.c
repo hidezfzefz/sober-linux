@@ -63,6 +63,13 @@
 #include "flags_latch_default.h"
 #include "crashpad_return.h"
 
+/* Checkpoint ladder (AVD-captured references only; see analysis/CHECKPOINT-LADDER.md).
+ * Rung 3 is intentionally undefined: no authenticated AVD capture exists. */
+static int g_ck_rung1_returned;
+static int g_ck_rung2_app_start;
+static int g_ck_rung2_v2_init;
+static int g_ck_rung2_lua_dm;
+
 /* Gated crashpoint diagnostic: report the guest latch when a guest path aborts
  * inside the crashpad writer, without changing any guest state. */
 static uintptr_t g_abrt_base;
@@ -758,6 +765,7 @@ static void real_appstate_prepare(uintptr_t base, void *env, void *clazz,
 static void real_appstate_start_lua(uintptr_t base, void *env, void *clazz)
 {
     ((void (*)(void *, void *))(base + 0x25448f6u))(env, clazz);
+    g_ck_rung2_lua_dm = 1;
     fprintf(stderr, "[app-shell] real-appstate: called "
                     "nativeAppBridgeStartLuaAppDM 0x25448f6\n");
 }
@@ -1134,6 +1142,7 @@ int guest_app_shell_run(uintptr_t base)
                     fflag_ctx, fflag_obj);
             long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
                 (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
+            g_ck_rung1_returned = 1;
             fprintf(stderr, "[app-shell] AVD boundary nativeInitClientSettings "
                             "0x2359277 -> rc=%ld D08_len=%#x latch=%u "
                             "CF0=%#x 72a31b8=%#x\n",
@@ -1495,6 +1504,7 @@ int guest_app_shell_run(uintptr_t base)
 
     rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
              (env, app_class, param_obj);
+    g_ck_rung2_v2_init = 1;
     fprintf(stderr, "[app-shell] guest call 0x24abf96 nativeAppBridgeV2InitWithParams"
                     "(param_obj) -> rc=%ld\n", rc);
     if (getenv("SOBER_APP_SLOT_DIAG"))
@@ -1554,6 +1564,7 @@ int guest_app_shell_run(uintptr_t base)
         rc = ((long (*)(void *, void *, void *, void *, int,
                         void *, void *, void *))(base + 0x247dc8du))
                  (env, app_class, s_url, s_ua, 0, s_aid, s_plat, s_ext);
+        g_ck_rung2_app_start = 1;
         fprintf(stderr, "[app-shell] guest call 0x247dc8d nativeAppBridgeAppStart"
                         "(url,ua,false,androidid,platform,empty) -> rc=%ld\n", rc);
         if (getenv("SOBER_APP_SLOT_DIAG"))
@@ -2059,7 +2070,24 @@ int guest_app_shell_run(uintptr_t base)
                 "genuine guest->Java callback via a harness-triggered thunk; "
                 "NO login/app-shell frame is proven by this run.\n");
     }
-    emit_marker("app shell rendered\n", "SOBER_SHELL_MARKER");
+    /* Checkpoint ladder: no single marker. Every rung below has an
+     * AVD-captured reference (analysis/CHECKPOINT-LADDER.md). Rung 3 is
+     * intentionally UNDEFINED until an authenticated AVD capture exists. */
+    {
+        int debt = avd_boundary_provenance || seeded_state || sober_avd_boundary_enabled();
+        int rung1 = g_ck_rung1_returned &&
+                    (*(volatile unsigned char *)(base + 0x7cdd149u) == 1);
+        int rung2 = g_ck_rung2_app_start && g_ck_rung2_v2_init && g_ck_rung2_lua_dm;
+        fprintf(stderr, "[checkpoint] rung1 client_settings_latch=%s "
+                        "(AVD ref: w12-gate-avd.log) DEBT=%d\n",
+                rung1 ? "PASS" : "FAIL", debt);
+        fprintf(stderr, "[checkpoint] rung2 app_start_to_lua_dm=%s "
+                        "(AVD ref: w12-j2n-300.log) DEBT=%d\n",
+                rung2 ? "PASS" : "FAIL", debt);
+        fprintf(stderr, "[checkpoint] rung3 UNDEFINED "
+                        "(no authenticated AVD capture; placeId/surface/"
+                        "StartGame/gameLoadedCallback not provable here)\n");
+    }
 
     const char *v = getenv("SOBER_WINDOW_HOLD_MS");
     long ms = v ? atol(v) : 4000;
