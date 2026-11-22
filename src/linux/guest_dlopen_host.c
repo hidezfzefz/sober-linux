@@ -179,6 +179,13 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
             emit("[harness] at fault %-14s @0x%lx = %p%s\n", watch[i].n,
                  (unsigned long)watch[i].rva, (void *)v, v ? "" : " <-- NULL");
         }
+        /* Read-only wave11 gate snapshot at fault time. */
+        emit("[harness] at fault gate_string hdr(CF0)=%#x len(D08)=%u "
+             "flags_latch=%u guard_byte=%#x\n",
+             (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
+             (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
+             (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
+             (unsigned)*(volatile unsigned char *)(base + 0x23862b0u));
     }
     emit("[harness] worker-1 progress: seed_index=%u ctors_done=%u "
          "ctor_rva=0x%llx\n",

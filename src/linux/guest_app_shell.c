@@ -40,6 +40,7 @@
  * native_jni.c and this gate would consult different instances.
  */
 #include "tsd_default.h"
+#include "avd_boundary.h"
 #include "fields_default.h"
 #include "javavm_default.h"
 #include "fflag_default.h"
@@ -1082,63 +1083,64 @@ int guest_app_shell_run(uintptr_t base)
     int np_rc = sober_notifier_probe_install((void *)base);
     fprintf(stderr, "[app-shell] notifier probe install -> rc=%d\n", np_rc);
 
-    /* Task #474: the genuine latch 0x7cdd149 ("flags loaded") is written only
-     * by nativeInitClientSettings 0x2359277 -> 0x2eb7155 -> 0x2eb7520. Without
-     * it, any TaskScheduler init (postsettings/StartLuaAppDM) hits the genuine
-     * RBXCRASH "Can't initialize the TaskScheduler before flags have been
-     * loaded" int3 at 0x6caef66. Real JNI call, 3 non-empty strings. */
-    if (getenv("SOBER_CLIENT_SETTINGS_INIT")) {
-        void *cs_env = sober_jni_env(j);
-        /* Wave6 #550 authoritative DEX fidelity: real owner is NativeGLInterface
-         * and args are (settings path, external JSON override,
-         * "GoogleAndroidApp") - our old slot order/class were from a modded
-         * mini APK and are wrong. */
-        void *cs_cls = sober_jni_find_class(j,
-            "com/roblox/engine/jni/NativeGLInterface");
-        void *a, *b, *c;
-        const char *cs_json = getenv("SOBER_SETTINGS_JSON");
-        if (!cs_json) cs_json = "{}";
-        if (sober_jstr_enabled()) {
-            /* A3: 0x2315532 converts each jstring through GetStringUTFChars
-             * (fn[165] @ +0x548).  The default bridge stub does not recognise
-             * a standalone canonical handle and returns NULL, so the guest
-             * sees an empty settings string and takes the bypass path.  Install
-             * the opt-in canonical accessors into the JNIEnv table first. */
-            void *cs_env_obj = sober_jni_env(j);
-            void **cs_fn = cs_env_obj
-                ? (void **)((char *)*(void **)cs_env_obj + 0x20u) : NULL;
-            int ji_rc = sober_jstr_install(cs_fn, (void *)base);
-            fprintf(stderr, "[app-shell] canonical jstrings install -> rc=%d\n",
-                    ji_rc);
-            a = sober_jstr_create((void *)base,
-                "/data/local/tmp/ClientAppSettings.json");
-            b = sober_jstr_create((void *)base, cs_json);
-            c = sober_jstr_create((void *)base, "GoogleAndroidApp");
+    /* Wave11: replay the AUTHORITATIVE AVD-captured JNI boundary. The old
+     * synthetic (path, "{}", "GoogleAndroidApp") call is REMOVED entirely.
+     * arg0 is the exact verified byte stream captured in Frida session
+     * w11-hook-settings; arg1 is Java null; arg2 is "GoogleAndroidApp".
+     * This is a separate provenance class, not a seeded_state knob. */
+    int avd_boundary_active = 0;
+    if (sober_avd_boundary_enabled()) {
+        char prov[256];
+        sober_avd_boundary_provenance(prov, sizeof(prov));
+        fprintf(stderr, "[app-shell] AVD boundary provenance: %s\n", prov);
+
+        char *arg0_bytes = NULL;
+        size_t arg0_len = 0;
+        int rc = sober_avd_boundary_load(&arg0_bytes, &arg0_len);
+        if (rc != 0) {
+            fprintf(stderr, "[app-shell] AVD boundary REPLAY FAILED rc=%d\n", rc);
         } else {
-            a = sober_jni_new_string_utf8(j,
-                "/data/local/tmp/ClientAppSettings.json");
-            b = sober_jni_new_string_utf8(j, cs_json);
-            c = sober_jni_new_string_utf8(j, "GoogleAndroidApp");
+            void *cs_env = sober_jni_env(j);
+            void *cs_cls = sober_jni_find_class(j,
+                "com/roblox/engine/jni/NativeGLInterface");
+            void *a = NULL, *c = NULL;
+            if (sober_jstr_enabled()) {
+                /* Install canonical accessors so GetStringUTFChars @0x2315532
+                 * sees the EXACT captured bytes rather than a NULL handle. */
+                void **cs_fn = cs_env
+                    ? (void **)((char *)*(void **)cs_env + 0x20u) : NULL;
+                int ji_rc = sober_jstr_install(cs_fn, (void *)base);
+                fprintf(stderr, "[app-shell] AVD boundary canonical jstrings "
+                                "install -> rc=%d\n", ji_rc);
+                a = sober_jstr_create((void *)base, arg0_bytes);
+                c = sober_jstr_create((void *)base, SOBER_AVD_BOUNDARY_ARG2);
+            } else {
+                a = sober_jni_new_string_utf8(j, arg0_bytes);
+                c = sober_jni_new_string_utf8(j, SOBER_AVD_BOUNDARY_ARG2);
+            }
+            void *b = NULL;                       /* Java null, as captured */
+            fprintf(stderr, "[app-shell] AVD boundary pre: arg0_len=%zu "
+                            "jstr0=%p D08=%#x latch=%u\n",
+                    arg0_len, a,
+                    (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
+                    (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u));
+            long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
+                (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
+            fprintf(stderr, "[app-shell] AVD boundary nativeInitClientSettings "
+                            "0x2359277 -> rc=%ld D08_len=%#x latch=%u "
+                            "CF0=%#x 72a31b8=%#x\n",
+                    cs_rc,
+                    (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
+                    (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
+                    (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
+                    (unsigned)*(volatile unsigned char *)(base + 0x72a31b8u));
+            free(arg0_bytes);
+            avd_boundary_active = 1;
         }
-        fprintf(stderr, "[app-shell] client-settings pre: "
-                        "7697cf0=%#x 7697d08=%#x 7697d09=%#x 72a31b8=%#x "
-                        "jstr0=%p tag=%#x\n",
-                (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
-                (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
-                (unsigned)*(volatile unsigned char *)(base + 0x7697d09u),
-                (unsigned)*(volatile unsigned char *)(base + 0x72a31b8u),
-                a, a ? (unsigned)*(volatile unsigned char *)a : 0u);
-        long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
-            (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
-        fprintf(stderr, "[app-shell] nativeInitClientSettings 0x2359277 "
-                        "-> rc=%ld, flags-loaded latch=%u "
-                        "(7697cf0=%#x 7697d08=%#x 7697d09=%#x 72a31b8=%#x)\n",
-                cs_rc,
-                (unsigned)*(unsigned char *)(base + 0x7cdd149u),
-                (unsigned)*(volatile unsigned char *)(base + 0x7697cf0u),
-                (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
-                (unsigned)*(volatile unsigned char *)(base + 0x7697d09u),
-                (unsigned)*(volatile unsigned char *)(base + 0x72a31b8u));
+    } else if (getenv("SOBER_CLIENT_SETTINGS_INIT")) {
+        fprintf(stderr, "[app-shell] SOBER_CLIENT_SETTINGS_INIT is RETIRED; "
+                        "use %s=1 for the AVD-captured boundary\n",
+                SOBER_AVD_BOUNDARY_ENV);
     }
 
     /* Task #461: must land BEFORE the JNI_OnLoad/JavaVM seeds — the first
@@ -1979,11 +1981,21 @@ int guest_app_shell_run(uintptr_t base)
         sober_scheduler_guest_stats(sg_stats, sizeof(sg_stats));
         fprintf(stderr, "[app-shell] scheduler diag: %s\n", sg_stats);
     }
+    /* Wave11: distinct provenance class, NOT folded into seeded_state.
+     * AVD-captured boundary input is host-supplied oracle data and therefore
+     * fails closed on its own, while remaining separately identifiable. */
+    int avd_boundary_provenance = sober_avd_boundary_should_withhold();
+    if (avd_boundary_provenance) {
+        char prov[256];
+        sober_avd_boundary_provenance(prov, sizeof(prov));
+        fprintf(stderr, "[app-shell] marker withheld: %s\n", prov);
+        shell_cb = 0;
+    }
     if (seeded_state) {
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "
                         "seed active (no app-shell frame proven)\n");
         shell_cb = 0;
-    } else {
+    } else if (!avd_boundary_provenance) {
         /* Worker-3 #494: emit only on a genuinely clean state.  The gate
          * function itself is fail-closed and emits nothing unless the notifier-
          * driven callback credential and placeId>0 are both genuine. */
