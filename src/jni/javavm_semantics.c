@@ -7,6 +7,7 @@
  */
 #define _GNU_SOURCE
 #include "javavm_semantics.h"
+#include "scheduler_guest.h"
 
 #include <pthread.h>
 #include <stdint.h>
@@ -214,6 +215,18 @@ static fj_jint fj_do_attach(void *vm, void **env_out, void *args, int daemon)
             "(attached=%ld idempotent=%ld)\n",
             daemon ? "AsDaemon" : "", t->name, (void *)&t->env,
             g_attach_calls, g_idempotent_attaches);
+
+    /* This is the genuine attach site on the worker thread: the AVD chain is
+     * thunk 0x2a0daa0 -> enter-hook (RA 0x2a0daf0) -> task call 0x2a0daf7 ->
+     * callback 0x2a18270 (RA 0x2a0dafa) -> FunctionMarshaller attach ->
+     * settings 0x235a58c -> latch 0x2eb7520.  The harness has no guest-side
+     * enter hook, so issue the single honest guest nesting prime HERE, on the
+     * attaching thread, immediately before its task call.  The prime module
+     * self-gates on SOBER_SCHEDULER_GUEST (already in the decision-013 seeded
+     * state chain), refuses the harness main thread, and executes only guest
+     * RVA 0x2a132c0(1); it fabricates no object and writes no guest byte. */
+    if (name[0] && strcmp(name, SOBER_SG_WORKER_NAME) == 0)
+        sober_scheduler_guest_prime_worker();
     return FJ_JNI_OK;
 }
 

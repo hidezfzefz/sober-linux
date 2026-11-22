@@ -120,8 +120,11 @@ static int find_guest_cb(struct dl_phdr_info *info, size_t size, void *data)
 {
     (void)size;                       /* struct may grow; we use the fixed part */
     struct find_ctx *ctx = (struct find_ctx *)data;
-    if (!info->dlpi_name || strstr(info->dlpi_name, "libroblox.so") == NULL)
-        return 0;
+    /* The harness dlopens a PRIVATE memfd copy of the engine, so dlpi_name is
+     * "/proc/self/fd/3", NOT "libroblox.so".  A name filter therefore silently
+     * missed the guest and left both TSD PLT GOT slots bound to glibc (the
+     * get/setspecific "split").  Match on the authoritative NT_GNU_BUILD_ID
+     * alone: it is unique to the frozen engine and never accepted by name. */
     for (unsigned i = 0; i < info->dlpi_phnum; ++i) {
         if (info->dlpi_phdr[i].p_type != PT_NOTE) continue;
         const unsigned char *notes =
@@ -378,6 +381,41 @@ done:
         fputs(out, stderr);
     }
     return healthy ? SOBER_TSD_DEFAULT_HEALTHY : SOBER_TSD_DEFAULT_UNHEALTHY;
+}
+
+int sober_tsd_default_key3_coherent(void *guest_base, void **out_state)
+{
+    if (out_state) *out_state = NULL;
+    if (!guest_base || !sober_tsd_default_enabled())
+        return 0;
+    if (!sober_tsd_default_verify_build(guest_base))
+        return 0;
+
+    uint32_t k3 = 0;
+    memcpy(&k3,
+           (const unsigned char *)guest_base + SOBER_TSD_KEY3_GLOBAL_RVA,
+           sizeof(k3));
+    if (k3 != 3u || k3 >= SOBER_TSD_BIONIC_SLOTS)
+        return 0;
+
+    void *get = NULL, *set = NULL;
+    if (resolve_stub_tsd(&get, &set) != 0)
+        return 0;
+
+    const uintptr_t b = (uintptr_t)guest_base;
+    const uintptr_t got_get =
+        *(volatile uintptr_t *)(b + SOBER_TSD_GOT_GETSPECIFIC_RVA);
+    const uintptr_t got_set =
+        *(volatile uintptr_t *)(b + SOBER_TSD_GOT_SETSPECIFIC_RVA);
+    /* Both guest PLTs must land on the same versioned stub.  The getspecific
+     * GOT (0x72298b0) and setspecific GOT (0x72295c8) are 0x2e8 apart, but a
+     * partial/split rebind would still pass a single-slot check; verify both. */
+    if (got_get != (uintptr_t)get || got_set != (uintptr_t)set)
+        return 0;
+
+    if (out_state)
+        *out_state = ((void *(*)(unsigned int))get)(k3);
+    return 1;
 }
 
 int sober_tsd_default_selftest(char *buf, size_t buf_len)

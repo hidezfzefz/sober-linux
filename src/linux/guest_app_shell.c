@@ -1516,6 +1516,12 @@ int guest_app_shell_run(uintptr_t base)
      * attach-site call belongs in the JavaVM attach path (lead-owned), so this
      * harness-side call is the earliest point available to us. */
     sober_scheduler_guest_on_attach("FunctionMarshaller");
+    if (getenv("SOBER_SCHED_DIAG")) {
+        char sg_stats_early[512];
+        sober_scheduler_guest_stats(sg_stats_early, sizeof(sg_stats_early));
+        fprintf(stderr, "[app-shell] scheduler diag (post-attach): %s\n",
+                sg_stats_early);
+    }
 
     int alt_path = getenv("SOBER_ALT_CALLBACK_PATH") != NULL;
     if (alt_path) {
@@ -1908,6 +1914,7 @@ int guest_app_shell_run(uintptr_t base)
                        getenv("SOBER_JAVAVM_DEFAULT") ||
                        getenv("SOBER_FFLAG_DEFAULT") ||
                        getenv("SOBER_SCHEDULER_GUEST") ||
+                       getenv("SOBER_SCHED_DIAG") ||
                        getenv("SOBER_SCHED_NEUTRAL") ||
                        getenv("SOBER_SINGLETON_DEFAULT") ||
                        getenv("SOBER_SINGLETON_DEFAULT_GATE") ||
@@ -1964,6 +1971,14 @@ int guest_app_shell_run(uintptr_t base)
                        env_prefix_active("SOBER_EVIDENCE_") ||
                        sober_frame_thread_should_withhold() ||
                        sober_frame_dispatch_should_withhold();
+    /* Lead diagnostic (read-only): dump the scheduler-prime counters so a run
+     * can prove whether the worker-scoped guest prime actually fired.  This
+     * knob is in seeded_state above and prints no marker. */
+    if (getenv("SOBER_SCHED_DIAG")) {
+        char sg_stats[512];
+        sober_scheduler_guest_stats(sg_stats, sizeof(sg_stats));
+        fprintf(stderr, "[app-shell] scheduler diag: %s\n", sg_stats);
+    }
     if (seeded_state) {
         fprintf(stderr, "[app-shell] marker withheld: diagnostic guest-state "
                         "seed active (no app-shell frame proven)\n");

@@ -146,6 +146,13 @@ SOBER_SG_API int sober_scheduler_guest_nesting(void);
 /* Non-zero once install() actually resolved the guest entry points. */
 SOBER_SG_API int sober_scheduler_guest_is_active(void);
 
+/* Read-only live coherence check of the guest's Bionic key 3 on the calling
+ * thread (delegates to sober_tsd_default_key3_coherent).  *out_state receives
+ * this thread's guest-built TLS state, or NULL if the guest has not built it
+ * yet.  Returns 0 when SOBER_TSD_DEFAULT=0 is set, the build does not match,
+ * key3 is not 3, or the get/setspecific GOT slots are split. */
+SOBER_SG_API int sober_scheduler_guest_tsd_coherent(void *out_state);
+
 /* Non-zero when this thread has already been primed (and opt-in is on). */
 SOBER_SG_API int sober_scheduler_guest_is_primed(void);
 

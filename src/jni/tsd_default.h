@@ -124,6 +124,21 @@ SOBER_TSD_DEFAULT_API int sober_tsd_default_install(void);
 SOBER_TSD_DEFAULT_API int sober_tsd_default_diagnose(void *guest_base,
                                                       char *buf, size_t buf_len);
 
+/* Read-only coherence check for the guest's Bionic TSD key 3 on the CALLING
+ * thread.  The guest's only key3 accessors are pthread_getspecific@plt
+ * (0x6d322e0 -> GOT 0x72298b0) and pthread_setspecific@plt (0x6d31d10 ->
+ * GOT 0x72295c8); both must resolve to the SAME versioned stub, and the guest
+ * key global 0x72a1b08 must still read 3.  A split store would let the guest
+ * build TLS state through one array and read it back through the other.
+ *
+ * Returns 1 when coherent, 0 on any mismatch (including the SOBER_TSD_DEFAULT=0
+ * kill switch).  *out_state, when non-NULL, receives THIS thread's current key3
+ * slot read through the stub; NULL means the guest has not built it yet (the
+ * guest builds it lazily at 0x2ea6520 via its own allocator + setspecific).
+ * This function performs NO guest writes, NO host TSD seed and NO patching. */
+SOBER_TSD_DEFAULT_API int sober_tsd_default_key3_coherent(void *guest_base,
+                                                          void **out_state);
+
 /* Resolve the versioned LIBC TSD symbols with no guest access.  Useful as a
  * constructor-time / test-time self-test of the stub itself. */
 SOBER_TSD_DEFAULT_API int sober_tsd_default_selftest(char *buf, size_t buf_len);
