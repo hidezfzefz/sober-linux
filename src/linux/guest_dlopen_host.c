@@ -23,6 +23,9 @@
 
 #include <dlfcn.h>
 #include <execinfo.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 #include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -186,6 +189,39 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
              (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
              (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
              (unsigned)*(volatile unsigned char *)(base + 0x23862b0u));
+    }
+    /* Read-only thread census at fault time (diagnostic, no guest writes). */
+    {
+        char path[256], comm[128], statbuf[512];
+        long self_tid = (long)syscall(SYS_gettid);
+        DIR *td = opendir("/proc/self/task");
+        emit("[harness] THREADS_AT_FAULT self_tid=<marked below>\n");
+        if (td) {
+            struct dirent *de;
+            while ((de = readdir(td)) != NULL) {
+                if (de->d_name[0] < '0' || de->d_name[0] > '9') continue;
+                snprintf(path, sizeof(path), "/proc/self/task/%s/comm", de->d_name);
+                comm[0] = 0;
+                FILE *f = fopen(path, "r");
+                if (f) { if (fgets(comm, sizeof(comm), f)) comm[strcspn(comm, "\n")] = 0; fclose(f); }
+                snprintf(path, sizeof(path), "/proc/self/task/%s/stat", de->d_name);
+                statbuf[0] = 0;
+                f = fopen(path, "r");
+                if (f) { if (fgets(statbuf, sizeof(statbuf), f)) {
+                    char *p = strrchr(statbuf, ')');
+                    if (p) { p++; while (*p == ' ') p++; }
+                    else p = statbuf;
+                    statbuf[0] = *p ? *p : '?'; statbuf[1] = 0;
+                } fclose(f); }
+                char line[320];
+                snprintf(line, sizeof(line),
+                         "[harness] THREAD tid=%s%s name=%s state=%s\n",
+                         de->d_name, atol(de->d_name) == self_tid ? " <FAULTING>" : "",
+                         comm[0] ? comm : "?", statbuf);
+                emit(line);
+            }
+            closedir(td);
+        }
     }
     emit("[harness] worker-1 progress: seed_index=%u ctors_done=%u "
          "ctor_rva=0x%llx\n",

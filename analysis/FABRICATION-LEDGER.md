@@ -16,6 +16,8 @@ kill-switchable, and must be removed before any clean marker claim.
 | 8 | `SOBER_HW_WATCH` / `SOBER_HW_WATCH_ADDR` perf breakpoint | `src/jni/hw_breakpoint.c` | lead | Read-only in-process DR watch; logs RIP in a signal handler | Remove after writer analysis |
 | 9 | `SOBER_AVD_BOUNDARY_UNVERIFIED` / `SOBER_AVD_BOUNDARY_PATH` | `src/jni/avd_boundary.c` | lead | **MODIFIED INPUT, diagnostic only** bisect path; SHA verification deliberately skipped and labeled | Remove after bisect; never counts toward a rung |
 | 10 | Enhanced perf-watch handler (RIP/regs/bytes/stack RAs) | `src/jni/hw_breakpoint.c` | lead | Read-only diagnostic dump; first 16 hits only | Remove after writer attribution |
+| 11 | Activation-scoped exec+data perf watchpoints | `src/jni/hw_breakpoint.c` | lead | Exec breakpoint after prologue `0x2312009` re-arms a write watch on this activation's `rbp-0xb8` | Remove after writer attribution |
+| 12 | Fault-time thread census | `src/linux/guest_dlopen_host.c` | lead | Reads `/proc/self/task/*/comm|stat`; no guest writes | Remove after thread comparison |
 
 **Not applied (rejected):** the proposed "real guest-addressable FFlag object"
 shim at `jni_native_objects.c`. Read-only diagnostic at `guest_app_shell.c`
