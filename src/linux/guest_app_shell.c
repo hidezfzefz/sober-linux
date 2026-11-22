@@ -1119,11 +1119,19 @@ int guest_app_shell_run(uintptr_t base)
                 c = sober_jni_new_string_utf8(j, SOBER_AVD_BOUNDARY_ARG2);
             }
             void *b = NULL;                       /* Java null, as captured */
+            /* Read-only: FFlag context global 0x72a3058 -> +0x18 object
+             * pointer. Wave12 says this holds the 0x30 token on the harness
+             * and a real heap object on AVD. */
+            void *fflag_ctx = *(void *const *)(base + 0x72a3058u);
+            void *fflag_obj = fflag_ctx
+                ? *(void *const *)((unsigned char *)fflag_ctx + 0x18u) : NULL;
             fprintf(stderr, "[app-shell] AVD boundary pre: arg0_len=%zu "
-                            "jstr0=%p D08=%#x latch=%u\n",
+                            "jstr0=%p D08=%#x latch=%u "
+                            "fflag_ctx=%p fflag_obj=%p\n",
                     arg0_len, a,
                     (unsigned)*(volatile unsigned char *)(base + 0x7697d08u),
-                    (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u));
+                    (unsigned)*(volatile unsigned char *)(base + 0x7cdd149u),
+                    fflag_ctx, fflag_obj);
             long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
                 (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
             fprintf(stderr, "[app-shell] AVD boundary nativeInitClientSettings "
