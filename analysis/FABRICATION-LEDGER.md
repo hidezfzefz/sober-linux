@@ -15,6 +15,7 @@ kill-switchable, and must be removed before any clean marker claim.
 | 7 | `SOBER_STOP_BEFORE_SETTINGS` + `prctl(PR_SET_PTRACER_ANY)` | `guest_app_shell.c` | lead | Diagnostic SIGSTOP attach point; no guest state change | Remove after the writer-RA question is answered |
 | 8 | `SOBER_HW_WATCH` / `SOBER_HW_WATCH_ADDR` perf breakpoint | `src/jni/hw_breakpoint.c` | lead | Read-only in-process DR watch; logs RIP in a signal handler | Remove after writer analysis |
 | 9 | `SOBER_AVD_BOUNDARY_UNVERIFIED` / `SOBER_AVD_BOUNDARY_PATH` | `src/jni/avd_boundary.c` | lead | **MODIFIED INPUT, diagnostic only** bisect path; SHA verification deliberately skipped and labeled | Remove after bisect; never counts toward a rung |
+| 10 | Enhanced perf-watch handler (RIP/regs/bytes/stack RAs) | `src/jni/hw_breakpoint.c` | lead | Read-only diagnostic dump; first 16 hits only | Remove after writer attribution |
 
 **Not applied (rejected):** the proposed "real guest-addressable FFlag object"
 shim at `jni_native_objects.c`. Read-only diagnostic at `guest_app_shell.c`
