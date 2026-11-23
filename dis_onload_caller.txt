@@ -1,0 +1,49 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000227bd90 <JNI_OnLoad@@LIBROBLOX+0xe36>:
+ 227bd90:	d6                   	udb
+ 227bd91:	fa                   	cli
+ 227bd92:	04 48                	add    $0x48,%al
+ 227bd94:	8b 0b                	mov    (%rbx),%ecx
+ 227bd96:	48 89 4d f0          	mov    %rcx,-0x10(%rbp)
+ 227bd9a:	48 8d 4d d0          	lea    -0x30(%rbp),%rcx
+ 227bd9e:	48 89 41 10          	mov    %rax,0x10(%rcx)
+ 227bda2:	48 8d 45 10          	lea    0x10(%rbp),%rax
+ 227bda6:	48 89 41 08          	mov    %rax,0x8(%rcx)
+ 227bdaa:	48 b8 18 00 00 00 30 	movabs $0x3000000018,%rax
+ 227bdb1:	00 00 00 
+ 227bdb4:	48 89 01             	mov    %rax,(%rcx)
+ 227bdb7:	48 8b 07             	mov    (%rdi),%rax
+ 227bdba:	ff 90 28 04 00 00    	call   *0x428(%rax)
+ 227bdc0:	48 8b 0b             	mov    (%rbx),%rcx
+ 227bdc3:	48 3b 4d f0          	cmp    -0x10(%rbp),%rcx
+ 227bdc7:	75 0a                	jne    227bdd3 <JNI_OnLoad@@LIBROBLOX+0xe79>
+ 227bdc9:	48 81 c4 d8 00 00 00 	add    $0xd8,%rsp
+ 227bdd0:	5b                   	pop    %rbx
+ 227bdd1:	5d                   	pop    %rbp
+ 227bdd2:	c3                   	ret
+ 227bdd3:	e8 68 63 ab 04       	call   6d32140 <__stack_chk_fail@plt>
+ 227bdd8:	55                   	push   %rbp
+ 227bdd9:	48 89 e5             	mov    %rsp,%rbp
+ 227bddc:	53                   	push   %rbx
+ 227bddd:	50                   	push   %rax
+ 227bdde:	48 89 fb             	mov    %rdi,%rbx
+ 227bde1:	48 8d 35 a0 a1 19 fe 	lea    -0x1e65e60(%rip),%rsi        # 415f88 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x19c1318>
+ 227bde8:	e8 33 27 a1 04       	call   6c8e520 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14969f2>
+ 227bded:	80 7b 08 00          	cmpb   $0x0,0x8(%rbx)
+ 227bdf1:	74 12                	je     227be05 <JNI_OnLoad@@LIBROBLOX+0xeab>
+ 227bdf3:	48 8b 3d 7e 2e a6 05 	mov    0x5a62e7e(%rip),%rdi        # 7cdec78 <__stop_pb_defaults@@Base+0xa5c7c0>
+ 227bdfa:	48 85 ff             	test   %rdi,%rdi
+ 227bdfd:	74 06                	je     227be05 <JNI_OnLoad@@LIBROBLOX+0xeab>
+ 227bdff:	48 8b 07             	mov    (%rdi),%rax
+ 227be02:	ff 50 28             	call   *0x28(%rax)
+ 227be05:	48 83 c4 08          	add    $0x8,%rsp
+ 227be09:	5b                   	pop    %rbx
+ 227be0a:	5d                   	pop    %rbp
+ 227be0b:	c3                   	ret
+ 227be0c:	48 89 c7             	mov    %rax,%rdi
+ 227be0f:	e8                   	.byte 0xe8
