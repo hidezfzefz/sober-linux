@@ -1,0 +1,11 @@
+86- 2383d36:	48 89 c2             	mov    %rax,%rdx
+87- 2383d39:	31 c0                	xor    %eax,%eax
+88: 2383d3b:	e8 fc 08 00 00       	call   238463c <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0xa24>
+89- 2383d40:	85 c0                	test   %eax,%eax
+90- 2383d42:	0f 8e a1 07 00 00    	jle    23844e9 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0x8d1>
+91- 2383d48:	89 c0                	mov    %eax,%eax
+92- 2383d4a:	48 89 85 c8 fe ff ff 	mov    %rax,-0x138(%rbp)
+93- 2383d51:	31 db                	xor    %ebx,%ebx
+94- 2383d53:	4c 89 b5 d0 fe ff ff 	mov    %r14,-0x130(%rbp)
+95- 2383d5a:	4c 89 ad d8 fe ff ff 	mov    %r13,-0x128(%rbp)
+96- 2383d61:	4c 89 bd f0 fe ff ff 	mov    %r15,-0x110(%rbp)
