@@ -48,4 +48,18 @@ B. Table seed-OFF row attributes the masked fault to `full_off_*.err`; THOSE LOG
   +0x28 zeroing UNPROVEN (agent states so).
 
 ## Pending
-harness #636 — no formal W30 report at time of writing.
+harness #636 — no formal W30 report at time of writing (this note is from W30 audit copy).
+
+## Wave31 audit (#639)
+- Decode: 0x7265502f666f7270 LE bytes 70 72 6f 66 2f 50 65 72 = "prof/Per" (NOT "profileP"). Fixed in ledger line 494 + w31 section. Static #640 also uses "prof/Per" correctly.
+- Ledger entry 27 added: rung1 FAIL = hit not observed, until harness (d) shows observed hit.
+- static #640 quotes verified verbatim (in w30-harness/runD_1.err / raw_rund_fflag.txt):
+  - disassembly `2ea655a movq $0x1,(%r14)`, `2ea656e call pthread_setspecific` — found in dis_accessor_alloc.txt (tab-formatted).
+  - prof string `2290b6 prof/total/scripts` — found in engine_prof_variants.txt.
+  - ctor replay `[fflag-default] replayed guest ctor 0x2e62390 ... -> OK` — found at w30 runD_1.err:3705/3687-3688 (report cites 3687; actual 3688 in w31 runD_1.err; minor 1-line citation offset, content verbatim).
+  - consumers global-string seed / ensure_flag / AVD boundary pre — found verbatim at w30 runD_1.err:3705/3708/3714.
+  - Static correctly marks exact prof/Per store site UNPROVEN (0 engine matches) and ctor chain tail UNPROVEN.
+- harness #636 in progress: new W31_ENTRY/W31_OBJ/W31_WRITE_ARM instrumentation added; runD_1.err now shows watch on obj+0x28 and a stack-smashing abort (signal=6) — harness still iterating; report.md still stale w30 copy. AWAIT FINAL REPORT.
+- Secrets scan: 6 self-matches, no credentials. Git: no capture/phone tracked.
+- Lead/static ledger line added as entry 28 (ctor[0] replay genuine guest code). Verified: w31 runD_1.err:3688 replay, :4007 global-string seed rc=1. Static RETRACTED its earlier global-string-seed absence claim — verified current line 4007 proves it ran.
+- Harness final runs: W31_ENTRY/W31_OBJ/W31_WRITE_ARM show [obj+0x28]=0 at accessor entry, but new host-side "stack smashing detected" abort (signal=6, rip=0x7ffff7e6359c libc) from the watch instrumentation — a harness defect to flag if claimed as guest fault. AWAIT FINAL HARNESS REPORT.
