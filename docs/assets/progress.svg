@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 705" width="1000" height="705" role="img" aria-label="Sober full diagnosis map">
 <rect x="0.00" y="0.00" width="1000.00" height="705.00" fill="#0d1117" stroke="#0d1117" stroke-width="0"/>
 <text x="4.00" y="30.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Sober native Linux port — FULL diagnosis map</text>
-<text x="4.00" y="56.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Tracked files: 1035 (src 137, analysis 212, docs 49, tests 17, tools 2, build 441, other 177)</text>
+<text x="4.00" y="56.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Tracked files: 1040 (src 137, analysis 212, docs 49, tests 17, tools 2, build 441, other 182)</text>
 <text x="4.00" y="82.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Ledger: 43 entries · DEBT=45 PROVEN=105 UNPROVEN=52 RETRACTED=29 BLOCKED=4 (keyword hits)</text>
 <text x="4.00" y="108.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">REVIEW-100 weighted score: 57% (older audit) · README current estimate: ≈66%</text>
 <text x="4.00" y="134.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Guest engine: 559 exports / 573 imports (external, frozen, not redistributed) · JNI table: 231 slots</text>
 <text x="4.00" y="160.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Marker: WITHHELD · rung1 = PASS-BOUNDARY-REPLAY (DEBT=1) · input w11-arg0.json SHA 8215519f</text>
 <text x="4.00" y="186.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">green = verified/implemented · blue = evidence/docs · orange = generated/required/debt · red = blocked/retracted · gray = no claim</text>
-<g><title>Repository inventory: 1035 tracked files, one square each</title>
-<text x="4.00" y="224.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Every tracked file (1035)</text>
+<g><title>Repository inventory: 1040 tracked files, one square each</title>
+<text x="4.00" y="224.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Every tracked file (1040)</text>
 <rect x="4.00" y="242.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>.gitignore — report / evidence</title></rect>
 <rect x="13.00" y="242.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>CMakeLists.txt — report / evidence</title></rect>
 <rect x="22.00" y="242.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>LICENSE — report / evidence</title></rect>
@@ -815,235 +815,240 @@
 <rect x="31.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_552_capture.txt — report / evidence</title></rect>
 <rect x="40.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_552_unprov.txt — report / evidence</title></rect>
 <rect x="49.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_accessor_lines.txt — report / evidence</title></rect>
-<rect x="58.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_callers.txt — report / evidence</title></rect>
-<rect x="67.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture.txt — report / evidence</title></rect>
-<rect x="76.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture_entries.txt — report / evidence</title></rect>
-<rect x="85.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture_order.txt — report / evidence</title></rect>
-<rect x="94.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_chain.txt — report / evidence</title></rect>
-<rect x="103.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_chain_655.txt — report / evidence</title></rect>
-<rect x="112.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_decision008.txt — report / evidence</title></rect>
-<rect x="121.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_callsite.txt — report / evidence</title></rect>
-<rect x="130.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_codeconst.txt — report / evidence</title></rect>
-<rect x="139.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_signature.txt — report / evidence</title></rect>
-<rect x="148.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_entry_trace.txt — report / evidence</title></rect>
-<rect x="157.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_fault.txt — report / evidence</title></rect>
-<rect x="166.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_fflush_plt.txt — report / evidence</title></rect>
-<rect x="175.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_install_sf.txt — report / evidence</title></rect>
-<rect x="184.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_jnienv_calls.txt — report / evidence</title></rect>
-<rect x="193.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_messages.txt — report / evidence</title></rect>
-<rect x="202.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_obj_chain.txt — report / evidence</title></rect>
-<rect x="211.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_order.txt — report / evidence</title></rect>
-<rect x="220.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_pairs.txt — report / evidence</title></rect>
-<rect x="229.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_plt_stub.txt — report / evidence</title></rect>
-<rect x="238.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_prof_users.txt — report / evidence</title></rect>
-<rect x="247.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_profper_value.txt — report / evidence</title></rect>
-<rect x="256.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_reach_r14_scan.txt — report / evidence</title></rect>
-<rect x="265.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_rund_fflag.txt — report / evidence</title></rect>
-<rect x="274.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sections.txt — report / evidence</title></rect>
-<rect x="283.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_full.txt — report / evidence</title></rect>
-<rect x="292.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_layout.txt — report / evidence</title></rect>
-<rect x="301.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_refs.txt — report / evidence</title></rect>
-<rect x="310.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_shared_param_logs.txt — report / evidence</title></rect>
-<rect x="319.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_shim_fflush.txt — report / evidence</title></rect>
-<rect x="328.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_slot_key.txt — report / evidence</title></rect>
-<rect x="337.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_strings.txt — report / evidence</title></rect>
-<rect x="346.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_three_entries.txt — report / evidence</title></rect>
-<rect x="355.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_tls_seedoff.txt — report / evidence</title></rect>
-<rect x="364.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_tls_seedon.txt — report / evidence</title></rect>
-<rect x="373.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_wrapper_call.txt — report / evidence</title></rect>
-<rect x="382.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer1.txt — report / evidence</title></rect>
-<rect x="391.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer1_aligned.txt — report / evidence</title></rect>
-<rect x="400.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer2.txt — report / evidence</title></rect>
-<rect x="409.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer_callers.txt — report / evidence</title></rect>
-<rect x="418.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writers.txt — report / evidence</title></rect>
-<rect x="427.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report.md — report / evidence</title></rect>
-<rect x="436.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report2.md — report / evidence</title></rect>
-<rect x="445.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report3.md — report / evidence</title></rect>
-<rect x="454.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report4.md — report / evidence</title></rect>
-<rect x="463.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report5.md — report / evidence</title></rect>
-<rect x="472.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_ab.md — report / evidence</title></rect>
-<rect x="481.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_chain.md — report / evidence</title></rect>
-<rect x="490.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n12.md — report / evidence</title></rect>
-<rect x="499.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n13.md — report / evidence</title></rect>
-<rect x="508.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n14.md — report / evidence</title></rect>
-<rect x="517.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n15.md — report / evidence</title></rect>
-<rect x="526.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n2.md — report / evidence</title></rect>
-<rect x="535.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n2obj.md — report / evidence</title></rect>
-<rect x="544.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n3.md — report / evidence</title></rect>
-<rect x="553.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n4.md — report / evidence</title></rect>
-<rect x="562.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n5.md — report / evidence</title></rect>
-<rect x="571.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_slot.md — report / evidence</title></rect>
-<rect x="580.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n13.sh — report / evidence</title></rect>
-<rect x="589.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n14.sh — report / evidence</title></rect>
-<rect x="598.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n2.sh — report / evidence</title></rect>
-<rect x="607.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n3.sh — report / evidence</title></rect>
-<rect x="616.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n4.sh — report / evidence</title></rect>
-<rect x="625.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n5.sh — report / evidence</title></rect>
-<rect x="634.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_ab.sh — report / evidence</title></rect>
-<rect x="643.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_n12.sh — report / evidence</title></rect>
-<rect x="652.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_n2obj.sh — report / evidence</title></rect>
-<rect x="661.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_compat.c — implementation</title></rect>
-<rect x="670.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_compat.h — implementation</title></rect>
-<rect x="679.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_types.h — implementation</title></rect>
-<rect x="688.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/README.md — implementation</title></rect>
-<rect x="697.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bionic_bootstrap.c — implementation</title></rect>
-<rect x="706.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bionic_bootstrap.h — implementation</title></rect>
-<rect x="715.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bootstrap_profile.h — implementation</title></rect>
-<rect x="724.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_libc.c — implementation</title></rect>
-<rect x="733.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_libc.map — implementation</title></rect>
-<rect x="742.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_sf_full.c — implementation — ledger refs: #4</title></rect>
-<rect x="751.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_signal.c — implementation</title></rect>
-<rect x="760.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/exports.map — implementation</title></rect>
-<rect x="769.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/gen_bionic_libc.py — implementation</title></rect>
-<rect x="778.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/gl_egl_forward.c — implementation</title></rect>
-<rect x="787.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/ndk_stub.c — implementation</title></rect>
-<rect x="796.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/CMakeLists.txt — implementation</title></rect>
-<rect x="805.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/README.md — implementation</title></rect>
-<rect x="814.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_contract_fix.c — implementation</title></rect>
-<rect x="823.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_contract_fix.h — implementation</title></rect>
-<rect x="832.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_default.c — implementation</title></rect>
-<rect x="841.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_default.h — implementation</title></rect>
-<rect x="850.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_default.c — implementation</title></rect>
-<rect x="859.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_default.h — implementation</title></rect>
-<rect x="868.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_fix.c — implementation</title></rect>
-<rect x="877.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_fix.h — implementation</title></rect>
-<rect x="886.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_inner.c — implementation</title></rect>
-<rect x="895.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_inner.h — implementation</title></rect>
-<rect x="4.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app_singleton_bridge.c — implementation</title></rect>
-<rect x="13.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app_singleton_bridge.h — implementation</title></rect>
-<rect x="22.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/avd_boundary.c — implementation — ledger refs: #1, #9</title></rect>
-<rect x="31.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/avd_boundary.h — implementation</title></rect>
-<rect x="40.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/callback_provenance.c — implementation</title></rect>
-<rect x="49.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/callback_provenance.h — implementation</title></rect>
-<rect x="58.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/controller_default.c — implementation</title></rect>
-<rect x="67.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/controller_default.h — implementation</title></rect>
-<rect x="76.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/crashpad_return.c — implementation</title></rect>
-<rect x="85.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/crashpad_return.h — implementation</title></rect>
-<rect x="94.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/delegate_default.c — implementation</title></rect>
-<rect x="103.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/delegate_default.h — implementation</title></rect>
-<rect x="112.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fflag_default.c — implementation — ledger refs: #28</title></rect>
-<rect x="121.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fflag_default.h — implementation</title></rect>
-<rect x="130.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fields_default.c — implementation</title></rect>
-<rect x="139.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fields_default.h — implementation</title></rect>
-<rect x="148.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/flags_latch_default.c — implementation</title></rect>
-<rect x="157.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/flags_latch_default.h — implementation</title></rect>
-<rect x="166.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_callbacks.c — implementation</title></rect>
-<rect x="175.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_callbacks.h — implementation</title></rect>
-<rect x="184.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_dispatch.c — implementation</title></rect>
-<rect x="193.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_dispatch.h — implementation</title></rect>
-<rect x="202.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_draw.c — implementation</title></rect>
-<rect x="211.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_draw.h — implementation</title></rect>
-<rect x="220.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_evidence.c — implementation</title></rect>
-<rect x="229.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_evidence.h — implementation</title></rect>
-<rect x="238.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_redraw.c — implementation</title></rect>
-<rect x="247.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_redraw.h — implementation</title></rect>
-<rect x="256.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_surface.c — implementation</title></rect>
-<rect x="265.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_surface.h — implementation</title></rect>
-<rect x="274.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_synthetic_tag.c — implementation</title></rect>
-<rect x="283.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_synthetic_tag.h — implementation</title></rect>
-<rect x="292.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_thread.c — implementation</title></rect>
-<rect x="301.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_thread.h — implementation</title></rect>
-<rect x="310.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/game_params.c — implementation</title></rect>
-<rect x="319.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/game_params.h — implementation</title></rect>
-<rect x="328.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/global_string_seed.c — implementation</title></rect>
-<rect x="337.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/global_string_seed.h — implementation</title></rect>
-<rect x="346.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/hw_breakpoint.c — implementation — ledger refs: #8, #10, #11</title></rect>
-<rect x="355.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/hw_breakpoint.h — implementation</title></rect>
-<rect x="364.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_default.c — implementation</title></rect>
-<rect x="373.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_default.h — implementation</title></rect>
-<rect x="382.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_semantics.c — implementation</title></rect>
-<rect x="391.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_semantics.h — implementation</title></rect>
-<rect x="400.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_arrays.c — implementation</title></rect>
-<rect x="409.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_arrays.h — implementation</title></rect>
-<rect x="418.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_json_bridge.c — implementation</title></rect>
-<rect x="427.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_json_bridge.h — implementation</title></rect>
-<rect x="436.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_native_objects.c — implementation</title></rect>
-<rect x="445.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_native_objects.h — implementation</title></rect>
-<rect x="454.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_probe.c — implementation</title></rect>
-<rect x="463.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_strings.c — implementation</title></rect>
-<rect x="472.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_strings.h — implementation</title></rect>
-<rect x="481.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jnislots_default.c — implementation</title></rect>
-<rect x="490.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jnislots_default.h — implementation</title></rect>
-<rect x="499.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/native_jni.c — implementation — ledger refs: #13, #14, #33, #38</title></rect>
-<rect x="508.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/native_jni.h — implementation</title></rect>
-<rect x="517.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/notifier_probe.c — implementation</title></rect>
-<rect x="526.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/notifier_probe.h — implementation</title></rect>
-<rect x="535.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/placeid_default.c — implementation</title></rect>
-<rect x="544.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/placeid_default.h — implementation</title></rect>
-<rect x="553.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/platform_fields.c — implementation</title></rect>
-<rect x="562.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/platform_fields.h — implementation</title></rect>
-<rect x="571.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/provenance_gate.c — implementation</title></rect>
-<rect x="580.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/provenance_gate.h — implementation</title></rect>
-<rect x="589.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/publish_default.c — implementation</title></rect>
-<rect x="598.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/publish_default.h — implementation</title></rect>
-<rect x="607.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/render_guest.c — implementation</title></rect>
-<rect x="616.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/render_guest.h — implementation</title></rect>
-<rect x="625.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scalar_returns.c — implementation</title></rect>
-<rect x="634.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scalar_returns.h — implementation</title></rect>
-<rect x="643.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scheduler_guest.c — implementation — ledger refs: #5</title></rect>
-<rect x="652.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scheduler_guest.h — implementation</title></rect>
-<rect x="661.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_default.c — implementation</title></rect>
-<rect x="670.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_default.h — implementation</title></rect>
-<rect x="679.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_fix.c — implementation</title></rect>
-<rect x="688.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_fix.h — implementation</title></rect>
-<rect x="697.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_services.c — implementation</title></rect>
-<rect x="706.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_services.h — implementation</title></rect>
-<rect x="715.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_params.c — implementation</title></rect>
-<rect x="724.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_params.h — implementation</title></rect>
-<rect x="733.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_v2.c — implementation</title></rect>
-<rect x="742.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_v2.h — implementation</title></rect>
-<rect x="751.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startgame_v2.c — implementation</title></rect>
-<rect x="760.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startgame_v2.h — implementation</title></rect>
-<rect x="769.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/static_object_calls.c — implementation</title></rect>
-<rect x="778.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/static_object_calls.h — implementation</title></rect>
-<rect x="787.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/tsd_default.c — implementation</title></rect>
-<rect x="796.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/tsd_default.h — implementation</title></rect>
-<rect x="805.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/android_relocs.c — implementation</title></rect>
-<rect x="814.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/android_relocs.h — implementation</title></rect>
-<rect x="823.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/gfx_loader.c — implementation</title></rect>
-<rect x="832.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/gfx_loader.h — implementation</title></rect>
-<rect x="841.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_app_shell.c — implementation — ledger refs: #35</title></rect>
-<rect x="850.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_app_shell.h — implementation</title></rect>
-<rect x="859.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_dlopen_host.c — implementation — ledger refs: #12, #41</title></rect>
-<rect x="868.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_render.c — implementation</title></rect>
-<rect x="877.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_render.h — implementation</title></rect>
-<rect x="886.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/main.c — implementation</title></rect>
-<rect x="895.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/platform.c — implementation</title></rect>
-<rect x="4.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/platform.h — implementation</title></rect>
-<rect x="13.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/CMakeLists.txt — implementation</title></rect>
-<rect x="22.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/README.md — implementation</title></rect>
-<rect x="31.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/native_render.c — implementation</title></rect>
-<rect x="40.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/native_render.h — implementation</title></rect>
-<rect x="49.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/render_probe.c — implementation</title></rect>
-<rect x="58.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/CMakeLists.txt — implementation</title></rect>
-<rect x="67.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/README.md — implementation</title></rect>
-<rect x="76.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/native_trace.c — implementation</title></rect>
-<rect x="85.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/native_trace.h — implementation</title></rect>
-<rect x="94.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>src_profper.txt — report / evidence</title></rect>
-<rect x="103.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>stores_720_all.txt — report / evidence</title></rect>
-<rect x="112.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>strings_assert.txt — report / evidence</title></rect>
-<rect x="121.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>symbols.txt — report / evidence</title></rect>
-<rect x="130.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D01-invariants.md — verification / tooling</title></rect>
-<rect x="139.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D04-baseline-tracking.md — verification / tooling</title></rect>
-<rect x="148.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D08-dispatch-diag.sh — verification / tooling</title></rect>
-<rect x="157.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D09-withhold-audit.sh — verification / tooling</title></rect>
-<rect x="166.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D12-final-invariants.md — verification / tooling</title></rect>
-<rect x="175.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/app-shell.sh — verification / tooling</title></rect>
-<rect x="184.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/fault-baseline.sh — verification / tooling</title></rect>
-<rect x="193.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/first-frame.sh — verification / tooling</title></rect>
-<rect x="202.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/gdb-trace.sh — verification / tooling</title></rect>
-<rect x="211.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/guest-dlopen.sh — verification / tooling</title></rect>
-<rect x="220.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/trace-app-shell.sh — verification / tooling</title></rect>
-<rect x="229.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-451.md — verification / tooling</title></rect>
-<rect x="238.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-456.md — verification / tooling</title></rect>
-<rect x="247.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-460.md — verification / tooling</title></rect>
-<rect x="256.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-463.md — verification / tooling</title></rect>
-<rect x="265.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-471.md — verification / tooling</title></rect>
-<rect x="274.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verify-native.sh — verification / tooling</title></rect>
-<rect x="283.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tools/gen_progress.py — verification / tooling</title></rect>
-<rect x="292.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tools/ptrace-watch/ptrace_watch.c — verification / tooling</title></rect>
-<rect x="301.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>verification-notes.md — report / evidence</title></rect>
-<rect x="310.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>writes_720.txt — report / evidence</title></rect>
+<rect x="58.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_assert.txt — report / evidence</title></rect>
+<rect x="67.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_callers.txt — report / evidence</title></rect>
+<rect x="76.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture.txt — report / evidence</title></rect>
+<rect x="85.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture_entries.txt — report / evidence</title></rect>
+<rect x="94.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_capture_order.txt — report / evidence</title></rect>
+<rect x="103.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_chain.txt — report / evidence</title></rect>
+<rect x="112.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_chain_655.txt — report / evidence</title></rect>
+<rect x="121.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_ctor3.txt — report / evidence</title></rect>
+<rect x="130.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_decision008.txt — report / evidence</title></rect>
+<rect x="139.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_callsite.txt — report / evidence</title></rect>
+<rect x="148.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_codeconst.txt — report / evidence</title></rect>
+<rect x="157.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_dex_signature.txt — report / evidence</title></rect>
+<rect x="166.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_entry_trace.txt — report / evidence</title></rect>
+<rect x="175.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_fault.txt — report / evidence</title></rect>
+<rect x="184.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_fflush_plt.txt — report / evidence</title></rect>
+<rect x="193.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_install_sf.txt — report / evidence</title></rect>
+<rect x="202.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_jnienv_calls.txt — report / evidence</title></rect>
+<rect x="211.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_messages.txt — report / evidence</title></rect>
+<rect x="220.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_mimalloc_strings.txt — report / evidence</title></rect>
+<rect x="229.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_mimalloc_xrefs.txt — report / evidence</title></rect>
+<rect x="238.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_obj_chain.txt — report / evidence</title></rect>
+<rect x="247.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_order.txt — report / evidence</title></rect>
+<rect x="256.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_pairs.txt — report / evidence</title></rect>
+<rect x="265.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_plt_stub.txt — report / evidence</title></rect>
+<rect x="274.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_prof_users.txt — report / evidence</title></rect>
+<rect x="283.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_profper_value.txt — report / evidence</title></rect>
+<rect x="292.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_reach_r14_scan.txt — report / evidence</title></rect>
+<rect x="301.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_rund_fflag.txt — report / evidence</title></rect>
+<rect x="310.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sections.txt — report / evidence</title></rect>
+<rect x="319.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_full.txt — report / evidence</title></rect>
+<rect x="328.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_layout.txt — report / evidence</title></rect>
+<rect x="337.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_sf_refs.txt — report / evidence</title></rect>
+<rect x="346.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_shared_param_logs.txt — report / evidence</title></rect>
+<rect x="355.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_shim_fflush.txt — report / evidence</title></rect>
+<rect x="364.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_slot_key.txt — report / evidence</title></rect>
+<rect x="373.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_strings.txt — report / evidence</title></rect>
+<rect x="382.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_three_entries.txt — report / evidence</title></rect>
+<rect x="391.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_tls_seedoff.txt — report / evidence</title></rect>
+<rect x="400.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_tls_seedon.txt — report / evidence</title></rect>
+<rect x="409.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_wrapper_call.txt — report / evidence</title></rect>
+<rect x="418.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer1.txt — report / evidence</title></rect>
+<rect x="427.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer1_aligned.txt — report / evidence</title></rect>
+<rect x="436.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer2.txt — report / evidence</title></rect>
+<rect x="445.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writer_callers.txt — report / evidence</title></rect>
+<rect x="454.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>raw_writers.txt — report / evidence</title></rect>
+<rect x="463.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report.md — report / evidence</title></rect>
+<rect x="472.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report2.md — report / evidence</title></rect>
+<rect x="481.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report3.md — report / evidence</title></rect>
+<rect x="490.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report4.md — report / evidence</title></rect>
+<rect x="499.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report5.md — report / evidence</title></rect>
+<rect x="508.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_ab.md — report / evidence</title></rect>
+<rect x="517.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_chain.md — report / evidence</title></rect>
+<rect x="526.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n12.md — report / evidence</title></rect>
+<rect x="535.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n13.md — report / evidence</title></rect>
+<rect x="544.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n14.md — report / evidence</title></rect>
+<rect x="553.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n15.md — report / evidence</title></rect>
+<rect x="562.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n2.md — report / evidence</title></rect>
+<rect x="571.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n2obj.md — report / evidence</title></rect>
+<rect x="580.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n3.md — report / evidence</title></rect>
+<rect x="589.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n4.md — report / evidence</title></rect>
+<rect x="598.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_n5.md — report / evidence</title></rect>
+<rect x="607.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>report_slot.md — report / evidence</title></rect>
+<rect x="616.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n13.sh — report / evidence</title></rect>
+<rect x="625.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n14.sh — report / evidence</title></rect>
+<rect x="634.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n2.sh — report / evidence</title></rect>
+<rect x="643.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n3.sh — report / evidence</title></rect>
+<rect x="652.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n4.sh — report / evidence</title></rect>
+<rect x="661.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund3_n5.sh — report / evidence</title></rect>
+<rect x="670.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_ab.sh — report / evidence</title></rect>
+<rect x="679.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_n12.sh — report / evidence</title></rect>
+<rect x="688.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>rund6_n2obj.sh — report / evidence</title></rect>
+<rect x="697.00" y="314.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>source_fflag.txt — report / evidence</title></rect>
+<rect x="706.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_compat.c — implementation</title></rect>
+<rect x="715.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_compat.h — implementation</title></rect>
+<rect x="724.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/android_types.h — implementation</title></rect>
+<rect x="733.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/README.md — implementation</title></rect>
+<rect x="742.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bionic_bootstrap.c — implementation</title></rect>
+<rect x="751.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bionic_bootstrap.h — implementation</title></rect>
+<rect x="760.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_bootstrap/bootstrap_profile.h — implementation</title></rect>
+<rect x="769.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_libc.c — implementation</title></rect>
+<rect x="778.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_libc.map — implementation</title></rect>
+<rect x="787.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_sf_full.c — implementation — ledger refs: #4</title></rect>
+<rect x="796.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/bionic_signal.c — implementation</title></rect>
+<rect x="805.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/exports.map — implementation</title></rect>
+<rect x="814.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/gen_bionic_libc.py — implementation</title></rect>
+<rect x="823.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/gl_egl_forward.c — implementation</title></rect>
+<rect x="832.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/compat/ndk_stub.c — implementation</title></rect>
+<rect x="841.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/CMakeLists.txt — implementation</title></rect>
+<rect x="850.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/README.md — implementation</title></rect>
+<rect x="859.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_contract_fix.c — implementation</title></rect>
+<rect x="868.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_contract_fix.h — implementation</title></rect>
+<rect x="877.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_default.c — implementation</title></rect>
+<rect x="886.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/alloc_default.h — implementation</title></rect>
+<rect x="895.00" y="314.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_default.c — implementation</title></rect>
+<rect x="4.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_default.h — implementation</title></rect>
+<rect x="13.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_fix.c — implementation</title></rect>
+<rect x="22.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_fix.h — implementation</title></rect>
+<rect x="31.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_inner.c — implementation</title></rect>
+<rect x="40.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app488_inner.h — implementation</title></rect>
+<rect x="49.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app_singleton_bridge.c — implementation</title></rect>
+<rect x="58.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/app_singleton_bridge.h — implementation</title></rect>
+<rect x="67.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/avd_boundary.c — implementation — ledger refs: #1, #9</title></rect>
+<rect x="76.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/avd_boundary.h — implementation</title></rect>
+<rect x="85.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/callback_provenance.c — implementation</title></rect>
+<rect x="94.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/callback_provenance.h — implementation</title></rect>
+<rect x="103.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/controller_default.c — implementation</title></rect>
+<rect x="112.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/controller_default.h — implementation</title></rect>
+<rect x="121.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/crashpad_return.c — implementation</title></rect>
+<rect x="130.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/crashpad_return.h — implementation</title></rect>
+<rect x="139.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/delegate_default.c — implementation</title></rect>
+<rect x="148.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/delegate_default.h — implementation</title></rect>
+<rect x="157.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fflag_default.c — implementation — ledger refs: #28</title></rect>
+<rect x="166.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fflag_default.h — implementation</title></rect>
+<rect x="175.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fields_default.c — implementation</title></rect>
+<rect x="184.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/fields_default.h — implementation</title></rect>
+<rect x="193.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/flags_latch_default.c — implementation</title></rect>
+<rect x="202.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/flags_latch_default.h — implementation</title></rect>
+<rect x="211.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_callbacks.c — implementation</title></rect>
+<rect x="220.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_callbacks.h — implementation</title></rect>
+<rect x="229.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_dispatch.c — implementation</title></rect>
+<rect x="238.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_dispatch.h — implementation</title></rect>
+<rect x="247.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_draw.c — implementation</title></rect>
+<rect x="256.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_draw.h — implementation</title></rect>
+<rect x="265.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_evidence.c — implementation</title></rect>
+<rect x="274.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_evidence.h — implementation</title></rect>
+<rect x="283.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_redraw.c — implementation</title></rect>
+<rect x="292.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_redraw.h — implementation</title></rect>
+<rect x="301.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_surface.c — implementation</title></rect>
+<rect x="310.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_surface.h — implementation</title></rect>
+<rect x="319.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_synthetic_tag.c — implementation</title></rect>
+<rect x="328.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_synthetic_tag.h — implementation</title></rect>
+<rect x="337.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_thread.c — implementation</title></rect>
+<rect x="346.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/frame_thread.h — implementation</title></rect>
+<rect x="355.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/game_params.c — implementation</title></rect>
+<rect x="364.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/game_params.h — implementation</title></rect>
+<rect x="373.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/global_string_seed.c — implementation</title></rect>
+<rect x="382.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/global_string_seed.h — implementation</title></rect>
+<rect x="391.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/hw_breakpoint.c — implementation — ledger refs: #8, #10, #11</title></rect>
+<rect x="400.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/hw_breakpoint.h — implementation</title></rect>
+<rect x="409.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_default.c — implementation</title></rect>
+<rect x="418.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_default.h — implementation</title></rect>
+<rect x="427.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_semantics.c — implementation</title></rect>
+<rect x="436.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/javavm_semantics.h — implementation</title></rect>
+<rect x="445.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_arrays.c — implementation</title></rect>
+<rect x="454.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_arrays.h — implementation</title></rect>
+<rect x="463.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_json_bridge.c — implementation</title></rect>
+<rect x="472.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_json_bridge.h — implementation</title></rect>
+<rect x="481.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_native_objects.c — implementation</title></rect>
+<rect x="490.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_native_objects.h — implementation</title></rect>
+<rect x="499.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_probe.c — implementation</title></rect>
+<rect x="508.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_strings.c — implementation</title></rect>
+<rect x="517.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jni_strings.h — implementation</title></rect>
+<rect x="526.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jnislots_default.c — implementation</title></rect>
+<rect x="535.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/jnislots_default.h — implementation</title></rect>
+<rect x="544.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/native_jni.c — implementation — ledger refs: #13, #14, #33, #38</title></rect>
+<rect x="553.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/native_jni.h — implementation</title></rect>
+<rect x="562.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/notifier_probe.c — implementation</title></rect>
+<rect x="571.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/notifier_probe.h — implementation</title></rect>
+<rect x="580.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/placeid_default.c — implementation</title></rect>
+<rect x="589.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/placeid_default.h — implementation</title></rect>
+<rect x="598.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/platform_fields.c — implementation</title></rect>
+<rect x="607.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/platform_fields.h — implementation</title></rect>
+<rect x="616.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/provenance_gate.c — implementation</title></rect>
+<rect x="625.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/provenance_gate.h — implementation</title></rect>
+<rect x="634.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/publish_default.c — implementation</title></rect>
+<rect x="643.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/publish_default.h — implementation</title></rect>
+<rect x="652.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/render_guest.c — implementation</title></rect>
+<rect x="661.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/render_guest.h — implementation</title></rect>
+<rect x="670.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scalar_returns.c — implementation</title></rect>
+<rect x="679.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scalar_returns.h — implementation</title></rect>
+<rect x="688.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scheduler_guest.c — implementation — ledger refs: #5</title></rect>
+<rect x="697.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/scheduler_guest.h — implementation</title></rect>
+<rect x="706.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_default.c — implementation</title></rect>
+<rect x="715.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_default.h — implementation</title></rect>
+<rect x="724.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_fix.c — implementation</title></rect>
+<rect x="733.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_fix.h — implementation</title></rect>
+<rect x="742.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_services.c — implementation</title></rect>
+<rect x="751.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/singleton_services.h — implementation</title></rect>
+<rect x="760.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_params.c — implementation</title></rect>
+<rect x="769.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_params.h — implementation</title></rect>
+<rect x="778.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_v2.c — implementation</title></rect>
+<rect x="787.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startapp_v2.h — implementation</title></rect>
+<rect x="796.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startgame_v2.c — implementation</title></rect>
+<rect x="805.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/startgame_v2.h — implementation</title></rect>
+<rect x="814.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/static_object_calls.c — implementation</title></rect>
+<rect x="823.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/static_object_calls.h — implementation</title></rect>
+<rect x="832.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/tsd_default.c — implementation</title></rect>
+<rect x="841.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/jni/tsd_default.h — implementation</title></rect>
+<rect x="850.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/android_relocs.c — implementation</title></rect>
+<rect x="859.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/android_relocs.h — implementation</title></rect>
+<rect x="868.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/gfx_loader.c — implementation</title></rect>
+<rect x="877.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/gfx_loader.h — implementation</title></rect>
+<rect x="886.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_app_shell.c — implementation — ledger refs: #35</title></rect>
+<rect x="895.00" y="323.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_app_shell.h — implementation</title></rect>
+<rect x="4.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_dlopen_host.c — implementation — ledger refs: #12, #41</title></rect>
+<rect x="13.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_render.c — implementation</title></rect>
+<rect x="22.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/guest_render.h — implementation</title></rect>
+<rect x="31.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/main.c — implementation</title></rect>
+<rect x="40.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/platform.c — implementation</title></rect>
+<rect x="49.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/linux/platform.h — implementation</title></rect>
+<rect x="58.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/CMakeLists.txt — implementation</title></rect>
+<rect x="67.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/README.md — implementation</title></rect>
+<rect x="76.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/native_render.c — implementation</title></rect>
+<rect x="85.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/native_render.h — implementation</title></rect>
+<rect x="94.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/render/render_probe.c — implementation</title></rect>
+<rect x="103.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/CMakeLists.txt — implementation</title></rect>
+<rect x="112.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/README.md — implementation</title></rect>
+<rect x="121.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/native_trace.c — implementation</title></rect>
+<rect x="130.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>src/trace/native_trace.h — implementation</title></rect>
+<rect x="139.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>src_profper.txt — report / evidence</title></rect>
+<rect x="148.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>stores_720_all.txt — report / evidence</title></rect>
+<rect x="157.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>strings_assert.txt — report / evidence</title></rect>
+<rect x="166.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>symbols.txt — report / evidence</title></rect>
+<rect x="175.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D01-invariants.md — verification / tooling</title></rect>
+<rect x="184.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D04-baseline-tracking.md — verification / tooling</title></rect>
+<rect x="193.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D08-dispatch-diag.sh — verification / tooling</title></rect>
+<rect x="202.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D09-withhold-audit.sh — verification / tooling</title></rect>
+<rect x="211.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/D12-final-invariants.md — verification / tooling</title></rect>
+<rect x="220.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/app-shell.sh — verification / tooling</title></rect>
+<rect x="229.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/fault-baseline.sh — verification / tooling</title></rect>
+<rect x="238.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/first-frame.sh — verification / tooling</title></rect>
+<rect x="247.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/gdb-trace.sh — verification / tooling</title></rect>
+<rect x="256.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/guest-dlopen.sh — verification / tooling</title></rect>
+<rect x="265.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/trace-app-shell.sh — verification / tooling</title></rect>
+<rect x="274.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-451.md — verification / tooling</title></rect>
+<rect x="283.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-456.md — verification / tooling</title></rect>
+<rect x="292.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-460.md — verification / tooling</title></rect>
+<rect x="301.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-463.md — verification / tooling</title></rect>
+<rect x="310.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verification-report-471.md — verification / tooling</title></rect>
+<rect x="319.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tests/verify-native.sh — verification / tooling</title></rect>
+<rect x="328.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tools/gen_progress.py — verification / tooling</title></rect>
+<rect x="337.00" y="332.00" width="8.00" height="8.00" fill="#2ea043" stroke="#0d1117" stroke-width="0.5"><title>tools/ptrace-watch/ptrace_watch.c — verification / tooling</title></rect>
+<rect x="346.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>verification-notes.md — report / evidence</title></rect>
+<rect x="355.00" y="332.00" width="8.00" height="8.00" fill="#1f6feb" stroke="#0d1117" stroke-width="0.5"><title>writes_720.txt — report / evidence</title></rect>
 </g>
 <g><title>REVIEW-100 domain audits: 14 domains</title>
 <text x="4.00" y="353.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Diagnosis domains (14)</text>
