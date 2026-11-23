@@ -1,0 +1,56 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002315583 <JNI_OnLoad@@LIBROBLOX+0x9a629>:
+ 2315583:	0f 57 c0             	xorps  %xmm0,%xmm0
+ 2315586:	0f 11 03             	movups %xmm0,(%rbx)
+ 2315589:	48 c7 43 10 00 00 00 	movq   $0x0,0x10(%rbx)
+ 2315590:	00 
+ 2315591:	48 89 d8             	mov    %rbx,%rax
+ 2315594:	5b                   	pop    %rbx
+ 2315595:	41 5c                	pop    %r12
+ 2315597:	41 5e                	pop    %r14
+ 2315599:	41 5f                	pop    %r15
+ 231559b:	5d                   	pop    %rbp
+ 231559c:	c3                   	ret
+ 231559d:	49 89 c6             	mov    %rax,%r14
+ 23155a0:	f6 03 01             	testb  $0x1,(%rbx)
+ 23155a3:	74 09                	je     23155ae <JNI_OnLoad@@LIBROBLOX+0x9a654>
+ 23155a5:	48 8b 7b 10          	mov    0x10(%rbx),%rdi
+ 23155a9:	e8 10 90 aa ff       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 23155ae:	4c 89 f7             	mov    %r14,%rdi
+ 23155b1:	e8 5a 14 b9 00       	call   2ea6a10 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486be0>
+ 23155b6:	48 89 c7             	mov    %rax,%rdi
+ 23155b9:	e8 09 62 b9 00       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 23155be:	55                   	push   %rbp
+ 23155bf:	48 89 e5             	mov    %rsp,%rbp
+ 23155c2:	53                   	push   %rbx
+ 23155c3:	48 83 ec 28          	sub    $0x28,%rsp
+ 23155c7:	48 89 fe             	mov    %rdi,%rsi
+ 23155ca:	48 8b 1d 27 3e f1 04 	mov    0x4f13e27(%rip),%rbx        # 72293f8 <strncat@plt+0x4f5878>
+ 23155d1:	48 8b 03             	mov    (%rbx),%rax
+ 23155d4:	48 89 45 f0          	mov    %rax,-0x10(%rbp)
+ 23155d8:	48 8d 7d d8          	lea    -0x28(%rbp),%rdi
+ 23155dc:	e8 48 00 00 00       	call   2315629 <JNI_OnLoad@@LIBROBLOX+0x9a6cf>
+ 23155e1:	f6 05 58 b8 52 05 01 	testb  $0x1,0x552b858(%rip)        # 7840e40 <__stop_pb_defaults@@Base+0x5be988>
+ 23155e8:	74 0c                	je     23155f6 <JNI_OnLoad@@LIBROBLOX+0x9a69c>
+ 23155ea:	48 8b 3d 5f b8 52 05 	mov    0x552b85f(%rip),%rdi        # 7840e50 <__stop_pb_defaults@@Base+0x5be998>
+ 23155f1:	e8 c8 8f aa ff       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 23155f6:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
+ 23155fa:	48 89 05 4f b8 52 05 	mov    %rax,0x552b84f(%rip)        # 7840e50 <__stop_pb_defaults@@Base+0x5be998>
+ 2315601:	0f 10 45 d8          	movups -0x28(%rbp),%xmm0
+ 2315605:	0f 11 05 34 b8 52 05 	movups %xmm0,0x552b834(%rip)        # 7840e40 <__stop_pb_defaults@@Base+0x5be988>
+ 231560c:	48 8b 03             	mov    (%rbx),%rax
+ 231560f:	48 3b 45 f0          	cmp    -0x10(%rbp),%rax
+ 2315613:	75 07                	jne    231561c <JNI_OnLoad@@LIBROBLOX+0x9a6c2>
+ 2315615:	48 83 c4 28          	add    $0x28,%rsp
+ 2315619:	5b                   	pop    %rbx
+ 231561a:	5d                   	pop    %rbp
+ 231561b:	c3                   	ret
+ 231561c:	e8                   	.byte 0xe8
+ 231561d:	1f                   	(bad)
+ 231561e:	cb                   	lret
+ 231561f:	a1                   	.byte 0xa1

@@ -1,0 +1,40 @@
+   fa34 Java_com_roblox_engine_jni_NativeSettingsInterface_getInteractiveAssertsEnabled
+  10f83 __assert
+  141b8 __android_log_assert
+  158c8 __assert2
+ 216537 assertion failed: i <= n
+ 216868 assertion failed: WITHIN_ARENA(ptr)
+ 216996 assertion failed: data != NULL
+ 22b0a3 assertion failed: st->DecControl.payloadSize_ms == 0 || st->DecControl.payloadSize_ms == 10 || st->DecControl.payloadSize_ms == 20 || st->DecControl.payloadSize_ms == 40 || st->DecControl.payloadSize_ms == 60
+ 22b174 assertion failed: _bits>0
+ 233029 assertion failed: mdsize <= EVP_MAX_MD_SIZE
+ 2333e3 assertion failed: list >= 0 && list < sh.freelist_size
+ 233a0c noAssertion
+ 247a08 assertion failed: st->DecControl.nChannelsInternal == 0 || st->DecControl.nChannelsInternal == 1 || st->DecControl.nChannelsInternal == 2
+ 247a92 assertion failed: st->arch >= 0
+ 247ab2 assertion failed: !ret
+ 247af4 assertion failed: st->postfilter_period_old >= COMBFILTER_MINPERIOD || st->postfilter_period_old == 0
+ 247b5a assertion failed: psEnc->sCmn.ltp_mem_length - psEnc->sCmn.predictLPCOrder >= psEncCtrl->pitchL[ 0 ] + LTP_ORDER / 2
+ 24fa58 assertion failed: (char **)temp->next->p_next == list
+ 25b0fe Assert
+ 25e363  assertions failed.
+ 264c8f assertion failed: typeOffset >= 0 && typeOffset < 6
+ 264cc3 assertion failed: N > 0
+ 26bd7a RBXAssert
+ 26c855 assertion failed: ctx->buf_len >= ctx->buf_off
+ 26c884 assertion failed: ctx->tmp_len <= 3
+ 26cc94 assertion failed: sh.bitmalloc != NULL
+ 26ccbb assertion failed: ptr == sh_find_my_buddy(buddy, list)
+ 26ccf2 assertion failed: (bit & 1) == 0
+ 27ceae RBXASSERT_CLI146594_RolloutScale
+ 27cecf RBXASSERT_146620_RolloutScale
+ 280f2f assertion failed: 0
+ 280f43 assertion failed: L > 0 && L <= MAX_FRAME_LENGTH
+ 281085 assertion failed: MAX_FRAME_LENGTH >= psEncC->frame_length
+ 2810c0 assertion failed: st->mode == opus_custom_mode_create(48000, 960, NULL)
+ 281108 assertion failed: fin != fout
+ 281141 assertion failed: len>0
+ 281159 assertion failed: bits[j] >= 0
+ 29c124 assertion failed: ( psEnc->sCmn.subfr_length * psEnc->sCmn.nb_subfr ) == psEnc->sCmn.frame_length
+ 29c186 assertion failed: sum>=0
+ 29c19f assertion failed: _k>0
