@@ -1098,6 +1098,22 @@ int guest_app_shell_run(uintptr_t base)
      * arg0 is the exact verified byte stream captured in Frida session
      * w11-hook-settings; arg1 is Java null; arg2 is "GoogleAndroidApp".
      * This is a separate provenance class, not a seeded_state knob. */
+    /* W24 Run D (HOST CODE ONLY, ledger debt): AVD boots with JNI_OnLoad
+     * BEFORE nativeInitClientSettings.  Our harness had the reverse.  When
+     * SOBER_JNI_ONLOAD_FIRST is set, do the genuine JNI_OnLoad here first (with
+     * the approved TSD seed), then let the settings replay run, and skip the
+     * later duplicate.  Seeder stays OFF; no guest byte is written. */
+    static int w24_onload_done;
+    if (getenv("SOBER_JNI_ONLOAD_FIRST") && !w24_onload_done) {
+        seed_stub_tsd((uintptr_t)base);
+        int (*early_onload)(void *, void *) =
+            (int (*)(void *, void *))(base + 0x227af5au);
+        int ever = early_onload(sober_jni_java_vm(j), NULL);
+        w24_onload_done = 1;
+        fprintf(stderr, "[app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> "
+                        "ver=%#x\n", (unsigned)ever);
+    }
+
     int avd_boundary_active = 0;
     if (sober_avd_boundary_enabled()) {
         char prov[256];
@@ -1328,13 +1344,18 @@ int guest_app_shell_run(uintptr_t base)
             fprintf(stderr,
                     "[app-shell] pre-OnLoad TSD key=%u get=%p\n", key, got);
         }
-        int (*jni_onload_fn)(void *, void *) =
-            (int (*)(void *, void *))(base + 0x227af5au);
-        int ver = jni_onload_fn(sober_jni_java_vm(j), NULL);
-        fprintf(stderr,
-                "[app-shell] genuine JNI_OnLoad 0x227af5a -> ver=%#x\n",
-                (unsigned)ver);
-        if (ver <= 0) seed_rc = SOBER_JNI_ERR;
+        if (w24_onload_done) {
+            fprintf(stderr, "[app-shell] JNI_OnLoad already done first "
+                            "(W24 order fix); skipping duplicate\n");
+        } else {
+            int (*jni_onload_fn)(void *, void *) =
+                (int (*)(void *, void *))(base + 0x227af5au);
+            int ver = jni_onload_fn(sober_jni_java_vm(j), NULL);
+            fprintf(stderr,
+                    "[app-shell] genuine JNI_OnLoad 0x227af5a -> ver=%#x\n",
+                    (unsigned)ver);
+            if (ver <= 0) seed_rc = SOBER_JNI_ERR;
+        }
     }
     if (seed_rc != SOBER_JNI_OK) {
         sober_jni_shutdown(j);

@@ -56,6 +56,7 @@ extern volatile unsigned long long sober_bootstrap_ctors_current_rva
     __attribute__((weak));
 extern volatile unsigned sober_bootstrap_seed_index __attribute__((weak));
 extern const char *sober_bionic_bootstrap_last_error(void) __attribute__((weak));
+extern long sober_jni_ring_dump_async(int fd) __attribute__((weak));
 
 /* ------------------------------------------------------------------ */
 /* globals used by the crash handler (only volatile / async-safe data)  */
@@ -189,6 +190,8 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
         ssize_t u = write(STDERR_FILENO, buf, (size_t)(p - buf));
         (void)u;
     }
+    /* W24 read-only JNIEnv ring: last 64 calls, async-safe dump. */
+    sober_jni_ring_dump_async(STDERR_FILENO);
     _exit(139);
 }
 
@@ -858,7 +861,30 @@ int main(int argc, char **argv)
             }
         }
         fprintf(stderr, "[harness] phase 4: JNI app-shell phase starting\n");
-        int arc = guest_app_shell_run(base);
+        /* W24(c) host-only 512MB-stack experiment: run the whole guest-entry
+         * app-shell phase on a pthread with a 512 MiB stack.  No guest bytes,
+         * no gate change; opt-in so the default path is unchanged. */
+        int arc = 0;
+        if (getenv("SOBER_W24_BIGSTACK")) {
+            struct w24_arg { uintptr_t base; int rc; } wa = { base, 0 };
+            void *(*th)(void *) = (void *(*)(void *))guest_app_shell_run;
+            pthread_attr_t at; pthread_t thid;
+            if (pthread_attr_init(&at) == 0 &&
+                pthread_attr_setstacksize(&at, (size_t)512u * 1024u * 1024u) == 0 &&
+                pthread_create(&thid, &at, th, (void *)(uintptr_t)base) == 0) {
+                pthread_join(thid, NULL);
+                fprintf(stderr, "[harness] W24 bigstack guest entry joined\n");
+                arc = 0;   /* thread return value not classified by guest_app_shell_run */
+            } else {
+                fprintf(stderr, "[harness] W24 bigstack pthread FAILED; "
+                                "falling back to main thread\n");
+                arc = guest_app_shell_run(base);
+            }
+            pthread_attr_destroy(&at);
+            (void)wa;
+        } else {
+            arc = guest_app_shell_run(base);
+        }
         if (arc != 0) {
             fprintf(stderr, "[harness] app-shell phase FAILED (rc=%d)\n", arc);
             free(bytes);
