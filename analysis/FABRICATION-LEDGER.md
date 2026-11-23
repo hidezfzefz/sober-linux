@@ -811,3 +811,44 @@ closure type UNPROVEN.
 → OUTPUT: 19 self-matches (ledger's own recorded scan commands + verification-notes); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n1-4. Marker WITHHELD.
+
+## Overnight n1-5 audit (task #663, final investigate wave) — BLOCKED + premise correction
+
+Owner: audit (`/tmp/opencode/n1-audit`, branch `n1-audit`). Cores 6-7. No device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each of the 8 `n15scan*.err` runs (8/8);
+`W24 JNI_OnLoad FIRST … ver=0x10006` and `W30 TSD seed REMOVED` present.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 36 | **BLOCKED (task rule): #552 argument unreconstructable and no genuine closure pointer found. Capture records #552 only as `[object Object]` (w12-j2n-300.log:567) — no class/fields/handle/type; generic Object and real shared_param_obj both fault at `[rdi+8]` si_addr=0x8. Live scan of obj±0x2000 found only a structural candidate at obj-224 whose fn is 0x755ec0 BELOW guest base in anonymous RW heap — not genuine. NO installer call, NO fabricated handle. DEBT** | raw `J2N #552 … ([object Object])` (w12:567); n14 `[N14_REPLAY]` both natives rc=-6066930334832433271, guard=0; n15 `[N15_CLOSURE] obj-224 raw=0x17f5bdf370380 … fn=0x7f5bdf326140`, `[N15_MAP obj] … rw-p 00000000 00:00 0`; math rip 0x7f5be6723f95 − 0x6ca7f95 → base 0x7f5bdfa7c000, fn−base = −0x755ec0 | static-A/harness, audited | Both reconstruction avenues exhausted read-only; any further attempt would fabricate a handle (forbidden) | Remove when a new genuine capture supplies the #552 argument's type/fields/native handle or a genuine closure pointer is quoted in executable guest text |
+
+**Premise CORRECTION (static-B #662, audited):** `0x2a0ed0f` and the `+0x28` store `0x2a0ed45`
+are NOT inside `0x2a0e8c0` — that function ends at `2a0eb92: ret`; `2a0eb0f: call 2a0eba0`
+transfers to a new function `0x2a0eba0` (`2a0eba0: push %rbp`) which contains the store.
+Earlier ledger lines (n1-2 static-A #650, n1-3 static-B #653 / static-A #655) loosely said
+"`0x2a0ed45` in fn `0x2a0e8c0`" — those attributions are RETRACTED; the call chain
+`0x2a0e7c0 → 2a0e83b call 2a0e8c0 → 2a0eb0f call 2a0eba0 → 2a0ed45` stands. All static-B #662
+quotes verified verbatim: entry saves `2a0ebb1/5/9/bd/c1/ce`, caller setup `2a0eaa0..2a0eb0f`,
+closure source `2a0ed04/08/0b/0f/12/15/18/1d/45`, self-bookkeeping `2a0ed22/2e/32/35/39/3d`.
+Contract: rdi=tagged list-head, rsi=out-ptr, rdx=refcount ptr, rcx=&arg2, r8=&arg3 (pointer-to-word,
+dereferenced at 2a0ed0f), mask 0x0000ffffffffffff. UNPROVEN arg provenance, +0x68 object type,
+whether 0x2a1e630 is the intended closure; the +0x40 closure is installed only on TRUE path which
+requires +0x28 already nonzero (circular) — no substitution/fabrication performed.
+
+**static-A #661 — all quotes verified:** `J2N #552 … ([object Object])` (w12:567), `#555 …
+[object Object]`; w11-first10 has no PostClientSettings (count 0), w11-arg0.json has no #552
+(count 0); harness-built `shared_param_obj=0x555556be4eb0 (blob=0x1000)` (w31 runD_1.err:4021)
+is not captured device state. BLOCKED conclusion sound.
+
+**harness #660 — all quoted lines verified, one overstatement:** SHA 8/8; fault sites 0x6ca7f95
+4/8, 0x2a13354 3/8, 0x2ea6446 1/8, all rc=139. `[N15_SCAN]`, `[N15_CLOSURE]`, `[N15_MAP obj]`
+quotes verbatim; fn−base = exactly −0x755ec0 (recomputed by audit) → anonymous RW heap, not
+executable guest text. Minor defect: report says the ±0x2000 window was used in "8 runs" but
+raw shows only 6/8 (`0x0..0x100` in 2 early scans); BLOCKED conclusion unaffected.
+
+**Secrets-scan command + output (final):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n1-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 20 self-matches (ledger's own recorded scan commands + verification-notes); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n1-5. Marker WITHHELD.
