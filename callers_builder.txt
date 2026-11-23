@@ -1,0 +1,3 @@
+ 6c8e9ac:	e8 8f ee ff ff       	call   6c8d840 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495d12>
+ 6c8eb83:	e8 b8 ec ff ff       	call   6c8d840 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495d12>
+ 6c8ef35:	e8 06 e9 ff ff       	call   6c8d840 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495d12>

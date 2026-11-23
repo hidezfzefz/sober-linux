@@ -1,54 +1,63 @@
-# OVERNIGHT n1 #645 — harness (one page)
+# n2 step1 #664 static-B — TLS holder writer + table provenance (READ-ONLY)
 
-Worktree `/tmp/opencode/n1-harness` branch n1-harness (fresh `build-n1`; inherited
-`build/` cache left untouched — DELETE NOTHING). Cores 0-1, flock held for all 6
-runs. No device/captures/guest writes/gate edits/seeder/fake returns/path remaps;
-TSD seed OFF, JNI_OnLoad-first ON. SHA verified EVERY run:
-`[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b`
-Config proof (ALL 6 runs, quoted): `[app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006`
-and `[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)`;
-script `rund6.sh:9` exports `SOBER_SEEDER_DISABLE=1 SOBER_JNI_ONLOAD_FIRST=1`.
-Evidence: `with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`. Logs 151 KB each.
+Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n2-static-b.
+FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (fn[224]); RA `0x6ca8014` (n1 harness). No apply.
 
-## FAULTING INSTRUCTION FIRST — PROVEN, CONFIGURATION-DEPENDENT
-**WITH bps (3/3):** `guest+0x2a1335e`, bytes `48 8b 00` = **`mov rax,[rax]`**,
-`si_addr=0x0` (NULL). Raw with_1:
-`[W30_FAULT] rip=0x00007faa0fca735e si_addr=0x0000000000000000 rsp=0x00007fffd71ba630 rbp=0x00007fffd71ba630 insn=0000000000000048 000000000000008b 0000000000000000 ...`
-`[W28_FAULT_INSN] rip=0x00007faa0fca735e guest_rva=0x02a1335e`
-**WITHOUT bps (3/3): non-deterministic call site, all `si_addr = rsp-8`**
-(stack-guard push): without_1 `guest_rva=0x06ca7f95` (`call 0x2a13350`),
-without_2 `guest_rva=0x02ea645b` (`call pthread_getspecific@plt`), without_3
-`guest_rva=0x02a0de6b` (`call 6c89e70`). Raw without_1:
-`[W30_FAULT] rip=0x00007fea4abb7f95 si_addr=0x00007fff4ff2eff8 rsp=0x00007fff4ff2f000 ...`
-**RETRACTED:** earlier waves' "the faulting instruction is always
-`0x6ca7f95`" — that is only the no-bp configuration (1/3 here).
+## RESULT: NOT an in-place patch. NO immediate alert triggered.
 
-## Perf exec bps (WITH runs) — PROVEN
-`[N1_ARM] base=0x7faa0d294000 host=0x55a82eb50000 pred=0 al=0 call720=0`.
-**0x2a1335e** raw: `[N1_PRED #1] tid=1624646 rax=0x55a84a0ac9b0 [rax]=0x7faa0cb86280 [[rax]+0x28]=0000000000000000`
-(also #2,#3,#10000,#20000,#30000 — identical; 6 sampled lines, 3/3 runs).
-**0x6ca7f9a** raw: `[N1_AL #1] tid=1624646 al=0x00 al_dec=0` — **al=0 at every
-sampled hit** (#1..#30000, all 3 runs): the predicate always returns FALSE.
-**0x6ca800e** hits 1,2,3,100 raw:
-`[N1_CALL720] hit=1 tid=1624646 rax=0x55a84a3dfe80 rbx=0x55a84a3e0618 [rax+0x720]=0x55a82eb7e690 decode=host+0x000000000002e690 bridge_env=0x55a84a3e0618 rax_is_env=0`
-`[N1_CALL720] hit=100 tid=1624646 rax=0x7fa9f4001f18 rbx=0x55a84a3e0618 [rax+0x720]=0x7faa13f3bf72 decode=guest+0x0000000006ca7f72 bridge_env=0x55a84a3e0618 rax_is_env=0`
-fn[224] flips host bridge → **`guest+0x6ca7f72`** (the function prologue
-containing the `call [rax+0x720]`); `rbx == bridge_env` constant, `rax` is not
-the env at any logged hit. 3/3 runs identical pattern.
+At `6c8e4d3` r14 is a **guest-private copy**, not the table the guest was given. The builder copies vtable entries from the given table into a per-key TLS buffer belonging to a *different* key, then replaces the holder's table pointer with that copy.
 
-## New first divergence
-`[[rax]+0x28]=0` and `al=0` at every sampled predicate hit → FALSE branch at
-`0x6ca7f9c` recurses; fn[224] becomes the self-pointer `guest+0x6ca7f72`. The
-breakpoint set changes the fault site: bps → NULL deref at `mov rax,[rax]`
-(`0x2a1335e`, `si_addr=0`); no bps → stack-guard push at whichever `call` in
-the recursion reaches the guard page first (varies per run, always
-`si_addr=rsp-8`).
+## PROVEN — [TLS holder+0] writer(s) (quoted raw)
 
-## NOT DONE
-No fix applied (read-only); no ledger edit; why with-bps rax at fault is
-`0x55a84a0ac9b0` while `si_addr=0` is UNPROVEN; who writes fn[224] UNPROVEN;
-total predicate hit count not logged (sampled 1,2,3,10k,20k,30k). No questions
-asked. Uploads untouched.
+Getter keys (dis_getters.txt):
+```
+6c89e74: lea 0x5f81ed(%rip),%rdi  # 7282068
+6c89e7b: call 2ea6440
+6c89e94: lea 0x5f81ed(%rip),%rdi  # 7282088
+```
+Shared helper 0x2ea6440 (dis_tls_helper.txt) — the pthread_getspecific holder is a per-thread array; the getter returns a per-key buffer at `+8+index*8`:
+```
+2ea6455: mov 0x43fb6ad(%rip),%edi  # 72a1b08
+2ea645b: call 6d322e0 <pthread_getspecific@plt>
+2ea64fc: mov %r13,0x10(%rbx)      ; key index assigned lazily under mutex
+2ea655a: movq $0x1,(%r14)         ; <-- writes [TLS holder ARRAY +0] = 1 on first alloc
+2ea6561: mov %r12,0x8(%r14)       ; capacity
+2ea656e: call 6d31d10 <pthread_setspecific@plt>
+2ea6573: mov 0x8(%r14,%r13,8),%r15 ; per-key buffer for this getter
+2ea65de: mov %r15,0x8(%r14,%r13,8) ; installs that buffer
+2ea65e3: mov %r15,%rax            ; returned to caller 6c89e70
+```
+The per-key buffer **returned by getter 6c89e70** has its `[0]` written by the vtable builder itself (dis_builder_fn.txt):
+```
+6c8d84a: mov %rdi,%rbx            ; rbx = holder holding given table at [0]
+6c8d84d: call 6c89e90             ; buffer C (key 7282088) -> rax
+6c8d85b: mov %rax,%r14            ; r14 = COPY DESTINATION
+6c8d85e: mov (%rbx),%r15          ; r15 = *(holder) = given table pointer
+6c8d86a: call 6c89e70             ; buffer B (key 7282068)
+6c8d86f: mov %r15,(%rax)          ; <-- writes [getter-6c89e70 buffer +0] = given table ptr
+6c8d872: call 6c89e70
+6c8d877: mov (%rax),%rax
+6c8d87a: mov (%rax),%rax          ; first vtable entry of given table
+6c8d87d: mov %rax,(%r14)          ; copy into buffer C
+```
 
-## Evidence files
-`/tmp/opencode/n1-harness/with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`.
+## PROVEN — r14 provenance at 6c8e4d3 (dis_builder_fn.txt / dis_builder_full.txt)
+
+```
+6c8e4cc: lea 0x19a9f(%rip),%rax  # 6ca7f72
+6c8e4d3: mov %rax,0x720(%r14)    ; self-pointer written into the COPY
+6c8e50b: mov %rax,0x740(%r14)
+6c8e512: mov %r14,(%rbx)         ; <-- guest saves the COPY as the real table
+6c8e51f: ret
+```
+r14 is set ONLY at `6c8d85b: mov %rax,%r14` from `call 6c89e90` (key `0x7282088`), distinct from getter `6c89e70` (key `0x7282068`). The neighbour writes `mov %rax,0x8(%r14)`, `0x10(%r14)` … `0x740(%r14)` (dis_builder_full.txt) are a full ~234-entry vtable copy. Builders are called with `rdi = (%rbx)` (given table in holder): `6c8e9ac`, `6c8eb83`, `6c8ef35: call 6c8d840`; at `6c8e9a0/6c8e9a8` the guest also stores the original pointer at `0x18(%rax)` of getter-6c89e50's buffer. `227bde8: call 6c8e520` is a separate function (its own prologue at `6c8e520`), not this builder; exact caller chain from JNI_OnLoad to `6c8d840` is UNPROVEN here.
+
+## UNPROVEN / RETRACTED
+
+- UNPROVEN: exact identity of `*(rbx)` on the harness path (whether it is literally the bridge table given to JNI_OnLoad); requires harness read-only comparison of `rbx@6c8e4d3`, `[bridge_table+0x720]`, and `rax@6ca800e`.
+- UNPROVEN: whether any *other* code path patches the given table in place — this instruction does not.
+- RETRACTED: any claim that `6c8e4d3` modifies the harness-provided table; it modifies a copy. n1 conclusion "guest self-pointer at fn224" stands, but its storage is the guest copy, not the bridge table.
+
+## Evidence / NOT done
+
+Evidence: dis_tls_helper.txt (159 lines), dis_builder_fn.txt, dis_builder_full.txt, dis_getters.txt, callers_builder.txt, dis_onload_caller.txt, report.md. NOT DONE: no runs/device/emulator/Wine/box64/QEMU/captures; no guest writes/gate edits/seeder/fake returns/path remaps/apply. Input SHA 8215519f per task statement (not re-verified here; no new captures).

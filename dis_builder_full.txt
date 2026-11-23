@@ -1,0 +1,969 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000006c8d220 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14956f2>:
+ 6c8d220:	55                   	push   %rbp
+ 6c8d221:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d224:	41 57                	push   %r15
+ 6c8d226:	41 56                	push   %r14
+ 6c8d228:	41 55                	push   %r13
+ 6c8d22a:	41 54                	push   %r12
+ 6c8d22c:	53                   	push   %rbx
+ 6c8d22d:	50                   	push   %rax
+ 6c8d22e:	41 89 d6             	mov    %edx,%r14d
+ 6c8d231:	48 89 f3             	mov    %rsi,%rbx
+ 6c8d234:	49 89 ff             	mov    %rdi,%r15
+ 6c8d237:	89 d0                	mov    %edx,%eax
+ 6c8d239:	48 8d 34 45 24 00 00 	lea    0x24(,%rax,2),%rsi
+ 6c8d240:	00 
+ 6c8d241:	48 89 df             	mov    %rbx,%rdi
+ 6c8d244:	e8 d7 9d 1c fc       	call   2e57020 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4371f0>
+ 6c8d249:	48 8d 35 33 fe 64 f9 	lea    -0x69b01cd(%rip),%rsi        # 2dd083 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1afa21d>
+ 6c8d250:	48 89 df             	mov    %rbx,%rdi
+ 6c8d253:	e8 c8 a9 1c fc       	call   2e57c20 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437df0>
+ 6c8d258:	45 85 f6             	test   %r14d,%r14d
+ 6c8d25b:	74 0d                	je     6c8d26a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149573c>
+ 6c8d25d:	48 89 df             	mov    %rbx,%rdi
+ 6c8d260:	be 7b 00 00 00       	mov    $0x7b,%esi
+ 6c8d265:	e8 36 a3 1c fc       	call   2e575a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437770>
+ 6c8d26a:	45 31 e4             	xor    %r12d,%r12d
+ 6c8d26d:	4c 8d 2d 37 94 88 f9 	lea    -0x6776bc9(%rip),%r13        # 5166ab <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18c0bf5>
+ 6c8d274:	43 0f b6 04 27       	movzbl (%r15,%r12,1),%eax
+ 6c8d279:	c1 e8 04             	shr    $0x4,%eax
+ 6c8d27c:	42 0f be 34 28       	movsbl (%rax,%r13,1),%esi
+ 6c8d281:	48 89 df             	mov    %rbx,%rdi
+ 6c8d284:	e8 17 a3 1c fc       	call   2e575a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437770>
+ 6c8d289:	43 0f b6 04 27       	movzbl (%r15,%r12,1),%eax
+ 6c8d28e:	83 e0 0f             	and    $0xf,%eax
+ 6c8d291:	42 0f be 34 28       	movsbl (%rax,%r13,1),%esi
+ 6c8d296:	48 89 df             	mov    %rbx,%rdi
+ 6c8d299:	e8 02 a3 1c fc       	call   2e575a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437770>
+ 6c8d29e:	44 89 e0             	mov    %r12d,%eax
+ 6c8d2a1:	83 e0 0b             	and    $0xb,%eax
+ 6c8d2a4:	83 f8 03             	cmp    $0x3,%eax
+ 6c8d2a7:	74 0c                	je     6c8d2b5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495787>
+ 6c8d2a9:	41 83 fc 09          	cmp    $0x9,%r12d
+ 6c8d2ad:	74 06                	je     6c8d2b5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495787>
+ 6c8d2af:	41 83 fc 05          	cmp    $0x5,%r12d
+ 6c8d2b3:	75 0d                	jne    6c8d2c2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495794>
+ 6c8d2b5:	48 89 df             	mov    %rbx,%rdi
+ 6c8d2b8:	be 2d 00 00 00       	mov    $0x2d,%esi
+ 6c8d2bd:	e8 de a2 1c fc       	call   2e575a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437770>
+ 6c8d2c2:	49 ff c4             	inc    %r12
+ 6c8d2c5:	49 83 fc 10          	cmp    $0x10,%r12
+ 6c8d2c9:	75 a9                	jne    6c8d274 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495746>
+ 6c8d2cb:	45 84 f6             	test   %r14b,%r14b
+ 6c8d2ce:	74 0d                	je     6c8d2dd <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14957af>
+ 6c8d2d0:	48 89 df             	mov    %rbx,%rdi
+ 6c8d2d3:	be 7d 00 00 00       	mov    $0x7d,%esi
+ 6c8d2d8:	e8 c3 a2 1c fc       	call   2e575a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437770>
+ 6c8d2dd:	b0 01                	mov    $0x1,%al
+ 6c8d2df:	48 83 c4 08          	add    $0x8,%rsp
+ 6c8d2e3:	5b                   	pop    %rbx
+ 6c8d2e4:	41 5c                	pop    %r12
+ 6c8d2e6:	41 5d                	pop    %r13
+ 6c8d2e8:	41 5e                	pop    %r14
+ 6c8d2ea:	41 5f                	pop    %r15
+ 6c8d2ec:	5d                   	pop    %rbp
+ 6c8d2ed:	c3                   	ret
+ 6c8d2ee:	55                   	push   %rbp
+ 6c8d2ef:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d2f2:	41 56                	push   %r14
+ 6c8d2f4:	53                   	push   %rbx
+ 6c8d2f5:	48 83 ec 20          	sub    $0x20,%rsp
+ 6c8d2f9:	48 89 fb             	mov    %rdi,%rbx
+ 6c8d2fc:	4c 8b 35 f5 c0 59 00 	mov    0x59c0f5(%rip),%r14        # 72293f8 <strncat@plt+0x4f5878>
+ 6c8d303:	49 8b 06             	mov    (%r14),%rax
+ 6c8d306:	48 89 45 e8          	mov    %rax,-0x18(%rbp)
+ 6c8d30a:	be 01 00 00 00       	mov    $0x1,%esi
+ 6c8d30f:	e8 b1 c9 69 fb       	call   2329cc5 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeInitFastLog@@LIBROBLOX+0x430>
+ 6c8d314:	48 8d 35 f8 fc 82 f9 	lea    -0x67d0308(%rip),%rsi        # 4bd013 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x191a28d>
+ 6c8d31b:	48 8d 7d d0          	lea    -0x30(%rbp),%rdi
+ 6c8d31f:	48 89 da             	mov    %rbx,%rdx
+ 6c8d322:	e8 99 b7 1c fc       	call   2e58ac0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x438c90>
+ 6c8d327:	f6 03 01             	testb  $0x1,(%rbx)
+ 6c8d32a:	74 09                	je     6c8d335 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495807>
+ 6c8d32c:	48 8b 7b 10          	mov    0x10(%rbx),%rdi
+ 6c8d330:	e8 89 12 13 fb       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 6c8d335:	48 8b 45 e0          	mov    -0x20(%rbp),%rax
+ 6c8d339:	48 89 43 10          	mov    %rax,0x10(%rbx)
+ 6c8d33d:	0f 10 45 d0          	movups -0x30(%rbp),%xmm0
+ 6c8d341:	0f 11 03             	movups %xmm0,(%rbx)
+ 6c8d344:	be 28 00 00 00       	mov    $0x28,%esi
+ 6c8d349:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d34e:	48 89 df             	mov    %rbx,%rdi
+ 6c8d351:	e8 4a a5 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d356:	be 1b 00 00 00       	mov    $0x1b,%esi
+ 6c8d35b:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d360:	48 89 df             	mov    %rbx,%rdi
+ 6c8d363:	e8 38 a5 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d368:	be 16 00 00 00       	mov    $0x16,%esi
+ 6c8d36d:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d372:	48 89 df             	mov    %rbx,%rdi
+ 6c8d375:	e8 26 a5 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d37a:	be 11 00 00 00       	mov    $0x11,%esi
+ 6c8d37f:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d384:	48 89 df             	mov    %rbx,%rdi
+ 6c8d387:	e8 14 a5 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d38c:	be 0c 00 00 00       	mov    $0xc,%esi
+ 6c8d391:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d396:	48 89 df             	mov    %rbx,%rdi
+ 6c8d399:	e8 02 a5 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d39e:	be 03 00 00 00       	mov    $0x3,%esi
+ 6c8d3a3:	ba 01 00 00 00       	mov    $0x1,%edx
+ 6c8d3a8:	48 89 df             	mov    %rbx,%rdi
+ 6c8d3ab:	e8 f0 a4 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d3b0:	49 8b 06             	mov    (%r14),%rax
+ 6c8d3b3:	48 3b 45 e8          	cmp    -0x18(%rbp),%rax
+ 6c8d3b7:	75 09                	jne    6c8d3c2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495894>
+ 6c8d3b9:	48 83 c4 20          	add    $0x20,%rsp
+ 6c8d3bd:	5b                   	pop    %rbx
+ 6c8d3be:	41 5e                	pop    %r14
+ 6c8d3c0:	5d                   	pop    %rbp
+ 6c8d3c1:	c3                   	ret
+ 6c8d3c2:	e8 79 4d 0a 00       	call   6d32140 <__stack_chk_fail@plt>
+ 6c8d3c7:	48 89 c7             	mov    %rax,%rdi
+ 6c8d3ca:	e8 f8 e3 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d3cf:	55                   	push   %rbp
+ 6c8d3d0:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d3d3:	53                   	push   %rbx
+ 6c8d3d4:	50                   	push   %rax
+ 6c8d3d5:	0f 57 c0             	xorps  %xmm0,%xmm0
+ 6c8d3d8:	0f 11 05 11 18 05 01 	movups %xmm0,0x1051811(%rip)        # 7cdebf0 <__stop_pb_defaults@@Base+0xa5c738>
+ 6c8d3df:	48 c7 05 16 18 05 01 	movq   $0x0,0x1051816(%rip)        # 7cdec00 <__stop_pb_defaults@@Base+0xa5c748>
+ 6c8d3e6:	00 00 00 00 
+ 6c8d3ea:	48 8d 3d ff 17 05 01 	lea    0x10517ff(%rip),%rdi        # 7cdebf0 <__stop_pb_defaults@@Base+0xa5c738>
+ 6c8d3f1:	e8 f8 fe ff ff       	call   6c8d2ee <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14957c0>
+ 6c8d3f6:	48 8d 3d f3 17 05 01 	lea    0x10517f3(%rip),%rdi        # 7cdebf0 <__stop_pb_defaults@@Base+0xa5c738>
+ 6c8d3fd:	be 08 00 00 00       	mov    $0x8,%esi
+ 6c8d402:	48 c7 c2 ff ff ff ff 	mov    $0xffffffffffffffff,%rdx
+ 6c8d409:	e8 92 a4 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d40e:	48 8d 3d db 17 05 01 	lea    0x10517db(%rip),%rdi        # 7cdebf0 <__stop_pb_defaults@@Base+0xa5c738>
+ 6c8d415:	ba 03 00 00 00       	mov    $0x3,%edx
+ 6c8d41a:	31 f6                	xor    %esi,%esi
+ 6c8d41c:	e8 7f a4 1c fc       	call   2e578a0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x437a70>
+ 6c8d421:	48 83 c4 08          	add    $0x8,%rsp
+ 6c8d425:	5b                   	pop    %rbx
+ 6c8d426:	5d                   	pop    %rbp
+ 6c8d427:	c3                   	ret
+ 6c8d428:	48 89 c3             	mov    %rax,%rbx
+ 6c8d42b:	f6 05 be 17 05 01 01 	testb  $0x1,0x10517be(%rip)        # 7cdebf0 <__stop_pb_defaults@@Base+0xa5c738>
+ 6c8d432:	74 0c                	je     6c8d440 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495912>
+ 6c8d434:	48 8b 3d c5 17 05 01 	mov    0x10517c5(%rip),%rdi        # 7cdec00 <__stop_pb_defaults@@Base+0xa5c748>
+ 6c8d43b:	e8 7e 11 13 fb       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 6c8d440:	48 89 df             	mov    %rbx,%rdi
+ 6c8d443:	e8 c8 95 21 fc       	call   2ea6a10 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486be0>
+ 6c8d448:	48 89 c7             	mov    %rax,%rdi
+ 6c8d44b:	e8 77 e3 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d450:	48 83 fe 24          	cmp    $0x24,%rsi
+ 6c8d454:	0f 85 64 01 00 00    	jne    6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d45a:	31 c0                	xor    %eax,%eax
+ 6c8d45c:	48 b9 3f 00 00 00 3f 	movabs $0x3f0000003f,%rcx
+ 6c8d463:	00 00 00 
+ 6c8d466:	31 d2                	xor    %edx,%edx
+ 6c8d468:	40 8a 34 17          	mov    (%rdi,%rdx,1),%sil
+ 6c8d46c:	44 8d 46 d0          	lea    -0x30(%rsi),%r8d
+ 6c8d470:	41 80 f8 0a          	cmp    $0xa,%r8b
+ 6c8d474:	72 12                	jb     6c8d488 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149595a>
+ 6c8d476:	40 0f b6 f6          	movzbl %sil,%esi
+ 6c8d47a:	83 c6 bf             	add    $0xffffffbf,%esi
+ 6c8d47d:	83 fe 25             	cmp    $0x25,%esi
+ 6c8d480:	77 1a                	ja     6c8d49c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149596e>
+ 6c8d482:	48 0f a3 f1          	bt     %rsi,%rcx
+ 6c8d486:	73 14                	jae    6c8d49c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149596e>
+ 6c8d488:	48 83 fa 07          	cmp    $0x7,%rdx
+ 6c8d48c:	48 8d 72 01          	lea    0x1(%rdx),%rsi
+ 6c8d490:	0f 93 c0             	setae  %al
+ 6c8d493:	48 89 f2             	mov    %rsi,%rdx
+ 6c8d496:	48 83 fe 08          	cmp    $0x8,%rsi
+ 6c8d49a:	75 cc                	jne    6c8d468 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149593a>
+ 6c8d49c:	a8 01                	test   $0x1,%al
+ 6c8d49e:	0f 84 1a 01 00 00    	je     6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d4a4:	80 7f 08 2d          	cmpb   $0x2d,0x8(%rdi)
+ 6c8d4a8:	0f 85 10 01 00 00    	jne    6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d4ae:	31 c0                	xor    %eax,%eax
+ 6c8d4b0:	31 d2                	xor    %edx,%edx
+ 6c8d4b2:	40 8a 74 17 09       	mov    0x9(%rdi,%rdx,1),%sil
+ 6c8d4b7:	44 8d 46 d0          	lea    -0x30(%rsi),%r8d
+ 6c8d4bb:	41 80 f8 0a          	cmp    $0xa,%r8b
+ 6c8d4bf:	72 12                	jb     6c8d4d3 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14959a5>
+ 6c8d4c1:	40 0f b6 f6          	movzbl %sil,%esi
+ 6c8d4c5:	83 c6 bf             	add    $0xffffffbf,%esi
+ 6c8d4c8:	83 fe 25             	cmp    $0x25,%esi
+ 6c8d4cb:	77 1a                	ja     6c8d4e7 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14959b9>
+ 6c8d4cd:	48 0f a3 f1          	bt     %rsi,%rcx
+ 6c8d4d1:	73 14                	jae    6c8d4e7 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14959b9>
+ 6c8d4d3:	48 83 fa 03          	cmp    $0x3,%rdx
+ 6c8d4d7:	48 8d 72 01          	lea    0x1(%rdx),%rsi
+ 6c8d4db:	0f 93 c0             	setae  %al
+ 6c8d4de:	48 89 f2             	mov    %rsi,%rdx
+ 6c8d4e1:	48 83 fe 04          	cmp    $0x4,%rsi
+ 6c8d4e5:	75 cb                	jne    6c8d4b2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495984>
+ 6c8d4e7:	a8 01                	test   $0x1,%al
+ 6c8d4e9:	0f 84 cf 00 00 00    	je     6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d4ef:	80 7f 0d 2d          	cmpb   $0x2d,0xd(%rdi)
+ 6c8d4f3:	0f 85 c5 00 00 00    	jne    6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d4f9:	31 c0                	xor    %eax,%eax
+ 6c8d4fb:	31 d2                	xor    %edx,%edx
+ 6c8d4fd:	40 8a 74 17 0e       	mov    0xe(%rdi,%rdx,1),%sil
+ 6c8d502:	44 8d 46 d0          	lea    -0x30(%rsi),%r8d
+ 6c8d506:	41 80 f8 0a          	cmp    $0xa,%r8b
+ 6c8d50a:	72 12                	jb     6c8d51e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14959f0>
+ 6c8d50c:	40 0f b6 f6          	movzbl %sil,%esi
+ 6c8d510:	83 c6 bf             	add    $0xffffffbf,%esi
+ 6c8d513:	83 fe 25             	cmp    $0x25,%esi
+ 6c8d516:	77 1a                	ja     6c8d532 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a04>
+ 6c8d518:	48 0f a3 f1          	bt     %rsi,%rcx
+ 6c8d51c:	73 14                	jae    6c8d532 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a04>
+ 6c8d51e:	48 83 fa 03          	cmp    $0x3,%rdx
+ 6c8d522:	48 8d 72 01          	lea    0x1(%rdx),%rsi
+ 6c8d526:	0f 93 c0             	setae  %al
+ 6c8d529:	48 89 f2             	mov    %rsi,%rdx
+ 6c8d52c:	48 83 fe 04          	cmp    $0x4,%rsi
+ 6c8d530:	75 cb                	jne    6c8d4fd <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14959cf>
+ 6c8d532:	a8 01                	test   $0x1,%al
+ 6c8d534:	0f 84 84 00 00 00    	je     6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d53a:	80 7f 12 2d          	cmpb   $0x2d,0x12(%rdi)
+ 6c8d53e:	75 7e                	jne    6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d540:	31 c0                	xor    %eax,%eax
+ 6c8d542:	31 d2                	xor    %edx,%edx
+ 6c8d544:	40 8a 74 17 13       	mov    0x13(%rdi,%rdx,1),%sil
+ 6c8d549:	44 8d 46 d0          	lea    -0x30(%rsi),%r8d
+ 6c8d54d:	41 80 f8 0a          	cmp    $0xa,%r8b
+ 6c8d551:	72 12                	jb     6c8d565 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a37>
+ 6c8d553:	40 0f b6 f6          	movzbl %sil,%esi
+ 6c8d557:	83 c6 bf             	add    $0xffffffbf,%esi
+ 6c8d55a:	83 fe 25             	cmp    $0x25,%esi
+ 6c8d55d:	77 1a                	ja     6c8d579 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a4b>
+ 6c8d55f:	48 0f a3 f1          	bt     %rsi,%rcx
+ 6c8d563:	73 14                	jae    6c8d579 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a4b>
+ 6c8d565:	48 83 fa 03          	cmp    $0x3,%rdx
+ 6c8d569:	48 8d 72 01          	lea    0x1(%rdx),%rsi
+ 6c8d56d:	0f 93 c0             	setae  %al
+ 6c8d570:	48 89 f2             	mov    %rsi,%rdx
+ 6c8d573:	48 83 fe 04          	cmp    $0x4,%rsi
+ 6c8d577:	75 cb                	jne    6c8d544 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a16>
+ 6c8d579:	a8 01                	test   $0x1,%al
+ 6c8d57b:	74 41                	je     6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d57d:	80 7f 17 2d          	cmpb   $0x2d,0x17(%rdi)
+ 6c8d581:	75 3b                	jne    6c8d5be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a90>
+ 6c8d583:	31 c0                	xor    %eax,%eax
+ 6c8d585:	31 d2                	xor    %edx,%edx
+ 6c8d587:	40 8a 74 17 18       	mov    0x18(%rdi,%rdx,1),%sil
+ 6c8d58c:	44 8d 46 d0          	lea    -0x30(%rsi),%r8d
+ 6c8d590:	41 80 f8 0a          	cmp    $0xa,%r8b
+ 6c8d594:	72 12                	jb     6c8d5a8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a7a>
+ 6c8d596:	40 0f b6 f6          	movzbl %sil,%esi
+ 6c8d59a:	83 c6 bf             	add    $0xffffffbf,%esi
+ 6c8d59d:	83 fe 25             	cmp    $0x25,%esi
+ 6c8d5a0:	77 1e                	ja     6c8d5c0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a92>
+ 6c8d5a2:	48 0f a3 f1          	bt     %rsi,%rcx
+ 6c8d5a6:	73 18                	jae    6c8d5c0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a92>
+ 6c8d5a8:	48 83 fa 0b          	cmp    $0xb,%rdx
+ 6c8d5ac:	48 8d 72 01          	lea    0x1(%rdx),%rsi
+ 6c8d5b0:	0f 93 c0             	setae  %al
+ 6c8d5b3:	48 89 f2             	mov    %rsi,%rdx
+ 6c8d5b6:	48 83 fe 0c          	cmp    $0xc,%rsi
+ 6c8d5ba:	75 cb                	jne    6c8d587 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a59>
+ 6c8d5bc:	eb 02                	jmp    6c8d5c0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495a92>
+ 6c8d5be:	31 c0                	xor    %eax,%eax
+ 6c8d5c0:	24 01                	and    $0x1,%al
+ 6c8d5c2:	c3                   	ret
+ 6c8d5c3:	cc                   	int3
+ 6c8d5c4:	55                   	push   %rbp
+ 6c8d5c5:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d5c8:	e8 f1 0f 13 fb       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 6c8d5cd:	5d                   	pop    %rbp
+ 6c8d5ce:	c3                   	ret
+ 6c8d5cf:	48 89 c7             	mov    %rax,%rdi
+ 6c8d5d2:	e8 f0 e1 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d5d7:	cc                   	int3
+ 6c8d5d8:	55                   	push   %rbp
+ 6c8d5d9:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d5dc:	48 8b 7f 10          	mov    0x10(%rdi),%rdi
+ 6c8d5e0:	48 85 ff             	test   %rdi,%rdi
+ 6c8d5e3:	74 05                	je     6c8d5ea <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495abc>
+ 6c8d5e5:	e8 d4 0f 13 fb       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 6c8d5ea:	5d                   	pop    %rbp
+ 6c8d5eb:	c3                   	ret
+ 6c8d5ec:	48 89 c7             	mov    %rax,%rdi
+ 6c8d5ef:	e8 d3 e1 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d5f4:	55                   	push   %rbp
+ 6c8d5f5:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d5f8:	41 57                	push   %r15
+ 6c8d5fa:	41 56                	push   %r14
+ 6c8d5fc:	53                   	push   %rbx
+ 6c8d5fd:	50                   	push   %rax
+ 6c8d5fe:	48 89 fb             	mov    %rdi,%rbx
+ 6c8d601:	e8 cf 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d606:	f0 48 ff 4c 03 08    	lock decq 0x8(%rbx,%rax,1)
+ 6c8d60c:	75 46                	jne    6c8d654 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495b26>
+ 6c8d60e:	e8 c2 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d613:	4c 8b 3c 03          	mov    (%rbx,%rax,1),%r15
+ 6c8d617:	e8 b9 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d61c:	48 89 c1             	mov    %rax,%rcx
+ 6c8d61f:	48 f7 d8             	neg    %rax
+ 6c8d622:	41 be 03 00 00 00    	mov    $0x3,%r14d
+ 6c8d628:	49 39 c7             	cmp    %rax,%r15
+ 6c8d62b:	77 13                	ja     6c8d640 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495b12>
+ 6c8d62d:	49 8d 04 0f          	lea    (%r15,%rcx,1),%rax
+ 6c8d631:	48 ff c8             	dec    %rax
+ 6c8d634:	31 d2                	xor    %edx,%edx
+ 6c8d636:	48 f7 f1             	div    %rcx
+ 6c8d639:	49 89 c6             	mov    %rax,%r14
+ 6c8d63c:	49 83 c6 04          	add    $0x4,%r14
+ 6c8d640:	e8 90 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d645:	4c 0f af f0          	imul   %rax,%r14
+ 6c8d649:	48 89 df             	mov    %rbx,%rdi
+ 6c8d64c:	4c 89 f6             	mov    %r14,%rsi
+ 6c8d64f:	e8 4c 46 0a 00       	call   6d31ca0 <munmap@plt>
+ 6c8d654:	48 83 c4 08          	add    $0x8,%rsp
+ 6c8d658:	5b                   	pop    %rbx
+ 6c8d659:	41 5e                	pop    %r14
+ 6c8d65b:	41 5f                	pop    %r15
+ 6c8d65d:	5d                   	pop    %rbp
+ 6c8d65e:	c3                   	ret
+ 6c8d65f:	48 89 c7             	mov    %rax,%rdi
+ 6c8d662:	e8 60 e1 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d667:	cc                   	int3
+ 6c8d668:	55                   	push   %rbp
+ 6c8d669:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d66c:	41 57                	push   %r15
+ 6c8d66e:	41 56                	push   %r14
+ 6c8d670:	41 55                	push   %r13
+ 6c8d672:	41 54                	push   %r12
+ 6c8d674:	53                   	push   %rbx
+ 6c8d675:	50                   	push   %rax
+ 6c8d676:	48 89 7d d0          	mov    %rdi,-0x30(%rbp)
+ 6c8d67a:	f3 48 0f b8 c2       	popcnt %rdx,%rax
+ 6c8d67f:	83 f8 01             	cmp    $0x1,%eax
+ 6c8d682:	0f 85 16 01 00 00    	jne    6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d688:	48 89 d3             	mov    %rdx,%rbx
+ 6c8d68b:	49 89 f6             	mov    %rsi,%r14
+ 6c8d68e:	e8 42 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d693:	48 39 d8             	cmp    %rbx,%rax
+ 6c8d696:	0f 82 02 01 00 00    	jb     6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d69c:	e8 34 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d6a1:	49 89 c5             	mov    %rax,%r13
+ 6c8d6a4:	e8 2c 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d6a9:	49 89 c7             	mov    %rax,%r15
+ 6c8d6ac:	e8 24 01 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d6b1:	48 89 c1             	mov    %rax,%rcx
+ 6c8d6b4:	48 f7 d8             	neg    %rax
+ 6c8d6b7:	49 c7 c4 ff ff ff ff 	mov    $0xffffffffffffffff,%r12
+ 6c8d6be:	4c 39 f0             	cmp    %r14,%rax
+ 6c8d6c1:	72 0f                	jb     6c8d6d2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ba4>
+ 6c8d6c3:	49 8d 04 0e          	lea    (%r14,%rcx,1),%rax
+ 6c8d6c7:	48 ff c8             	dec    %rax
+ 6c8d6ca:	31 d2                	xor    %edx,%edx
+ 6c8d6cc:	48 f7 f1             	div    %rcx
+ 6c8d6cf:	49 89 c4             	mov    %rax,%r12
+ 6c8d6d2:	4c 89 e8             	mov    %r13,%rax
+ 6c8d6d5:	49 f7 e4             	mul    %r12
+ 6c8d6d8:	0f 80 c0 00 00 00    	jo     6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d6de:	49 c1 e7 02          	shl    $0x2,%r15
+ 6c8d6e2:	4d 0f af e5          	imul   %r13,%r12
+ 6c8d6e6:	4d 01 e7             	add    %r12,%r15
+ 6c8d6e9:	0f 82 af 00 00 00    	jb     6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d6ef:	31 ff                	xor    %edi,%edi
+ 6c8d6f1:	4c 89 fe             	mov    %r15,%rsi
+ 6c8d6f4:	31 d2                	xor    %edx,%edx
+ 6c8d6f6:	b9 22 00 00 00       	mov    $0x22,%ecx
+ 6c8d6fb:	41 b8 ff ff ff ff    	mov    $0xffffffff,%r8d
+ 6c8d701:	45 31 c9             	xor    %r9d,%r9d
+ 6c8d704:	e8 77 45 0a 00       	call   6d31c80 <mmap@plt>
+ 6c8d709:	48 89 c3             	mov    %rax,%rbx
+ 6c8d70c:	48 ff c0             	inc    %rax
+ 6c8d70f:	48 83 f8 02          	cmp    $0x2,%rax
+ 6c8d713:	0f 82 85 00 00 00    	jb     6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d719:	e8 b7 00 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d71e:	48 8d 3c 18          	lea    (%rax,%rbx,1),%rdi
+ 6c8d722:	4c 89 ee             	mov    %r13,%rsi
+ 6c8d725:	e8 f9 00 00 00       	call   6c8d823 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495cf5>
+ 6c8d72a:	84 c0                	test   %al,%al
+ 6c8d72c:	74 58                	je     6c8d786 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c58>
+ 6c8d72e:	4d 85 e4             	test   %r12,%r12
+ 6c8d731:	74 18                	je     6c8d74b <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c1d>
+ 6c8d733:	e8 9d 00 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d738:	48 8d 3c 40          	lea    (%rax,%rax,2),%rdi
+ 6c8d73c:	48 01 df             	add    %rbx,%rdi
+ 6c8d73f:	4c 89 e6             	mov    %r12,%rsi
+ 6c8d742:	e8 dc 00 00 00       	call   6c8d823 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495cf5>
+ 6c8d747:	84 c0                	test   %al,%al
+ 6c8d749:	74 48                	je     6c8d793 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c65>
+ 6c8d74b:	48 85 db             	test   %rbx,%rbx
+ 6c8d74e:	74 4e                	je     6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d750:	e8 80 00 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d755:	48 c7 44 03 08 00 00 	movq   $0x0,0x8(%rbx,%rax,1)
+ 6c8d75c:	00 00 
+ 6c8d75e:	4c 89 34 03          	mov    %r14,(%rbx,%rax,1)
+ 6c8d762:	4c 8b 75 d0          	mov    -0x30(%rbp),%r14
+ 6c8d766:	49 89 1e             	mov    %rbx,(%r14)
+ 6c8d769:	e8 67 00 00 00       	call   6c8d7d5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495ca7>
+ 6c8d76e:	f0 48 ff 44 03 08    	lock incq 0x8(%rbx,%rax,1)
+ 6c8d774:	4c 89 f0             	mov    %r14,%rax
+ 6c8d777:	48 83 c4 08          	add    $0x8,%rsp
+ 6c8d77b:	5b                   	pop    %rbx
+ 6c8d77c:	41 5c                	pop    %r12
+ 6c8d77e:	41 5d                	pop    %r13
+ 6c8d780:	41 5e                	pop    %r14
+ 6c8d782:	41 5f                	pop    %r15
+ 6c8d784:	5d                   	pop    %rbp
+ 6c8d785:	c3                   	ret
+ 6c8d786:	48 89 df             	mov    %rbx,%rdi
+ 6c8d789:	4c 89 fe             	mov    %r15,%rsi
+ 6c8d78c:	e8 0f 45 0a 00       	call   6d31ca0 <munmap@plt>
+ 6c8d791:	eb 0b                	jmp    6c8d79e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c70>
+ 6c8d793:	48 89 df             	mov    %rbx,%rdi
+ 6c8d796:	4c 89 fe             	mov    %r15,%rsi
+ 6c8d799:	e8 02 45 0a 00       	call   6d31ca0 <munmap@plt>
+ 6c8d79e:	bf 08 00 00 00       	mov    $0x8,%edi
+ 6c8d7a3:	e8 98 77 21 fc       	call   2ea4f40 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x485110>
+ 6c8d7a8:	48 89 c3             	mov    %rax,%rbx
+ 6c8d7ab:	48 89 c7             	mov    %rax,%rdi
+ 6c8d7ae:	e8 2d d9 1f fc       	call   2e8b0e0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x46b2b0>
+ 6c8d7b3:	48 8d 35 e6 9c 12 00 	lea    0x129ce6(%rip),%rsi        # 6db74a0 <strncat@plt+0x83920>
+ 6c8d7ba:	48 8d 15 df 9a 14 fb 	lea    -0x4eb6521(%rip),%rdx        # 1dd72a0 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX>
+ 6c8d7c1:	48 89 df             	mov    %rbx,%rdi
+ 6c8d7c4:	e8 27 79 21 fc       	call   2ea50f0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4852c0>
+ 6c8d7c9:	eb 02                	jmp    6c8d7cd <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c9f>
+ 6c8d7cb:	eb 00                	jmp    6c8d7cd <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495c9f>
+ 6c8d7cd:	48 89 c7             	mov    %rax,%rdi
+ 6c8d7d0:	e8 f2 df 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d7d5:	55                   	push   %rbp
+ 6c8d7d6:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d7d9:	8a 05 39 14 05 01    	mov    0x1051439(%rip),%al        # 7cdec18 <__stop_pb_defaults@@Base+0xa5c760>
+ 6c8d7df:	84 c0                	test   %al,%al
+ 6c8d7e1:	74 09                	je     6c8d7ec <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495cbe>
+ 6c8d7e3:	48 8b 05 26 14 05 01 	mov    0x1051426(%rip),%rax        # 7cdec10 <__stop_pb_defaults@@Base+0xa5c758>
+ 6c8d7ea:	5d                   	pop    %rbp
+ 6c8d7eb:	c3                   	ret
+ 6c8d7ec:	48 8d 3d 25 14 05 01 	lea    0x1051425(%rip),%rdi        # 7cdec18 <__stop_pb_defaults@@Base+0xa5c760>
+ 6c8d7f3:	e8 c8 fe d7 fb       	call   2a0d6c0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x299f25>
+ 6c8d7f8:	85 c0                	test   %eax,%eax
+ 6c8d7fa:	74 e7                	je     6c8d7e3 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495cb5>
+ 6c8d7fc:	bf 27 00 00 00       	mov    $0x27,%edi
+ 6c8d801:	e8 6a 44 0a 00       	call   6d31c70 <sysconf@plt>
+ 6c8d806:	48 89 05 03 14 05 01 	mov    %rax,0x1051403(%rip)        # 7cdec10 <__stop_pb_defaults@@Base+0xa5c758>
+ 6c8d80d:	48 8d 3d 04 14 05 01 	lea    0x1051404(%rip),%rdi        # 7cdec18 <__stop_pb_defaults@@Base+0xa5c760>
+ 6c8d814:	e8 b7 ff d7 fb       	call   2a0d7d0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a035>
+ 6c8d819:	eb c8                	jmp    6c8d7e3 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495cb5>
+ 6c8d81b:	48 89 c7             	mov    %rax,%rdi
+ 6c8d81e:	e8 a4 df 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d823:	55                   	push   %rbp
+ 6c8d824:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d827:	ba 03 00 00 00       	mov    $0x3,%edx
+ 6c8d82c:	e8 5f 44 0a 00       	call   6d31c90 <mprotect@plt>
+ 6c8d831:	85 c0                	test   %eax,%eax
+ 6c8d833:	0f 94 c0             	sete   %al
+ 6c8d836:	5d                   	pop    %rbp
+ 6c8d837:	c3                   	ret
+ 6c8d838:	48 89 c7             	mov    %rax,%rdi
+ 6c8d83b:	e8 87 df 21 fc       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 6c8d840:	55                   	push   %rbp
+ 6c8d841:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d844:	41 57                	push   %r15
+ 6c8d846:	41 56                	push   %r14
+ 6c8d848:	53                   	push   %rbx
+ 6c8d849:	50                   	push   %rax
+ 6c8d84a:	48 89 fb             	mov    %rdi,%rbx
+ 6c8d84d:	e8 3e c6 ff ff       	call   6c89e90 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492362>
+ 6c8d852:	48 85 db             	test   %rbx,%rbx
+ 6c8d855:	0f 84 ba 0c 00 00    	je     6c8e515 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14969e7>
+ 6c8d85b:	49 89 c6             	mov    %rax,%r14
+ 6c8d85e:	4c 8b 3b             	mov    (%rbx),%r15
+ 6c8d861:	49 39 c7             	cmp    %rax,%r15
+ 6c8d864:	0f 84 ab 0c 00 00    	je     6c8e515 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14969e7>
+ 6c8d86a:	e8 01 c6 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d86f:	4c 89 38             	mov    %r15,(%rax)
+ 6c8d872:	e8 f9 c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d877:	48 8b 00             	mov    (%rax),%rax
+ 6c8d87a:	48 8b 00             	mov    (%rax),%rax
+ 6c8d87d:	49 89 06             	mov    %rax,(%r14)
+ 6c8d880:	e8 eb c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d885:	48 8b 00             	mov    (%rax),%rax
+ 6c8d888:	48 8b 40 08          	mov    0x8(%rax),%rax
+ 6c8d88c:	49 89 46 08          	mov    %rax,0x8(%r14)
+ 6c8d890:	e8 db c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d895:	48 8b 00             	mov    (%rax),%rax
+ 6c8d898:	48 8b 40 10          	mov    0x10(%rax),%rax
+ 6c8d89c:	49 89 46 10          	mov    %rax,0x10(%r14)
+ 6c8d8a0:	e8 cb c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d8a5:	48 8b 00             	mov    (%rax),%rax
+ 6c8d8a8:	48 8b 40 18          	mov    0x18(%rax),%rax
+ 6c8d8ac:	49 89 46 18          	mov    %rax,0x18(%r14)
+ 6c8d8b0:	48 8d 05 65 17 00 00 	lea    0x1765(%rip),%rax        # 6c8f01c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14974ee>
+ 6c8d8b7:	49 89 46 20          	mov    %rax,0x20(%r14)
+ 6c8d8bb:	48 8d 05 88 18 00 00 	lea    0x1888(%rip),%rax        # 6c8f14a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149761c>
+ 6c8d8c2:	49 89 46 28          	mov    %rax,0x28(%r14)
+ 6c8d8c6:	48 8d 05 73 1a 00 00 	lea    0x1a73(%rip),%rax        # 6c8f340 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1497812>
+ 6c8d8cd:	49 89 46 30          	mov    %rax,0x30(%r14)
+ 6c8d8d1:	48 8d 05 d2 1b 00 00 	lea    0x1bd2(%rip),%rax        # 6c8f4aa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149797c>
+ 6c8d8d8:	49 89 46 38          	mov    %rax,0x38(%r14)
+ 6c8d8dc:	48 8d 05 31 1d 00 00 	lea    0x1d31(%rip),%rax        # 6c8f614 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1497ae6>
+ 6c8d8e3:	49 89 46 40          	mov    %rax,0x40(%r14)
+ 6c8d8e7:	48 8d 05 90 1e 00 00 	lea    0x1e90(%rip),%rax        # 6c8f77e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1497c50>
+ 6c8d8ee:	49 89 46 48          	mov    %rax,0x48(%r14)
+ 6c8d8f2:	48 8d 05 67 20 00 00 	lea    0x2067(%rip),%rax        # 6c8f960 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1497e32>
+ 6c8d8f9:	49 89 46 50          	mov    %rax,0x50(%r14)
+ 6c8d8fd:	48 8d 05 c6 21 00 00 	lea    0x21c6(%rip),%rax        # 6c8faca <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1497f9c>
+ 6c8d904:	49 89 46 58          	mov    %rax,0x58(%r14)
+ 6c8d908:	48 8d 05 45 23 00 00 	lea    0x2345(%rip),%rax        # 6c8fc54 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498126>
+ 6c8d90f:	49 89 46 60          	mov    %rax,0x60(%r14)
+ 6c8d913:	48 8d 05 1c 25 00 00 	lea    0x251c(%rip),%rax        # 6c8fe36 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498308>
+ 6c8d91a:	49 89 46 68          	mov    %rax,0x68(%r14)
+ 6c8d91e:	48 8d 05 79 26 00 00 	lea    0x2679(%rip),%rax        # 6c8ff9e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498470>
+ 6c8d925:	49 89 46 70          	mov    %rax,0x70(%r14)
+ 6c8d929:	48 8d 05 f8 27 00 00 	lea    0x27f8(%rip),%rax        # 6c90128 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14985fa>
+ 6c8d930:	49 89 46 78          	mov    %rax,0x78(%r14)
+ 6c8d934:	48 8d 05 1d 29 00 00 	lea    0x291d(%rip),%rax        # 6c90258 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149872a>
+ 6c8d93b:	49 89 86 80 00 00 00 	mov    %rax,0x80(%r14)
+ 6c8d942:	48 8d 05 23 2a 00 00 	lea    0x2a23(%rip),%rax        # 6c9036c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149883e>
+ 6c8d949:	49 89 86 88 00 00 00 	mov    %rax,0x88(%r14)
+ 6c8d950:	48 8d 05 29 2b 00 00 	lea    0x2b29(%rip),%rax        # 6c90480 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498952>
+ 6c8d957:	49 89 86 90 00 00 00 	mov    %rax,0x90(%r14)
+ 6c8d95e:	48 8d 05 4d 2c 00 00 	lea    0x2c4d(%rip),%rax        # 6c905b2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498a84>
+ 6c8d965:	49 89 86 98 00 00 00 	mov    %rax,0x98(%r14)
+ 6c8d96c:	48 8d 05 b5 2d 00 00 	lea    0x2db5(%rip),%rax        # 6c90728 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498bfa>
+ 6c8d973:	49 89 86 a0 00 00 00 	mov    %rax,0xa0(%r14)
+ 6c8d97a:	48 8d 05 17 2f 00 00 	lea    0x2f17(%rip),%rax        # 6c90898 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498d6a>
+ 6c8d981:	49 89 86 a8 00 00 00 	mov    %rax,0xa8(%r14)
+ 6c8d988:	48 8d 05 79 30 00 00 	lea    0x3079(%rip),%rax        # 6c90a08 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1498eda>
+ 6c8d98f:	49 89 86 b0 00 00 00 	mov    %rax,0xb0(%r14)
+ 6c8d996:	48 8d 05 9d 31 00 00 	lea    0x319d(%rip),%rax        # 6c90b3a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149900c>
+ 6c8d99d:	49 89 86 b8 00 00 00 	mov    %rax,0xb8(%r14)
+ 6c8d9a4:	48 8d 05 c1 32 00 00 	lea    0x32c1(%rip),%rax        # 6c90c6c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149913e>
+ 6c8d9ab:	49 89 86 c0 00 00 00 	mov    %rax,0xc0(%r14)
+ 6c8d9b2:	48 8d 05 43 34 00 00 	lea    0x3443(%rip),%rax        # 6c90dfc <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14992ce>
+ 6c8d9b9:	49 89 86 c8 00 00 00 	mov    %rax,0xc8(%r14)
+ 6c8d9c0:	48 8d 05 a5 35 00 00 	lea    0x35a5(%rip),%rax        # 6c90f6c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149943e>
+ 6c8d9c7:	49 89 86 d0 00 00 00 	mov    %rax,0xd0(%r14)
+ 6c8d9ce:	48 8d 05 0d 37 00 00 	lea    0x370d(%rip),%rax        # 6c910e2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14995b4>
+ 6c8d9d5:	49 89 86 d8 00 00 00 	mov    %rax,0xd8(%r14)
+ 6c8d9dc:	48 8d 05 6e 38 00 00 	lea    0x386e(%rip),%rax        # 6c91251 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1499723>
+ 6c8d9e3:	49 89 86 e0 00 00 00 	mov    %rax,0xe0(%r14)
+ 6c8d9ea:	48 8d 05 01 3b 00 00 	lea    0x3b01(%rip),%rax        # 6c914f2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14999c4>
+ 6c8d9f1:	49 89 86 e8 00 00 00 	mov    %rax,0xe8(%r14)
+ 6c8d9f8:	48 8d 05 bf 3c 00 00 	lea    0x3cbf(%rip),%rax        # 6c916be <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1499b90>
+ 6c8d9ff:	49 89 86 f0 00 00 00 	mov    %rax,0xf0(%r14)
+ 6c8da06:	48 8d 05 7d 3e 00 00 	lea    0x3e7d(%rip),%rax        # 6c9188a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1499d5c>
+ 6c8da0d:	49 89 86 f8 00 00 00 	mov    %rax,0xf8(%r14)
+ 6c8da14:	48 8d 05 df 3f 00 00 	lea    0x3fdf(%rip),%rax        # 6c919fa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1499ecc>
+ 6c8da1b:	49 89 86 00 01 00 00 	mov    %rax,0x100(%r14)
+ 6c8da22:	48 8d 05 61 41 00 00 	lea    0x4161(%rip),%rax        # 6c91b8a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149a05c>
+ 6c8da29:	49 89 86 08 01 00 00 	mov    %rax,0x108(%r14)
+ 6c8da30:	48 8d 05 1e 43 00 00 	lea    0x431e(%rip),%rax        # 6c91d55 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149a227>
+ 6c8da37:	49 89 86 10 01 00 00 	mov    %rax,0x110(%r14)
+ 6c8da3e:	48 8d 05 b1 45 00 00 	lea    0x45b1(%rip),%rax        # 6c91ff6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149a4c8>
+ 6c8da45:	49 89 86 18 01 00 00 	mov    %rax,0x118(%r14)
+ 6c8da4c:	48 8d 05 6f 47 00 00 	lea    0x476f(%rip),%rax        # 6c921c2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149a694>
+ 6c8da53:	49 89 86 20 01 00 00 	mov    %rax,0x120(%r14)
+ 6c8da5a:	48 8d 05 2c 49 00 00 	lea    0x492c(%rip),%rax        # 6c9238d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149a85f>
+ 6c8da61:	49 89 86 28 01 00 00 	mov    %rax,0x128(%r14)
+ 6c8da68:	48 8d 05 bb 4b 00 00 	lea    0x4bbb(%rip),%rax        # 6c9262a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149aafc>
+ 6c8da6f:	49 89 86 30 01 00 00 	mov    %rax,0x130(%r14)
+ 6c8da76:	48 8d 05 77 4d 00 00 	lea    0x4d77(%rip),%rax        # 6c927f4 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149acc6>
+ 6c8da7d:	49 89 86 38 01 00 00 	mov    %rax,0x138(%r14)
+ 6c8da84:	48 8d 05 32 4f 00 00 	lea    0x4f32(%rip),%rax        # 6c929bd <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149ae8f>
+ 6c8da8b:	49 89 86 40 01 00 00 	mov    %rax,0x140(%r14)
+ 6c8da92:	48 8d 05 c1 51 00 00 	lea    0x51c1(%rip),%rax        # 6c92c5a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149b12c>
+ 6c8da99:	49 89 86 48 01 00 00 	mov    %rax,0x148(%r14)
+ 6c8daa0:	48 8d 05 7d 53 00 00 	lea    0x537d(%rip),%rax        # 6c92e24 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149b2f6>
+ 6c8daa7:	49 89 86 50 01 00 00 	mov    %rax,0x150(%r14)
+ 6c8daae:	48 8d 05 38 55 00 00 	lea    0x5538(%rip),%rax        # 6c92fed <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149b4bf>
+ 6c8dab5:	49 89 86 58 01 00 00 	mov    %rax,0x158(%r14)
+ 6c8dabc:	48 8d 05 cb 57 00 00 	lea    0x57cb(%rip),%rax        # 6c9328e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149b760>
+ 6c8dac3:	49 89 86 60 01 00 00 	mov    %rax,0x160(%r14)
+ 6c8daca:	48 8d 05 89 59 00 00 	lea    0x5989(%rip),%rax        # 6c9345a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149b92c>
+ 6c8dad1:	49 89 86 68 01 00 00 	mov    %rax,0x168(%r14)
+ 6c8dad8:	48 8d 05 46 5b 00 00 	lea    0x5b46(%rip),%rax        # 6c93625 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149baf7>
+ 6c8dadf:	49 89 86 70 01 00 00 	mov    %rax,0x170(%r14)
+ 6c8dae6:	48 8d 05 d9 5d 00 00 	lea    0x5dd9(%rip),%rax        # 6c938c6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149bd98>
+ 6c8daed:	49 89 86 78 01 00 00 	mov    %rax,0x178(%r14)
+ 6c8daf4:	48 8d 05 97 5f 00 00 	lea    0x5f97(%rip),%rax        # 6c93a92 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149bf64>
+ 6c8dafb:	49 89 86 80 01 00 00 	mov    %rax,0x180(%r14)
+ 6c8db02:	48 8d 05 54 61 00 00 	lea    0x6154(%rip),%rax        # 6c93c5d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149c12f>
+ 6c8db09:	49 89 86 88 01 00 00 	mov    %rax,0x188(%r14)
+ 6c8db10:	48 8d 05 e3 63 00 00 	lea    0x63e3(%rip),%rax        # 6c93efa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149c3cc>
+ 6c8db17:	49 89 86 90 01 00 00 	mov    %rax,0x190(%r14)
+ 6c8db1e:	48 8d 05 9f 65 00 00 	lea    0x659f(%rip),%rax        # 6c940c4 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149c596>
+ 6c8db25:	49 89 86 98 01 00 00 	mov    %rax,0x198(%r14)
+ 6c8db2c:	48 8d 05 5a 67 00 00 	lea    0x675a(%rip),%rax        # 6c9428d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149c75f>
+ 6c8db33:	49 89 86 a0 01 00 00 	mov    %rax,0x1a0(%r14)
+ 6c8db3a:	48 8d 05 ed 69 00 00 	lea    0x69ed(%rip),%rax        # 6c9452e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149ca00>
+ 6c8db41:	49 89 86 a8 01 00 00 	mov    %rax,0x1a8(%r14)
+ 6c8db48:	48 8d 05 ab 6b 00 00 	lea    0x6bab(%rip),%rax        # 6c946fa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149cbcc>
+ 6c8db4f:	49 89 86 b0 01 00 00 	mov    %rax,0x1b0(%r14)
+ 6c8db56:	48 8d 05 68 6d 00 00 	lea    0x6d68(%rip),%rax        # 6c948c5 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149cd97>
+ 6c8db5d:	49 89 86 b8 01 00 00 	mov    %rax,0x1b8(%r14)
+ 6c8db64:	48 8d 05 fd 6f 00 00 	lea    0x6ffd(%rip),%rax        # 6c94b68 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149d03a>
+ 6c8db6b:	49 89 86 c0 01 00 00 	mov    %rax,0x1c0(%r14)
+ 6c8db72:	48 8d 05 bd 71 00 00 	lea    0x71bd(%rip),%rax        # 6c94d36 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149d208>
+ 6c8db79:	49 89 86 c8 01 00 00 	mov    %rax,0x1c8(%r14)
+ 6c8db80:	48 8d 05 7c 73 00 00 	lea    0x737c(%rip),%rax        # 6c94f03 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149d3d5>
+ 6c8db87:	49 89 86 d0 01 00 00 	mov    %rax,0x1d0(%r14)
+ 6c8db8e:	48 8d 05 11 76 00 00 	lea    0x7611(%rip),%rax        # 6c951a6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149d678>
+ 6c8db95:	49 89 86 d8 01 00 00 	mov    %rax,0x1d8(%r14)
+ 6c8db9c:	48 8d 05 d1 77 00 00 	lea    0x77d1(%rip),%rax        # 6c95374 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149d846>
+ 6c8dba3:	49 89 86 e0 01 00 00 	mov    %rax,0x1e0(%r14)
+ 6c8dbaa:	48 8d 05 90 79 00 00 	lea    0x7990(%rip),%rax        # 6c95541 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149da13>
+ 6c8dbb1:	49 89 86 e8 01 00 00 	mov    %rax,0x1e8(%r14)
+ 6c8dbb8:	48 8d 05 e5 7b 00 00 	lea    0x7be5(%rip),%rax        # 6c957a4 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149dc76>
+ 6c8dbbf:	49 89 86 f0 01 00 00 	mov    %rax,0x1f0(%r14)
+ 6c8dbc6:	48 8d 05 61 7d 00 00 	lea    0x7d61(%rip),%rax        # 6c9592e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149de00>
+ 6c8dbcd:	49 89 86 f8 01 00 00 	mov    %rax,0x1f8(%r14)
+ 6c8dbd4:	48 8d 05 dc 7e 00 00 	lea    0x7edc(%rip),%rax        # 6c95ab7 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149df89>
+ 6c8dbdb:	49 89 86 00 02 00 00 	mov    %rax,0x200(%r14)
+ 6c8dbe2:	48 8d 05 95 81 00 00 	lea    0x8195(%rip),%rax        # 6c95d7e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149e250>
+ 6c8dbe9:	49 89 86 08 02 00 00 	mov    %rax,0x208(%r14)
+ 6c8dbf0:	48 8d 05 77 83 00 00 	lea    0x8377(%rip),%rax        # 6c95f6e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149e440>
+ 6c8dbf7:	49 89 86 10 02 00 00 	mov    %rax,0x210(%r14)
+ 6c8dbfe:	48 8d 05 59 85 00 00 	lea    0x8559(%rip),%rax        # 6c9615e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149e630>
+ 6c8dc05:	49 89 86 18 02 00 00 	mov    %rax,0x218(%r14)
+ 6c8dc0c:	48 8d 05 0f 88 00 00 	lea    0x880f(%rip),%rax        # 6c96422 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149e8f4>
+ 6c8dc13:	49 89 86 20 02 00 00 	mov    %rax,0x220(%r14)
+ 6c8dc1a:	48 8d 05 ef 89 00 00 	lea    0x89ef(%rip),%rax        # 6c96610 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149eae2>
+ 6c8dc21:	49 89 86 28 02 00 00 	mov    %rax,0x228(%r14)
+ 6c8dc28:	48 8d 05 cf 8b 00 00 	lea    0x8bcf(%rip),%rax        # 6c967fe <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149ecd0>
+ 6c8dc2f:	49 89 86 30 02 00 00 	mov    %rax,0x230(%r14)
+ 6c8dc36:	48 8d 05 85 8e 00 00 	lea    0x8e85(%rip),%rax        # 6c96ac2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149ef94>
+ 6c8dc3d:	49 89 86 38 02 00 00 	mov    %rax,0x238(%r14)
+ 6c8dc44:	48 8d 05 65 90 00 00 	lea    0x9065(%rip),%rax        # 6c96cb0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149f182>
+ 6c8dc4b:	49 89 86 40 02 00 00 	mov    %rax,0x240(%r14)
+ 6c8dc52:	48 8d 05 45 92 00 00 	lea    0x9245(%rip),%rax        # 6c96e9e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149f370>
+ 6c8dc59:	49 89 86 48 02 00 00 	mov    %rax,0x248(%r14)
+ 6c8dc60:	48 8d 05 ff 94 00 00 	lea    0x94ff(%rip),%rax        # 6c97166 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149f638>
+ 6c8dc67:	49 89 86 50 02 00 00 	mov    %rax,0x250(%r14)
+ 6c8dc6e:	48 8d 05 e1 96 00 00 	lea    0x96e1(%rip),%rax        # 6c97356 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149f828>
+ 6c8dc75:	49 89 86 58 02 00 00 	mov    %rax,0x258(%r14)
+ 6c8dc7c:	48 8d 05 c3 98 00 00 	lea    0x98c3(%rip),%rax        # 6c97546 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149fa18>
+ 6c8dc83:	49 89 86 60 02 00 00 	mov    %rax,0x260(%r14)
+ 6c8dc8a:	48 8d 05 7d 9b 00 00 	lea    0x9b7d(%rip),%rax        # 6c9780e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149fce0>
+ 6c8dc91:	49 89 86 68 02 00 00 	mov    %rax,0x268(%r14)
+ 6c8dc98:	48 8d 05 5f 9d 00 00 	lea    0x9d5f(%rip),%rax        # 6c979fe <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149fed0>
+ 6c8dc9f:	49 89 86 70 02 00 00 	mov    %rax,0x270(%r14)
+ 6c8dca6:	48 8d 05 41 9f 00 00 	lea    0x9f41(%rip),%rax        # 6c97bee <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a00c0>
+ 6c8dcad:	49 89 86 78 02 00 00 	mov    %rax,0x278(%r14)
+ 6c8dcb4:	48 8d 05 f7 a1 00 00 	lea    0xa1f7(%rip),%rax        # 6c97eb2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0384>
+ 6c8dcbb:	49 89 86 80 02 00 00 	mov    %rax,0x280(%r14)
+ 6c8dcc2:	48 8d 05 d7 a3 00 00 	lea    0xa3d7(%rip),%rax        # 6c980a0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0572>
+ 6c8dcc9:	49 89 86 88 02 00 00 	mov    %rax,0x288(%r14)
+ 6c8dcd0:	48 8d 05 b7 a5 00 00 	lea    0xa5b7(%rip),%rax        # 6c9828e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0760>
+ 6c8dcd7:	49 89 86 90 02 00 00 	mov    %rax,0x290(%r14)
+ 6c8dcde:	48 8d 05 71 a8 00 00 	lea    0xa871(%rip),%rax        # 6c98556 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0a28>
+ 6c8dce5:	49 89 86 98 02 00 00 	mov    %rax,0x298(%r14)
+ 6c8dcec:	48 8d 05 53 aa 00 00 	lea    0xaa53(%rip),%rax        # 6c98746 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0c18>
+ 6c8dcf3:	49 89 86 a0 02 00 00 	mov    %rax,0x2a0(%r14)
+ 6c8dcfa:	48 8d 05 35 ac 00 00 	lea    0xac35(%rip),%rax        # 6c98936 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a0e08>
+ 6c8dd01:	49 89 86 a8 02 00 00 	mov    %rax,0x2a8(%r14)
+ 6c8dd08:	48 8d 05 f1 ae 00 00 	lea    0xaef1(%rip),%rax        # 6c98c00 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a10d2>
+ 6c8dd0f:	49 89 86 b0 02 00 00 	mov    %rax,0x2b0(%r14)
+ 6c8dd16:	48 8d 05 d5 b0 00 00 	lea    0xb0d5(%rip),%rax        # 6c98df2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a12c4>
+ 6c8dd1d:	49 89 86 b8 02 00 00 	mov    %rax,0x2b8(%r14)
+ 6c8dd24:	48 8d 05 b9 b2 00 00 	lea    0xb2b9(%rip),%rax        # 6c98fe4 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a14b6>
+ 6c8dd2b:	49 89 86 c0 02 00 00 	mov    %rax,0x2c0(%r14)
+ 6c8dd32:	48 8d 05 75 b5 00 00 	lea    0xb575(%rip),%rax        # 6c992ae <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a1780>
+ 6c8dd39:	49 89 86 c8 02 00 00 	mov    %rax,0x2c8(%r14)
+ 6c8dd40:	48 8d 05 59 b7 00 00 	lea    0xb759(%rip),%rax        # 6c994a0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a1972>
+ 6c8dd47:	49 89 86 d0 02 00 00 	mov    %rax,0x2d0(%r14)
+ 6c8dd4e:	48 8d 05 3d b9 00 00 	lea    0xb93d(%rip),%rax        # 6c99692 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a1b64>
+ 6c8dd55:	49 89 86 d8 02 00 00 	mov    %rax,0x2d8(%r14)
+ 6c8dd5c:	48 8d 05 c5 bb 00 00 	lea    0xbbc5(%rip),%rax        # 6c99928 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a1dfa>
+ 6c8dd63:	49 89 86 e0 02 00 00 	mov    %rax,0x2e0(%r14)
+ 6c8dd6a:	48 8d 05 81 bd 00 00 	lea    0xbd81(%rip),%rax        # 6c99af2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a1fc4>
+ 6c8dd71:	49 89 86 e8 02 00 00 	mov    %rax,0x2e8(%r14)
+ 6c8dd78:	48 8d 05 3d bf 00 00 	lea    0xbf3d(%rip),%rax        # 6c99cbc <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a218e>
+ 6c8dd7f:	49 89 86 f0 02 00 00 	mov    %rax,0x2f0(%r14)
+ 6c8dd86:	48 8d 05 fb c0 00 00 	lea    0xc0fb(%rip),%rax        # 6c99e88 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a235a>
+ 6c8dd8d:	49 89 86 f8 02 00 00 	mov    %rax,0x2f8(%r14)
+ 6c8dd94:	48 8d 05 7f c2 00 00 	lea    0xc27f(%rip),%rax        # 6c9a01a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a24ec>
+ 6c8dd9b:	49 89 86 00 03 00 00 	mov    %rax,0x300(%r14)
+ 6c8dda2:	48 8d 05 01 c4 00 00 	lea    0xc401(%rip),%rax        # 6c9a1aa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a267c>
+ 6c8dda9:	49 89 86 08 03 00 00 	mov    %rax,0x308(%r14)
+ 6c8ddb0:	48 8d 05 83 c5 00 00 	lea    0xc583(%rip),%rax        # 6c9a33a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a280c>
+ 6c8ddb7:	49 89 86 10 03 00 00 	mov    %rax,0x310(%r14)
+ 6c8ddbe:	48 8d 05 07 c7 00 00 	lea    0xc707(%rip),%rax        # 6c9a4cc <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a299e>
+ 6c8ddc5:	49 89 86 18 03 00 00 	mov    %rax,0x318(%r14)
+ 6c8ddcc:	48 8d 05 8b c8 00 00 	lea    0xc88b(%rip),%rax        # 6c9a65e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a2b30>
+ 6c8ddd3:	49 89 86 20 03 00 00 	mov    %rax,0x320(%r14)
+ 6c8ddda:	48 8d 05 0d ca 00 00 	lea    0xca0d(%rip),%rax        # 6c9a7ee <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a2cc0>
+ 6c8dde1:	49 89 86 28 03 00 00 	mov    %rax,0x328(%r14)
+ 6c8dde8:	48 8d 05 91 cb 00 00 	lea    0xcb91(%rip),%rax        # 6c9a980 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a2e52>
+ 6c8ddef:	49 89 86 30 03 00 00 	mov    %rax,0x330(%r14)
+ 6c8ddf6:	48 8d 05 17 cd 00 00 	lea    0xcd17(%rip),%rax        # 6c9ab14 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a2fe6>
+ 6c8ddfd:	49 89 86 38 03 00 00 	mov    %rax,0x338(%r14)
+ 6c8de04:	48 8d 05 9d ce 00 00 	lea    0xce9d(%rip),%rax        # 6c9aca8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a317a>
+ 6c8de0b:	49 89 86 40 03 00 00 	mov    %rax,0x340(%r14)
+ 6c8de12:	48 8d 05 19 d0 00 00 	lea    0xd019(%rip),%rax        # 6c9ae32 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a3304>
+ 6c8de19:	49 89 86 48 03 00 00 	mov    %rax,0x348(%r14)
+ 6c8de20:	48 8d 05 a7 d1 00 00 	lea    0xd1a7(%rip),%rax        # 6c9afce <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a34a0>
+ 6c8de27:	49 89 86 50 03 00 00 	mov    %rax,0x350(%r14)
+ 6c8de2e:	48 8d 05 35 d3 00 00 	lea    0xd335(%rip),%rax        # 6c9b16a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a363c>
+ 6c8de35:	49 89 86 58 03 00 00 	mov    %rax,0x358(%r14)
+ 6c8de3c:	48 8d 05 c3 d4 00 00 	lea    0xd4c3(%rip),%rax        # 6c9b306 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a37d8>
+ 6c8de43:	49 89 86 60 03 00 00 	mov    %rax,0x360(%r14)
+ 6c8de4a:	48 8d 05 51 d6 00 00 	lea    0xd651(%rip),%rax        # 6c9b4a2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a3974>
+ 6c8de51:	49 89 86 68 03 00 00 	mov    %rax,0x368(%r14)
+ 6c8de58:	48 8d 05 d9 d7 00 00 	lea    0xd7d9(%rip),%rax        # 6c9b638 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a3b0a>
+ 6c8de5f:	49 89 86 70 03 00 00 	mov    %rax,0x370(%r14)
+ 6c8de66:	48 8d 05 55 d9 00 00 	lea    0xd955(%rip),%rax        # 6c9b7c2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a3c94>
+ 6c8de6d:	49 89 86 78 03 00 00 	mov    %rax,0x378(%r14)
+ 6c8de74:	48 8d 05 01 db 00 00 	lea    0xdb01(%rip),%rax        # 6c9b97c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a3e4e>
+ 6c8de7b:	49 89 86 80 03 00 00 	mov    %rax,0x380(%r14)
+ 6c8de82:	48 8d 05 ad dc 00 00 	lea    0xdcad(%rip),%rax        # 6c9bb36 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4008>
+ 6c8de89:	49 89 86 88 03 00 00 	mov    %rax,0x388(%r14)
+ 6c8de90:	48 8d 05 6a de 00 00 	lea    0xde6a(%rip),%rax        # 6c9bd01 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a41d3>
+ 6c8de97:	49 89 86 90 03 00 00 	mov    %rax,0x390(%r14)
+ 6c8de9e:	48 8d 05 fd e0 00 00 	lea    0xe0fd(%rip),%rax        # 6c9bfa2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4474>
+ 6c8dea5:	49 89 86 98 03 00 00 	mov    %rax,0x398(%r14)
+ 6c8deac:	48 8d 05 bb e2 00 00 	lea    0xe2bb(%rip),%rax        # 6c9c16e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4640>
+ 6c8deb3:	49 89 86 a0 03 00 00 	mov    %rax,0x3a0(%r14)
+ 6c8deba:	48 8d 05 78 e4 00 00 	lea    0xe478(%rip),%rax        # 6c9c339 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a480b>
+ 6c8dec1:	49 89 86 a8 03 00 00 	mov    %rax,0x3a8(%r14)
+ 6c8dec8:	48 8d 05 07 e7 00 00 	lea    0xe707(%rip),%rax        # 6c9c5d6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4aa8>
+ 6c8decf:	49 89 86 b0 03 00 00 	mov    %rax,0x3b0(%r14)
+ 6c8ded6:	48 8d 05 c3 e8 00 00 	lea    0xe8c3(%rip),%rax        # 6c9c7a0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4c72>
+ 6c8dedd:	49 89 86 b8 03 00 00 	mov    %rax,0x3b8(%r14)
+ 6c8dee4:	48 8d 05 7e ea 00 00 	lea    0xea7e(%rip),%rax        # 6c9c969 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a4e3b>
+ 6c8deeb:	49 89 86 c0 03 00 00 	mov    %rax,0x3c0(%r14)
+ 6c8def2:	48 8d 05 0d ed 00 00 	lea    0xed0d(%rip),%rax        # 6c9cc06 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a50d8>
+ 6c8def9:	49 89 86 c8 03 00 00 	mov    %rax,0x3c8(%r14)
+ 6c8df00:	48 8d 05 c9 ee 00 00 	lea    0xeec9(%rip),%rax        # 6c9cdd0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a52a2>
+ 6c8df07:	49 89 86 d0 03 00 00 	mov    %rax,0x3d0(%r14)
+ 6c8df0e:	48 8d 05 84 f0 00 00 	lea    0xf084(%rip),%rax        # 6c9cf99 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a546b>
+ 6c8df15:	49 89 86 d8 03 00 00 	mov    %rax,0x3d8(%r14)
+ 6c8df1c:	48 8d 05 17 f3 00 00 	lea    0xf317(%rip),%rax        # 6c9d23a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a570c>
+ 6c8df23:	49 89 86 e0 03 00 00 	mov    %rax,0x3e0(%r14)
+ 6c8df2a:	48 8d 05 d5 f4 00 00 	lea    0xf4d5(%rip),%rax        # 6c9d406 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a58d8>
+ 6c8df31:	49 89 86 e8 03 00 00 	mov    %rax,0x3e8(%r14)
+ 6c8df38:	48 8d 05 92 f6 00 00 	lea    0xf692(%rip),%rax        # 6c9d5d1 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a5aa3>
+ 6c8df3f:	49 89 86 f0 03 00 00 	mov    %rax,0x3f0(%r14)
+ 6c8df46:	48 8d 05 25 f9 00 00 	lea    0xf925(%rip),%rax        # 6c9d872 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a5d44>
+ 6c8df4d:	49 89 86 f8 03 00 00 	mov    %rax,0x3f8(%r14)
+ 6c8df54:	48 8d 05 e3 fa 00 00 	lea    0xfae3(%rip),%rax        # 6c9da3e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a5f10>
+ 6c8df5b:	49 89 86 00 04 00 00 	mov    %rax,0x400(%r14)
+ 6c8df62:	48 8d 05 a0 fc 00 00 	lea    0xfca0(%rip),%rax        # 6c9dc09 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a60db>
+ 6c8df69:	49 89 86 08 04 00 00 	mov    %rax,0x408(%r14)
+ 6c8df70:	48 8d 05 2f ff 00 00 	lea    0xff2f(%rip),%rax        # 6c9dea6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a6378>
+ 6c8df77:	49 89 86 10 04 00 00 	mov    %rax,0x410(%r14)
+ 6c8df7e:	48 8d 05 eb 00 01 00 	lea    0x100eb(%rip),%rax        # 6c9e070 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a6542>
+ 6c8df85:	49 89 86 18 04 00 00 	mov    %rax,0x418(%r14)
+ 6c8df8c:	48 8d 05 a6 02 01 00 	lea    0x102a6(%rip),%rax        # 6c9e239 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a670b>
+ 6c8df93:	49 89 86 20 04 00 00 	mov    %rax,0x420(%r14)
+ 6c8df9a:	48 8d 05 39 05 01 00 	lea    0x10539(%rip),%rax        # 6c9e4da <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a69ac>
+ 6c8dfa1:	49 89 86 28 04 00 00 	mov    %rax,0x428(%r14)
+ 6c8dfa8:	48 8d 05 f7 06 01 00 	lea    0x106f7(%rip),%rax        # 6c9e6a6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a6b78>
+ 6c8dfaf:	49 89 86 30 04 00 00 	mov    %rax,0x430(%r14)
+ 6c8dfb6:	48 8d 05 b4 08 01 00 	lea    0x108b4(%rip),%rax        # 6c9e871 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a6d43>
+ 6c8dfbd:	49 89 86 38 04 00 00 	mov    %rax,0x438(%r14)
+ 6c8dfc4:	48 8d 05 49 0b 01 00 	lea    0x10b49(%rip),%rax        # 6c9eb14 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a6fe6>
+ 6c8dfcb:	49 89 86 40 04 00 00 	mov    %rax,0x440(%r14)
+ 6c8dfd2:	48 8d 05 09 0d 01 00 	lea    0x10d09(%rip),%rax        # 6c9ece2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a71b4>
+ 6c8dfd9:	49 89 86 48 04 00 00 	mov    %rax,0x448(%r14)
+ 6c8dfe0:	48 8d 05 c8 0e 01 00 	lea    0x10ec8(%rip),%rax        # 6c9eeaf <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a7381>
+ 6c8dfe7:	49 89 86 50 04 00 00 	mov    %rax,0x450(%r14)
+ 6c8dfee:	48 8d 05 5d 11 01 00 	lea    0x1115d(%rip),%rax        # 6c9f152 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a7624>
+ 6c8dff5:	49 89 86 58 04 00 00 	mov    %rax,0x458(%r14)
+ 6c8dffc:	48 8d 05 1d 13 01 00 	lea    0x1131d(%rip),%rax        # 6c9f320 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a77f2>
+ 6c8e003:	49 89 86 60 04 00 00 	mov    %rax,0x460(%r14)
+ 6c8e00a:	48 8d 05 dc 14 01 00 	lea    0x114dc(%rip),%rax        # 6c9f4ed <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a79bf>
+ 6c8e011:	49 89 86 68 04 00 00 	mov    %rax,0x468(%r14)
+ 6c8e018:	48 8d 05 31 17 01 00 	lea    0x11731(%rip),%rax        # 6c9f750 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a7c22>
+ 6c8e01f:	49 89 86 70 04 00 00 	mov    %rax,0x470(%r14)
+ 6c8e026:	48 8d 05 ad 18 01 00 	lea    0x118ad(%rip),%rax        # 6c9f8da <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a7dac>
+ 6c8e02d:	49 89 86 78 04 00 00 	mov    %rax,0x478(%r14)
+ 6c8e034:	48 8d 05 29 1a 01 00 	lea    0x11a29(%rip),%rax        # 6c9fa64 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a7f36>
+ 6c8e03b:	49 89 86 80 04 00 00 	mov    %rax,0x480(%r14)
+ 6c8e042:	48 8d 05 e7 1b 01 00 	lea    0x11be7(%rip),%rax        # 6c9fc30 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8102>
+ 6c8e049:	49 89 86 88 04 00 00 	mov    %rax,0x488(%r14)
+ 6c8e050:	48 8d 05 6b 1d 01 00 	lea    0x11d6b(%rip),%rax        # 6c9fdc2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8294>
+ 6c8e057:	49 89 86 90 04 00 00 	mov    %rax,0x490(%r14)
+ 6c8e05e:	48 8d 05 ed 1e 01 00 	lea    0x11eed(%rip),%rax        # 6c9ff52 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8424>
+ 6c8e065:	49 89 86 98 04 00 00 	mov    %rax,0x498(%r14)
+ 6c8e06c:	48 8d 05 6f 20 01 00 	lea    0x1206f(%rip),%rax        # 6ca00e2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a85b4>
+ 6c8e073:	49 89 86 a0 04 00 00 	mov    %rax,0x4a0(%r14)
+ 6c8e07a:	48 8d 05 f3 21 01 00 	lea    0x121f3(%rip),%rax        # 6ca0274 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8746>
+ 6c8e081:	49 89 86 a8 04 00 00 	mov    %rax,0x4a8(%r14)
+ 6c8e088:	48 8d 05 77 23 01 00 	lea    0x12377(%rip),%rax        # 6ca0406 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a88d8>
+ 6c8e08f:	49 89 86 b0 04 00 00 	mov    %rax,0x4b0(%r14)
+ 6c8e096:	48 8d 05 f9 24 01 00 	lea    0x124f9(%rip),%rax        # 6ca0596 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8a68>
+ 6c8e09d:	49 89 86 b8 04 00 00 	mov    %rax,0x4b8(%r14)
+ 6c8e0a4:	48 8d 05 7d 26 01 00 	lea    0x1267d(%rip),%rax        # 6ca0728 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8bfa>
+ 6c8e0ab:	49 89 86 c0 04 00 00 	mov    %rax,0x4c0(%r14)
+ 6c8e0b2:	48 8d 05 03 28 01 00 	lea    0x12803(%rip),%rax        # 6ca08bc <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8d8e>
+ 6c8e0b9:	49 89 86 c8 04 00 00 	mov    %rax,0x4c8(%r14)
+ 6c8e0c0:	48 8d 05 89 29 01 00 	lea    0x12989(%rip),%rax        # 6ca0a50 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a8f22>
+ 6c8e0c7:	49 89 86 d0 04 00 00 	mov    %rax,0x4d0(%r14)
+ 6c8e0ce:	48 8d 05 05 2b 01 00 	lea    0x12b05(%rip),%rax        # 6ca0bda <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a90ac>
+ 6c8e0d5:	49 89 86 d8 04 00 00 	mov    %rax,0x4d8(%r14)
+ 6c8e0dc:	48 8d 05 93 2c 01 00 	lea    0x12c93(%rip),%rax        # 6ca0d76 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9248>
+ 6c8e0e3:	49 89 86 e0 04 00 00 	mov    %rax,0x4e0(%r14)
+ 6c8e0ea:	48 8d 05 21 2e 01 00 	lea    0x12e21(%rip),%rax        # 6ca0f12 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a93e4>
+ 6c8e0f1:	49 89 86 e8 04 00 00 	mov    %rax,0x4e8(%r14)
+ 6c8e0f8:	48 8d 05 af 2f 01 00 	lea    0x12faf(%rip),%rax        # 6ca10ae <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9580>
+ 6c8e0ff:	49 89 86 f0 04 00 00 	mov    %rax,0x4f0(%r14)
+ 6c8e106:	48 8d 05 3d 31 01 00 	lea    0x1313d(%rip),%rax        # 6ca124a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a971c>
+ 6c8e10d:	49 89 86 f8 04 00 00 	mov    %rax,0x4f8(%r14)
+ 6c8e114:	48 8d 05 c5 32 01 00 	lea    0x132c5(%rip),%rax        # 6ca13e0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a98b2>
+ 6c8e11b:	49 89 86 00 05 00 00 	mov    %rax,0x500(%r14)
+ 6c8e122:	48 8d 05 41 34 01 00 	lea    0x13441(%rip),%rax        # 6ca156a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9a3c>
+ 6c8e129:	49 89 86 08 05 00 00 	mov    %rax,0x508(%r14)
+ 6c8e130:	48 8d 05 ed 35 01 00 	lea    0x135ed(%rip),%rax        # 6ca1724 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9bf6>
+ 6c8e137:	49 89 86 10 05 00 00 	mov    %rax,0x510(%r14)
+ 6c8e13e:	48 8d 05 99 37 01 00 	lea    0x13799(%rip),%rax        # 6ca18de <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9db0>
+ 6c8e145:	49 89 86 18 05 00 00 	mov    %rax,0x518(%r14)
+ 6c8e14c:	48 8d 05 27 39 01 00 	lea    0x13927(%rip),%rax        # 6ca1a7a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14a9f4c>
+ 6c8e153:	49 89 86 20 05 00 00 	mov    %rax,0x520(%r14)
+ 6c8e15a:	48 8d 05 87 3a 01 00 	lea    0x13a87(%rip),%rax        # 6ca1be8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa0ba>
+ 6c8e161:	49 89 86 28 05 00 00 	mov    %rax,0x528(%r14)
+ 6c8e168:	48 8d 05 0b 3c 01 00 	lea    0x13c0b(%rip),%rax        # 6ca1d7a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa24c>
+ 6c8e16f:	49 89 86 30 05 00 00 	mov    %rax,0x530(%r14)
+ 6c8e176:	48 8d 05 6b 3d 01 00 	lea    0x13d6b(%rip),%rax        # 6ca1ee8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa3ba>
+ 6c8e17d:	49 89 86 38 05 00 00 	mov    %rax,0x538(%r14)
+ 6c8e184:	48 8d 05 cd 3e 01 00 	lea    0x13ecd(%rip),%rax        # 6ca2058 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa52a>
+ 6c8e18b:	49 89 86 40 05 00 00 	mov    %rax,0x540(%r14)
+ 6c8e192:	48 8d 05 2d 40 01 00 	lea    0x1402d(%rip),%rax        # 6ca21c6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa698>
+ 6c8e199:	49 89 86 48 05 00 00 	mov    %rax,0x548(%r14)
+ 6c8e1a0:	48 8d 05 b1 41 01 00 	lea    0x141b1(%rip),%rax        # 6ca2358 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa82a>
+ 6c8e1a7:	49 89 86 50 05 00 00 	mov    %rax,0x550(%r14)
+ 6c8e1ae:	48 8d 05 11 43 01 00 	lea    0x14311(%rip),%rax        # 6ca24c6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aa998>
+ 6c8e1b5:	49 89 86 58 05 00 00 	mov    %rax,0x558(%r14)
+ 6c8e1bc:	48 8d 05 71 44 01 00 	lea    0x14471(%rip),%rax        # 6ca2634 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aab06>
+ 6c8e1c3:	49 89 86 60 05 00 00 	mov    %rax,0x560(%r14)
+ 6c8e1ca:	48 8d 05 35 46 01 00 	lea    0x14635(%rip),%rax        # 6ca2806 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aacd8>
+ 6c8e1d1:	49 89 86 68 05 00 00 	mov    %rax,0x568(%r14)
+ 6c8e1d8:	48 8d 05 c3 47 01 00 	lea    0x147c3(%rip),%rax        # 6ca29a2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aae74>
+ 6c8e1df:	49 89 86 70 05 00 00 	mov    %rax,0x570(%r14)
+ 6c8e1e6:	48 8d 05 45 49 01 00 	lea    0x14945(%rip),%rax        # 6ca2b32 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab004>
+ 6c8e1ed:	49 89 86 78 05 00 00 	mov    %rax,0x578(%r14)
+ 6c8e1f4:	48 8d 05 af 4a 01 00 	lea    0x14aaf(%rip),%rax        # 6ca2caa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab17c>
+ 6c8e1fb:	49 89 86 80 05 00 00 	mov    %rax,0x580(%r14)
+ 6c8e202:	48 8d 05 19 4c 01 00 	lea    0x14c19(%rip),%rax        # 6ca2e22 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab2f4>
+ 6c8e209:	49 89 86 88 05 00 00 	mov    %rax,0x588(%r14)
+ 6c8e210:	48 8d 05 83 4d 01 00 	lea    0x14d83(%rip),%rax        # 6ca2f9a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab46c>
+ 6c8e217:	49 89 86 90 05 00 00 	mov    %rax,0x590(%r14)
+ 6c8e21e:	48 8d 05 ed 4e 01 00 	lea    0x14eed(%rip),%rax        # 6ca3112 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab5e4>
+ 6c8e225:	49 89 86 98 05 00 00 	mov    %rax,0x598(%r14)
+ 6c8e22c:	48 8d 05 57 50 01 00 	lea    0x15057(%rip),%rax        # 6ca328a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab75c>
+ 6c8e233:	49 89 86 a0 05 00 00 	mov    %rax,0x5a0(%r14)
+ 6c8e23a:	48 8d 05 c1 51 01 00 	lea    0x151c1(%rip),%rax        # 6ca3402 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ab8d4>
+ 6c8e241:	49 89 86 a8 05 00 00 	mov    %rax,0x5a8(%r14)
+ 6c8e248:	48 8d 05 2b 53 01 00 	lea    0x1532b(%rip),%rax        # 6ca357a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aba4c>
+ 6c8e24f:	49 89 86 b0 05 00 00 	mov    %rax,0x5b0(%r14)
+ 6c8e256:	48 8d 05 95 54 01 00 	lea    0x15495(%rip),%rax        # 6ca36f2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14abbc4>
+ 6c8e25d:	49 89 86 b8 05 00 00 	mov    %rax,0x5b8(%r14)
+ 6c8e264:	48 8d 05 19 56 01 00 	lea    0x15619(%rip),%rax        # 6ca3884 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14abd56>
+ 6c8e26b:	49 89 86 c0 05 00 00 	mov    %rax,0x5c0(%r14)
+ 6c8e272:	48 8d 05 9d 57 01 00 	lea    0x1579d(%rip),%rax        # 6ca3a16 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14abee8>
+ 6c8e279:	49 89 86 c8 05 00 00 	mov    %rax,0x5c8(%r14)
+ 6c8e280:	48 8d 05 21 59 01 00 	lea    0x15921(%rip),%rax        # 6ca3ba8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac07a>
+ 6c8e287:	49 89 86 d0 05 00 00 	mov    %rax,0x5d0(%r14)
+ 6c8e28e:	48 8d 05 a5 5a 01 00 	lea    0x15aa5(%rip),%rax        # 6ca3d3a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac20c>
+ 6c8e295:	49 89 86 d8 05 00 00 	mov    %rax,0x5d8(%r14)
+ 6c8e29c:	48 8d 05 29 5c 01 00 	lea    0x15c29(%rip),%rax        # 6ca3ecc <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac39e>
+ 6c8e2a3:	49 89 86 e0 05 00 00 	mov    %rax,0x5e0(%r14)
+ 6c8e2aa:	48 8d 05 ad 5d 01 00 	lea    0x15dad(%rip),%rax        # 6ca405e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac530>
+ 6c8e2b1:	49 89 86 e8 05 00 00 	mov    %rax,0x5e8(%r14)
+ 6c8e2b8:	48 8d 05 31 5f 01 00 	lea    0x15f31(%rip),%rax        # 6ca41f0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac6c2>
+ 6c8e2bf:	49 89 86 f0 05 00 00 	mov    %rax,0x5f0(%r14)
+ 6c8e2c6:	48 8d 05 b5 60 01 00 	lea    0x160b5(%rip),%rax        # 6ca4382 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac854>
+ 6c8e2cd:	49 89 86 f8 05 00 00 	mov    %rax,0x5f8(%r14)
+ 6c8e2d4:	48 8d 05 3d 62 01 00 	lea    0x1623d(%rip),%rax        # 6ca4518 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ac9ea>
+ 6c8e2db:	49 89 86 00 06 00 00 	mov    %rax,0x600(%r14)
+ 6c8e2e2:	48 8d 05 c5 63 01 00 	lea    0x163c5(%rip),%rax        # 6ca46ae <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14acb80>
+ 6c8e2e9:	49 89 86 08 06 00 00 	mov    %rax,0x608(%r14)
+ 6c8e2f0:	48 8d 05 4d 65 01 00 	lea    0x1654d(%rip),%rax        # 6ca4844 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14acd16>
+ 6c8e2f7:	49 89 86 10 06 00 00 	mov    %rax,0x610(%r14)
+ 6c8e2fe:	48 8d 05 d5 66 01 00 	lea    0x166d5(%rip),%rax        # 6ca49da <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aceac>
+ 6c8e305:	49 89 86 18 06 00 00 	mov    %rax,0x618(%r14)
+ 6c8e30c:	48 8d 05 5d 68 01 00 	lea    0x1685d(%rip),%rax        # 6ca4b70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad042>
+ 6c8e313:	49 89 86 20 06 00 00 	mov    %rax,0x620(%r14)
+ 6c8e31a:	48 8d 05 e5 69 01 00 	lea    0x169e5(%rip),%rax        # 6ca4d06 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad1d8>
+ 6c8e321:	49 89 86 28 06 00 00 	mov    %rax,0x628(%r14)
+ 6c8e328:	48 8d 05 6d 6b 01 00 	lea    0x16b6d(%rip),%rax        # 6ca4e9c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad36e>
+ 6c8e32f:	49 89 86 30 06 00 00 	mov    %rax,0x630(%r14)
+ 6c8e336:	48 8d 05 f5 6c 01 00 	lea    0x16cf5(%rip),%rax        # 6ca5032 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad504>
+ 6c8e33d:	49 89 86 38 06 00 00 	mov    %rax,0x638(%r14)
+ 6c8e344:	48 8d 05 9f 6e 01 00 	lea    0x16e9f(%rip),%rax        # 6ca51ea <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad6bc>
+ 6c8e34b:	49 89 86 40 06 00 00 	mov    %rax,0x640(%r14)
+ 6c8e352:	48 8d 05 49 70 01 00 	lea    0x17049(%rip),%rax        # 6ca53a2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ad874>
+ 6c8e359:	49 89 86 48 06 00 00 	mov    %rax,0x648(%r14)
+ 6c8e360:	48 8d 05 f3 71 01 00 	lea    0x171f3(%rip),%rax        # 6ca555a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ada2c>
+ 6c8e367:	49 89 86 50 06 00 00 	mov    %rax,0x650(%r14)
+ 6c8e36e:	48 8d 05 9d 73 01 00 	lea    0x1739d(%rip),%rax        # 6ca5712 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14adbe4>
+ 6c8e375:	49 89 86 58 06 00 00 	mov    %rax,0x658(%r14)
+ 6c8e37c:	48 8d 05 47 75 01 00 	lea    0x17547(%rip),%rax        # 6ca58ca <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14add9c>
+ 6c8e383:	49 89 86 60 06 00 00 	mov    %rax,0x660(%r14)
+ 6c8e38a:	48 8d 05 f1 76 01 00 	lea    0x176f1(%rip),%rax        # 6ca5a82 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14adf54>
+ 6c8e391:	49 89 86 68 06 00 00 	mov    %rax,0x668(%r14)
+ 6c8e398:	48 8d 05 9b 78 01 00 	lea    0x1789b(%rip),%rax        # 6ca5c3a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae10c>
+ 6c8e39f:	49 89 86 70 06 00 00 	mov    %rax,0x670(%r14)
+ 6c8e3a6:	48 8d 05 45 7a 01 00 	lea    0x17a45(%rip),%rax        # 6ca5df2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae2c4>
+ 6c8e3ad:	49 89 86 78 06 00 00 	mov    %rax,0x678(%r14)
+ 6c8e3b4:	48 8d 05 ef 7b 01 00 	lea    0x17bef(%rip),%rax        # 6ca5faa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae47c>
+ 6c8e3bb:	49 89 86 80 06 00 00 	mov    %rax,0x680(%r14)
+ 6c8e3c2:	48 8d 05 99 7d 01 00 	lea    0x17d99(%rip),%rax        # 6ca6162 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae634>
+ 6c8e3c9:	49 89 86 88 06 00 00 	mov    %rax,0x688(%r14)
+ 6c8e3d0:	48 8d 05 43 7f 01 00 	lea    0x17f43(%rip),%rax        # 6ca631a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae7ec>
+ 6c8e3d7:	49 89 86 90 06 00 00 	mov    %rax,0x690(%r14)
+ 6c8e3de:	48 8d 05 ed 80 01 00 	lea    0x180ed(%rip),%rax        # 6ca64d2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14ae9a4>
+ 6c8e3e5:	49 89 86 98 06 00 00 	mov    %rax,0x698(%r14)
+ 6c8e3ec:	48 8d 05 97 82 01 00 	lea    0x18297(%rip),%rax        # 6ca668a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aeb5c>
+ 6c8e3f3:	49 89 86 a0 06 00 00 	mov    %rax,0x6a0(%r14)
+ 6c8e3fa:	48 8d 05 41 84 01 00 	lea    0x18441(%rip),%rax        # 6ca6842 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aed14>
+ 6c8e401:	49 89 86 a8 06 00 00 	mov    %rax,0x6a8(%r14)
+ 6c8e408:	48 8d 05 eb 85 01 00 	lea    0x185eb(%rip),%rax        # 6ca69fa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14aeecc>
+ 6c8e40f:	49 89 86 b0 06 00 00 	mov    %rax,0x6b0(%r14)
+ 6c8e416:	48 8d 05 95 87 01 00 	lea    0x18795(%rip),%rax        # 6ca6bb2 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af084>
+ 6c8e41d:	49 89 86 b8 06 00 00 	mov    %rax,0x6b8(%r14)
+ 6c8e424:	48 8d 05 55 89 01 00 	lea    0x18955(%rip),%rax        # 6ca6d80 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af252>
+ 6c8e42b:	49 89 86 c0 06 00 00 	mov    %rax,0x6c0(%r14)
+ 6c8e432:	48 8d 05 b5 8a 01 00 	lea    0x18ab5(%rip),%rax        # 6ca6eee <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af3c0>
+ 6c8e439:	49 89 86 c8 06 00 00 	mov    %rax,0x6c8(%r14)
+ 6c8e440:	48 8d 05 15 8c 01 00 	lea    0x18c15(%rip),%rax        # 6ca705c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af52e>
+ 6c8e447:	49 89 86 d0 06 00 00 	mov    %rax,0x6d0(%r14)
+ 6c8e44e:	48 8d 05 75 8d 01 00 	lea    0x18d75(%rip),%rax        # 6ca71ca <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af69c>
+ 6c8e455:	49 89 86 d8 06 00 00 	mov    %rax,0x6d8(%r14)
+ 6c8e45c:	48 8d 05 d5 8e 01 00 	lea    0x18ed5(%rip),%rax        # 6ca7338 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af80a>
+ 6c8e463:	49 89 86 e0 06 00 00 	mov    %rax,0x6e0(%r14)
+ 6c8e46a:	48 8d 05 7f 90 01 00 	lea    0x1907f(%rip),%rax        # 6ca74f0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14af9c2>
+ 6c8e471:	49 89 86 e8 06 00 00 	mov    %rax,0x6e8(%r14)
+ 6c8e478:	48 8d 05 29 92 01 00 	lea    0x19229(%rip),%rax        # 6ca76a8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14afb7a>
+ 6c8e47f:	49 89 86 f0 06 00 00 	mov    %rax,0x6f0(%r14)
+ 6c8e486:	48 8d 05 ad 93 01 00 	lea    0x193ad(%rip),%rax        # 6ca783a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14afd0c>
+ 6c8e48d:	49 89 86 f8 06 00 00 	mov    %rax,0x6f8(%r14)
+ 6c8e494:	48 8d 05 35 95 01 00 	lea    0x19535(%rip),%rax        # 6ca79d0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14afea2>
+ 6c8e49b:	49 89 86 00 07 00 00 	mov    %rax,0x700(%r14)
+ 6c8e4a2:	48 8d 05 b9 96 01 00 	lea    0x196b9(%rip),%rax        # 6ca7b62 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b0034>
+ 6c8e4a9:	49 89 86 08 07 00 00 	mov    %rax,0x708(%r14)
+ 6c8e4b0:	48 8d 05 19 98 01 00 	lea    0x19819(%rip),%rax        # 6ca7cd0 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b01a2>
+ 6c8e4b7:	49 89 86 10 07 00 00 	mov    %rax,0x710(%r14)
+ 6c8e4be:	48 8d 05 7b 99 01 00 	lea    0x1997b(%rip),%rax        # 6ca7e40 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b0312>
+ 6c8e4c5:	49 89 86 18 07 00 00 	mov    %rax,0x718(%r14)
+ 6c8e4cc:	48 8d 05 9f 9a 01 00 	lea    0x19a9f(%rip),%rax        # 6ca7f72 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b0444>
+ 6c8e4d3:	49 89 86 20 07 00 00 	mov    %rax,0x720(%r14)
+ 6c8e4da:	48 8d 05 c5 9b 01 00 	lea    0x19bc5(%rip),%rax        # 6ca80a6 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b0578>
+ 6c8e4e1:	49 89 86 28 07 00 00 	mov    %rax,0x728(%r14)
+ 6c8e4e8:	48 8d 05 49 9d 01 00 	lea    0x19d49(%rip),%rax        # 6ca8238 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b070a>
+ 6c8e4ef:	49 89 86 30 07 00 00 	mov    %rax,0x730(%r14)
+ 6c8e4f6:	48 8d 05 ab 9e 01 00 	lea    0x19eab(%rip),%rax        # 6ca83a8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b087a>
+ 6c8e4fd:	49 89 86 38 07 00 00 	mov    %rax,0x738(%r14)
+ 6c8e504:	48 8d 05 0d a0 01 00 	lea    0x1a00d(%rip),%rax        # 6ca8518 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b09ea>
+ 6c8e50b:	49 89 86 40 07 00 00 	mov    %rax,0x740(%r14)
+ 6c8e512:	4c 89 33             	mov    %r14,(%rbx)
+ 6c8e515:	48 83 c4 08          	add    $0x8,%rsp
+ 6c8e519:	5b                   	pop    %rbx
+ 6c8e51a:	41 5e                	pop    %r14
+ 6c8e51c:	41 5f                	pop    %r15
+ 6c8e51e:	5d                   	pop    %rbp
+ 6c8e51f:	c3                   	ret
+ 6c8e520:	55                   	push   %rbp
+ 6c8e521:	48 89 e5             	mov    %rsp,%rbp
+ 6c8e524:	41 57                	push   %r15
+ 6c8e526:	41 56                	push   %r14
+ 6c8e528:	53                   	push   %rbx
+ 6c8e529:	48 83 ec 48          	sub    $0x48,%rsp
+ 6c8e52d:	49 89 fe             	mov    %rdi,%r14

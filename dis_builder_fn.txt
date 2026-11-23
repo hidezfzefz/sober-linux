@@ -1,0 +1,32 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000006c8d840 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1495d12>:
+ 6c8d840:	55                   	push   %rbp
+ 6c8d841:	48 89 e5             	mov    %rsp,%rbp
+ 6c8d844:	41 57                	push   %r15
+ 6c8d846:	41 56                	push   %r14
+ 6c8d848:	53                   	push   %rbx
+ 6c8d849:	50                   	push   %rax
+ 6c8d84a:	48 89 fb             	mov    %rdi,%rbx
+ 6c8d84d:	e8 3e c6 ff ff       	call   6c89e90 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492362>
+ 6c8d852:	48 85 db             	test   %rbx,%rbx
+ 6c8d855:	0f 84 ba 0c 00 00    	je     6c8e515 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14969e7>
+ 6c8d85b:	49 89 c6             	mov    %rax,%r14
+ 6c8d85e:	4c 8b 3b             	mov    (%rbx),%r15
+ 6c8d861:	49 39 c7             	cmp    %rax,%r15
+ 6c8d864:	0f 84 ab 0c 00 00    	je     6c8e515 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14969e7>
+ 6c8d86a:	e8 01 c6 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d86f:	4c 89 38             	mov    %r15,(%rax)
+ 6c8d872:	e8 f9 c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d877:	48 8b 00             	mov    (%rax),%rax
+ 6c8d87a:	48 8b 00             	mov    (%rax),%rax
+ 6c8d87d:	49 89 06             	mov    %rax,(%r14)
+ 6c8d880:	e8 eb c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
+ 6c8d885:	48 8b 00             	mov    (%rax),%rax
+ 6c8d888:	48 8b 40 08          	mov    0x8(%rax),%rax
+ 6c8d88c:	49 89 46 08          	mov    %rax,0x8(%r14)
+ 6c8d890:	e8 db c5 ff ff       	call   6c89e70 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492342>
