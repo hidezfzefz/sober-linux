@@ -208,19 +208,60 @@ static void w21_rsi_sig(int s, siginfo_t *si, void *uc)
             (unsigned long)*(uintptr_t *)(w21_base + 0x72a3058u));
     /* one-shot; keep armed for repeat activations */
 }
+extern uintptr_t g_bridge_env_ptr; /* non-static, defined below */   /* defined later with sober_jni_env() */
+/* W26: register dump at the host call into 0x24650a9 and at the
+ * GetStringUTFChars call site 0x2315556.  Read-only perf exec breakpoints. */
+static void w26_regs_sig(int s, siginfo_t *si, void *uc, const char *tag)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rdi = (uintptr_t)c->uc_mcontext.gregs[REG_RDI];
+    uintptr_t rsi = (uintptr_t)c->uc_mcontext.gregs[REG_RSI];
+    uintptr_t ft = 0;
+    if (rdi >= 0x10000u && rdi < 0x0000800000000000ULL)
+        ft = *(uintptr_t *)rdi;
+    fprintf(stderr,
+            "[W26_REGS %s] rdi=%p rsi=%p rdx=%p rcx=%p r8=%p r9=%p "
+            "fn_table=[rdi]=%p is_bridge_env=%d tid=%ld\n",
+            tag, (void *)rdi, (void *)rsi,
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_RDX],
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_RCX],
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_R8],
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_R9],
+            (void *)ft, (rdi && rdi == g_bridge_env_ptr) ? 1 : 0,
+            (long)syscall(SYS_gettid));
+}
+static void w26_entry_sig(int s, siginfo_t *si, void *uc)
+{
+    w26_regs_sig(s, si, uc, "entry_0x24650a9");
+}
+static void w26_getstring_sig(int s, siginfo_t *si, void *uc)
+{
+    w26_regs_sig(s, si, uc, "getstring_0x2315556");
+}
+
 static void w21_init(uintptr_t base)
 {
-    if (!getenv("SOBER_W21_WATCH")) return;
+    if (!getenv("SOBER_W21_WATCH") && !getenv("SOBER_W26_WATCH")) return;
     w21_base = base;   /* guest already mapped when the seeder runs */
-    w21_fd_latch = w21_perf(w21_base + 0x2eb7520u);
-    w21_fd_rsi = w21_perf(w21_base + 0x23115c8u);
+    int w26 = getenv("SOBER_W26_WATCH") != NULL;
+    if (w26) {
+        w21_fd_latch = w21_perf(w21_base + 0x24650a9u);      /* host call entry */
+        w21_fd_rsi   = w21_perf(w21_base + 0x2315556u);      /* call [rax+0x548] */
+    } else {
+        w21_fd_latch = w21_perf(w21_base + 0x2eb7520u);
+        w21_fd_rsi   = w21_perf(w21_base + 0x23115c8u);
+    }
     if (w21_fd_latch < 0 || w21_fd_rsi < 0) {
         fprintf(stderr, "[W21_WATCH] perf_event_open FAILED\n"); return;
     }
-    int a = w21_arm(w21_fd_latch, SIGUSR1, w21_latch_sig);
-    int b = w21_arm(w21_fd_rsi, SIGUSR2, w21_rsi_sig);
-    fprintf(stderr, "[W21_WATCH] armed base=%p latch=%d rsi=%d\n",
-            (void *)w21_base, a, b);
+    int a = w26 ? w21_arm(w21_fd_latch, SIGUSR1, w26_entry_sig)
+                : w21_arm(w21_fd_latch, SIGUSR1, w21_latch_sig);
+    int b = w26 ? w21_arm(w21_fd_rsi, SIGUSR2, w26_getstring_sig)
+                : w21_arm(w21_fd_rsi, SIGUSR2, w21_rsi_sig);
+    fprintf(stderr, "[W21_WATCH] mode=%s base=%p fd1=%d fd2=%d\n",
+            w26 ? "W26" : "W21", (void *)w21_base, a, b);
 }
 
 /* ---- local JNI scalar types (ABI-identical to jni.h) ------------------ */
@@ -1202,7 +1243,7 @@ SR_API void sober_jni_shutdown(SoberJni *j)
     free(j);
 }
 
-static uintptr_t g_bridge_env_ptr, g_bridge_vm_ptr;
+uintptr_t g_bridge_env_ptr, g_bridge_vm_ptr;
 void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm)
 {
     if (env) *env = g_bridge_env_ptr;
