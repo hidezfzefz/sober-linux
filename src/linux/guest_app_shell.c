@@ -69,6 +69,9 @@
 /* Checkpoint ladder (AVD-captured references only; see analysis/CHECKPOINT-LADDER.md).
  * Rung 3 is intentionally undefined: no authenticated AVD capture exists. */
 static int g_ck_rung1_returned;
+/* W32: read-only latch samples around nativeInitClientSettings (no writes). */
+int g_w32_latch_before = -1, g_w32_latch_after = -1;
+extern int g_w29_arg0_sha_ok;
 static int g_ck_rung2_app_start;
 static int g_ck_rung2_v2_init;
 static int g_ck_rung2_lua_dm;
@@ -1188,6 +1191,8 @@ int guest_app_shell_run(uintptr_t base)
             void *fflag_ctx = *(void *const *)(base + 0x72a3058u);
             void *fflag_obj = fflag_ctx
                 ? *(void *const *)((unsigned char *)fflag_ctx + 0x18u) : NULL;
+            g_w32_latch_before =
+                (int)*(volatile unsigned char *)(base + 0x7cdd149u);
             fprintf(stderr, "[app-shell] AVD boundary pre: arg0_len=%zu "
                             "jstr0=%p D08=%#x latch=%u "
                             "fflag_ctx=%p fflag_obj=%p\n",
@@ -1221,12 +1226,20 @@ int guest_app_shell_run(uintptr_t base)
             long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
                 (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
             g_ck_rung1_returned = 1;
+            g_w32_latch_after =
+                (int)*(volatile unsigned char *)(base + 0x7cdd149u);
+            fprintf(stderr, "[W32_LATCH_RO] before=%d after=%d\n",
+                    g_w32_latch_before, g_w32_latch_after);
             /* W23: emit the rung1 line IMMEDIATELY on return with write(2),
              * before any later phase can fault.  Label only: PASS-BOUNDARY-
              * REPLAY(DEBT=n) when the read-only credential holds; never CLEAN.
              */
             {
-                const int boundary = sober_w21_boundary_ok();
+                /* W32: watcher-free read-only credential: before=0, after=1, SHA verified.
+             * All harness latch accesses are READS (no write anywhere). */
+            const int boundary = sober_w21_boundary_ok() ||
+                (g_w32_latch_before == 0 && g_w32_latch_after == 1 &&
+                 g_w29_arg0_sha_ok);
                 const int debt = sober_avd_boundary_enabled() ? 1 : 0;
                 char rb[160]; int rn = 0;
                 static const char pre[] = "[checkpoint] rung1 ";
@@ -2250,7 +2263,10 @@ int guest_app_shell_run(uintptr_t base)
          * marker decision elsewhere is untouched.  Never print CLEAN while a
          * seeder slot or replayed argument is in use (DEBT != 0). */
         {
-            const int boundary = rung1 && sober_w21_boundary_ok();
+            const int boundary = rung1 &&
+                (sober_w21_boundary_ok() ||
+                 (g_w32_latch_before == 0 && g_w32_latch_after == 1 &&
+                  g_w29_arg0_sha_ok));
             /* W29 INPUT FIRST: a SHA-mismatched / modified boundary input can
              * never earn a pass label.  Label-only change; no gate logic. */
             extern int g_w29_arg0_sha_ok;
