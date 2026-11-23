@@ -1,0 +1,9 @@
+ 6caef4f:	80 3d f3 e1 02 01 00 	cmpb   $0x0,0x102e1f3(%rip)        # 7cdd149 <__stop_pb_defaults@@Base+0xa5ac91>
+ 6caef56:	74 0e                	je     6caef66 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b7438>
+ 6caef58:	80 3d f1 06 04 01 00 	cmpb   $0x0,0x10406f1(%rip)        # 7cef650 <__stop_pb_defaults@@Base+0xa6d198>
+ 6caef5f:	74 05                	je     6caef66 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b7438>
+ 6caef61:	e8 6a 31 08 00       	call   6d320d0 <abort@plt>
+ 6caef66:	cc                   	int3
+ 6caef67:	89 c0                	mov    %eax,%eax
+ 6caef69:	e8 62 31 08 00       	call   6d320d0 <abort@plt>
+ 6caef6e:	eb 4a                	jmp    6caefba <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b748c>
