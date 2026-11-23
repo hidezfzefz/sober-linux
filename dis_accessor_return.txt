@@ -1,0 +1,26 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002ea6573 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486743>:
+ 2ea6573:	4f 8b 7c ee 08       	mov    0x8(%r14,%r13,8),%r15
+ 2ea6578:	4d 85 ff             	test   %r15,%r15
+ 2ea657b:	75 66                	jne    2ea65e3 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4867b3>
+ 2ea657d:	48 8b 43 08          	mov    0x8(%rbx),%rax
+ 2ea6581:	48 83 f8 09          	cmp    $0x9,%rax
+ 2ea6585:	41 bf 08 00 00 00    	mov    $0x8,%r15d
+ 2ea658b:	4c 0f 43 f8          	cmovae %rax,%r15
+ 2ea658f:	49 8d 47 ff          	lea    -0x1(%r15),%rax
+ 2ea6593:	49 85 c7             	test   %rax,%r15
+ 2ea6596:	75 5d                	jne    2ea65f5 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4867c5>
+ 2ea6598:	4c 8b 23             	mov    (%rbx),%r12
+ 2ea659b:	4b 8d 3c 27          	lea    (%r15,%r12,1),%rdi
+ 2ea659f:	48 83 c7 07          	add    $0x7,%rdi
+ 2ea65a3:	e8 ba 47 f1 fe       	call   1dbad62 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1c53e>
+ 2ea65a8:	48 85 c0             	test   %rax,%rax
+ 2ea65ab:	74 4d                	je     2ea65fa <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4867ca>
+ 2ea65ad:	49                   	rex.WB
+ 2ea65ae:	8d                   	.byte 0x8d
+ 2ea65af:	4f                   	rex.WRXB
