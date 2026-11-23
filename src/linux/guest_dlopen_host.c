@@ -60,6 +60,7 @@ extern const char *sober_bionic_bootstrap_last_error(void) __attribute__((weak))
 extern long sober_jni_ring_dump_async(int fd) __attribute__((weak));
 extern long sober_javavm_ring_dump_async(int fd) __attribute__((weak));
 extern long sober_n1_ring_dump_async(int fd) __attribute__((weak));
+
 extern void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm)
     __attribute__((weak));
 
@@ -100,6 +101,7 @@ static void emit(const char *fmt, ...)
  * no strsignal.  libc base is precomputed at install time for offset labeling.
  */
 static volatile uintptr_t g_libc_lo, g_libc_hi;
+static volatile uintptr_t w40_sf_lo, w40_sf_hi;   /* exported __sF range */
 static void w24_put(char **p, const char *s)
 {
     while (*s) *(*p)++ = *s++;
@@ -195,6 +197,68 @@ static void w40_maps(char **p, char *base, char *end, uintptr_t addr,
     }
     if (!found) w24_put(p, "maps=NOT_FOUND");
     w24_line(p, base, end);
+}
+
+/* n5 HOST-ONLY stdio shim ring, defined in the host executable so the DSO
+ * shims (bionic_libc.c fflush/fwrite/fclose) can note calls via weak ref and
+ * the crash handler can dump it with write(2) only. */
+struct w40_stdio_ent {
+    uint64_t seq; long tid; uintptr_t file, ra; int in_sf;
+};
+static struct w40_stdio_ent w40_stdio_ring[32];
+static volatile unsigned w40_stdio_pos;
+void sober_stdio_ring_note(uintptr_t file, uintptr_t ra);
+void sober_stdio_ring_note(uintptr_t file, uintptr_t ra)
+{
+    unsigned i = __atomic_fetch_add(&w40_stdio_pos, 1, __ATOMIC_RELAXED) & 31u;
+    struct w40_stdio_ent *e = &w40_stdio_ring[i];
+    e->seq = (uint64_t)(__atomic_load_n(&w40_stdio_pos, __ATOMIC_RELAXED));
+    e->tid = (long)syscall(SYS_gettid);
+    e->file = file; e->ra = ra;
+    /* Exported Bionic __sF object lives in the DSO; range checked in dump via
+     * a host-side symbol resolved at startup (see g_w40_sf_lo/hi). */
+    e->in_sf = (w40_sf_lo && file >= w40_sf_lo && file < w40_sf_hi) ? 1 : 0;
+}
+static long w40_stdio_dump(int fd, uintptr_t gbase)
+{
+    char buf[4096], *p = buf, *end = buf + sizeof(buf) - 1;
+    static const char hx[] = "0123456789abcdef";
+    #define PUT(x) do { const char *_s=(x); while (*_s && p<end-1) *p++=*_s++; } while(0)
+    #define HEX(v) do { uintptr_t _v=(uintptr_t)(v); \
+        for (int _i=60; _i>=0 && p<end-1; _i-=4) *p++=hx[(_v>>_i)&0xfu]; } while(0)
+    /* Resolve the exported Bionic __sF object from the stub libc DSO.  This
+     * is the last operation in the handler; all critical dumps are already
+     * emitted, so a failure here cannot mask the fault record. */
+    if (!w40_sf_lo) {
+        void *h = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
+        if (h) {
+            void *sf = dlsym(h, "__sF");
+            if (sf) { w40_sf_lo = (uintptr_t)sf; w40_sf_hi = w40_sf_lo + 0x200u; }
+        }
+    }
+    PUT("[W40_STDIO_RING] last 32 fflush/fwrite/fclose calls "
+        "(seq,tid,FILE*,caller,guest_rva,in_sF):\n");
+    unsigned pos = __atomic_load_n(&w40_stdio_pos, __ATOMIC_RELAXED);
+    unsigned start = pos > 32u ? pos - 32u : 0u;
+    for (unsigned i = start; i < pos; ++i) {
+        struct w40_stdio_ent *e = &w40_stdio_ring[i & 31u];
+        PUT("["); HEX(e->seq); PUT("] tid=");
+        { char t[32]; int n=snprintf(t,sizeof(t),"%ld",e->tid);
+          for(int k=0;k<n && p<end-1;k++) *p++=t[k]; }
+        PUT(" FILE=0x"); HEX(e->file);
+        PUT(" ra=0x"); HEX(e->ra);
+        PUT(" guest_rva=");
+        if (gbase && e->ra >= gbase) { PUT("0x"); HEX(e->ra - gbase); }
+        else PUT("non-guest");
+        PUT(" in_sF=");
+        *p++=(char)('0'+((w40_sf_lo && e->file>=w40_sf_lo && e->file<w40_sf_hi)
+                         || e->in_sf));
+        PUT("\n");
+    }
+    #undef PUT
+    #undef HEX
+    ssize_t u = write(fd, buf, (size_t)(p-buf));
+    return (long)(u>0?u:0);
 }
 
 static void crash_handler(int sig, siginfo_t *si, void *ucontext)
@@ -296,7 +360,8 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     if (delta < 0) delta = -delta;
     w24_put(&p, "[W30_SI_RSP_DELTA] "); w24_num(&p, delta);
     w24_line(&p, buf, end);
-    if (delta >= 0 && delta < 65536u) {
+    /* n5: RET64 on EVERY fault, not only when si_addr is near rsp. */
+    {
         w24_put(&p, "[W30_RET64] rsp="); w24_u64(&p, rsp, 1);
         w24_line(&p, buf, end);
         uintptr_t ret64_first[3]; unsigned nret64 = 0;
@@ -357,6 +422,7 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     if (sober_jni_ring_dump_async) sober_jni_ring_dump_async(STDERR_FILENO);
     if (sober_javavm_ring_dump_async) sober_javavm_ring_dump_async(STDERR_FILENO);
     if (sober_n1_ring_dump_async) sober_n1_ring_dump_async(STDERR_FILENO);
+    w40_stdio_dump(STDERR_FILENO, (uintptr_t)base);
     _exit(139);
 }
 
