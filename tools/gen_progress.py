@@ -60,53 +60,112 @@ def badge(name: str, label: str, value: str, color: str) -> None:
 for b in BADGES:
     badge(*b)
 
-# Progress map: subsystem tiles. status: 2=done, 1=partial/diagnostic, 0=not proven.
-TILES = [
-    ("native ELF / no runtime", 2), ("guest init 3618/3618", 2),
-    ("APS2 relocations", 2), ("Bionic TSD shim", 2),
-    ("X11/EGL window", 2), ("first frame 0x649d422", 2),
-    ("JNIEnv 231 slots", 2), ("cached JNI IDs 49", 2),
-    ("JNI fields/arrays/scalars", 2), ("callback provenance (diag)", 1),
-    ("notifier-hit probe (diag)", 1), ("strict gate 013/038", 2),
-    ("verification + reports", 2), ("app state (seeds only)", 1),
-    ("singleton services", 1), ("controller installer", 1),
-    ("MessageBus publish", 1), ("gameLoadedCallback", 0),
-    ("login/app-shell frame", 0), ("marker emitted", 0),
+# Progress map — dark grid-of-squares style: summary percentages plus groups of
+# small squares with hover titles (same visual language as the reference SVG).
+# status per check: 2 = verified, 1 = diagnostic/opt-in/seeded, 0 = not proven.
+# A group's fill fraction is weighted: verified = 1, diagnostic = 0.5.
+GREEN = "#2ea043"
+
+SUMMARY = [
+    ("Guest init", 3618, 3618),
+    ("APS2 relocations", 565390, 565390),
+    ("JNI slots", 231, 231),
+    ("App-shell callback", 0, 1),
+    ("Gate / marker", 1, 2),
 ]
 
-COLS = 5
-TW, TH = 150, 46
-PAD = 10
-W = COLS * (TW + PAD) + PAD
-rows = (len(TILES) + COLS - 1) // COLS
-H = 70 + rows * (TH + PAD) + PAD
+GROUPS = [
+    ("Native runtime", 2, [
+        ("native ELF / no runtime", 2),
+        ("guest init 3618/3618", 2),
+        ("APS2 relocs 565390/565390", 2),
+        ("Bionic TSD shim", 2),
+        ("X11/EGL window", 2),
+        ("first frame 0x649d422", 2),
+    ]),
+    ("JNI bridge", 2, [
+        ("JNIEnv 231 slots", 2),
+        ("cached JNI IDs 49", 2),
+        ("fields / arrays / scalars", 2),
+        ("VM ops + JavaVM install", 2),
+        ("fn[224] self-pointer root cause", 2),
+    ]),
+    ("Diagnostics / seeded state", 1, [
+        ("callback provenance (diag)", 1),
+        ("notifier-hit probe (diag)", 1),
+        ("app state (seeds only)", 1),
+        ("singleton services", 1),
+        ("controller installer", 1),
+        ("MessageBus publish", 1),
+        ("rung1 boundary replay", 1),
+    ]),
+    ("Not proven / withheld", 0, [
+        ("gameLoadedCallback", 0),
+        ("login / app-shell frame", 0),
+        ("marker emitted", 0),
+        ("rung2 StartLuaAppDM", 0),
+    ]),
+]
+
+W = 1000
+CELL, GAP, PER_ROW = 10, 1, 80
+MARGIN = 4
+GROUP_H = 42
+HEADER_H = 81 + len(SUMMARY) * 30 + 10
+H = HEADER_H + len(GROUPS) * GROUP_H + 10
+
+
+def fraction(items):
+    if not items:
+        return 0.0
+    score = sum(1.0 if s == 2 else 0.5 if s == 1 else 0.0 for _, s in items)
+    return score / len(items)
+
+
+all_items = [item for _, _, items in GROUPS for item in items]
+counts = {s: sum(1 for _, v in all_items if v == s) for s in (2, 1, 0)}
+overall = fraction(all_items) * 100
 
 parts = [
-    f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" role="img" aria-label="progress map">',
-    f'<rect width="{W}" height="{H}" fill="{BG}"/>',
-    '<text x="12" y="26" fill="#e6edf3" font-family="DejaVu Sans,sans-serif" font-size="16" font-weight="bold">Sober native Linux port — progress map</text>',
-    '<text x="12" y="46" fill="#8b949e" font-family="DejaVu Sans,sans-serif" font-size="11">green = verified · orange = diagnostic/opt-in only · red = not proven / withheld</text>',
+    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Sober progress map">',
+    f'<rect x="0.00" y="0.00" width="{W}.00" height="{H}.00" fill="{BG}" stroke="{BG}" stroke-width="0"/>',
+    '<text x="4.00" y="21.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Sober native Linux port — progress map</text>',
+    f'<text x="4.00" y="51.00" font-family="sans-serif" font-size="16" fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">Overall: {overall:.2f}% ({counts[2]} verified / {counts[1]} diagnostic / {counts[0]} not proven)</text>',
 ]
-colors = {2: GREEN, 1: ORANGE, 0: RED}
-for i, (label, status) in enumerate(TILES):
-    x = PAD + (i % COLS) * (TW + PAD)
-    y = 60 + (i // COLS) * (TH + PAD)
-    c = colors[status]
-    parts.append(f'<rect x="{x}" y="{y}" width="{TW}" height="{TH}" rx="4" fill="{c}" fill-opacity="0.22" stroke="{c}"/>')
-    # wrap long labels
-    words = label.split()
-    lines, cur = [], ""
-    for w in words:
-        if len(cur) + len(w) + 1 > 20:
-            lines.append(cur)
-            cur = w
-        else:
-            cur = f"{cur} {w}".strip()
-    if cur:
-        lines.append(cur)
-    for j, ln in enumerate(lines[:2]):
-        parts.append(f'<text x="{x + TW / 2:.0f}" y="{y + 20 + j * 13}" fill="#e6edf3" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="10">{esc(ln)}</text>')
+for i, (label, done, total) in enumerate(SUMMARY):
+    p = 100.0 * done / total if total else 0.0
+    parts.append(
+        f'<text x="4.00" y="{81 + i * 30}.00" font-family="sans-serif" font-size="16" '
+        f'fill="#ffffff" stroke="#0d1117" stroke-width="3" paint-order="stroke">'
+        f'{esc(label)}: {p:.2f}% ({done}/{total})</text>'
+    )
+
+for gi, (name, status, items) in enumerate(GROUPS):
+    p = fraction(items) * 100
+    n2 = sum(1 for _, v in items if v == 2)
+    n1 = sum(1 for _, v in items if v == 1)
+    n0 = sum(1 for _, v in items if v == 0)
+    y = HEADER_H + 16 + gi * GROUP_H
+    color = {2: GREEN, 1: ORANGE, 0: RED}[status]
+    parts.append(
+        f'<g><title>{esc(name)}: {n2} verified / {n1} diagnostic / {n0} not proven ({p:.2f}%)</title>'
+    )
+    parts.append(
+        f'<text x="4.00" y="{y}.00" font-family="sans-serif" font-size="16" fill="#ffffff" '
+        f'stroke="#0d1117" stroke-width="3" paint-order="stroke">'
+        f'{esc(name)}: {p:.2f}% ({n2}+{n1}/{len(items)})</text>'
+    )
+    filled = round(p / 100 * PER_ROW)
+    for c in range(PER_ROW):
+        x = MARGIN + c * (CELL + GAP)
+        fill = color if c < filled else GRAY
+        parts.append(
+            f'<rect x="{x}.00" y="{y + 8}.00" width="{CELL}.00" height="{CELL}.00" '
+            f'fill="{fill}" stroke="#0d1117" stroke-width="0.5"/>'
+        )
+    parts.append('</g>')
+
 parts.append("</svg>")
 (ASSETS / "progress.svg").write_text("\n".join(parts) + "\n")
 
-print(f"generated {len(BADGES)} badges + progress.svg in {ASSETS}")
+print(f"generated {len(BADGES)} badges + progress.svg (grid style) in {ASSETS}")
