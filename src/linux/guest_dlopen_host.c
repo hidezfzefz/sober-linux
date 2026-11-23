@@ -321,6 +321,58 @@ static void n8g_log(const char *tag)
     (void)uw;
 }
 
+/* ---- n8 WAVE4: fatal-path edge bps (early armed before ctor replay) ---- */
+static long n8e_hits[7];
+static const uintptr_t n8e_addrs[7] = {
+    0x238463cu, 0x2383d42u, 0x239d215u,
+    0x239eb14u, 0x239eb1bu, 0x23a1422u, 0x23a146eu
+};
+static const char *n8e_tags[7] = {
+    "[N8E SIZE_RET 238463c]", "[N8E AFTER_SIZE 2383d42]",
+    "[N8E PRINTER 239d215]", "[N8E FLAG_TEST 239eb14]",
+    "[N8E FLAG_BR 239eb1b]", "[N8E AL_TEST 23a1422]",
+    "[N8E ASSERT_CALL 23a146e]"
+};
+static void n8e_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rip = (uintptr_t)c->uc_mcontext.gregs[REG_RIP];
+    int idx = -1;
+    if (n7b_base) for (int i = 0; i < 7; ++i)
+        if (rip == n7b_base + n8e_addrs[i]) { idx = i; break; }
+    if (idx < 0) return;
+    long n = __atomic_fetch_add(&n8e_hits[idx], 1, __ATOMIC_RELAXED) + 1;
+    uint64_t rax = (uint64_t)c->uc_mcontext.gregs[REG_RAX];
+    uint64_t rflags = (uint64_t)c->uc_mcontext.gregs[REG_EFL];
+    char b[320], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, n8e_tags[idx]);
+    w24_put(&p, " hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_put(&p, " rax="); w24_u64(&p, rax, 1);
+    w24_put(&p, " al="); w24_u64(&p, rax & 0xffu, 0);
+    w24_put(&p, " ZF="); w24_u64(&p, (rflags >> 6) & 1u, 0);
+    w24_put(&p, " CF="); w24_u64(&p, rflags & 1u, 0);
+    w24_line(&p, b, end);
+    ssize_t u = write(STDERR_FILENO, b, (size_t)(p - b)); (void)u;
+}
+static void n8e_arm_all(uintptr_t base)
+{
+    n7b_base = base;
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = n8e_sig; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask); sigaction(41, &sa, NULL);
+    int fd[7], rc[7];
+    for (int i = 0; i < 7; ++i) {
+        fd[i] = n7b_perf(base + n8e_addrs[i]);
+        rc[i] = n7b_arm(fd[i], 41, n8e_sig);
+    }
+    fprintf(stderr, "[N8E_ARM] base=%p fds=%d/%d/%d/%d/%d/%d/%d rc=%d/%d/%d/%d/%d/%d/%d\n",
+            (void *)base, fd[0],fd[1],fd[2],fd[3],fd[4],fd[5],fd[6],
+            rc[0],rc[1],rc[2],rc[3],rc[4],rc[5],rc[6]);
+}
+
 static void n8p_arm_all(uintptr_t base)
 {
     n7b_base = base;
@@ -1192,6 +1244,7 @@ int main(int argc, char **argv)
     /* n7 WAVE2: arm ctor3602 exec bps HERE, before drive_constructors(). */
     if (getenv("SOBER_N7B_BEFORE")) n7b_arm_all(base);
     if (getenv("SOBER_N8_PROBE")) n8p_arm_all(base);
+    if (getenv("SOBER_N8_EDGE")) n8e_arm_all(base);
     sober_guest_elf_describe(&elf);
 
     size_t applied = 0, relative = 0, symbolic = 0, unknown = 0, unresolved = 0;
