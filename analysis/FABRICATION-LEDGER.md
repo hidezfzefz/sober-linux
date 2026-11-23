@@ -922,3 +922,52 @@ guest writes/gate/seeder/fake returns/path remaps; no object credited.
 → OUTPUT: 38 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n2. Marker WITHHELD.
+
+## Overnight n3 audit (task #671) — adjudication + retractions
+
+Owner: audit (`/tmp/opencode/n3-audit`, branch `n3-audit`). Cores 6-7. READ-ONLY, no device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n3_{1,2,3}.err` (3/3);
+`W24 JNI_OnLoad FIRST … ver=0x10006` and `W30 TSD seed REMOVED` present; object OFF, rc=139 3/3.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 40 | **RETRACTED: "faulting `rdi=0` is the NULL #552 jobject argument (object OFF), not global/TLS". n3 entry bp disproves it — jobject at entry is VALID; NULL rdi is INNER, producer UNPROVEN. Also RETRACTED: "zero JNI calls = guest never read the list" — `size`=1/run with a0==entry rdx** | raw n3_1.err `[N3_552_ENTRY] tid=1876773 rip=base+0x2383c18 rdi=0x56302bd802d0 rsi=0x56302d66d260 rdx=0x56302c1ba750 rcx=0x56302c1ba750 [rdx]=0x56300e0ebec0 [rdx+8]=0x1 rdi_is_env=1` + `[W25_FAULT_ARGS] rdi=0x0000000000000000 rax=0x0000000000000000` (3/3); ring `[0x…20] slot=0x…8e name=size a0=0x000056302c1ba750 …` with a0==entry rdx; counts size=1/get=0/GetObjectClass=0/GetMethodID=0 | audit adjudication (lead notified) | Entry jobject non-NULL ⇒ fault rdi cannot be the entry jobject; static-A inferred it from n14 logs with no entry bp. Only `rdi==0` at fault is PROVEN; its producer and the "not global/TLS" exclusion are UNPROVEN | Remove when a raw line identifies the exact inner producer of the NULL rdi (or confirms it is the jobject) |
+
+**Faulting instruction first (n3, PROVEN):** `rip=0x00007fe629ee08ff` host/shared-lib, no guest_rva,
+bytes `48 8b 47 08 74 05 48 85` = `mov rax,[rdi+8]; je; test rax,rax`, `si_addr=0x8`
+(`[NULL+8]`), rc=139 3/3. static-A independently located the same RIP in n1-harness/n14_1.err
+and confirmed no guest RVA (`rip - guest_base = 0xf20f8ff` > engine size); exact host symbol UNPROVEN.
+
+**harness #672 — all quotes verified verbatim:** SHA 3/3; fault line/args; `[N3_ENTRY_ARM]
+base=0x7fe61acd0000 fd_rc=0`; `[N3_552_ENTRY] … rdi_is_env=1`; ring `name=size a0==entry rdx`;
+counts size=1/get=0/GetObjectClass=0/GetMethodID=0 per run. UNPROVEN: inner NULL rdi producer,
+host module at `...08ff`, why `size` returned 0 yet fault persists.
+
+**static-A #670 — claims verified except the adjudicated rdi provenance:** order lines (`JNI_OnLoad
+FIRST` → `nativeInitClientSettings 0x2359277` → `controller ensure_flag` → `N14_REPLAY 1/3`
+`nativeOnPreCreated` → `N14_REPLAY 2/3` `nativeOnResumed` → fault, no 3/3 line); capture
+`J2N #551 nativeInitClientSettings` (w12:566) before `J2N #552 … ([object Object])` (w12:567),
+verified verbatim in w12-j2n-300.log; #552 pre-BaseDirs preserved but order not identical
+(harness inserts lifecycle replays + JNI_OnLoad FIRST). **QUOTE-RULE DEFECT flagged:** report line 9
+condensed `insn` bytes (`48 8b 47 08 74 05 48 85`) vs raw zero-padded
+`insn=0000000000000048 000000000000008b …`; substance verified, quote not verbatim.
+static-A subsequently added an explicit RETRACTION section to report.md (commit b47f2a9)
+quoting the n3 entry bp and accepting the inner-rdi verdict; the condensed-insn line remains
+in the (now retracted) original section.
+
+**static-B #673 — all quoted disasm verified verbatim:** `rbx@6c8e512` = builder entry rdi via
+`6c8d84a mov %rdi,%rbx`; caller `6c8e8bd mov %rsi,%rbx` / `6c8e9a5 mov (%rbx),%rdi` =
+host/bridge callback-arg slot; host registration `227b979 lea #6c8e8a8`, `227b980 mov %rax,
+#7cdec50`, `227b9b1 mov %r14,(%rbx)`; seeding `6c8eb79 mov 0x18(%r15),%rax` /
+`6c8eb7d mov %rax,(%rbx)` / `6c8eb83 call 6c8d840`; wrapper `6ca7ffa call 6c89e50`,
+`6ca7fff mov 0x18(%rax),%rbx` (original table), `6ca8003 call 6c89e70`, `6ca8008 mov (%rax),%rax`,
+`6ca800e call *0x720(%rax)`; guard `6c8d861/864` skips after swap. `6c8e512` verified in
+`dis_builder_full.txt` (omitted from report evidence list, minor). RETRACTED: wrapper uses the
+copy (it reads the original); harness pointer-identity conflict UNPROVEN.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n3-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 46 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n3. Marker WITHHELD.
