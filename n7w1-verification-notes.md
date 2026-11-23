@@ -41,3 +41,16 @@ SHA banner + w11-arg0.json 8215519f quoted every run. Rate limit wait 5min x3 th
 - Secrets scan 71 self-matches; git no captures/tokens.
 - Git index writes still fail -> commit/push via plumbing (fresh index built by update-index --index-info
   from git ls-tree -r HEAD with the two changed paths replaced; commit-tree; direct ref file write; push).
+  NOTE: /dev/shm GIT_INDEX_FILE works; other paths intermittently fail.
+
+## Wave4 verification (task #699)
+- harness #698: SHA+banner 3/3; arm 4/5 inner bps (trap bp failed, perf slot limit) with
+  fds=-1/... inner_rc=0/0/0/0/-1; hits FLOG_FFLUSH=2/UNWIND=0/ASSERT_DISPATCH=1/ASSERT_REPORT=1
+  per run; order dispatch->reporter->FLog#1->HardAssert msg->FLog#2->W30_FAULT => HardAssert reporter
+  (FLog 0x2e61d13) fires, unwind reporter 0x2ea6a94 NOT taken. Trap instruction UNPROVEN by bp.
+- static-A #697: no direct size()==0->HardAssert edge (2383d42 jle -> canary -> 238450a ret);
+  message call 23a146e (rsi=0x4c0d2b, edi=0), dispatcher 6caed61..77, table 0x721fbd0; reach via
+  printer 239d215 -> 239eb14 flag 0x7cdede0 -> 23a1424 -> call; entry edge to 239d215 UNPROVEN.
+- static-B #700: index clamped 0..10 selects tag in rdi, message is rsi from call site — RETRACTED
+  'message table' framing; table contents UNPROVEN (relocation-filled). Verified by direct objdump.
+- Secrets scan 72 self-matches; git no captures/tokens.
