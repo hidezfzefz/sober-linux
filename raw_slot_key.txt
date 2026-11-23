@@ -1,0 +1,9 @@
+3018190: 2a0de78:	e8 53 00 00 00       	call   2a0ded0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a735>
+3018239: 2a0df25:	e8 16 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+3018245: 2a0df41:	49 89 86 08 04 00 00 	mov    %rax,0x408(%r14)
+3018246: 2a0df48:	49 89 86 10 04 00 00 	mov    %rax,0x410(%r14)
+3023734: 2a1335e:	48 8b 00             	mov    (%rax),%rax
+3023735: 2a13361:	48 83 78 28 00       	cmpq   $0x0,0x28(%rax)
+4246807: 2ea6677:	48 8b 07             	mov    (%rdi),%rax
+4246811: 2ea6682:	48 89 03             	mov    %rax,(%rbx)
+4246817: 2ea6695:	e9 76 b6 e8 03       	jmp    6d31d10 <pthread_setspecific@plt>
