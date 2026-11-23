@@ -12,7 +12,7 @@ Quoted harness raw line (lead-relayed from n4 harness):
 Host libc ELF offset `0x7c8ff`; `objdump` quoted by harness:
 > `7c8ff: 48 8b 47 08 mov rax,QWORD PTR [rdi+0x8]`
 
-`nm -D` quoted: `_IO_fflush@@GLIBC_2.2.5 at 0x7c860` ⇒ fault = **`_IO_fflush+0x3f`, NULL rdi** (`si_addr=0x8`). RET64 was NOT exercised (si_addr far from rsp), so **there is no first-guest-RVA call site** — PROVEN.
+`nm -D` quoted: `_IO_fflush@@GLIBC_2.2.5 at 0x7c860` ⇒ fault = **`_IO_fflush+0x9f`, NULL rdi** (`si_addr=0x8`). RET64 was NOT exercised (si_addr far from rsp), so **there is no first-guest-RVA call site** — PROVEN.
 
 The first guest-mapped stack qword `guest+0x00000000072a0818` is **DATA, not a
 call site**: quoted `readelf -SW` `.bss` = `0000000007282500 … b1ad1c`, which
@@ -53,7 +53,7 @@ Quoted source:
 > `:497: return real ? real(mapped) : 0;`
 
 So a NULL guest stream maps to NULL and is passed straight to glibc — the
-mechanism for the NULL rdi at `_IO_fflush+0x3f`. The exact guest call site on
+mechanism for the NULL rdi at `_IO_fflush+0x9f`. The exact guest call site on
 the #552 path that supplies NULL is **UNPROVEN** (no `fflush@plt` call inside
 the `0x2383c18` body; the sampled sites load rdi from FILE*-bearing fields).
 
@@ -66,3 +66,10 @@ credentials, no captures/logs/tokens in git.
 First divergence: NULL FILE* from a guest FILE*-bearing field reaches host
 `_IO_fflush`; real boot supplies a valid stream. Next: harness logs the guest
 flush call site and its FILE* field on the #552 path.
+
+## CORRECTION (audit #677) — symbol offset
+
+RETRACTED my `_IO_fflush+0x3f` wording: `nm -D` gives `_IO_fflush@@GLIBC_2.2.5 =
+0x7c860` and the faulting address is `0x7c8ff`, so
+`0x7c8ff - 0x7c860 = 0x9f`. Correct designation: **`_IO_fflush+0x9f`**. All
+other findings unchanged.
