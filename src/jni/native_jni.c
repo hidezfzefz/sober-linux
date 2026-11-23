@@ -712,8 +712,77 @@ static void n1_call720_sig(int s, siginfo_t *si, void *uc)
     #undef P
 }
 
+/* ---- n2 STEP 1 READ-ONLY table test -------------------------------------
+ * exec bp 0x6c8e4d3 (guest JNIEnv vtable builder): log r14 vs bridge table.
+ * exec bp 0x6ca800e (call *0x720(%rax)): log rax vs bridge table, and
+ *   [bridge_table+0x720] vs base+0x6ca7f72 (in-place patch detector).
+ * Only process_vm_readv / host-global reads; NO writes of any kind.
+ */
+static uintptr_t n2_base;
+static uintptr_t n2_guest_table_ptr;   /* set in sr_build_tables */
+static uintptr_t n2_bridge_table(void)
+{
+    uintptr_t env = g_bridge_env_ptr;
+    if (!env || env < 0x10000u) return 0;
+    return *(uintptr_t *)env;   /* host memory, direct read fine */
+}
+static void n2_builder_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t r14 = (uintptr_t)c->uc_mcontext.gregs[REG_R14];
+    uintptr_t tab = n2_bridge_table();
+    uintptr_t guest_tab = n2_guest_table_ptr;
+    uintptr_t w = 0;
+    (void)w31_read(r14 + 0x720u, &w, 8u);
+    fprintf(stderr,
+            "[N2_TABLE builder 0x6c8e4d3] tid=%ld r14=%p "
+            "bridge_table=%p r14_is_bridge_table=%d "
+            "guest_copy=%p r14_is_guest_copy=%d "
+            "[r14+0x720]=%p self=%p\n",
+            (long)syscall(SYS_gettid), (void *)r14, (void *)tab,
+            (tab && r14 == tab) ? 1 : 0,
+            (void *)guest_tab, (guest_tab && r14 == guest_tab) ? 1 : 0,
+            (void *)w, (void *)(n2_base + 0x6ca7f72u));
+}
+static void n2_call720_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t tab = n2_bridge_table();
+    uintptr_t w = 0;
+    (void)w31_read(rax + 0x720u, &w, 8u);
+    uintptr_t bw = 0;
+    if (tab) (void)w31_read(tab + 0x720u, &bw, 8u);
+    uintptr_t expect = n2_base + 0x6ca7f72u;
+    fprintf(stderr,
+            "[N2_TABLE call720 0x6ca800e] tid=%ld rax=%p "
+            "bridge_table=%p rax_is_bridge_table=%d "
+            "guest_copy=%p rax_is_guest_copy=%d "
+            "[rax+0x720]=%p [bridge_table+0x720]=%p expect=%p "
+            "bridge_patched=%d\n",
+            (long)syscall(SYS_gettid), (void *)rax, (void *)tab,
+            (tab && rax == tab) ? 1 : 0,
+            (void *)n2_guest_table_ptr,
+            (n2_guest_table_ptr && rax == n2_guest_table_ptr) ? 1 : 0,
+            (void *)w, (void *)bw, (void *)expect, (bw == expect) ? 1 : 0);
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_N2_TABLE")) {
+        n2_base = base;
+        int f1 = w21_perf(n2_base + 0x6c8e4d3u);
+        int f2 = w21_perf(n2_base + 0x6ca800eu);
+        int a1 = f1 >= 0 ? w21_arm(f1, SIGUSR1, n2_builder_sig) : -1;
+        int a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, n2_call720_sig) : -1;
+        fprintf(stderr, "[N2_TABLE_ARM] base=%p bridge_env=%p builder=%d call720=%d\n",
+                (void *)n2_base, (void *)(uintptr_t)g_bridge_env_ptr, a1, a2);
+        return;
+    }
     if (getenv("SOBER_N1_TRACE")) {
         n1_base = base;
         {
@@ -969,8 +1038,13 @@ typedef struct {
 struct SoberJni {
     SoberJniOptions opts;
     SRNativeInterface env_table;
+    /* n2 kill-switch fix: the guest JNIEnv-vtable builder (0x6c8e4cc/4d3)
+     * patches fn[224] IN PLACE.  Give it a disposable copy; the harness bridge
+     * keeps env_table pristine.  Host-only, ledgered; no guest writes. */
+    SRNativeInterface guest_env_table;
     SRInvokeInterface vm_table;
     SREnvObj env_obj;
+    SREnvObj guest_env_obj;
     SRVmObj  vm_obj;
     int      initialised;
 
@@ -1598,7 +1672,9 @@ static sr_jint sr_GetEnv(void *vm, void **env_out, sr_jint version)
     (void)version;
     SRVmObj *v = (SRVmObj *)vm;
     if (!env_out || !v || !v->owner) return -1;
-    *env_out = &v->owner->env_obj;
+    /* guest-facing env: its function table is a disposable copy that the
+     * guest may patch; sober_jni_env() still exposes the pristine table. */
+    *env_out = &v->owner->guest_env_obj;
     return 0;
 }
 static sr_jint sr_AttachCurrentThread(void *vm, void **env_out, void *args)
@@ -1735,8 +1811,13 @@ static void sr_build_tables(SoberJni *j)
     SETFN(*v, 3, sr_GetEnv);
     SETFN(*v, 4, sr_AttachCurrentThreadAsDaemon);
 
+    /* disposable copy for the guest; real bridge table stays pristine */
+    memcpy(&j->guest_env_table, &j->env_table, sizeof(j->env_table));
+    n2_guest_table_ptr = (uintptr_t)&j->guest_env_table;
     j->env_obj.functions = &j->env_table;
     j->env_obj.owner = j;
+    j->guest_env_obj.functions = &j->guest_env_table;
+    j->guest_env_obj.owner = j;
     j->vm_obj.functions = &j->vm_table;
     j->vm_obj.owner = j;
     j->initialised = 1;
