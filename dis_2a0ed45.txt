@@ -1,5 +1,5 @@
 
-/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
 
 
 Disassembly of section .text:
@@ -30,3 +30,10 @@ Disassembly of section .text:
  2a0ed5d:	cc                   	int3
  2a0ed5e:	cc                   	int3
  2a0ed5f:	cc                   	int3
+ 2a0ed60:	55                   	push   %rbp
+ 2a0ed61:	48 89 e5             	mov    %rsp,%rbp
+ 2a0ed64:	41 57                	push   %r15
+ 2a0ed66:	41 56                	push   %r14
+ 2a0ed68:	53                   	push   %rbx
+ 2a0ed69:	48 83 ec 18          	sub    $0x18,%rsp
+ 2a0ed6d:	49 89 fe             	mov    %rdi,%r14
