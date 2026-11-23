@@ -1,0 +1,8 @@
+1316042: 239eb14:	80 3d c5 02 94 05 00 	cmpb   $0x0,0x59402c5(%rip)        # 7cdede0 <__stop_pb_defaults@@Base+0xa5c928>
+1316043: 239eb1b:	0f 84 01 29 00 00    	je     23a1422 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0x1d80a>
+1318504: 23a1422:	84 c0                	test   %al,%al
+1318505: 23a1424:	74 3f                	je     23a1465 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0x1d84d>
+1318519: 23a1465:	48 8d 35 bf f8 11 fe 	lea    -0x1ee0741(%rip),%rsi        # 4c0d2b <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1916575>
+1318520: 23a146c:	31 ff                	xor    %edi,%edi
+1318521: 23a146e:	e8 ea d8 90 04       	call   6caed5d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b722f>
+21078469: 6caef66:	cc                   	int3
