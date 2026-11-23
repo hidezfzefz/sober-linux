@@ -1617,19 +1617,36 @@ int guest_app_shell_run(uintptr_t base)
     }
 
     int real_path = getenv("SOBER_REAL_APPSTATE_PATH") != NULL;
-    if (getenv("SOBER_NATIVE_FLAGS_INIT")) {
+    /* n1-3 rule 6 (host-only): replay the two natives missing from the harness
+     * in AVD-captured order, after BaseDirs (#612):
+     *   #613 nativeSetPreferencesFile("prefs")
+     *   #614 nativeInitializeNativeFlags(String[] flag names from capture)
+     * No guest bytes/gate writes, no fake returns, no path remapping. */
+    if (!getenv("SOBER_N1_NO_MISSING_NATIVES")) {
+        void *s_prefs = sober_jni_new_string_utf8(j, "prefs");
+        rc = ((long (*)(void *, void *, void *))(base + 0x246515du))
+                 (env, app_class, s_prefs);
+        fprintf(stderr, "[app-shell] N1_RULE6 1 nativeSetPreferencesFile "
+                        "0x246515d(\"prefs\") -> rc=%ld\n", rc);
+
         void *flags = NULL;
         if (sober_jni_arrays_is_active()) {
-            const char *flag_names[] = { "EnableAppBridgeComponents" };
-            flags = sober_jni_new_string_array(j, flag_names, 1);
+            /* verbatim tokens from w12-j2n-300.log:629 (last is truncated there) */
+            const char *flag_names[] = {
+                "EnableAndroidBinaryChannelDownloadTiming",
+                "PgsTreatmentActive",
+                "EnableLazyWorkManagerInit",
+                "EnableAppPlatformQoSEmergencyOnAnd..."
+            };
+            flags = sober_jni_new_string_array(j, flag_names, 4);
         }
         if (!flags)
             flags = sober_jni_new_native_object(j, "[Ljava/lang/String;",
                                                 0x80, NULL);
         rc = ((long (*)(void *, void *, void *))(base + 0x2465210u))
                  (env, app_class, flags);
-        fprintf(stderr, "[app-shell] guest call 0x2465210 "
-                        "nativeInitializeNativeFlags(String[]) -> rc=%ld\n", rc);
+        fprintf(stderr, "[app-shell] N1_RULE6 2 nativeInitializeNativeFlags "
+                        "0x2465210(String[4]) -> rc=%ld\n", rc);
     }
 
     if (real_path) {
