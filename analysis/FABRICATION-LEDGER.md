@@ -1022,7 +1022,7 @@ Input SHA: `verified … sha256=8215519f…` = 1 in each `n5_{1,2,3}.err` (3/3);
 
 | # | Entry | Where | Owner | Why | Removal condition |
 | - | ----- | ----- | ----- | --- | --- |
-| 43 | **Bionic `__sF` ABI fidelity, defect removal (host-only): `SOBER_BIONIC_SF_FULL=1` widens exported `__sF` to 0x200 and maps guest `__sF+0x98/+0x130` to real host stdout/stderr with valid `_lock`, removing the earlier host libc `_IO_fflush+0x9f` NULL-FILE fault. DEBT** | raw n5_1.err `[bionic-sf] full __sF stdio bridge installed (host __sF=0x55829d0d5140, size=0x200)`, `[bionic-sf] stdio GOT bound: fwrite 0x7229748 …; fflush 0x7229750 …`; script `rund3_n5.sh:10 export SOBER_BIONIC_SF_FULL=1`; libc objdump `7c8e8 mov rdi,[rdi+0x88]` (_lock load) then `7c8ff mov rax,[rdi+0x8]` NULL with tiny __sF; source `bionic_libc.c:443 sober_libc_obj___sF[0x200]`, `bionic_sf_full.c:4-7` | harness (owner), audited | A genuine host-side ABI fix: no guest bytes/gate/fake returns/remaps; libc fault gone 3/3, replaced by a guest assert (below) | Remove when a real device/AVD boot supplies the full `__sF` bridge natively (no host shim needed) or the opt-in is folded into default host code |
+| 43 | **Bionic __sF ABI fidelity, defect removal; DEBT=1; gate/withhold list unchanged** (host-only: `SOBER_BIONIC_SF_FULL=1` widens exported `__sF` to 0x200 and maps guest `__sF+0x98/+0x130` to real host stdout/stderr with valid `_lock`, removing the earlier host libc `_IO_fflush+0x9f` NULL-FILE fault) | raw n5_1.err `[bionic-sf] full __sF stdio bridge installed (host __sF=0x55829d0d5140, size=0x200)`, `[bionic-sf] stdio GOT bound: fwrite 0x7229748 …; fflush 0x7229750 …`; script `rund3_n5.sh:10 export SOBER_BIONIC_SF_FULL=1`; libc objdump `7c8e8 mov rdi,[rdi+0x88]` (_lock load) then `7c8ff mov rax,[rdi+0x8]` NULL with tiny __sF; source `bionic_libc.c:443 sober_libc_obj___sF[0x200]`, `bionic_sf_full.c:4-7` | harness (owner), audited | A genuine host-side ABI fix: no guest bytes/gate/fake returns/remaps; libc fault gone 3/3, replaced by a guest assert (below) | Remove when a real device/AVD boot supplies the full `__sF` bridge natively (no host shim needed) or the opt-in is folded into default host code |
 
 **NEW FAULT (first divergence, PROVEN):** with SF_FULL ON the libc fault is GONE (3/3); new fault
 `guest+0x6caef67`, bytes `89 c0 e8 62 …`, `si_addr=0x0`, **signal=5 SIGTRAP (guest HardAssert)**.
@@ -1030,6 +1030,16 @@ Raw `[W28_FAULT_INSN] rip=0x00007f12da5d6f67 guest_rva=0x06caef67`, `signal=5 ti
 last-15 stderr `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`.
 3rd `N14_REPLAY` never printed (assert fires before #552 returns). This is a GUEST-side defect newly
 exposed by removing the host one — not credit; exact assert meaning and mimalloc-detection cause UNPROVEN.
+
+**A/B (#682, one session, ALL-3 criteria) — all quoted claims verified:** SHA 6/6; banner
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` 3/3 in A, `=UNSET` 3/3 in B; A faults at guest RVA
+`0x06caef67` 3/3, B at host `...08ff` 3/3; `N14_REPLAY 3/3` count 0/0/0 in BOTH arms;
+rc=139 6/6. Success criteria: (1) libc fault gone under A = YES, (2) 3rd replay prints = NO
+in both arms, (3) faulting instruction differs = YES → **overall NOT SUCCESS** (criterion 2
+fails). Last-15 A ends with HardAssert, B with replay 2/3 + guard 0. Gate/withhold UNCHANGED:
+source diff (12e2407→HEAD) touches only `bionic_libc.c`/`bionic_sf_full.c`/`guest_dlopen_host.c`
++ reports/scripts, no rung/gate/marker changes; rung1 PASS (DEBT=1) 6/6 label only. Ledger
+text recorded EXACTLY as lead specified (entry 43).
 
 **harness #678 — all quoted claims verified verbatim:** SHA 3/3; SF_FULL installed/GOT-bound lines;
 `[W40_STDIO_RING] last 32 fflush/fwrite/fclose calls …` header present 3/3 but `in_sF` entries 0/0/0
@@ -1044,6 +1054,20 @@ from source comments; `SOBER_BIONIC_SF_FULL` opt-in). Two of three cited caller 
 (`1dceb4f`, `1dcf4c8`) not independently confirmed by spot objdump — not used as a success claim;
 "no caller in #552 body" consistent with prior-wave scans. Fatal helper flushes +0x130 (stderr);
 other logger FILE* from object fields → global "all flushes use one stream" UNPROVEN.
+
+**static-B follow-up (report2.md, new guest fault) — quotes verified:** reporter fn `0x6caed7c`
+via dispatcher `0x6caed5d` (`6caed5d push rbp`, `6caed61 cmp $0xa,%edi`, `6caed6c lea #721fbd0`,
+`6caed77 call 6caed7c` — verified by direct objdump), trap `6caef66 cc int3` (reported RIP 6caef67
+is the following instruction), message `23a1465 lea #4c0d2b` / `23a146e call 6caed5d`, strings
+`0x4c0d2b Expect to have mimalloc working…`, `0x3a30e8 HardAssert`, `0x3a3078 [DFLog::Mimalloc]
+… NOT detected` verified from engine bytes, matching harness RET64 `guest+0x3a30e8/0x4c0d2b`;
+predicate bytes `0x7cdd149` (W18 latch, written by `2eb7520 movb $1`) and `0x7cef650` (init zero
+`2279a4b xor %eax,%eax` / `2279a8f mov %al`, FFlag `DebugForceTerminateOnRbxCrash`), both must be
+nonzero else int3; weak `mi_malloc` at `bionic_bootstrap/bionic_bootstrap.c:175` (README:246
+"glibc malloc when mimalloc absent"). UNPROVEN (as agent states): exact detection call at
+`23a1422 test %al,%al`, which byte is specifically "mimalloc detected", whether either byte alone
+clears the assert. Several dispatcher/string lines absent from saved evidence files but verified
+by direct objdump/strings.
 
 **static-B #680 — all quoted lines verified verbatim:** after-#552 host calls (`0x24650a9/0x232d484/
 0x2326e2e/0x246515d/0x2465210/0x233762c/0x24abf96`) are host `fprintf(stderr,…)`, NOT guest fflush —
