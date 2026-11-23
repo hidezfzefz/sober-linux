@@ -492,7 +492,8 @@ an independent host-side defect, not a checkpoint credit.
 - **harness #632 — largely PROVEN, one claim RETRACTED:** default arg0 = authoritative
   `w11-arg0.json` (`avd_boundary.h:16`, SHA const `:20`), full-JSON runs log `arg0_len=1533221`;
   TSD seed ON eq=1 for first two call-pairs then guest replaces TLS (writes `0x7265502f666f7270`
-  "profileP"), seed OFF guest-owned TLS `[tls]=0x1`; seed-OFF fault `guest+0x2a13354 = call
+  = bytes `70 72 6f 66 2f 50 65 72` LE = **"prof/Per"**, NOT "profileP" — prior decode RETRACTED),
+  seed OFF guest-owned TLS `[tls]=0x1`; seed-OFF fault `guest+0x2a13354 = call
   0x2a0de60` (bytes `e8 07 ab ff ff`), all 8/8 JNI pairs returned; host fault `0x555555586e9b` =
   `sober_w21_boundary_ok()` (`native_jni.c:184`) caused by `w21_init` early-return leaving
   `w21_base=0`, host-only NULL guard `if (!w21_base) return 0;` applied at `:187`.
@@ -552,3 +553,41 @@ Engine SHA `3e498d64`. NEW RULE honored: every success claim below QUOTES its ra
 → OUTPUT: 5 self-matches (the ledger's own recorded scan command in 3 worktree copies + 2 verification-notes copies); no credential values.
 **Git:** no capture/phone/logcat/core files tracked (1 false-positive "core." prose match in
 `G6_progress_score.md`); w30 worktrees each on own branch. Marker WITHHELD.
+
+## Wave31 audit (task #639) — decode fix + rung1 meaning + quoted-line verification
+
+Owner: audit (worktree `/tmp/opencode/w31-audit`, branch `w31-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. QUOTE rule honored: every success claim below quotes a raw line.
+
+**DECODE FIX (lead-directed):** the value `0x7265502f666f7270` decodes little-endian to bytes
+`70 72 6f 66 2f 50 65 72` = **"prof/Per"**, NOT "profileP". Prior W29/W30 reports (e.g.
+`/tmp/opencode/w30-static/report.md:34`) and this ledger's W29 section (line 494) used the wrong
+"profileP" decode — RETRACTED and corrected above. Raw anchor quoted:
+`[W29_TLS 0x2315556] tid=1519045 key=3 rax=0x5555558fe0e8 [rax]=(nil) rsi=0x5555574b3c30 seed=0x5555559f60f0 [seed]=0x7265502f666f7270 eq=0`.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 27 | **rung1 FAIL = latch hit NOT observed WITH WATCHER ARMED; absence with watcher UNARMED is a watcher-configuration effect, NOT proof the latch never fires. rung1 PASS requires a real W21 latch hit (caller RA 0x2359342). STATUS: task (d) MET — hit observed in W31 runD_1 + latchrun (watcher armed)** | raw `[checkpoint] rung1 FAIL (DEBT=1)` (W29 13×, W30 runD 3/3; 0 W21_LATCH_HIT); MET: w31 `runD_1.err` + `latchrun.err` raw `[W21_LATCH_HIT] rip=base+0x2eb7520 callerRA=base+0x2359342 latch=0x0` + `[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`; runs 2-3 raw `[W31_ARM] ... latch=-1` + rung1 FAIL | lead/audit | Qualified per lead: distinguish "hit not observed with watcher armed" from "watcher not armed" — the latter is configuration, not latch absence. Consolidated from W29 (line 54 retracted), W30 and W31 audit | Retire the FAIL-reading where watcher is armed and a hit is quoted; keep it for unarmed-watcher runs. PASS is DEBT=1 replay on authoritative input — not a clean marker |
+| 28 | **W31 harness replays genuine guest `ctor[0] 0x2e62390` (FFlag registry) — real guest code, no byte patches/callbacks/JNIEnv; the real boot runs it at library load. Replay precedes JNI_OnLoad and nativeInitClientSettings** | `src/jni/fflag_default.c:161-175` (`ctor()` via RVA `SOBER_FFLAG_DEFAULT_RVA_CTOR0`, no writes); raw w30 `runD_1.err:3687 [fflag-default] replayed guest ctor 0x2e62390 ... -> OK`, `:3702 JNI_OnLoad FIRST ver=0x10006`, `:3707 nativeInitClientSettings`; w31 `runD_1.err:3688` same replay line | lead/static | Confirms ctor[0] is active in Run D and is genuine guest code (Decision 008 skips it at bootstrap; real boot runs it at library load), not a harness shim | Remove when a real-boot capture demonstrates the same ctor[0] chain without harness replay, or replay is proven to alter guest semantics |
+
+**Harness #638 final verification (all quotes found verbatim in raw files at 04:08):**
+- FAULTING INSTR: objdump `6ca7f95: e8 b6 b3 d6 fb call 2a13350` — PROVEN. Raw (latchrun.err)
+  `[W30_FAULT] rip=0x00007fffef8e3f95 si_addr=0x00007fffff7fefb8 rsp=0x00007fffff7fefc0 ...`,
+  si_addr=rsp-8 stack overflow. With W31 bps armed the fault moves to host `0x7ffff7e30017`
+  (raw runD_1.err:78803) — still si_addr=rsp-8.
+- (a) PROVEN: raw `[W31_ENTRY #1] tid=1585707 ...` / `#37537 tid=1585707 ...` (37,537 entries,
+  37,536 obj), `37536 [obj+0x28]=0000000000000000` and `37536 ascii28=0` — all zeros, never ASCII.
+- (b) PROVEN: raw `[W31_WRITE_ARM] obj=0x7fffe86a08c0 watch=0x7fffe86a08e8 tid=1585707`;
+  zero `[W31_WRITE]` lines. Writer identity UNPROVEN (agent states so).
+- (d) PROVEN: raw `runD_1.err [W21_LATCH_HIT] rip=base+0x2eb7520 callerRA=base+0x2359342
+  latch=0x0 tid=1585707` + `[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`. Input provenance
+  raw `runD_1.err:3704 file=w11-arg0.json sha256=8215519f…`, `:3705 [avd-boundary] verified … sha256=8215519f…`,
+  `:3706 arg0_len=1533221` — AUTHORITATIVE input, not the w15-flags-1.json modified input of entry 22.
+  Source `native_jni.c:182-192 sober_w21_boundary_ok()` requires hits>0, before=0, after=1, RA=0x2359342;
+  `guest_app_shell.c:2243-2266` prints PASS only when `!modified_input`. Runs 2-3 raw
+  `[W31_ARM] ... latch=-1` + rung1 FAIL — watcher-config effect, NOT a latch absence.
+  NOTE: PASS is `DEBT=1` (replay), NOT clean — marker WITHHELD. Earlier 16 PASS downgrades (entry 22)
+  were for MODIFIED input; this PASS is on authoritative input and is not covered by that downgrade.
+- STALE-QUOTE flag: an earlier report revision (04:07:11) quoted tids 1579693/1582405 and
+  obj=0x7fffe852e280, which do NOT occur in the final runD_1.err; the agent corrected these at
+  04:08:35. Final report quotes verified; no unsupported claim remains.
