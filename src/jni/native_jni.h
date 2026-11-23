@@ -166,6 +166,12 @@ const char *sober_jni_last_callback(SoberJni *j);    /* "" if none */
 /* Human-readable recent-activity summary; returns buf. */
 const char *sober_jni_describe_activity(SoberJni *j, char *buf, size_t cap);
 
+/* W22 read-only boundary credential for the rung PRINTER LABEL only.
+ * 1 when a real 0x2eb7520 hit had latch 0 before / 1 after and caller RA
+ * 0x2359342.  Never reads or changes any gate decision. */
+int  sober_w21_boundary_ok(void);
+long sober_w21_latch_hits(void);
+
 #ifdef __cplusplus
 }
 #endif

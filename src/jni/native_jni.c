@@ -40,6 +40,137 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <ucontext.h>
+#include <linux/perf_event.h>
+#include <linux/hw_breakpoint.h>
+
+/* ---- W21 read-only perf exec watcher (host-side instrumentation only) ---- *
+ * SOBER_W21_WATCH=1 arms hardware EXEC breakpoints (perf_event_open, no guest
+ * byte patches) at guest 0x2eb7520 (latch writer) and 0x23115c8 (RSI origin).
+ * Handlers only log; they never write guest state.  This is the ACTUAL hit
+ * evidence requested by task #602 (not an inference from latch=1). */
+static int w21_fd_latch = -1, w21_fd_rsi = -1;
+static uintptr_t w21_base;
+static long w21_latch_hits;
+static long w21_caller_ra_rva;      /* RVA of the caller RA at the latch hit */
+static int  w21_latch_before = -1;  /* latch byte sampled inside the handler */
+static const char w21_buildid[20] = {
+    0x20,0x4a,0xd0,0x49,0x59,0x9c,0x96,0xaf,
+    0xb7,0x5b,0x8a,0x21,0xd5,0x05,0x10,0x63,0xe8,0x21,0xd6,0xc9};
+static int w21_note(const unsigned char *n, size_t sz)
+{
+    size_t off = 0;
+    while (off + sizeof(Elf64_Nhdr) <= sz) {
+        Elf64_Nhdr h; memcpy(&h, n + off, sizeof(h)); off += sizeof(h);
+        size_t ns = h.n_namesz, ds = h.n_descsz;
+        size_t np = (ns + 3u) & ~3u, dp = (ds + 3u) & ~3u;
+        if (ns > 4096u || ds > 4096u || np > sz - off || dp > sz - off - np) return 0;
+        if (h.n_type == 3u && ns >= 4u && !memcmp(n + off, "GNU", 4) &&
+            ds == 20u && !memcmp(n + off + np, w21_buildid, 20u)) return 1;
+        off += np + dp;
+    }
+    return 0;
+}
+static int w21_phdr(struct dl_phdr_info *i, size_t sz, void *d)
+{
+    (void)sz; (void)d;
+    for (unsigned j = 0; j < i->dlpi_phnum; ++j) {
+        if (i->dlpi_phdr[j].p_type != PT_NOTE) continue;
+        const unsigned char *n = (const unsigned char *)
+            (i->dlpi_addr + i->dlpi_phdr[j].p_vaddr);
+        if (w21_note(n, (size_t)i->dlpi_phdr[j].p_memsz)) {
+            w21_base = (uintptr_t)i->dlpi_addr; return 1;
+        }
+    }
+    return 0;
+}
+static int w21_perf(uintptr_t addr)
+{
+    struct perf_event_attr a; memset(&a, 0, sizeof(a));
+    a.type = PERF_TYPE_BREAKPOINT; a.size = sizeof(a);
+    a.bp_type = HW_BREAKPOINT_X; a.bp_addr = (uint64_t)addr;
+    a.bp_len = HW_BREAKPOINT_LEN_8; a.disabled = 1;
+    a.sample_period = 1; a.wakeup_events = 1;
+    a.exclude_kernel = 1; a.exclude_hv = 1;
+    return (int)syscall(SYS_perf_event_open, &a, 0, -1, -1, 0);
+}
+static int w21_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
+{
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = fn; sa.sa_flags = SA_SIGINFO; sigemptyset(&sa.sa_mask);
+    if (sigaction(signo, &sa, NULL) != 0) return -1;
+    if (fcntl(fd, F_SETSIG, signo) != 0) return -2;
+    if (fcntl(fd, F_SETOWN, getpid()) != 0) return -3;
+    if (fcntl(fd, F_SETFL, O_ASYNC) != 0) return -4;
+    return ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0 ? -5 : 0;
+}
+static void w21_latch_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    unsigned long rip = c ? (unsigned long)c->uc_mcontext.gregs[REG_RIP] : 0;
+    unsigned long rbp = c ? (unsigned long)c->uc_mcontext.gregs[REG_RBP] : 0;
+    unsigned long ra = 0;
+    if (rbp) ra = (unsigned long)*(unsigned long *)(rbp + 8);
+    w21_latch_before = *(unsigned char *)(w21_base + 0x7cdd149u);
+    w21_caller_ra_rva = (long)(ra - w21_base);
+    __atomic_fetch_add(&w21_latch_hits, 1, __ATOMIC_RELAXED);
+    fprintf(stderr, "[W21_LATCH_HIT] rip=base+0x%lx callerRA=base+0x%lx "
+            "latch=0x%x tid=%ld\n",
+            rip - w21_base, ra - w21_base,
+            w21_latch_before, (long)syscall(SYS_gettid));
+}
+/* W22 rung-printer credential (READ-ONLY observation, no gate logic):
+ * 1 only when a REAL latch hit was seen with latch=0 before, latch=1 after and
+ * caller RA == AVD reference 0x2359342. */
+int sober_w21_boundary_ok(void)
+{
+    unsigned char after = *(volatile unsigned char *)(w21_base + 0x7cdd149u);
+    return w21_base && __atomic_load_n(&w21_latch_hits, __ATOMIC_RELAXED) > 0 &&
+           w21_latch_before == 0 && after == 1 &&
+           w21_caller_ra_rva == 0x2359342L;
+}
+
+long sober_w21_latch_hits(void)
+{
+    return __atomic_load_n(&w21_latch_hits, __ATOMIC_RELAXED);
+}
+
+static void w21_rsi_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    unsigned long rax = c ? (unsigned long)c->uc_mcontext.gregs[REG_RAX] : 0;
+    uintptr_t ctx = (uintptr_t)rax;
+    uintptr_t v0 = ctx ? *(uintptr_t *)ctx : 0u;
+    uintptr_t v20 = ctx ? *(uintptr_t *)(ctx + 0x20u) : 0u;
+    uintptr_t lo = w21_base + 0x6d37bc0u, hi = w21_base + 0x7220e40u;
+    fprintf(stderr, "[W21_RSI_ORIGIN] ctx=%p ctx0=0x%lx ctx20=0x%lx "
+            "in_data_rel_ro=%d G=0x%lx\n",
+            (void *)ctx, (unsigned long)v0, (unsigned long)v20,
+            (v0 >= lo && v0 < hi),
+            (unsigned long)*(uintptr_t *)(w21_base + 0x72a3058u));
+    /* one-shot; keep armed for repeat activations */
+}
+static void w21_init(uintptr_t base)
+{
+    if (!getenv("SOBER_W21_WATCH")) return;
+    w21_base = base;   /* guest already mapped when the seeder runs */
+    w21_fd_latch = w21_perf(w21_base + 0x2eb7520u);
+    w21_fd_rsi = w21_perf(w21_base + 0x23115c8u);
+    if (w21_fd_latch < 0 || w21_fd_rsi < 0) {
+        fprintf(stderr, "[W21_WATCH] perf_event_open FAILED\n"); return;
+    }
+    int a = w21_arm(w21_fd_latch, SIGUSR1, w21_latch_sig);
+    int b = w21_arm(w21_fd_rsi, SIGUSR2, w21_rsi_sig);
+    fprintf(stderr, "[W21_WATCH] armed base=%p latch=%d rsi=%d\n",
+            (void *)w21_base, a, b);
+}
 
 /* ---- local JNI scalar types (ABI-identical to jni.h) ------------------ */
 typedef int32_t  sr_jint;
@@ -1385,6 +1516,7 @@ static const SrCachedMethod sr_cached_methods[] = {
 SR_API int sober_jni_seed_guest_jni_state(SoberJni *j, void *guest_base)
 {
     if (!j || !guest_base) return SOBER_JNI_ERR;
+    w21_init((uintptr_t)guest_base);   /* W21 read-only exec watcher (opt-in) */
     int seeded = 0;
 
     /* Named entries first (worker-1 jni-map §1.2). */
