@@ -40,3 +40,10 @@ No guest writes/hand-set bytes/fake returns/seeder/remaps. Rate limit wait 5min 
   zeroes flag. Independently confirms no-benefit A/B of wave1 and static-A construction argument.
 - Secrets scan 68 self-matches; git no captures/tokens.
 - No new ledger entry needed (entry 47 already has owner+removal); wave2 recorded in ledger prose.
+
+## Wave3 verification (task #709)
+- static-A #708: all quotes verified (mimalloc globals writers/readers, arena-init explicit host call,
+  1dbe4fc tiny blast radius but forging nonzero return = semantic fake -> gate/DEBT policy). REPORT ONLY.
+- harness #707: SHA+banner 3/3; [N8G AFTER_CTOR3]/[AT_FAULT] identical; audit recomputed bit41=43,
+  ptidx=0x2b05c, p<low-bound=True; ptword=0 => two independent rejections by 1dbe4fc => flag stays 0.
+- Secrets scan 69 self-matches; git no captures/tokens. No new ledger entry (entry 47 covers replay).
