@@ -1,0 +1,38 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000227b940 <JNI_OnLoad@@LIBROBLOX+0x9e6>:
+ 227b940:	5d                   	pop    %rbp
+ 227b941:	e9 8a 1e 79 00       	jmp    2a0d7d0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a035>
+ 227b946:	48 85 ff             	test   %rdi,%rdi
+ 227b949:	74 6d                	je     227b9b8 <JNI_OnLoad@@LIBROBLOX+0xa5e>
+ 227b94b:	55                   	push   %rbp
+ 227b94c:	48 89 e5             	mov    %rsp,%rbp
+ 227b94f:	41 56                	push   %r14
+ 227b951:	53                   	push   %rbx
+ 227b952:	48 89 fb             	mov    %rdi,%rbx
+ 227b955:	4c 8d 35 c4 32 a6 05 	lea    0x5a632c4(%rip),%r14        # 7cdec20 <__stop_pb_defaults@@Base+0xa5c768>
+ 227b95c:	4c 39 37             	cmp    %r14,(%rdi)
+ 227b95f:	74 53                	je     227b9b4 <JNI_OnLoad@@LIBROBLOX+0xa5a>
+ 227b961:	8a 05 01 33 a6 05    	mov    0x5a63301(%rip),%al        # 7cdec68 <__stop_pb_defaults@@Base+0xa5c7b0>
+ 227b967:	84 c0                	test   %al,%al
+ 227b969:	74 4e                	je     227b9b9 <JNI_OnLoad@@LIBROBLOX+0xa5f>
+ 227b96b:	48 8d 05 f8 2d a1 04 	lea    0x4a12df8(%rip),%rax        # 6c8e76a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1496c3c>
+ 227b972:	48 89 05 bf 32 a6 05 	mov    %rax,0x5a632bf(%rip)        # 7cdec38 <__stop_pb_defaults@@Base+0xa5c780>
+ 227b979:	48 8d 05 28 2f a1 04 	lea    0x4a12f28(%rip),%rax        # 6c8e8a8 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1496d7a>
+ 227b980:	48 89 05 c9 32 a6 05 	mov    %rax,0x5a632c9(%rip)        # 7cdec50 <__stop_pb_defaults@@Base+0xa5c798>
+ 227b987:	48 8d 05 c4 30 a1 04 	lea    0x4a130c4(%rip),%rax        # 6c8ea52 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1496f24>
+ 227b98e:	48 89 05 ab 32 a6 05 	mov    %rax,0x5a632ab(%rip)        # 7cdec40 <__stop_pb_defaults@@Base+0xa5c788>
+ 227b995:	48 8d 05 ce 32 a1 04 	lea    0x4a132ce(%rip),%rax        # 6c8ec6a <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x149713c>
+ 227b99c:	48 89 05 a5 32 a6 05 	mov    %rax,0x5a632a5(%rip)        # 7cdec48 <__stop_pb_defaults@@Base+0xa5c790>
+ 227b9a3:	48 8d 05 5a 34 a1 04 	lea    0x4a1345a(%rip),%rax        # 6c8ee04 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14972d6>
+ 227b9aa:	48 89 05 a7 32 a6 05 	mov    %rax,0x5a632a7(%rip)        # 7cdec58 <__stop_pb_defaults@@Base+0xa5c7a0>
+ 227b9b1:	4c 89 33             	mov    %r14,(%rbx)
+ 227b9b4:	5b                   	pop    %rbx
+ 227b9b5:	41 5e                	pop    %r14
+ 227b9b7:	5d                   	pop    %rbp
+ 227b9b8:	c3                   	ret
+ 227b9b9:	48 8d 3d a8 32 a6 05 	lea    0x5a632a8(%rip),%rdi        # 7cdec68 <__stop_pb_defaults@@Base+0xa5c7b0>

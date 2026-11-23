@@ -1,96 +1,57 @@
-# n3 #670 — faulting `mov rax,[rdi+0x8]`, rdi provenance, #552 call order
+# n3 #673 static-B — rbx@6c8e512 origin + wrapper table pointer (READ-ONLY)
 
-Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
-Evidence: `raw_fault.txt`, `raw_order.txt`, `raw_capture.txt`.
+Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n3-static-b.
+FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (RA `0x6ca8014`).
 
-## FAULTING INSTRUCTION FIRST — PROVEN
+## RESULT
 
-Quoted from `/tmp/opencode/n1-harness/n14_1.err:3728`:
-> `[W30_FAULT] rip=0x00007f6508f078ff si_addr=0x0000000000000008 rsp=0x00007fff907cd540 rbp=0x00007fff907cd5b0 insn=48 8b 47 08 74 05 48 85`
+1. `rbx` at `6c8e512` = the builder's entry `rdi` = **`*(caller's rsi argument)`** — a slot in a **host/bridge-provided callback argument struct**, not a guest heap allocation. The guest pre-seeds that slot with the original JNIEnv table pointer.
+2. At wrapper `6ca8008: mov (%rax),%rax`, `rax` is the getter-`6c89e70` buffer and `[rax]` is the **ORIGINAL table pointer**, captured before the builder swaps the holder to the copy. The wrapper dereferences the **original**, not the patched copy.
 
-Bytes `48 8b 47 08` = **`mov rax,[rdi+0x8]`**, then `74 05` (je), `48 85` (test).
-Fault registers quoted at `:3736`: `rdi=0x0000000000000000`, `rax=0x0000000000000000`, hence `si_addr=0x8` — NULL+8 dereference, not a stack-guard fault.
+## PROVEN — rbx chain (quoted raw)
 
-RVA / containing function: harness's own report states explicitly
-> `rip=0x00007f6508f078ff (host/shared-lib, no guest_rva)` (n1-harness/report_n14.md).
+Builder `0x6c8d840` (dis_builder_fn.txt):
+```
+6c8d84a: 48 89 fb        mov    %rdi,%rbx     ; rbx = entry rdi
+6c8d85e: 4c 8b 3b        mov    (%rbx),%r15   ; r15 = *(rbx)
+6c8d86f: 4c 89 38        mov    %r15,(%rax)   ; buffer[6c89e70][0] = *(rbx)
+6c8e512: 4c 89 33        mov    %r14,(%rbx)   ; *(rbx) = copy
+```
+Caller `0x6c8e8a8` (dis_callers_fn.txt): `6c8e8bd: mov %rsi,%rbx`; `6c8e9a5: mov (%rbx),%rdi`; `6c8e9a8: mov %rdi,0x18(%rax)`; `6c8e9ac: call 6c8d840`. So builder rdi = `*(caller rsi)`.
+Caller `0x6c8ea52` seeds that same slot explicitly from the saved original:
+```
+6c8eb79: 49 8b 47 18     mov    0x18(%r15),%rax   ; buffer[6c89e50][0x18] = original table
+6c8eb7d: 48 89 03        mov    %rax,(%rbx)       ; *(rbx) = original table
+6c8eb80: 48 8b 3b        mov    (%rbx),%rdi
+6c8eb83: e8 b8 ec ff ff  call   6c8d840
+```
+(identical seeding at `6c8ef2b/6c8ef2f/6c8ef32/6c8ef35`). Sender of `0x18(%r15)`: `6c8e9a8: mov %rdi,0x18(%rax)`.
+Host ownership: JNI_OnLoad registers the caller function pointer into a global, and the argument struct is tagged (dis_jnionload_reg.txt):
+```
+227b979: 48 8d 05 28 2f a1 04  lea ... # 6c8e8a8
+227b980: 48 89 05 c9 32 a6 05  mov %rax,0x5a632c9(%rip)  # 7cdec50
+227b9b1: 4c 89 33              mov %r14,(%rbx)           ; tag [arg]=0x7cdec20
+```
+No guest-side reader of global `0x7cdec50` exists in the engine (only the JNI_OnLoad writer), so the callback is invoked by the host/bridge; its `rsi` is host-supplied. The guest-side host table is global `0x7cdec60` (`6c8e987: mov ... # 7cdec60; call *0x30(%rax)`).
 
-Guest base in that run was `0x7f64f9cf8000` (raw `n14_1.err:7`), and
-`0x7f6508f078ff - 0x7f64f9cf8000 = 0xf20f8ff`, far beyond the engine size
-(120,041,712 B), confirming it is **not** in guest `.text`. So there is **no
-guest RVA**; the containing function is host-side. Exact host symbol is
-**UNPROVEN** — no raw line maps that RIP to a function name (the harness
-labels it `host/shared-lib`).
+## PROVEN — wrapper table pointer (dis_wrapper_6ca8008.txt)
 
-## Entry-to-fault path from #552 `0x2383c18` — PROVEN links
+```
+6ca7ffa: e8 51 1e fe ff  call   6c89e50
+6ca7fff: 48 8b 58 18     mov    0x18(%rax),%rbx  ; rbx = original table (env arg)
+6ca8003: e8 68 1e fe ff  call   6c89e70
+6ca8008: 48 8b 00        mov    (%rax),%rax      ; rax = buffer[6c89e70][0]
+6ca800b: 48 89 df        mov    %rbx,%rdi
+6ca800e: ff 90 20 07 00 00  call   *0x720(%rax)
+```
+`buffer[6c89e70][0]` is written ONLY by `6c8d86f: mov %r15,(%rax)` (sole `mov ...,(%rax)` after `call 6c89e70` in the whole engine). Guard `6c8d861: cmp %rax,%r15; 6c8d864: je 6c8e515` skips the builder once holder[0] == copy, so the buffer keeps the ORIGINAL pointer captured at the first build. The copy (buffer from `6c89e90`) is stored only into `*(rbx)` at `6c8e512` and is NOT what the wrapper reads.
 
-Quoted raw lines from `n14_1.err` (in order):
-> `:3702 [app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006`
-> `:3708 [app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 D08_len=0 latch=1`
-> `:3715 [app-shell] controller ensure_flag -> rc=0 flag=1`
-> `:3724 [N14_REPLAY 1/3] nativeOnPreCreated 0x23239c5("ActivitySplash") -> rc=-6066930334832433271`
-> `:3726 [N14_REPLAY 2/3] nativeOnResumed 0x2328066("ActivitySplash") -> rc=-6066930334832433271`
-> `:3728 [W30_FAULT] rip=0x…08ff …`
+## UNPROVEN / RETRACTED
 
-There is **no** `N14_REPLAY 3/3` line — the third native (`0x2383c18`,
-`nativePostClientSettingsLoadedInitialization3`) faulted before its log line.
-The guest entry prologue (quoted earlier) saves the jobject arg:
-`2383c23: mov %rdx,%rbx` / `2383c26: mov %rdi,%r14`; the host bridge receives
-that jobject as its first argument and faults on `[rdi+8]`.
+- UNPROVEN: how the harness observed `[bridge_table+0x720]==base+0x6ca7f72` given that this path writes fn224 into the COPY while the wrapper reads the ORIGINAL. Could be pointer identity (harness sampling holder[0] after `6c8e512`) or a separate in-place writer not located here. Needs harness pointer comparison, not a static claim.
+- UNPROVEN: exact host struct type at `caller rsi`; only that it is host-supplied via the global callback registration and seeded by the guest.
+- RETRACTED: any claim that `6c8e512` makes the wrapper use the copy — it does not.
 
-## Where rdi comes from — PROVEN / UNPROVEN
+## Evidence / NOT done
 
-Raw fault dump shows **`rdi=0x0000000000000000`**. With `SOBER_N2_JAVA_OBJECT`
-default OFF, no Java object was built, so the third native received a NULL
-jobject argument. Therefore the faulting `rdi` is the **JNI jobject argument**
-of the replayed #552 native (passed through the host bridge), **not** a global
-and **not** a TLS-holder field. PROVEN that rdi==0; the exact host function
-that derefs `+8` is UNPROVEN.
-
-## Which STARTUP native sets the source — PROVEN (capture)
-
-Quoted from `w12-j2n-300.log`:
-> `566:J2N #551 t=290317ms com.roblox.engine.jni.NativeGLInterface.nativeInitClientSettings("{…}", null, "GoogleAndroidApp")`
-> `567:J2N #552 t=290696ms com.roblox.engine.jni.NativeGLInterface.nativePostClientSettingsLoadedInitialization3([object Object])`
-
-`nativeInitClientSettings` (#551, RVA `0x2359277`) is the startup native
-immediately before #552 and is the one the harness also replays at `:3708` —
-the source of the post-settings path. Earlier capture lines show lifecycle
-natives (`nativeOnPreCreated` #67 at t=2406ms, `nativeOnResumed` #105 at
-t=20511ms) long before #551/#552.
-
-## Is #552 called at the same point in harness? — PARTLY PROVEN / DIFFERS
-
-Capture order (quoted): lifecycle natives at t≈2.4 s / 20.5 s → #551
-t=290317 → #552 t=290696 → #612 BaseDirs t=290866.
-Harness order (quoted lines above): JNI_OnLoad FIRST → #551 boundary →
-controller flag → replayed `nativeOnPreCreated`/`nativeOnResumed` → #552 fault.
-So #552 is still **after #551 and before BaseDirs**, but the two lifecycle
-natives are replayed immediately before it rather than at their captured early
-times, and the harness adds a `JNI_OnLoad FIRST` step that the capture hook
-does not record. Order is therefore **not identical**; the relative
-post-#551/pre-BaseDirs position is preserved.
-
-## What NOT done
-No apply, no build, no runs/gdb/perf, no device/AVD/Frida/phone, no new
-captures, no guest writes, gate edits, seeder, fake returns or path remaps, no
-credentials, no captures/logs/tokens in git.
-
-## First divergence + next step
-First divergence: harness passes NULL for the #552 jobject (object OFF), so the
-host bridge derefs `[NULL+8]`; capture passed a real Java `List`. Next: harness
-logs the #552 argument at the host bridge entry (faulting instruction first).
-
-## RETRACTION (lead flag, harness n3 entry tracing) — #670 rdi provenance
-
-My earlier claim "the faulting rdi is the NULL jobject argument of the replayed
-#552 native" is **RETRACTED** — it was based on older n14 logs without entry
-tracing. Raw `/tmp/opencode/n3-harness/n3_1.err:3729`:
-> `[N3_552_ENTRY] tid=1876773 rip=base+0x2383c18 rdi=0x56302bd802d0 rsi=0x56302d66d260 rdx=0x56302c1ba750 rcx=0x56302c1ba750 [rdx]=0x56300e0ebec0 [rdx+8]=0x1 rdi_is_env=1`
-
-At #552 entry rdi is the bridge JNIEnv (`rdi_is_env=1`), rsi the jclass, and
-rdx/rcx the jobject — rdx is VALID (`[rdx]=0x56300e0ebec0`, `[rdx+8]=0x1`).
-Harness n3 report quoted: `Counts per run: size 1, get 0, GetObjectClass 0,
-GetMethodID 0`, with `size` a0 == entry rdx — the guest DID read the list.
-So the faulting `rdi=0` (`mov rax,[rdi+8]`, si_addr=0x8) is an **INNER**
-host-bridge argument, not the entry jobject; its precise origin is UNPROVEN.
-All other #670 findings stand.
+Evidence: dis_wrapper_6ca8008.txt, dis_builder_fn.txt, dis_callers_fn.txt, dis_jnionload_reg.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. Input SHA 8215519f per task statement (not re-verified; no new captures).
