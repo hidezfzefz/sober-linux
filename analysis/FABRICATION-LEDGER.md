@@ -303,3 +303,35 @@ handling, no runs by audit. Engine SHA `3e498d64`.
 `@2x.png` false-positive emails). **Git:** no captures, no phone logs, no wave/capture/phone-named
 tracked files, no untracked capture-like files. Rung1 stays `PASS-BOUNDARY-REPLAY(DEBT=n)`, never
 CLEAN; seeder OFF. Marker WITHHELD.
+
+## Wave25 audit (task #622) — claim verification vs raw files
+
+Owner: audit (branch `w25-audit`). Audit files out of git `/tmp/opencode/w25-audit/`. No device
+handling, no runs by audit. Engine SHA `3e498d64`.
+
+- **static #620 — PROVEN incl. RETRACTION:** at `0x231555c` rax is a JNIEnv **field load**
+  (`0x231554b mov (%rsi),%rax`), not a global; `0x2315556 call *0x548(%rax)` (fn[165]
+  GetStringUTFChars, RA `0x231555c`); caller `nativeSetBaseDataDirectories 0x24650a9` →
+  `0x24650d1 call 0x2315532` (RA `0x24650d6`); env is the JNI method's first arg from
+  `guest_app_shell.c:1498`. Verified in `dis_*.txt`. **RETRACTED** "0x548 = fn[169]": with 4
+  reserved words and fn[] at +0x20, `0x548` = fn[165] (`native_jni.c:1068/1103`), `0x550` = fn[166],
+  fn[169] = GetObjectArrayElement at `0x568` (`:1073`). `jni_json_bridge.c:24` "idx 169" counts raw
+  slots without the 4 reserved words. No functional change applied.
+- **phone #621 — version gap PROVEN on authoritative side; phone values report-only.** I
+  independently verified authoritative APK sha256 `114a6f8e…` and aapt badging `2.740.931` /
+  code `3170`. Phone side (`2.748.1527` / `22294`, sha `2badef75…`) is quoted from the phone's
+  report: the pulled APK at `/tmp/opencode/w25-phone/base.apk` was cleaned up (out of git), so it
+  cannot be re-audited locally. Gap is a newer client build, not a repack; ARM64, no RAs, no logcat
+  (no "logged in" signal), no credentials handled.
+- **harness #619 — PROVEN:** `runD_{1,2,3}.err` all show fault `rdi=0`, `rax=0`, bridge
+  `env=0x…ae8` with `rdi_is_env=0`, stack `env_hits=4/vm_hits=0`, `W25_VM_RING` header with **no
+  entries** (GetEnv/Attach/Detach/GetJavaVM never called on this path), fault tid == latch-hit tid
+  (1432402 in runD_1), fp#0 `guest+0x231555c` / fp#1 `guest+0x24650d6`, `si_addr=0x548`, rc=139,
+  rung1 `PASS-BOUNDARY-REPLAY(DEBT=1)`, no recursion. Seeder OFF, JNI_OnLoad-first ON.
+
+No new numbered entry (no ledger entry requested by agents this wave). Entry 17's "NULL
+GetStringUTFChars" fault is refined: the NULL is the **JNIEnv argument** (`rdi=0`/`rax=0`) at the
+GetStringUTFChars call, while the bridge env is valid and on the stack; cause still UNPROVEN.
+
+**Secrets:** clean (ledger's own "Cookie:" note, 2 redacted `@rbxinfra.com`, 1 local author email).
+**Git:** no captures, no phone logs, no wave/capture/phone-named files. Marker WITHHELD.

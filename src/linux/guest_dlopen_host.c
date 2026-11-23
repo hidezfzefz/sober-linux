@@ -57,6 +57,9 @@ extern volatile unsigned long long sober_bootstrap_ctors_current_rva
 extern volatile unsigned sober_bootstrap_seed_index __attribute__((weak));
 extern const char *sober_bionic_bootstrap_last_error(void) __attribute__((weak));
 extern long sober_jni_ring_dump_async(int fd) __attribute__((weak));
+extern long sober_javavm_ring_dump_async(int fd) __attribute__((weak));
+extern void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm)
+    __attribute__((weak));
 
 /* ------------------------------------------------------------------ */
 /* globals used by the crash handler (only volatile / async-safe data)  */
@@ -186,12 +189,48 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
         if (nxt <= fp || nxt > fp + 0x100000u) break;
         fp = nxt;
     }
+    /* W25 fault argument dump: rdi/rax + 16 bytes at [rdi] (canonical only). */
+    {
+        uintptr_t rdi = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RDI] : 0;
+        uintptr_t rax = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RAX] : 0;
+        w24_put(&p, "[W25_FAULT_ARGS] rdi="); w24_u64(&p, rdi, 1);
+        w24_put(&p, " rax="); w24_u64(&p, rax, 1); w24_line(&p, buf, end);
+        if (rdi >= 0x10000u && rdi < 0x0000800000000000ULL) {
+            w24_put(&p, "[W25_RDI16] ");
+            for (unsigned k = 0; k < 16; ++k) {
+                w24_u64(&p, *(const unsigned char *)(rdi + k), 0);
+                w24_put(&p, " ");
+            }
+            w24_line(&p, buf, end);
+        } else {
+            w24_put(&p, "[W25_RDI16] non-canonical/NULL - no deref\n");
+            w24_line(&p, buf, end);
+        }
+        uintptr_t benv = 0, bvm = 0;
+        sober_jni_bridge_ptrs(&benv, &bvm);
+        w24_put(&p, "[W25_BRIDGE] env="); w24_u64(&p, benv, 1);
+        w24_put(&p, " vm="); w24_u64(&p, bvm, 1);
+        w24_put(&p, " rdi_is_env="); w24_u64(&p, rdi && rdi == benv ? 1 : 0, 0);
+        w24_line(&p, buf, end);
+        if (rsp) {
+            unsigned ne = 0, nv = 0;
+            for (unsigned i = 0; i < 256u; ++i) {
+                uintptr_t v = *(const uintptr_t *)(rsp + (size_t)i * 8u);
+                if (benv && v == benv) ++ne;
+                if (bvm && v == bvm) ++nv;
+            }
+            w24_put(&p, "[W25_STACK_ENV] env_hits="); w24_u64(&p, ne, 0);
+            w24_put(&p, " vm_hits="); w24_u64(&p, nv, 0);
+            w24_line(&p, buf, end);
+        }
+    }
     {
         ssize_t u = write(STDERR_FILENO, buf, (size_t)(p - buf));
         (void)u;
     }
-    /* W24 read-only JNIEnv ring: last 64 calls, async-safe dump. */
+    /* W24/W25 read-only rings: JNIEnv calls and JavaVM thread ops. */
     sober_jni_ring_dump_async(STDERR_FILENO);
+    sober_javavm_ring_dump_async(STDERR_FILENO);
     _exit(139);
 }
 
