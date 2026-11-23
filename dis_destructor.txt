@@ -1,0 +1,86 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002ea6670 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486840>:
+ 2ea6670:	41 56                	push   %r14
+ 2ea6672:	53                   	push   %rbx
+ 2ea6673:	50                   	push   %rax
+ 2ea6674:	48 89 fb             	mov    %rdi,%rbx
+ 2ea6677:	48 8b 07             	mov    (%rdi),%rax
+ 2ea667a:	48 85 c0             	test   %rax,%rax
+ 2ea667d:	74 1b                	je     2ea669a <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x48686a>
+ 2ea667f:	48 ff c8             	dec    %rax
+ 2ea6682:	48 89 03             	mov    %rax,(%rbx)
+ 2ea6685:	8b 3d 7d b4 3f 04    	mov    0x43fb47d(%rip),%edi        # 72a1b08 <__stop_pb_defaults@@Base+0x1f650>
+ 2ea668b:	48 89 de             	mov    %rbx,%rsi
+ 2ea668e:	48 83 c4 08          	add    $0x8,%rsp
+ 2ea6692:	5b                   	pop    %rbx
+ 2ea6693:	41 5e                	pop    %r14
+ 2ea6695:	e9 76 b6 e8 03       	jmp    6d31d10 <pthread_setspecific@plt>
+ 2ea669a:	48 8b 43 08          	mov    0x8(%rbx),%rax
+ 2ea669e:	48 85 c0             	test   %rax,%rax
+ 2ea66a1:	74 2e                	je     2ea66d1 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4868a1>
+ 2ea66a3:	45 31 f6             	xor    %r14d,%r14d
+ 2ea66a6:	eb 10                	jmp    2ea66b8 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486888>
+ 2ea66a8:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+ 2ea66af:	00 
+ 2ea66b0:	49 ff c6             	inc    %r14
+ 2ea66b3:	49 39 c6             	cmp    %rax,%r14
+ 2ea66b6:	73 19                	jae    2ea66d1 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4868a1>
+ 2ea66b8:	4a 8b 4c f3 10       	mov    0x10(%rbx,%r14,8),%rcx
+ 2ea66bd:	48 85 c9             	test   %rcx,%rcx
+ 2ea66c0:	74 ee                	je     2ea66b0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486880>
+ 2ea66c2:	48 8b 79 f8          	mov    -0x8(%rcx),%rdi
+ 2ea66c6:	e8 8e 7e f1 fe       	call   1dbe559 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18d47>
+ 2ea66cb:	48 8b 43 08          	mov    0x8(%rbx),%rax
+ 2ea66cf:	eb df                	jmp    2ea66b0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486880>
+ 2ea66d1:	48 89 df             	mov    %rbx,%rdi
+ 2ea66d4:	48 83 c4 08          	add    $0x8,%rsp
+ 2ea66d8:	5b                   	pop    %rbx
+ 2ea66d9:	41 5e                	pop    %r14
+ 2ea66db:	e9 79 7e f1 fe       	jmp    1dbe559 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18d47>
+ 2ea66e0:	0f 29 44 24 e8       	movaps %xmm0,-0x18(%rsp)
+ 2ea66e5:	48 8b 4c 24 e8       	mov    -0x18(%rsp),%rcx
+ 2ea66ea:	48 8b 54 24 f0       	mov    -0x10(%rsp),%rdx
+ 2ea66ef:	0f 29 4c 24 d8       	movaps %xmm1,-0x28(%rsp)
+ 2ea66f4:	48 8b 7c 24 d8       	mov    -0x28(%rsp),%rdi
+ 2ea66f9:	48 8b 74 24 e0       	mov    -0x20(%rsp),%rsi
+ 2ea66fe:	49 b8 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%r8
+ 2ea6705:	ff ff 7f 
+ 2ea6708:	49 89 d1             	mov    %rdx,%r9
+ 2ea670b:	4d 21 c1             	and    %r8,%r9
+ 2ea670e:	49 21 f0             	and    %rsi,%r8
+ 2ea6711:	48 89 c8             	mov    %rcx,%rax
+ 2ea6714:	48 f7 d8             	neg    %rax
+ 2ea6717:	48 b8 00 00 00 00 00 	movabs $0x7fff000000000000,%rax
+ 2ea671e:	00 ff 7f 
+ 2ea6721:	49 89 c2             	mov    %rax,%r10
+ 2ea6724:	4d 19 ca             	sbb    %r9,%r10
+ 2ea6727:	41 0f 92 c2          	setb   %r10b
+ 2ea672b:	49 89 fb             	mov    %rdi,%r11
+ 2ea672e:	49 f7 db             	neg    %r11
+ 2ea6731:	4c 19 c0             	sbb    %r8,%rax
+ 2ea6734:	0f 92 c0             	setb   %al
+ 2ea6737:	44 08 d0             	or     %r10b,%al
+ 2ea673a:	b8 01 00 00 00       	mov    $0x1,%eax
+ 2ea673f:	75 33                	jne    2ea6774 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486944>
+ 2ea6741:	48 89 f8             	mov    %rdi,%rax
+ 2ea6744:	48 09 c8             	or     %rcx,%rax
+ 2ea6747:	4d 09 c8             	or     %r9,%r8
+ 2ea674a:	49 09 c0             	or     %rax,%r8
+ 2ea674d:	74 26                	je     2ea6775 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486945>
+ 2ea674f:	48 c7 c0 ff ff ff ff 	mov    $0xffffffffffffffff,%rax
+ 2ea6756:	48 85 d6             	test   %rdx,%rsi
+ 2ea6759:	78 1d                	js     2ea6778 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486948>
+ 2ea675b:	48 39 f9             	cmp    %rdi,%rcx
+ 2ea675e:	49 89 d0             	mov    %rdx,%r8
+ 2ea6761:	49 19 f0             	sbb    %rsi,%r8
+ 2ea6764:	7c 0e                	jl     2ea6774 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486944>
+ 2ea6766:	48 31 f9             	xor    %rdi,%rcx
+ 2ea6769:	48 31 f2             	xor    %rsi,%rdx
+ 2ea676c:	31 c0                	xor    %eax,%eax
+ 2ea676e:	48                   	rex.W
+ 2ea676f:	09                   	.byte 0x9
