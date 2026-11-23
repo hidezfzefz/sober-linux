@@ -1378,3 +1378,35 @@ populates `[0x7cd9040]` in a real boot; whether a genuine mimalloc runtime would
 → OUTPUT: 69 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n8w3. Marker WITHHELD.
+
+## Overnight n8 WAVE4 audit (task #710) — size==0 to HardAssert chain confirmed
+
+Owner: audit (`/tmp/opencode/n8-audit`, branch `n8-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n8e_{1,2,3}.err` (3/3); rc=139 3/3;
+fault int3 `0x6caef66` (RIP `0x6caef67`), HardAssert, signal=5.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 48 | **RETRACTED (refined): n7w4 static-A #697 "no static edge from size()==0 to HardAssert". The edge EXISTS via worker return + wrapper unconditional tail-jump — held only inside the worker `0x2383c84`** | static chain `2383c6d call 2383c84` → `2383d42 jle 23844e9` → `238450a ret` → `2383c72 call 23847db` → `2383c7f jmp 239d1c7` (unconditional tail-jump into same-ELF-symbol prologue block) → printer preds `239d205 je 239d215`/`239d743 je`/`239d760 jmp` → `239d215 call 239ead3` → `239eb14 cmpb $0,0x7cdede0` → `239eb1b je 23a1422` → `23a1424 je 23a1465` → `23a146e call 6caed5d` → int3; runtime n8e_1.err 3748-3751 | static-A #711, audited (harness #712 runtime confirms) | Prior "no edge" was true only within the worker function; the wrapper's tail-jump bridges it. Runtime order independently observed | Remove when a raw line shows an alternate entry to the printer (invalidating the tail-jump chain) |
+
+**static-A #711 — all quoted disasm verified verbatim:** chain above, all addresses present in saved
+files (`dis_552_full.txt`/`dis_552_body.txt`/`raw_cfg_chain.txt`); `239d1c7: push %rbp` is a separate
+prologue block in the same ELF symbol (nm: only `2383c18`). Printer predecessors `239d205/239d743/
+239d760` all target `239d215`. UNPROVEN: which of the 3 predecessors / gate globals selects the path.
+
+**harness #712 — all quoted claims verified:** `[N8E_ARM] base=0x7f03448c4000 fds=4/5/6/7/-1/-1/-1
+rc=0/0/0/0/-1/-1/-1` (4/7 armed: SIZE_RET 0x238463c, AFTER_SIZE 0x2383d42, PRINTER 0x239d215,
+FLAG_TEST 0x239eb14; FLAG_BR/AL_TEST/ASSERT_CALL FAILED perf slot limit). Order 3/3 identical on
+tid 2756178: 3748 `[N8E SIZE_RET 238463c] rax=0 ZF=1`, 3749 `[N8E AFTER_SIZE 2383d42] rax=0 ZF=1`,
+3750 `[N8E PRINTER 239d215] hit=1`, 3751 `[N8E FLAG_TEST 239eb14] hit=1`, then HardAssert + W30_FAULT.
+`jle 0x23844e9` TAKEN (ZF=1 directly logged) ⇒ normal early return, NOT a throw — RETRACTS any
+"size()==0 raises exception" claim; fatal path reached LATER via printer → flag test → int3.
+`je 0x23a1422` inferred from zero flag byte + static decode (FLAG_BR bp unarmed) — caveat recorded.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n8-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 70 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n8w4. Marker WITHHELD.
