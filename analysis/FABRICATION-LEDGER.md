@@ -644,3 +644,48 @@ Glob `/tmp/opencode/w32-*/` excludes the out-of-scope uploads directory.
 | # | Entry | Where | Owner | Why | Removal condition |
 | - | ----- | ----- | ----- | --- | --- |
 | 30 | **W32 ROOT CAUSE — JNIEnv fn[224] self-pointer feedback loop: slot `[rax+0x720]` changes from host `sr_ExceptionCheck` (host+0x2e690) to `guest+0x6ca7f72` (the prologue of the very wrapper containing `call *0x720(%rax)` at `0x6ca800e`) ⇒ infinite self-recursion ⇒ stack overflow at `0x6ca7f95 call 0x2a13350`, si_addr=rsp-8. W24 scheduler TRUE-path attribution RETRACTED: `[obj+0x28]=0` on all 37,547 entries ⇒ FALSE path always, not TRUE path. Writer of fn[224] UNPROVEN; identity/route of host+0x2e690 beyond sr_ExceptionCheck UNPROVEN; DEBT** | raw `call720.err`/`call720c.err`: `[W32_CALL720_ARM] base=0x7fffe8c3c000 host=0x555555554000 fd_rc=0`; `hit=1 … [rax+0x720]=0x555555582690 decode=host+0x2e690`; `hit=20/100 … [rax+0x720]=0x7fffef8e3f72 decode=guest+0x6ca7f72`; disasm `6ca7f72: push rbp/mov rbp,rsp` and `6ca800e: call *0x720(%rax)`; `nm guest-init-host: 2e690 t sr_ExceptionCheck`; `native_jni.c:1560 SETFN(*t,224,sr_ExceptionCheck)`; W32 `[obj+0x28]=0` 37,547/37,547 | lead/static/harness, audited | Replaces the scheduler-TRUE-path causal story with a directly observed callback self-pointer loop; explains the recurring 0x6ca8014 frame and the rsp-8 guard-page fault | Remove when the fn[224] writer is identified with a raw line and the loop is reproduced without harness replay, or a genuine guest route restores the host callback |
+
+## Overnight n1-1 audit (task #646) — quoted-line verification
+
+Owner: audit (worktree `/tmp/opencode/n1-audit`, branch `n1-audit`). Cores 6-7 for all heavy cmds.
+No device/runs; no questions. Engine SHA `3e498d64`. QUOTE rule enforced.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 31 | **Fault site is CONFIGURATION-DEPENDENT — RETRACTED: "faulting instruction is always `0x6ca7f95`". WITH breakpoints: `guest+0x2a1335e mov rax,[rax]`, si_addr=0 (NULL), 3/3. WITHOUT breakpoints: non-deterministic call site (`0x6ca7f95` / `0x2ea645b` / `0x2a0de6b`, 1/3 each), all si_addr=rsp-8 stack-guard push, 3/3** | raw with_1 `[W28_FAULT_INSN] … guest_rva=0x02a1335e`; without_1/2/3 `guest_rva=0x06ca7f95/0x02ea645b/0x02a0de6b`; `[W30_SI_RSP_DELTA] 8` 3/3 without, huge deltas with | harness/lead, audited | A breakpoint set changes the observed fault site; no single "always" instruction may be claimed | Remove when a single configuration is shown to produce one fault site across all runs |
+
+**Input SHA on every run — PROVEN.** `grep -c 'verified /tmp/opencode/w11-arg0.json bytes sha256=8215519f…'` = 1 in each of
+`with_{1,2,3}.err`, `without_{1,2,3}.err` (6/6). No MODIFIED-INPUT line in any run.
+
+**static-A #644 — all quotes verified verbatim:** `2a0de64/6b lea #722e560; call 2ea6440`,
+`2a0de7d/84 lea #722e540; call 2ea6440`, `2a0de89 lea #2a0dfe0`, `2a0de90 lea #6d37bc0`,
+`2a0de9a call 2ea6130`, `2a0deba add $0x410,%rax`; getter `2ea645b call pthread_getspecific@plt`,
+`2ea656e call pthread_setspecific@plt`; predicate `2a13361 cmpq $0,0x28(%rax)`, `2a13366 setne %al`;
+writers `2a0ed45 mov %r15,0x28(%rbx)`, `2a1362f movq $0,0x28(%rdi)`. Returns `&slot = TLS[0x722e540]+0x410`,
+not obj itself; exact obj type/size and writer entry UNPROVEN (agent states so).
+
+**harness #645 — all quotes verified verbatim:** `[N1_ARM] base=… pred=0 al=0 call720=0`;
+`[N1_PRED #1] … [[rax]+0x28]=0000000000000000` at #1/2/3/10000/20000/30000 (3 runs);
+`[N1_AL #1] … al=0x00 al_dec=0` at all sampled hits (no nonzero al found); `[N1_CALL720] hit=1 …
+[rax+0x720]=0x55a82eb7e690 decode=host+0x2e690 bridge_env=… rax_is_env=0` → at `hit=100 …
+decode=guest+0x6ca7f72`, rbx==bridge_env constant. Fault quotes verified exactly (with_1
+`rsp=0x00007fffd71ba630`, without_1 `si_addr=0x00007fff4ff2eff8 rsp=0x00007fff4ff2f000`).
+
+**static-B #647 — QUOTE-RULE DEFECT (3 lines):** report writes `6c89e50/6c89e70/6c89e90: lea … #7282048/
+7282068/7282088`, but raw `dis_6c89e50_70.txt` places those `lea`s at `6c89e54 / 6c89e74 / 6c89e94`
+(addresses off by 4; substance — keys and getter 2ea6440 — correct). Under "any success claim without
+a quote → RETRACTED", the three misattributed `lea` lines are RETRACTED as quoted; the underlying key
+claim is separately VERIFIED by the raw lines at the corrected addresses. All other static-B quotes
+verified: `2ea644c mov 0x10(%rdi),%r13`, `2ea6455 mov … #72a1b08,%edi`, `2ea645b call pthread_getspecific@plt`,
+`2a13569 call 2a0de60`, `2a1356e mov (%rax),%rax`, `2a13571 mov 0x70(%rax),%rdi`,
+`2a13575 and $0xffffffffffffffc0,%rdi`, `2a13579 mov %rbx,%rsi`, `2a13582 jmp 2a12e80`,
+`2a13374/79 call 2a0de60`, `2a13381 movzbl 0x20(%rax),%eax`, `2a13385 and $1,%al`, callers
+`55f5748/55f58a1/560ad0b`. Real-vs-wrapper env identity, exact real-boot fn224 pointer, key-object
++0x10 writers and +0x20 bit0 writer UNPROVEN (agent states so).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n1-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 16 self-matches (ledger recorded commands ×3 + verification-notes ×1 in each of 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked. Tracked `.log` files are 18
+pre-existing `appData/logs/*_last.log` (780B–1.5K FLog snippets, added in afed56d) + `build/Testing/Temporary/LastTest.log`;
+no credentials/flag values inside; NOT introduced by n1-1. No new captures this wave. n1 worktrees at 702fae9, own branches. Marker WITHHELD.
