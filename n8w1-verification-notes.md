@@ -30,3 +30,13 @@ No guest writes/hand-set bytes/fake returns/seeder/remaps. Rate limit wait 5min 
 - Ledger 47: ctor3 replay host-only owner=harness + removal condition, DEBT=1.
 - Secrets scan 67 self-matches; git no captures/tokens.
 - Git index writes fail -> commit/push via /dev/shm tmpfs plumbing.
+
+## Wave2 verification (task #706)
+- static-A #705: all quotes verified — bl=1 needs 4 conditions; decisive 1dbe4fc is unbridged
+  mimalloc-private-arena predicate that host glibc malloc never populates; 1dbdfba bridged to
+  malloc_usable_size. So flag stays 0 by construction (runtime UNPROVEN by static-A).
+- harness #704: SHA+banner 3/3; arm 4/6 bps (CMP2/STORE failed perf limit); CMP1 zero hits 3/3
+  with final [0x7cdede0]=0x00 => je at 1db9a8d taken => usable-size low byte zero => first check
+  zeroes flag. Independently confirms no-benefit A/B of wave1 and static-A construction argument.
+- Secrets scan 68 self-matches; git no captures/tokens.
+- No new ledger entry needed (entry 47 already has owner+removal); wave2 recorded in ledger prose.

@@ -1298,3 +1298,42 @@ changes). UNPROVEN: why ctor3 leaves 0x7cdede0 zero under the host allocator; ge
 → OUTPUT: 67 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n8w1. Marker WITHHELD.
+
+## Overnight n8 WAVE2 audit (task #706) — why ctor3 replay is inert
+
+Owner: audit (`/tmp/opencode/n8-audit`, branch `n8-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n8p_{1,2,3}.err` (3/3); rc=139 3/3;
+fault int3 `0x6caef66` (RIP `0x6caef67`), HardAssert, signal=5.
+
+**static-A #705 — all quoted disasm verified:** exact bl=1 conditions at `1db9acf` require all four:
+(A) `1dbe4fc(p1)!=0`, (B) `endptr1 >= 0x20`, (C) `1dbe4fc(p2)!=0`, (D) `endptr2 >= 0x20`
+(chain `1db9a66/6b`, `1db9a71/76`, `1db9a8a test %r15b,%r15b` / `1db9a8d je 1db9acf`,
+`1db9a8f cmp %r12,%r14` / `1db9a92 jb`, `1db9aa6/ab`, `1db9ab0/b5`, `1db9ac7/aca/ acd`,
+`1db9acf mov %bl,0x7cdede0`; `r12 = [0x7cdedd8] = 0x20` from `1db9a79`). `1dbe4fc` is a
+boolean validity predicate (`1dbe500 call 1dbe50d`, `1dbe505 test %rax,%rax`, `1dbe508 setne %al`)
+checking mimalloc PRIVATE arena globals `[0x7cd8ff8]` low bound, `[0x7cd9048]` commit bitmap,
+`[0x7cd9040]` page table (`1dbe514/51d/52b/531/53f/551`). `1dbdfba` is BRIDGED to glibc
+`malloc_usable_size` (`bootstrap_profile.h:63 SOBER_BRIDGE_USABLE_SIZE_RVA 0x1dbdfbau`,
+`bionic_bootstrap.c:892-893`, in-place trampoline `:855-861`, `host_allocate :271-277` plain
+`malloc(n)` no registration, `host_usable_size :532-551`), but `1dbe4fc` is NOT in the bridge
+list (`:62-67`) and host_allocate never populates those globals ⇒ (A)/(C) fail ⇒ bl stays 0.
+PROVEN by construction; runtime values UNPROVEN by static-A.
+
+**harness #704 — all quoted claims verified:** SHA+banner 3/3; `[N8P_ARM] base=0x7f117a250000
+fds=4/5/6/7/-1/-1 rc=0/0/0/0/-1/-1` — 4/6 armed (MALLOC 0x1dbad62, USABLE 0x1dbe4fc,
+ENDP 0x1dbdfba, CMP1 0x1db9a8f); CMP2 0x1db9ac7 and STORE 0x1db9acf FAILED (perf slot limit).
+Counts/run: MALLOC 4346, USABLE 1, ENDP ~72k, CMP1 **0/0/0**, CMP2/STORE 0 (unarmed). First
+ctor3-attributable hits after `[N8_CTOR3] before`: MALLOC `rdi=0x20`, USABLE `rdi=alloc base`,
+ENDP `rdi=same base`; final `[0x7cdede0]=0x00` 3/3. **Control-flow conclusion (PROVEN among armed
+bps):** CMP1 zero hits with final byte 0 ⇒ `je` at `1db9a8d` was taken ⇒ `r15b` (usable-size
+return low byte) was ZERO ⇒ the FIRST check zeroes `0x7cdede0`, before either `cmp r14,r12`.
+This independently confirms entry 47's "no benefit" A/B result and static-A's construction argument.
+UNPROVEN: exact numeric usable-size/end-pointer returns (entry bps only), CMP2/STORE hits (unarmed).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n8-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 68 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n8w2. Marker WITHHELD.
