@@ -1337,3 +1337,44 @@ UNPROVEN: exact numeric usable-size/end-pointer returns (entry bps only), CMP2/S
 → OUTPUT: 68 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n8w2. Marker WITHHELD.
+
+## Overnight n8 WAVE3 audit (task #709) — mimalloc globals: runtime confirms unregistered pointer
+
+Owner: audit (`/tmp/opencode/n8-audit`, branch `n8-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n8g_{1,2,3}.err` (3/3); rc=139 3/3;
+fault int3 `0x6caef66` (RIP `0x6caef67`), HardAssert, signal=5.
+
+**static-A #708 — all quoted disasm verified (several by direct objdump / harness source):**
+Three mimalloc-private globals — `0x7cd8ff8` (arena low-bound MASK) sole writer `1dbb91d mov %rdx`
+(value computed `1dbb906 mov $1,%eax`, `1dbb90b shl %cl,%rax`, `1dbb912 mov $0xffffffffffff0000,%rdx`,
+`1dbb919 cmovb`), reader `1dbe514 cmp %rdi,0x7cd8ff8` / `1dbe51b jbe ret 0`; `0x7cd9040` (page-table
+BASE) sole writer `1dbb9a2 mov %rax` (`1dbb99d call 1dbbad9`), reader `1dbe531`/`1dbe53f` →
+`1dbe543 test; je ret 0`; `0x7cd9048` (commit BITMAP) two writers `1dbb9fc mov %rcx` and
+`1dbc2b6 lock or %r15`, reader `1dbe51d`/`1dbe52b bt (p>>41)`. Writers live in arena-init `0x1dbb178`
+and a commit fn, NOT ctor entries (nearest ctor[1] `0x1dba8f3` SKIPPED); written by explicit host call
+`bionic_bootstrap/bionic_bootstrap.c:1150 BDEBUG("replaying arena init…")`, `:1155 ((void(*)(void))
+(base + SOBER_ARENA_INIT_RVA))()`; raw log `ab_off_1.err:22 arena_table@0x7cd9040=(nil)` →
+`:31 = 0x7fb949753000`. `1dbe4fc` has exactly 2 call sites (both ctor3: `1db9a66`, `1db9aa6`),
+`1dbe50d` only from `1dbe4fc` (`1dbe500`), no indirect/data/jmp — tiny blast radius, a trampoline
+(`bionic_bootstrap.c:855-861`) is mechanically safe; BUT forging a nonzero return for glibc pointers
+(not in bb_reg) would SYNTHESIZE "mimalloc detected" — semantic fake, gate/DEBT policy, not a static
+blocker. REPORT ONLY, no apply.
+
+**harness #707 — all quoted claims verified:** `[N8G AFTER_CTOR3] [7cd8ff8]=0x0000800000000000
+[7cd9048]=0xffffffffffffffff [7cd9040]=0x00007f37a01ab000 alloc=0x0000560b82a97df0 bit41=43
+bitmap_bit=1 ptidx=0x2b05c ptword=0x0000000000000000`, `[N8G AT_FAULT]` byte-identical. Audit
+recomputed all derived values: `(p>>41)&63 = 43`, `p>>29 = 0x2b05c`, `p < 0x800000000000` = True.
+Two independent rejections: alloc pointer BELOW arena low bound (`1dbe514 cmp/jbe ret 0`) AND
+page-table word at `ptidx` is ZERO (`1dbe531/53f test; je ret 0`); commit bitmap bit IS 1 — so
+registration is missing specifically in the page table. Thus `1dbe4fc(alloc)=0` → `test r15b,r15b`
+at `1db9a8a` sees zero → `je 1db9acf` → bl=0 → `0x7cdede0=0` → HardAssert int3. This confirms
+wave2's control-flow inference with runtime values and static-A #705's prediction. UNPROVEN: who
+populates `[0x7cd9040]` in a real boot; whether a genuine mimalloc runtime would register the pointer.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n8-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 69 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n8w3. Marker WITHHELD.
