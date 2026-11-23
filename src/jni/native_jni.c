@@ -593,8 +593,99 @@ static void w32_call720_sig(int s, siginfo_t *si, void *uc)
     #undef P
 }
 
+/* ---- N1 overnight: read-only perf EXEC breakpoints, no fix --------------
+ * 0x2a1335e: rax, [rax], [[rax]+0x28]
+ * 0x6ca7f9a: al (predicate result, logged BEFORE the `test al,al`)
+ * 0x6ca800e hits 1,2,3,100: rax, rbx, [rax+0x720] as RVA + bridge env.
+ * All guest memory reads use process_vm_readv (w31_read); no guest writes.
+ */
+static long n1_pred_hits, n1_al_hits, n1_call_hits;
+static uintptr_t n1_base, n1_host_base;
+
+static void n1_pred_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n1_pred_hits, 1, __ATOMIC_RELAXED) + 1;
+    if (n > 3 && (n % 10000) != 0) return;
+    uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t obj = 0; uint64_t guard = 0;
+    long g1 = w31_read(rax, &obj, 8u);
+    long g2 = g1 == 8 ? w31_read(obj + 0x28u, &guard, 8u) : -1;
+    fprintf(stderr,
+            "[N1_PRED #%ld] tid=%ld rax=%p [rax]=%p [[rax]+0x28]=%s%016lx\n",
+            n, (long)syscall(SYS_gettid), (void *)rax, (void *)obj,
+            g2 == 8 ? "" : "UNREADABLE-", (unsigned long)guard);
+}
+static void n1_al_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n1_al_hits, 1, __ATOMIC_RELAXED) + 1;
+    if (n > 3 && (n % 10000) != 0) return;
+    unsigned long rax = (unsigned long)c->uc_mcontext.gregs[REG_RAX];
+    fprintf(stderr, "[N1_AL #%ld] tid=%ld al=0x%02lx al_dec=%lu\n",
+            n, (long)syscall(SYS_gettid), (rax & 0xffu), (rax & 0xffu));
+}
+static void n1_call720_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n1_call_hits, 1, __ATOMIC_RELAXED) + 1;
+    if (n > 3 && n != 100) return;
+    uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t rbx = (uintptr_t)c->uc_mcontext.gregs[REG_RBX];
+    uintptr_t fn = 0;
+    (void)w31_read(rax + 0x720u, &fn, 8u);
+    char line[512], *p = line; static char *lim; lim = line + sizeof(line);
+    #define P(x) do { const char *_q=(x); while (*_q && p<lim-1) *p++=*_q++; } while(0)
+    P("[N1_CALL720] hit="); { char t[32]; snprintf(t,sizeof(t),"%ld",n); P(t); }
+    P(" tid="); { char t[32]; snprintf(t,sizeof(t),"%ld",(long)syscall(SYS_gettid)); P(t); }
+    P(" rax="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rax); P(t); }
+    P(" rbx="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rbx); P(t); }
+    P(" [rax+0x720]="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)fn); P(t); }
+    P(" decode=");
+    if (n1_base && fn >= n1_base && fn < n1_base + 0x8000000u) {
+        P("guest+0x"); w31_hex(&p, (uint64_t)(fn - n1_base));
+    } else if (n1_host_base && fn >= n1_host_base &&
+               fn < n1_host_base + 0x200000u) {
+        P("host+0x"); w31_hex(&p, (uint64_t)(fn - n1_host_base));
+    } else P("other");
+    P(" bridge_env="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)(uintptr_t)g_bridge_env_ptr); P(t); }
+    P(" rax_is_env="); *p++ = (char)('0' + (rax && rax == g_bridge_env_ptr));
+    *p++='\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p - line)); (void)u;
+    #undef P
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_N1_TRACE")) {
+        n1_base = base;
+        {
+            Dl_info li;
+            if (dladdr((void *)(uintptr_t)&n1_call720_sig, &li) && li.dli_fbase)
+                n1_host_base = (uintptr_t)li.dli_fbase;
+        }
+        static const uintptr_t addrs[3] = {
+            0x2a1335eu, 0x6ca7f9au, 0x6ca800eu
+        };
+        static void (*fns[3])(int, siginfo_t *, void *) = {
+            n1_pred_sig, n1_al_sig, n1_call720_sig
+        };
+        static const int sigs[3] = { SIGUSR1, SIGUSR2, 36 };
+        int ok[3];
+        for (int i = 0; i < 3; ++i) {
+            int fd = w21_perf(n1_base + addrs[i]);
+            ok[i] = fd >= 0 ? w21_arm(fd, sigs[i], fns[i]) : -1;
+        }
+        fprintf(stderr, "[N1_ARM] base=%p host=%p pred=%d al=%d call720=%d\n",
+                (void *)n1_base, (void *)n1_host_base, ok[0], ok[1], ok[2]);
+        return;
+    }
     if (getenv("SOBER_W32_CALL720")) {
         w21_base = w31_base = base;
         {

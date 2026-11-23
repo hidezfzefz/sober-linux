@@ -1,70 +1,54 @@
-# W32 #643 — harness (one page)
+# OVERNIGHT n1 #645 — harness (one page)
 
-Worktree `/tmp/opencode/w32-harness`, branch w32-harness. Engine SHA `3e498d64`.
-flock held; no device/guest writes/gate edits/seeder; seed OFF; JNI_OnLoad-first
-ON; full JSON SHA verified. Every success claim quotes a raw line. The uploaded
-doc under `/tmp/opencode/uploads` was NOT read (out of scope).
-Evidence: `trace_{1,2,3}.err`, `nowatch_{1,2,3}.err`, `rund3.sh`.
+Worktree `/tmp/opencode/n1-harness` branch n1-harness (fresh `build-n1`; inherited
+`build/` cache left untouched — DELETE NOTHING). Cores 0-1, flock held for all 6
+runs. No device/captures/guest writes/gate edits/seeder/fake returns/path remaps;
+TSD seed OFF, JNI_OnLoad-first ON. SHA verified EVERY run:
+`[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b`
+Config proof (ALL 6 runs, quoted): `[app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006`
+and `[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)`;
+script `rund6.sh:9` exports `SOBER_SEEDER_DISABLE=1 SOBER_JNI_ONLOAD_FIRST=1`.
+Evidence: `with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`. Logs 151 KB each.
 
-## FAULTING INSTRUCTION FIRST — PROVEN
-`guest+0x6ca7f95`, bytes `e8 b6 b3 d6 fb` = **`call 0x2a13350`**,
-`si_addr = rsp-8` (stack overflow). Raw `nowatch_1.err`:
-`[W30_FAULT] rip=0x00007fffef8e3f95 si_addr=0x00007fffff7fefc8 rsp=0x00007fffff7fefd0 rbp=0x00007fffff7ff0a0 insn=00000000000000e8 00000000000000b6 ...` (corrected to exact raw `rbp=0x00007fffff7ff0a0` by lead/audit — earlier `...090` was not verbatim)
+## FAULTING INSTRUCTION FIRST — PROVEN, CONFIGURATION-DEPENDENT
+**WITH bps (3/3):** `guest+0x2a1335e`, bytes `48 8b 00` = **`mov rax,[rax]`**,
+`si_addr=0x0` (NULL). Raw with_1:
+`[W30_FAULT] rip=0x00007faa0fca735e si_addr=0x0000000000000000 rsp=0x00007fffd71ba630 rbp=0x00007fffd71ba630 insn=0000000000000048 000000000000008b 0000000000000000 ...`
+`[W28_FAULT_INSN] rip=0x00007faa0fca735e guest_rva=0x02a1335e`
+**WITHOUT bps (3/3): non-deterministic call site, all `si_addr = rsp-8`**
+(stack-guard push): without_1 `guest_rva=0x06ca7f95` (`call 0x2a13350`),
+without_2 `guest_rva=0x02ea645b` (`call pthread_getspecific@plt`), without_3
+`guest_rva=0x02a0de6b` (`call 6c89e70`). Raw without_1:
+`[W30_FAULT] rip=0x00007fea4abb7f95 si_addr=0x00007fff4ff2eff8 rsp=0x00007fff4ff2f000 ...`
+**RETRACTED:** earlier waves' "the faulting instruction is always
+`0x6ca7f95`" — that is only the no-bp configuration (1/3 here).
 
-## (a) HW exec breakpoints on the two +0x28 writers — PROVEN
-`[W32_ARM] base=0x7fffe8c3c000 entry=0 obj=0 writer0=0 writer1=0` (all 3).
-Run D ×3: `0x2a0ed45` **0 hits**, `0x2a1362f` **68 hits** every run
-(`w0=0 w1=68 precede=0`). First hit, raw `trace_1.err`:
-`[W32_WRITER 0x2a1362f] hit=1 tid=1606363 guest_RA=guest+0x0000000002a0ede0 entries_so_far=27 precedes_first_entry=0`
-**No hit precedes the first `0x2a13350` entry** (`precedes_first_entry=1` count
-= 0/0/0); all writer hits are on tid 1606363. Caller RAs observed:
-`guest+0x2a0ede0`, `guest+0x2a0e598`, `guest+0x2a0e1d8`, plus `guest+0x2a0e840` and `guest+0x2a0f492` (two RAs omitted in the original list, restored by lead/audit — all 5 appear in the raw writer-hit lines).
+## Perf exec bps (WITH runs) — PROVEN
+`[N1_ARM] base=0x7faa0d294000 host=0x55a82eb50000 pred=0 al=0 call720=0`.
+**0x2a1335e** raw: `[N1_PRED #1] tid=1624646 rax=0x55a84a0ac9b0 [rax]=0x7faa0cb86280 [[rax]+0x28]=0000000000000000`
+(also #2,#3,#10000,#20000,#30000 — identical; 6 sampled lines, 3/3 runs).
+**0x6ca7f9a** raw: `[N1_AL #1] tid=1624646 al=0x00 al_dec=0` — **al=0 at every
+sampled hit** (#1..#30000, all 3 runs): the predicate always returns FALSE.
+**0x6ca800e** hits 1,2,3,100 raw:
+`[N1_CALL720] hit=1 tid=1624646 rax=0x55a84a3dfe80 rbx=0x55a84a3e0618 [rax+0x720]=0x55a82eb7e690 decode=host+0x000000000002e690 bridge_env=0x55a84a3e0618 rax_is_env=0`
+`[N1_CALL720] hit=100 tid=1624646 rax=0x7fa9f4001f18 rbx=0x55a84a3e0618 [rax+0x720]=0x7faa13f3bf72 decode=guest+0x0000000006ca7f72 bridge_env=0x55a84a3e0618 rax_is_env=0`
+fn[224] flips host bridge → **`guest+0x6ca7f72`** (the function prologue
+containing the `call [rax+0x720]`); `rbx == bridge_env` constant, `rax` is not
+the env at any logged hit. 3/3 runs identical pattern.
 
-## (b) Distinct obj values — PROVEN
-`trace_1.err`: 37,547 `[W32_OBJ]` lines, first three:
-`[W32_OBJ #1] tid=1606363 obj=0x7fffe85c2500 [obj+0x28]=0000000000000000`
-`#2` and `#3` identical. Distinct obj count **1 per run**
-(`grep -o obj=... | sort -u` → `obj=0x7fffe85c2500` only; runs 2-3 →
-`obj=0x7fffe860c640`, also 1 each). **Same object across every entry within a
-run**; address varies between runs (allocation layout), `[obj+0x28]=0` always.
-
-## (c) Rung1 WITHOUT watchers — PROVEN + ledger
-No watcher armed (`grep -c 'W32_ARM|W31_ARM|W21_WATCH|W21_LATCH_HIT|W28_PAIRS'
-nowatch_1.err` = 0). Raw, all 3 runs:
-`[W32_LATCH_RO] before=0 after=1`
-`[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`
-Supporting raw: `[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519f...`;
-`[app-shell] AVD boundary pre: arg0_len=1533221 ... latch=0 ...`;
-`[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 ... latch=1 ...`;
-`[flags-latch] route=none (inert; no guest call, latch=0, withhold=0)`. Host source has **no write** to `0x7cdd149` (only comparisons); the label-only
-change accepts before=0/after=1 + SHA when no watcher is armed. Ledger entry
-sent lead: "W32 watcher-free rung1: before=0 after=1, SHA 8215519f, no harness
-write -> PASS-BOUNDARY-REPLAY (DEBT=1) label only; DEBT".
-
-## ADDENDUM — 0x6ca800e SIG STOP hook (lead mid-wave add, read-only)
-`[W32_CALL720_ARM] base=0x7fffe8c3c000 host=0x555555554000 fd_rc=0`. Raw hits:
-```
-[W32_CALL720] hit=1 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
-[W32_CALL720] hit=2 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
-[W32_CALL720] hit=3 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
-[W32_CALL720] hit=20 tid=1612252 rdi=0x555555ae0bb8 rax=0x7fffb8001f18 [rax]=(nil) [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72
-[W32_CALL720] hit=100 tid=1612252 rdi=0x555555ae0bb8 rax=0x7fffb8001f18 [rax]=(nil) [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72
-```
-**PROVEN:** `[rax+0x720]` (JNI fn[224]) starts as host bridge `host+0x2e690`,
-then at hit 20 becomes **`guest+0x6ca7f72`** — the *prologue of the same
-function* containing `call [rax+0x720]` at `0x6ca800e` (static decode:
-`6ca7f72: push rbp; mov rbp,rsp; sub rsp,0xc0`). Calling it re-enters that
-function → infinite recursion → stack overflow. This is the recursion's
-mechanism. No fix applied (read-only). Evidence `call720c.err`.
+## New first divergence
+`[[rax]+0x28]=0` and `al=0` at every sampled predicate hit → FALSE branch at
+`0x6ca7f9c` recurses; fn[224] becomes the self-pointer `guest+0x6ca7f72`. The
+breakpoint set changes the fault site: bps → NULL deref at `mov rax,[rax]`
+(`0x2a1335e`, `si_addr=0`); no bps → stack-guard push at whichever `call` in
+the recursion reaches the guard page first (varies per run, always
+`si_addr=rsp-8`).
 
 ## NOT DONE
-No ledger edit by me (entry sent); no guest bytes/gate edits/device; writer
-`0x2a1362f` not proven to target this obj's +0x28 (UNPROVEN); why `0x2a0ed45`
-never runs UNPROVEN (static); who writes fn[224] with the guest pointer
-UNPROVEN (next step).
+No fix applied (read-only); no ledger edit; why with-bps rax at fault is
+`0x55a84a0ac9b0` while `si_addr=0` is UNPROVEN; who writes fn[224] UNPROVEN;
+total predicate hit count not logged (sampled 1,2,3,10k,20k,30k). No questions
+asked. Uploads untouched.
 
-## First divergence / next step
-`[obj+0x28]` stays 0 so the `0x6ca8014` recursion never terminates; the
-37,547th entry faults at `call 0x2a13350`, `si_addr=rsp-8`. Mechanism is in the
-addendum (fn[224] becomes a self-pointer). Next: static identify who writes
-fn[224] with the guest pointer.
+## Evidence files
+`/tmp/opencode/n1-harness/with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`.
