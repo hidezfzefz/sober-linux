@@ -73,3 +73,25 @@ Exact prof/Per store site and the tail of the ctor chain are UNPROVEN.
 First divergence: guest-created TLS state (`[tls]=0x1`) vs seeded value later
 overwritten with "prof/Per"; ctor[0] replay succeeds but the recursion
 terminator remains unidentified. Next: harness logs the `+0x28` writer with tid.
+
+## FINAL ADDENDUM (lead-appended from static's delivered corrections; read-only)
+
+- **RETRACTED:** the earlier claim that `SOBER_SEED_GLOBAL_STRING` / JNI_OnLoad /
+  `nativeInitClientSettings` were absent from w31 Run D. The log was still being
+  written when first read (3,791 lines then, 78,945 later). Corrected quoted order
+  in w31 `runD_1.err`: `:3688 [fflag-default] replayed guest ctor 0x2e62390 ... -> OK`,
+  `:3992 [app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006`,
+  `:4006 [app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 ... latch=1`,
+  `:4007 [app-shell] global-string seed at 0x72a0520 (SOBER_SEED_GLOBAL_STRING, early) -> rc=1`,
+  `:4013 [app-shell] controller ensure_flag -> rc=0 flag=1`. So ctor[0] replay runs
+  BEFORE both JNI_OnLoad and InitClientSettings; the global-string seed runs AFTER
+  InitClientSettings. Same order in w30 (`3687 / 3702 / 3707 / 3708 / 3714`).
+- **Exact #462 reason** (`guest_app_shell.c:1268-1272`, quoted): without the replay
+  "the global at 0x72a0520 stays NULL and the worker faults at 0x2e5d42a"; the replay
+  is "Opt-in replay of the genuine guest ctor — no byte patches, no fake vtables,
+  no callbacks." Critical for audit ledger entry 28.
+- What ran BEFORE ctor[0] replay (w31 `runD_1:3680-3687`): TSD GOT rebind, W31 arm,
+  `SOBER_SEEDER_DISABLE`, cached-ID seeding, JavaVM install, provenance gate install.
+- In w31 the global-string seed DID run (`rc=1`); any claim it wrote then was replaced
+  by a later guest ctor write is UNPROVEN — `global_string_seed.c` has "Do not clobber
+  a value the guest installed itself." and logs "already non-NULL ... leaving untouched".
