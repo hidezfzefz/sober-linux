@@ -126,6 +126,42 @@ static long n14_readmem(uintptr_t addr, void *dst, size_t len)
     struct iovec li = { dst, len }, ri = { (void *)addr, len };
     return process_vm_readv((pid_t)getpid(), &li, 1UL, &ri, 1UL, 0UL);
 }
+/* n2 step3: DEX-typed harness Java object.  Types/signatures come ONLY from
+ * authoritative classes2.dex (base.apk SHA 114a6f8e), verified by static-A #668:
+ *   java/util/List.size()I, java/util/List.get(I)Ljava/lang/Object;,
+ *   com/roblox/engine/jni/model/ApplicationExitInfoCpp.mPid:I
+ * Behavior from DEX bytecode of Lyj/l2.a(): the factory may return
+ * Collections.EMPTY_LIST (SDK<30 / no ActivityManager / no exit reasons).
+ * With no runtime ActivityManager data available, the ONLY DEX-derivable list
+ * is empty => size()=0.  get() and mPid are NOT DEX-derivable without runtime
+ * exit-info data: they HARD FAIL (log + abort) instead of silent defaults. */
+static int n2_obj_active;
+static intptr_t n2_size_handler(void *env, void *obj, const char *name,
+                                const char *sig, void *args, void *user)
+{
+    (void)env; (void)obj; (void)args; (void)user;
+    if (!n2_obj_active) return 0;
+    if (strcmp(name, "size") || strcmp(sig, "()I")) {
+        fprintf(stderr, "[N2_OBJ HARD_FAIL] unexpected method %s%s\n",
+                name ? name : "?", sig ? sig : "?");
+        abort();
+    }
+    fprintf(stderr, "[N2_OBJ size] List.size()I -> 0 "
+                    "(Collections.EMPTY_LIST DEX path)\n");
+    return 0;
+}
+static intptr_t n2_get_handler(void *env, void *obj, const char *name,
+                               const char *sig, void *args, void *user)
+{
+    (void)env; (void)obj; (void)args; (void)user;
+    fprintf(stderr, "[N2_OBJ HARD_FAIL] List.get%s called with empty list; "
+                    "no DEX-derivable element (runtime ActivityManager data "
+                    "not available). Aborting, no fake return.\n",
+            sig ? sig : "?");
+    abort();
+    return 0;
+}
+
 /* n1-5 READ-ONLY closure scan.  Contract (static-A #656 / static-B #653):
  * a genuine closure/task pointer is canonical after masking 0xffffffffffff;
  * the object it points to has fn ptr at +0 and ctx ptr at +8.  Search qwords
@@ -1712,6 +1748,15 @@ int guest_app_shell_run(uintptr_t base)
         n14_log_guard(base, "after nativeOnResumed");
 
         if (!getenv("SOBER_N1_SKIP_THIRD")) {
+          if (getenv("SOBER_N2_JAVA_OBJECT")) {
+            n2_obj_active = 1;
+            sober_jni_set_callback_handler(j, "size", n2_size_handler, NULL);
+            sober_jni_set_callback_handler(j, "get",  n2_get_handler,  NULL);
+            opaque = sober_native_java_list(j, NULL, 0);
+            fprintf(stderr, "[N2_OBJ BUILT] DEX-typed java/util/List "
+                            "size=0 get=(I)Ljava/lang/Object; mPid=I "
+                            "class=ApplicationExitInfoCpp list=%p\n", opaque);
+          }
           rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
                    (env, app_class, opaque);
           fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
