@@ -10,6 +10,7 @@
 #define _GNU_SOURCE
 #include <signal.h>
 #include <sys/prctl.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "guest_app_shell.h"
@@ -1500,11 +1501,31 @@ int guest_app_shell_run(uintptr_t base)
         "com/roblox/engine/jni/NativeGLJavaInterface");
 
     /* DECISION 020: pass real JNI args using worker-2's helpers (full
-     * guest-shaped A/B/C/D graph on every returned handle). */
-    void *s_base1 = sober_jni_new_string_utf8(j, "/tmp/opencode/sober-apk/split");
-    void *s_base2 = sober_jni_new_string_utf8(j, "/tmp/opencode/sober-apk/split");
+     * guest-shaped A/B/C/D graph on every returned handle).
+     * W27 host-only value fixes (LEDGER DEBT):
+     *  - the authoritative Android capture passes TWO DISTINCT base dirs;
+     *    create two real, existing Linux dirs under a per-run temp root.
+     *  - channel is "" in the capture, not "LIVE".
+     * No guest bytes are written and no shim path remapping is used. */
+    char w27_root[] = "/tmp/sober-w27-XXXXXX";
+    const char *w27_tmp = mkdtemp(w27_root);
+    char w27_base1[128], w27_base2[128];
+    if (w27_tmp) {
+        snprintf(w27_base1, sizeof(w27_base1), "%s/data", w27_tmp);
+        snprintf(w27_base2, sizeof(w27_base2), "%s/sdcard", w27_tmp);
+        if (mkdir(w27_base1, 0700) != 0 || mkdir(w27_base2, 0700) != 0) {
+            fprintf(stderr, "[app-shell] W27 base-dir mkdir FAILED\n");
+        }
+    } else {
+        snprintf(w27_base1, sizeof(w27_base1), "/tmp");
+        snprintf(w27_base2, sizeof(w27_base2), "/var/tmp");
+    }
+    fprintf(stderr, "[app-shell] W27 base dirs: '%s' '%s' (distinct=%d)\n",
+            w27_base1, w27_base2, strcmp(w27_base1, w27_base2) != 0);
+    void *s_base1 = sober_jni_new_string_utf8(j, w27_base1);
+    void *s_base2 = sober_jni_new_string_utf8(j, w27_base2);
     void *s_ver   = sober_jni_new_string_utf8(j, "2.740.931");
-    void *s_chan  = sober_jni_new_string_utf8(j, "LIVE");
+    void *s_chan  = sober_jni_new_string_utf8(j, "");
     /* Lead's ruling: use REAL native handles from the frozen compat shim, in a
      * generous zeroed param blob, instead of a small synthetic blob. */
     void *am = (void *)AAssetManager_fromJava(NULL, NULL);
