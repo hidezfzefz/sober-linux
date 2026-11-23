@@ -591,3 +591,56 @@ Engine SHA `3e498d64`. QUOTE rule honored: every success claim below quotes a ra
 - STALE-QUOTE flag: an earlier report revision (04:07:11) quoted tids 1579693/1582405 and
   obj=0x7fffe852e280, which do NOT occur in the final runD_1.err; the agent corrected these at
   04:08:35. Final report quotes verified; no unsupported claim remains.
+
+## Wave32 audit (task #642) — quoted-line verification
+
+Owner: audit (worktree `/tmp/opencode/w32-audit`, branch `w32-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. QUOTE rule applied. `/tmp/opencode/uploads` OUT OF SCOPE — not read.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 29 | **W32 watcher-free rung1: before=0 after=1, SHA 8215519f, no harness write -> PASS-BOUNDARY-REPLAY (DEBT=1) label only; DEBT** | raw `nowatch_*.err [W32_LATCH_RO] before=0 after=1` + `[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`; source `guest_app_shell.c:1194/1228/1239-1242`, `2258-2270` | harness/lead | Read-only before/after latch credential with SHA verified; label-only, no gate change; DEBT=1 replay | Remove when the label is earned without boundary replay or the credential is proven to reflect a non-guest write |
+
+**static #641 — all quoted lines verified verbatim:** wrapper `6ca800e call *0x720(%rax)`,
+`6ca8014 mov (%r14),%rcx`, guard `6ca7f95 call 2a13350`/`6ca7f9a test al,al`/`6ca7f9c je 6ca7ffa`;
+obj chain `2a0de64 lea #722e560`/`2a0de84 call 2ea6440`/`2a0deba add $0x410,%rax`;
+writers `2a0ed45 mov %r15,0x28(%rbx)`, `2a0e83b call 2a0e8c0`, `2a0ed1d call 2a13620`,
+`2a1362f movq $0x0,0x28(%rdi)` — found in `dis_wrapper_6ca7f72.txt`, `dis_sched_getter.txt`,
+`dis_writer1_region.txt`, `raw_writer_callers.txt`, `dis_2a1362f.txt`. Minor: report's evidence
+list omits `dis_2a1362f.txt` (source of the `2a1362f` quote). `0x6ca8014` is epilogue/RA, not a
+call instruction — consistent with W24. Exact vtable, size, writer entry path UNPROVEN (agent states so).
+
+**harness #643 — mostly verified; two QUOTE-rule defects flagged:**
+- PROVEN (verbatim): `[W32_ARM] base=0x7fffe8c3c000 entry=0 obj=0 writer0=0 writer1=0` 3/3;
+  `[W32_WRITER 0x2a1362f] hit=1 tid=1606363 guest_RA=guest+0x2a0ede0 entries_so_far=27
+  precedes_first_entry=0` and `hit=68 ... guest_RA=guest+0x2a0e598 entries_so_far=156 ...`;
+  `precedes_first_entry=1` count 0/0/0; 68 hits of `0x2a1362f` and 0 of `0x2a0ed45` per run;
+  single tid; 37,547 `[W32_OBJ]`, first `obj=0x7fffe85c2500 [obj+0x28]=0000000000000000`, 1 distinct
+  obj/run; `[W32_LATCH_RO] before=0 after=1` + `[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`;
+  `verified w11-arg0.json sha256=8215519f…`, `arg0_len=1533221 latch=0`, `nativeInitClientSettings
+  ... latch=1`, `[flags-latch] route=none`; watcher-token count 0.
+- **QUOTE-RULE DEFECT 1:** report's FAULTING-INSTRUCTION quote has `rbp=0x00007fffff7ff090`;
+  the raw `nowatch_1.err` line reads `rbp=0x00007fffff7ff0a0`. NOT verbatim — quote must be corrected.
+- **QUOTE-RULE DEFECT 2:** report lists caller RAs as only `0x2a0ede0, 0x2a0e598, 0x2a0e1d8`;
+  raw logs show five: also `0x2a0e840, 0x2a0f492`. Incomplete list.
+- Derived (not a raw line): `w0=0 w1=68 precede=0` is agent shorthand; counts independently
+  verified (0/68, zero precede=1).
+- Watcher-free credential scrutinized: `g_w32_latch_before` sampled at `guest_app_shell.c:1194`
+  (before call), `after` at `:1228` (after call); no host byte write to `0x7cdd149` (grep of src:
+  reads/comparisons only); engine `movb $1` writers per `flags_latch_default.h:12-19` are
+  `0x2eb7520` (the replayed nativeInitClientSettings), crashpad and unreachable `0x56d*` family;
+  corroborated by W31 watcher's `[W21_LATCH_HIT] callerRA=0x2359342`. Sound as DEBT=1 replay credit,
+  NOT clean — marker WITHHELD. Observed writer `0x2a1362f` not proven to target this obj's +0x28
+  (agent states UNPROVEN).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/w32-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 6 self-matches (ledger's own recorded scan command, 2 per worktree × 3); no credential values.
+Glob `/tmp/opencode/w32-*/` excludes the out-of-scope uploads directory.
+**Git:** no capture/phone/logcat/core tracked; w32 worktrees each on own branch. Marker WITHHELD.
+
+### W32 root-cause addendum (lead-directed, verified by audit)
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 30 | **W32 ROOT CAUSE — JNIEnv fn[224] self-pointer feedback loop: slot `[rax+0x720]` changes from host `sr_ExceptionCheck` (host+0x2e690) to `guest+0x6ca7f72` (the prologue of the very wrapper containing `call *0x720(%rax)` at `0x6ca800e`) ⇒ infinite self-recursion ⇒ stack overflow at `0x6ca7f95 call 0x2a13350`, si_addr=rsp-8. W24 scheduler TRUE-path attribution RETRACTED: `[obj+0x28]=0` on all 37,547 entries ⇒ FALSE path always, not TRUE path. Writer of fn[224] UNPROVEN; identity/route of host+0x2e690 beyond sr_ExceptionCheck UNPROVEN; DEBT** | raw `call720.err`/`call720c.err`: `[W32_CALL720_ARM] base=0x7fffe8c3c000 host=0x555555554000 fd_rc=0`; `hit=1 … [rax+0x720]=0x555555582690 decode=host+0x2e690`; `hit=20/100 … [rax+0x720]=0x7fffef8e3f72 decode=guest+0x6ca7f72`; disasm `6ca7f72: push rbp/mov rbp,rsp` and `6ca800e: call *0x720(%rax)`; `nm guest-init-host: 2e690 t sr_ExceptionCheck`; `native_jni.c:1560 SETFN(*t,224,sr_ExceptionCheck)`; W32 `[obj+0x28]=0` 37,547/37,547 | lead/static/harness, audited | Replaces the scheduler-TRUE-path causal story with a directly observed callback self-pointer loop; explains the recurring 0x6ca8014 frame and the rsp-8 guard-page fault | Remove when the fn[224] writer is identified with a raw line and the loop is reproduced without harness replay, or a genuine guest route restores the host callback |
