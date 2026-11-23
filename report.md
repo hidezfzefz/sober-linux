@@ -1,67 +1,64 @@
-# n6 #684 static-B — weak mi_malloc + malloc/new resolution (READ-ONLY)
+# n7w1 #688 static-B — ctor replay + boot-only + dl_iterate_phdr (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST (n5 new divergence): `guest+0x6caef67` SIGTRAP, real trap `6caef66: cc int3` in HardAssert reporter `0x6caed7c`; log `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`. All quotes raw.
+FAULTING INSTRUCTION FIRST: guest `int3` at `0x6caef66` (reported RIP `0x6caef67`), HardAssert `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`. All lines quoted raw from source/logs.
 
-## (a) PROVEN — "host binds weak mi_malloc" is a README claim, not an active code path
+## PROVEN — 3618-ctor replay (src/linux/guest_dlopen_host.c)
 
-Exact declarations (all in the **compat bootstrap shim**, `src/compat/bionic_bootstrap/bionic_bootstrap.c`, NOT the harness app-shell `guest_app_shell.c` and NOT the ELF loader `android_relocs.c`):
 ```
-175:extern void *mi_malloc(size_t) __attribute__((weak));
-176:extern void *mi_calloc(size_t, size_t) __attribute__((weak));
-262:extern void  mi_free(void *) __attribute__((weak));
-263:extern void *mi_realloc(void *, size_t) __attribute__((weak));
-264:extern void *mi_aligned_alloc(size_t, size_t) __attribute__((weak));
-265:extern size_t mi_usable_size(const void *) __attribute__((weak));
+819:    const char *range_env = getenv("SOBER_CTOR_RANGES");
+820:    int native_ranges = range_env && !strcmp(range_env, "native");
+821:    int all_ranges = range_env && !strcmp(range_env, "all");
+823:    uintptr_t *array = (uintptr_t *)g_init_array_addr;
+824:    const unsigned std_ranges[][2] = { {2, 3}, {5, 3618} };
+825:    const unsigned native_range[][2] = { {2, 3618} };
+826:    const unsigned all_range[][2] = { {0, 3618} };
+827:    const unsigned (*ranges)[2] = all_ranges ? all_range
+828:                                  : (native_ranges ? native_range : std_ranges);
+829:    size_t nranges = (native_ranges || all_ranges) ? 1 : 2;
+833:        for (unsigned i = ranges[r][0]; i < ranges[r][1] && i < elf->init_array_count; ++i) {
+861:            uintptr_t fn = array[i];
+875:            ((void (*)(void))fn)();
 ```
-**RETRACTED as an active mechanism:** these six weak symbols are *declared but never referenced* in any compiled source — repo-wide grep finds only these declaration lines plus prose in `README.md:46,49,51,242`. The actual bridge ops are bound in `bb_resolve_alloc_ops()` (`bionic_bootstrap.c:585`):
-```
-591:    g_bb_ops.allocate      = host_allocate;
-593:    g_bb_ops.free          = host_free;
-594:    g_bb_ops.usable_size   = host_usable_size;
-595:    g_bb_ops.realloc       = host_reallocate;
-596:    g_bb_ops.aligned_alloc = host_aligned_allocate;
-```
-and `host_allocate` (`bionic_bootstrap.c:271-276`) is plain glibc:
-```
-271:static void *host_allocate(size_t n)
-274:    void *p = malloc(n);
-274:    if (p) memset(p, 0, n);
-```
-So the n5 phrase "host binds weak mi_malloc" refers to **documentation intent** (`README.md:55`: "mimalloc is used if the process already exports it; otherwise native glibc malloc is used"; `README.md:246`: "allocator is glibc malloc when mimalloc is absent"), not to a live weak-symbol call. The library truly has **zero** `mi_*` dynamic symbols (`nm -D` over all 1132 dynsyms returns none) — the weak refs would only bind if the *host process* exported mimalloc; it does not, and they are unused anyway.
+Default (`std`) replays indices **2 and 5..3617**; skips 0,1,3,4. `g_init_array_addr = base + elf->init_array_rva` (`:810`), count from DT_INIT_ARRAYSZ; `android_relocs.h:8` notes the 3618-entry array at RVA `0x7220e58` is zero-filled by plain dlopen — the harness decodes `DT_ANDROID_RELA` and writes the entries (android_relocs.c:258-261) before driving them.
 
-**Where guest malloc/new resolve:** the engine's allocator is **embedded** (statically linked mimalloc); guest allocator calls are direct internal calls, not PLT/dynsym. The harness patches **eight** bridge thunks (README says "six", code has eight) via `install_bridges()` at `bionic_bootstrap.c:875-908`; RVAs from `bootstrap_profile.h:62-74`:
-```
-62:#define SOBER_BRIDGE_ALLOC_SMALL_RVA   0x1dbad62u
-63:#define SOBER_BRIDGE_USABLE_SIZE_RVA   0x1dbdfbau
-64:#define SOBER_BRIDGE_REALLOCATE_RVA    0x227aafau
-65:#define SOBER_BRIDGE_ALLOCATE_RVA      0x1dbab02u
-66:#define SOBER_BRIDGE_ALIGNED_ALLOC_RVA 0x1dd60e5u
-67:#define SOBER_BRIDGE_FREE_RVA          0x1dbe559u
-71:#define SOBER_BRIDGE_CALLOC_RVA        0x253225eu
-74:#define SOBER_BRIDGE_CALLOC_RUNTIME_RVA 0x231f0e2u
-```
-i.e. guest embedded allocator wins for all ordinary calls; shims (glibc malloc/free) win **only** at those eight patched thunks.
+**ctor3602 IS in the replayed set** (index 3602 lies in `[5,3618)`), confirmed in log `n5_1.err:3652`: `[harness] ctor[3602] rva=0x2279a47` — that is the function containing `2279a8f: mov %al,0x7cef650` (n5/n6 static-B finding).
 
-## (b) PROVEN — premise false: no library-defined malloc/new symbol has a GOT slot
-
-For **each** of `malloc, free, calloc, realloc, posix_memalign, memalign, aligned_alloc, _Znwm, _Znam, _ZdlPv, _ZdaPv, _Znwj`:
-- `nm -D --defined-only libroblox.so` → **no match** (none defined/exported);
-- `readelf -rW libroblox.so` → **no relocation** mentioning any of them (all 542 dynamic relocs are `R_X86_64_JUMP_SLOT`, none for these names).
-
-Therefore there is **no per-symbol loader code to quote** — no guest GOT slot exists for any of these symbols. The only generic symbolic-GOT resolution in the loader is `src/linux/android_relocs.c:262-286`:
+**Order vs scheduler guard** (n5_1.err raw):
 ```
-262:                const char *name = symidx ? symbol_name(elf, symidx) : NULL;
-263:                void *value = name ? dlsym(RTLD_DEFAULT, name) : NULL;
+3652:[harness] ctor[3602] rva=0x2279a47
+3687:[fflag-default] replayed guest ctor 0x2e62390 (FFlag registry): ... ctors 1/3/4 not required ...
+3689:[app-shell] scheduler guest install -> rc=1
+3706:[W32_LATCH_RO] before=0 after=1
+3708:[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 ... latch=1 ...
+```
+So ctor3602 runs **before** the ctor[0] replay, scheduler install, and the latch/guard flip (`0x7cdd149` 0->1) — the guard is written by the AVD-boundary native replay, not by ctor3602.
+
+## PROVEN — real boot runs what harness never runs
+
+- The Android linker invokes **every** init_array entry automatically, including indices **0,1,3,4** that std replay skips (`guest_dlopen_host.c:824`). Log names them: ctor[0]=`0x2e62390` FFlag registry (decision 008 skips genuine call; harness instead does a host-side replay at `guest_app_shell.c:1411-1419`), ctor[1]=protobuf once-guard `0x1dba8f3` (`:850-857` only under `SOBER_CTOR1`), ctor[3]=allocator thread init `0x1e47927` (`:851-854` only for native/all ranges), ctor[4]=time baseline (named in log as "time baseline=lazy").
+- `android_relocs.h:8-12`: "a plain dlopen() leaves the 3618-entry DT_INIT_ARRAY ... zero-filled and the first constructor call is a NULL call (SIGSEGV, rip=0x0)" — the harness must decode APS2 relocs itself; a real boot has the Android linker doing this natively.
+- Real boot has genuine Bionic libc + the engine's loaded allocator, so the mimalloc integration probe is true; harness uses glibc-backed bridges (n6 finding) and the probe is DFLog-only (static-A #683).
+
+## PROVEN — dl_iterate_phdr shim return
+
+- Exported to guest by `src/compat/bionic_libc.map:348: dl_iterate_phdr;`
+- `src/compat/bionic_libc.c:1356: TRAMP(dl_iterate_phdr);` with the macro at `:459-470`:
+```
+459:#define TRAMP(name) \
+460:    __asm__ volatile ( \
 ...
-276:                    *target = (uint64_t)(uintptr_t)value +
-277:                              (type == 1 ? (uint64_t)r_addend : 0);
-278:                    ++symbolic;
+464:        "movq sober_libc_fn_" #name "(%%rip), %%rax\n\t" \
+465:        "testq %%rax, %%rax\n\t" \
+466:        "jz 1f\n\t" \
+467:        "jmp *%%rax\n\t" \
+468:        "1: xorl %%eax, %%eax\n\t" \
+469:        "ret\n\t" \
 ```
-This would make a **host shim win** over a library definition for any symbolic relocation (dlsym RTLD_DEFAULT searches the host first), but it never applies to malloc/new here because none are relocated. `src/trace/native_trace.c:389-393` (`real_malloc = sr_resolve("malloc", "__libc_malloc")` etc.) is an **optional LD_PRELOAD tracer**, not the guest loader.
-Verdict: **the library's own embedded allocator wins** for guest malloc/operator-new; shims only via the eight patched bridge RVAs.
+- The function pointer is filled at `bionic_libc.c:919: sober_libc_fn_dl_iterate_phdr = native_lookup("dl_iterate_phdr");` (resolver `:32-37` uses `real_dlsym_fn(h, name)` with `h = g_glibc ? g_glibc : RTLD_DEFAULT`).
+
+**Return semantics:** if resolved (normal case), the shim tail-jumps to the real glibc `dl_iterate_phdr` — it does **not** synthesize guest link-map entries; the callback sees the host link map. If resolution failed (pointer NULL), the TRAMP returns **0 in eax** without ever invoking the callback — an unwinder then sees zero object/frame callbacks, which is consistent with the `_Unwind_Resume() can't return` HardAssert text (strings `RBXCRASH` `0x3a30df`, `HardAssert` `0x3a30e8`, `_Unwind_Resume` in n5 static-A evidence). Which branch actually runs in n7 is **UNPROVEN** from static evidence; no new runs done.
 
 ## UNPROVEN / NOT done
 
-- UNPROVEN: whether the eight bridge RVAs are the *only* allocator indirection (full static enumeration of direct calls to embedded allocator not done); exact property that makes the guest's mimalloc detection false (static-A scope).
-- RETRACTED: n5's "weak mi_malloc binding" as the cause of the HardAssert — the weak refs are dead declarations.
-- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; no captures/tokens in git.
+- UNPROVEN: exact RVA of ctor[3]/[4] from a replayed run (not present in std logs); whether the shim's function pointer is NULL at fault time; whether zero callbacks is sufficient to cause the unwind failure.
+- RETRACTED: none here. NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF. No captures/tokens in git.
