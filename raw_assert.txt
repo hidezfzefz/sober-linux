@@ -5,3 +5,5 @@
  6caef61:	e8 6a 31 08 00       	call   6d320d0 <abort@plt>
  6caef66:	cc                   	int3
  6caef67:	89 c0                	mov    %eax,%eax
+ 6caef69:	e8 62 31 08 00       	call   6d320d0 <abort@plt>
+ 6caef6e:	eb 4a                	jmp    6caefba <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b748c>

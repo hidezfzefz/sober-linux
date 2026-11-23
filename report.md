@@ -1,64 +1,67 @@
-# n7w1 #688 static-B — ctor replay + boot-only + dl_iterate_phdr (READ-ONLY)
+# n7w1 #687 — ctor3602 write condition + assert polarity
 
-FAULTING INSTRUCTION FIRST: guest `int3` at `0x6caef66` (reported RIP `0x6caef67`), HardAssert `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`. All lines quoted raw from source/logs.
+Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
+Evidence: `dis_ctor3602.txt`, `raw_assert.txt`.
 
-## PROVEN — 3618-ctor replay (src/linux/guest_dlopen_host.c)
+Faulting instruction first: guest **`0x6caef66: int3`** (HardAssert trap),
+bytes `cc`. Reached by `je` from the two byte tests below.
 
-```
-819:    const char *range_env = getenv("SOBER_CTOR_RANGES");
-820:    int native_ranges = range_env && !strcmp(range_env, "native");
-821:    int all_ranges = range_env && !strcmp(range_env, "all");
-823:    uintptr_t *array = (uintptr_t *)g_init_array_addr;
-824:    const unsigned std_ranges[][2] = { {2, 3}, {5, 3618} };
-825:    const unsigned native_range[][2] = { {2, 3618} };
-826:    const unsigned all_range[][2] = { {0, 3618} };
-827:    const unsigned (*ranges)[2] = all_ranges ? all_range
-828:                                  : (native_ranges ? native_range : std_ranges);
-829:    size_t nranges = (native_ranges || all_ranges) ? 1 : 2;
-833:        for (unsigned i = ranges[r][0]; i < ranges[r][1] && i < elf->init_array_count; ++i) {
-861:            uintptr_t fn = array[i];
-875:            ((void (*)(void))fn)();
-```
-Default (`std`) replays indices **2 and 5..3617**; skips 0,1,3,4. `g_init_array_addr = base + elf->init_array_rva` (`:810`), count from DT_INIT_ARRAYSZ; `android_relocs.h:8` notes the 3618-entry array at RVA `0x7220e58` is zero-filled by plain dlopen — the harness decodes `DT_ANDROID_RELA` and writes the entries (android_relocs.c:258-261) before driving them.
+## (1) ctor 3602 `0x2279a47` — the write is UNCONDITIONAL — PROVEN
 
-**ctor3602 IS in the replayed set** (index 3602 lies in `[5,3618)`), confirmed in log `n5_1.err:3652`: `[harness] ctor[3602] rva=0x2279a47` — that is the function containing `2279a8f: mov %al,0x7cef650` (n5/n6 static-B finding).
+Quoted raw disassembly (full function `0x2279a47..0x2279b55`):
+> `2279a47: push %rbp` / `2279a48: mov %rsp,%rbp`
+> `2279a4b: xor %eax,%eax`            ⇒ `%al = 0`
+> `2279a4d: mov %al,0x7cef628`
+> `2279a53: lea … # 2bfe87,%rcx` ; `2279a5a: mov %rcx,0x7cef630`
+> `2279a61: movq $0x1c,0x7cef638`
+> `2279a6c: lea … # 227d536,%rcx` ; `2279a73: mov %rcx,0x7cef640`
+> `2279a7a: lea … # 7cef640,%rcx`
+> `2279a81: mov 0x7cdeb68(%rip),%rdx`
+> `2279a88: mov %rdx,0x7cef648`
+> `2279a8f: mov %al,0x7cef650`        <-- the write: stores 0, no guard
 
-**Order vs scheduler guard** (n5_1.err raw):
-```
-3652:[harness] ctor[3602] rva=0x2279a47
-3687:[fflag-default] replayed guest ctor 0x2e62390 (FFlag registry): ... ctors 1/3/4 not required ...
-3689:[app-shell] scheduler guest install -> rc=1
-3706:[W32_LATCH_RO] before=0 after=1
-3708:[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 ... latch=1 ...
-```
-So ctor3602 runs **before** the ctor[0] replay, scheduler install, and the latch/guard flip (`0x7cdd149` 0->1) — the guard is written by the AVD-boundary native replay, not by ctor3602.
+There is **no condition guarding `0x2279a8f`**: `%al` was zeroed once at
+`0x2279a4b` and no test/branch/jump occurs between it and the store. No
+`getenv`, no import/GOT check, no global flag test, no syscall, no CPU-feature
+probe, and no detection call decides it. The only calls in the ctor come
+*after* the write (`2279adf: call 1dc1208`, `2279b48: call 2e8afb0`) and build
+objects/strings, not a mimalloc detection result.
 
-## PROVEN — real boot runs what harness never runs
+**RETRACTED** the premise that a detection call or compared feature guards the
+write to `0x7cef650` — the store is an unconditional zero assignment.
 
-- The Android linker invokes **every** init_array entry automatically, including indices **0,1,3,4** that std replay skips (`guest_dlopen_host.c:824`). Log names them: ctor[0]=`0x2e62390` FFlag registry (decision 008 skips genuine call; harness instead does a host-side replay at `guest_app_shell.c:1411-1419`), ctor[1]=protobuf once-guard `0x1dba8f3` (`:850-857` only under `SOBER_CTOR1`), ctor[3]=allocator thread init `0x1e47927` (`:851-854` only for native/all ranges), ctor[4]=time baseline (named in log as "time baseline=lazy").
-- `android_relocs.h:8-12`: "a plain dlopen() leaves the 3618-entry DT_INIT_ARRAY ... zero-filled and the first constructor call is a NULL call (SIGSEGV, rip=0x0)" — the harness must decode APS2 relocs itself; a real boot has the Android linker doing this natively.
-- Real boot has genuine Bionic libc + the engine's loaded allocator, so the mimalloc integration probe is true; harness uses glibc-backed bridges (n6 finding) and the probe is DFLog-only (static-A #683).
+## (2) Assert polarity — PROVEN
 
-## PROVEN — dl_iterate_phdr shim return
+Quoted raw disassembly (`0x6caef4f..0x6caef6e`):
+> `6caef4f: cmpb $0x0,0x7cdd149`      (latch byte — tested FIRST)
+> `6caef56: je 0x6caef66`
+> `6caef58: cmpb $0x0,0x7cef650`      (mimalloc byte — tested SECOND)
+> `6caef5f: je 0x6caef66`
+> `6caef61: call 0x6d320d0 <abort@plt>`
+> `6caef66: int3`                     <-- faulting instruction
+> `6caef67: mov %eax,%eax`
+> `6caef69: call 0x6d320d0 <abort@plt>`
 
-- Exported to guest by `src/compat/bionic_libc.map:348: dl_iterate_phdr;`
-- `src/compat/bionic_libc.c:1356: TRAMP(dl_iterate_phdr);` with the macro at `:459-470`:
-```
-459:#define TRAMP(name) \
-460:    __asm__ volatile ( \
-...
-464:        "movq sober_libc_fn_" #name "(%%rip), %%rax\n\t" \
-465:        "testq %%rax, %%rax\n\t" \
-466:        "jz 1f\n\t" \
-467:        "jmp *%%rax\n\t" \
-468:        "1: xorl %%eax, %%eax\n\t" \
-469:        "ret\n\t" \
-```
-- The function pointer is filled at `bionic_libc.c:919: sober_libc_fn_dl_iterate_phdr = native_lookup("dl_iterate_phdr");` (resolver `:32-37` uses `real_dlsym_fn(h, name)` with `h = g_glibc ? g_glibc : RTLD_DEFAULT`).
+Polarity: `je 0x6caef66` is taken when the tested byte equals **ZERO**, so the
+`int3` HardAssert trap at `0x6caef66` fires when **either** byte is zero:
+- latch `0x7cdd149 == 0` → trap (first test), or
+- mimalloc flag `0x7cef650 == 0` → trap (second test).
 
-**Return semantics:** if resolved (normal case), the shim tail-jumps to the real glibc `dl_iterate_phdr` — it does **not** synthesize guest link-map entries; the callback sees the host link map. If resolution failed (pointer NULL), the TRAMP returns **0 in eax** without ever invoking the callback — an unwinder then sees zero object/frame callbacks, which is consistent with the `_Unwind_Resume() can't return` HardAssert text (strings `RBXCRASH` `0x3a30df`, `HardAssert` `0x3a30e8`, `_Unwind_Resume` in n5 static-A evidence). Which branch actually runs in n7 is **UNPROVEN** from static evidence; no new runs done.
+The explicit `abort@plt` at `0x6caef61` runs only when **both** bytes are
+non-zero. So the answer to "is the abort path taken on zero?" is: **the `int3`
+trap path is taken on zero**; the direct `abort()` call is taken on non-zero.
+Byte order: `0x7cdd149` first, `0x7cef650` second.
 
-## UNPROVEN / NOT done
+## What NOT done
+No apply/build, no runs/gdb/perf, no device/AVD/Frida/phone, no new captures,
+no guest writes, gate edits, seeder, fake JNI returns, remaps, or setting
+`0x7cef650` by hand, no credentials, no captures/logs/tokens in git. I did not
+locate a local raw `sha256=8215519f` banner line in my own evidence files; the
+input/SHA banner is the harness's condition, not asserted here (UNPROVEN from
+my side).
 
-- UNPROVEN: exact RVA of ctor[3]/[4] from a replayed run (not present in std logs); whether the shim's function pointer is NULL at fault time; whether zero callbacks is sufficient to cause the unwind failure.
-- RETRACTED: none here. NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF. No captures/tokens in git.
+## First divergence + next step
+First divergence: ctor 3602 unconditionally writes 0 to `0x7cef650`, so the
+assert's second byte is zero and `je 0x6caef66` (int3) fires; on a genuine
+boot the mimalloc probe would leave it non-zero. Next: harness exec-bp at
+`0x2279a8f` (hit/tid/order/value) and read both assert bytes at the fault.

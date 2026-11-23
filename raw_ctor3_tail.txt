@@ -1,0 +1,18 @@
+ 1db9a90:	39 e6                	cmp    %esp,%esi
+ 1db9a92:	72 3b                	jb     1db9acf <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1d7d1>
+ 1db9a94:	48 8b 3d 3d 53 f2 05 	mov    0x5f2533d(%rip),%rdi        # 7cdedd8 <__stop_pb_defaults@@Base+0xa5c920>
+ 1db9a9b:	e8 62 10 00 00       	call   1dbab02 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1c79e>
+ 1db9aa0:	49 89 c7             	mov    %rax,%r15
+ 1db9aa3:	48 89 c7             	mov    %rax,%rdi
+ 1db9aa6:	e8 51 4a 00 00       	call   1dbe4fc <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18da4>
+ 1db9aab:	89 c3                	mov    %eax,%ebx
+ 1db9aad:	4c 89 ff             	mov    %r15,%rdi
+ 1db9ab0:	e8 05 45 00 00       	call   1dbdfba <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x192e6>
+ 1db9ab5:	49 89 c6             	mov    %rax,%r14
+ 1db9ab8:	4c 8b 25 19 53 f2 05 	mov    0x5f25319(%rip),%r12        # 7cdedd8 <__stop_pb_defaults@@Base+0xa5c920>
+ 1db9abf:	4c 89 ff             	mov    %r15,%rdi
+ 1db9ac2:	e8 f7 4a 00 00       	call   1dbe5be <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18ce2>
+ 1db9ac7:	4d 39 e6             	cmp    %r12,%r14
+ 1db9aca:	0f 93 c0             	setae  %al
+ 1db9acd:	20 c3                	and    %al,%bl
+ 1db9acf:	88 1d 0b 53 f2 05    	mov    %bl,0x5f2530b(%rip)        # 7cdede0 <__stop_pb_defaults@@Base+0xa5c928>
