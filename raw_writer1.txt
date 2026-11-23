@@ -1,0 +1,19 @@
+ 2a0ed1a:	00 00                	add    %al,(%rax)
+ 2a0ed1c:	00 e8                	add    %ch,%al
+ 2a0ed1e:	fe 48 00             	decb   0x0(%rax)
+ 2a0ed21:	00 48 8d             	add    %cl,-0x73(%rax)
+ 2a0ed24:	43 30 48 c7          	rex.XB xor %cl,-0x39(%r8)
+ 2a0ed28:	43 30 00             	rex.XB xor %al,(%r8)
+ 2a0ed2b:	00 00                	add    %al,(%rax)
+ 2a0ed2d:	00 49 83             	add    %cl,-0x7d(%rcx)
+ 2a0ed30:	c6                   	(bad)
+ 2a0ed31:	b1 49                	mov    $0x49,%cl
+ 2a0ed33:	21 c6                	and    %eax,%esi
+ 2a0ed35:	4c 89 73 38          	mov    %r14,0x38(%rbx)
+ 2a0ed39:	4c 89 73 40          	mov    %r14,0x40(%rbx)
+ 2a0ed3d:	48 c7 43 48 00 00 00 	movq   $0x0,0x48(%rbx)
+ 2a0ed44:	00 
+ 2a0ed45:	4c 89 7b 28          	mov    %r15,0x28(%rbx)
+ 2a0ed49:	48 89 d8             	mov    %rbx,%rax
+ 2a0ed4c:	48                   	rex.W
+ 2a0ed4d:	83                   	.byte 0x83

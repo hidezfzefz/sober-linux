@@ -1,0 +1,4 @@
+3018924: 2a0e83b:	e8 80 00 00 00       	call   2a0e8c0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29b125>
+3018962: 2a0e8c0:	55                   	push   %rbp
+3019291: 2a0ed1d:	e8 fe 48 00 00       	call   2a13620 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29fe85>
+3019301: 2a0ed45:	4c 89 7b 28          	mov    %r15,0x28(%rbx)
