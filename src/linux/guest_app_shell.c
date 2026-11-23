@@ -126,6 +126,77 @@ static long n14_readmem(uintptr_t addr, void *dst, size_t len)
     struct iovec li = { dst, len }, ri = { (void *)addr, len };
     return process_vm_readv((pid_t)getpid(), &li, 1UL, &ri, 1UL, 0UL);
 }
+/* n1-5 READ-ONLY closure scan.  Contract (static-A #656 / static-B #653):
+ * a genuine closure/task pointer is canonical after masking 0xffffffffffff;
+ * the object it points to has fn ptr at +0 and ctx ptr at +8.  Search qwords
+ * already present in the live obj (esp. +0x40/+0x68 holders).  No writes. */
+static void n15_scan_closures(uintptr_t base)
+{
+    uintptr_t (*slot_getter)(void) = (uintptr_t (*)(void))(base + 0x2a0de60u);
+    uintptr_t slot = slot_getter(), obj = 0;
+    if (n14_readmem(slot, &obj, 8u) != 8 || !obj) {
+        fprintf(stderr, "[N15_SCAN] slot=%p obj UNREADABLE\n", (void *)slot);
+        return;
+    }
+    fprintf(stderr, "[N15_SCAN] obj=%p scanning qwords obj-0x2000..obj+0x2000 tid=%ld\n",
+            (void *)obj, (long)getpid());
+    uintptr_t fn_cand = 0, ctx_cand = 0;   /* filled by candidate below */
+    /* Read-only mapping provenance for any candidate region. */
+    {
+        FILE *m = fopen("/proc/self/maps", "r");
+        if (m) {
+            char ln[512];
+            while (fgets(ln, sizeof(ln), m)) {
+                unsigned long lo, hi;
+                if (sscanf(ln, "%lx-%lx", &lo, &hi) != 2) continue;
+                if ((unsigned long)obj >= lo && (unsigned long)obj < hi)
+                    fprintf(stderr, "[N15_MAP obj] %s", ln);
+                if ((unsigned long)fn_cand >= lo && (unsigned long)fn_cand < hi)
+                    fprintf(stderr, "[N15_MAP fn] %s", ln);
+                if ((unsigned long)ctx_cand >= lo && (unsigned long)ctx_cand < hi)
+                    fprintf(stderr, "[N15_MAP ctx] %s", ln);
+            }
+            fclose(m);
+        }
+    }
+    for (int64_t off = -0x2000; off < 0x2000; off += 8) {
+        uintptr_t v = 0;
+        if (n14_readmem((uintptr_t)((int64_t)obj + off), &v, 8u) != 8) continue;
+        uintptr_t masked = v & 0xffffffffffffULL;
+        if (masked < 0x10000u) continue;
+        uintptr_t fn = 0, ctx = 0;
+        long g1 = n14_readmem(masked, &fn, 8u);
+        long g2 = n14_readmem(masked + 8u, &ctx, 8u);
+        uintptr_t fnm = fn & 0xffffffffffffULL, ctxm = ctx & 0xffffffffffffULL;
+        int fn_ok = (g1 == 8 && fnm >= 0x10000u);
+        int ctx_ok = (g2 == 8 && ctxm >= 0x10000u);
+        if (fn_ok && ctx_ok) {
+            fn_cand = fn; ctx_cand = ctx;
+            fprintf(stderr,
+                    "[N15_CLOSURE] obj%+lld raw=%p masked=%p fn=%p ctx=%p\n",
+                    (long long)off, (void *)v, (void *)masked,
+                    (void *)fn, (void *)ctx);
+        }
+    }
+    {
+        FILE *m = fopen("/proc/self/maps", "r");
+        if (m) {
+            char ln[512];
+            while (fgets(ln, sizeof(ln), m)) {
+                unsigned long lo, hi;
+                if (sscanf(ln, "%lx-%lx", &lo, &hi) != 2) continue;
+                if (fn_cand && (unsigned long)fn_cand >= lo &&
+                    (unsigned long)fn_cand < hi)
+                    fprintf(stderr, "[N15_MAP fn] %s", ln);
+                if (ctx_cand && (unsigned long)ctx_cand >= lo &&
+                    (unsigned long)ctx_cand < hi)
+                    fprintf(stderr, "[N15_MAP ctx] %s", ln);
+            }
+            fclose(m);
+        }
+    }
+}
+
 static void n14_log_guard(uintptr_t base, const char *tag)
 {
     uintptr_t (*slot_getter)(void) =
@@ -1649,6 +1720,8 @@ int guest_app_shell_run(uintptr_t base)
           n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
         } else fprintf(stderr, "[N14_REPLAY 3/3] SKIPPED (diagnostic)\n");
     }
+
+    if (getenv("SOBER_N15_SCAN")) n15_scan_closures(base);
 
     /* Generic SysV calls: first 6 pointer args in registers, remainder on the
      * stack. Each JNI static native method takes (JNIEnv*, jclass, ...). */
