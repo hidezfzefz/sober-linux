@@ -1,0 +1,76 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000006c89e40 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1492312>:
+ 6c89e40:	89 f0                	mov    %esi,%eax
+ 6c89e42:	5b                   	pop    %rbx
+ 6c89e43:	41 5c                	pop    %r12
+ 6c89e45:	41 5e                	pop    %r14
+ 6c89e47:	41 5f                	pop    %r15
+ 6c89e49:	5d                   	pop    %rbp
+ 6c89e4a:	c3                   	ret
+ 6c89e4b:	cc                   	int3
+ 6c89e4c:	cc                   	int3
+ 6c89e4d:	cc                   	int3
+ 6c89e4e:	cc                   	int3
+ 6c89e4f:	cc                   	int3
+ 6c89e50:	55                   	push   %rbp
+ 6c89e51:	48 89 e5             	mov    %rsp,%rbp
+ 6c89e54:	48 8d 3d ed 81 5f 00 	lea    0x5f81ed(%rip),%rdi        # 7282048 <strncat@plt+0x54e4c8>
+ 6c89e5b:	e8 e0 c5 21 fc       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 6c89e60:	5d                   	pop    %rbp
+ 6c89e61:	c3                   	ret
+ 6c89e62:	cc                   	int3
+ 6c89e63:	cc                   	int3
+ 6c89e64:	cc                   	int3
+ 6c89e65:	cc                   	int3
+ 6c89e66:	cc                   	int3
+ 6c89e67:	cc                   	int3
+ 6c89e68:	cc                   	int3
+ 6c89e69:	cc                   	int3
+ 6c89e6a:	cc                   	int3
+ 6c89e6b:	cc                   	int3
+ 6c89e6c:	cc                   	int3
+ 6c89e6d:	cc                   	int3
+ 6c89e6e:	cc                   	int3
+ 6c89e6f:	cc                   	int3
+ 6c89e70:	55                   	push   %rbp
+ 6c89e71:	48 89 e5             	mov    %rsp,%rbp
+ 6c89e74:	48 8d 3d ed 81 5f 00 	lea    0x5f81ed(%rip),%rdi        # 7282068 <strncat@plt+0x54e4e8>
+ 6c89e7b:	e8 c0 c5 21 fc       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 6c89e80:	5d                   	pop    %rbp
+ 6c89e81:	c3                   	ret
+ 6c89e82:	cc                   	int3
+ 6c89e83:	cc                   	int3
+ 6c89e84:	cc                   	int3
+ 6c89e85:	cc                   	int3
+ 6c89e86:	cc                   	int3
+ 6c89e87:	cc                   	int3
+ 6c89e88:	cc                   	int3
+ 6c89e89:	cc                   	int3
+ 6c89e8a:	cc                   	int3
+ 6c89e8b:	cc                   	int3
+ 6c89e8c:	cc                   	int3
+ 6c89e8d:	cc                   	int3
+ 6c89e8e:	cc                   	int3
+ 6c89e8f:	cc                   	int3
+ 6c89e90:	55                   	push   %rbp
+ 6c89e91:	48 89 e5             	mov    %rsp,%rbp
+ 6c89e94:	48 8d 3d ed 81 5f 00 	lea    0x5f81ed(%rip),%rdi        # 7282088 <strncat@plt+0x54e508>
+ 6c89e9b:	e8 a0 c5 21 fc       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 6c89ea0:	5d                   	pop    %rbp
+ 6c89ea1:	c3                   	ret
+ 6c89ea2:	55                   	push   %rbp
+ 6c89ea3:	48 89 e5             	mov    %rsp,%rbp
+ 6c89ea6:	53                   	push   %rbx
+ 6c89ea7:	50                   	push   %rax
+ 6c89ea8:	48 89 fb             	mov    %rdi,%rbx
+ 6c89eab:	e8 e0 94 d8 fb       	call   2a13390 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29fbf5>
+ 6c89eb0:	48 89 c1             	mov    %rax,%rcx
+ 6c89eb3:	31 c0                	xor    %eax,%eax
+ 6c89eb5:	f0 48 0f b1 0b       	lock cmpxchg %rcx,(%rbx)
+ 6c89eba:	0f 94 c2             	sete   %dl
+ 6c89ebd:	48 39 c8             	cmp    %rcx,%rax

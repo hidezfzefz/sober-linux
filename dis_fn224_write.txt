@@ -1,0 +1,25 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000042576d0 <Java_com_roblox_protocols_systemdialogplatforminterface_generated_IPlatformSystemDialogHandler_00024CppProxy_native_1dismissAll@@LIBROBLOX+0x84d8ca>:
+ 42576d0:	0f 11 83 d0 06 00 00 	movups %xmm0,0x6d0(%rbx)
+ 42576d7:	48 89 83 e0 06 00 00 	mov    %rax,0x6e0(%rbx)
+ 42576de:	88 8b e8 06 00 00    	mov    %cl,0x6e8(%rbx)
+ 42576e4:	89 93 ec 06 00 00    	mov    %edx,0x6ec(%rbx)
+ 42576ea:	0f 11 83 f0 06 00 00 	movups %xmm0,0x6f0(%rbx)
+ 42576f1:	48 89 83 00 07 00 00 	mov    %rax,0x700(%rbx)
+ 42576f8:	88 8b 08 07 00 00    	mov    %cl,0x708(%rbx)
+ 42576fe:	89 93 0c 07 00 00    	mov    %edx,0x70c(%rbx)
+ 4257704:	0f 11 83 10 07 00 00 	movups %xmm0,0x710(%rbx)
+ 425770b:	48 89 83 20 07 00 00 	mov    %rax,0x720(%rbx)
+ 4257712:	88 8b 28 07 00 00    	mov    %cl,0x728(%rbx)
+ 4257718:	89 93 2c 07 00 00    	mov    %edx,0x72c(%rbx)
+ 425771e:	48 89 83 40 07 00 00 	mov    %rax,0x740(%rbx)
+ 4257725:	0f 11 83 30 07 00 00 	movups %xmm0,0x730(%rbx)
+ 425772c:	88 8b 48 07 00 00    	mov    %cl,0x748(%rbx)
+ 4257732:	89 93 4c 07 00 00    	mov    %edx,0x74c(%rbx)
+ 4257738:	0f 11 83 50 07 00 00 	movups %xmm0,0x750(%rbx)
+ 425773f:	0f                   	.byte 0xf
