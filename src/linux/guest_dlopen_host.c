@@ -994,6 +994,21 @@ static int drive_constructors(uintptr_t base,
                 ((void (*)(void))(base + 0x2e62390))();
                 dump_state(base, "AFTER ctor[0] injection");
             }
+            /* n8 WAVE1 host-only experiment (default OFF): replay the genuine
+             * ctor3 0x1db9a40 in init_array order, right after ctor0 and
+             * before ctor3602.  No byte patching, no hand-set globals. */
+            if (i == 6 && getenv("SOBER_N8_CTOR3")) {
+                unsigned char v = 0;
+                long g = w30_readmem(base + 0x7cdede0u, &v, 1u);
+                fprintf(stderr, "[N8_CTOR3] before 0x7cdede0=%s0x%02x\n",
+                        (g == 1) ? "" : "UNREADABLE-", (unsigned)v);
+                g_ctor_rva = 0x1db9a40;
+                ((void (*)(void))(base + 0x1db9a40u))();
+                g = w30_readmem(base + 0x7cdede0u, &v, 1u);
+                fprintf(stderr, "[N8_CTOR3] after 0x7cdede0=%s0x%02x\n",
+                        (g == 1) ? "" : "UNREADABLE-", (unsigned)v);
+                dump_state(base, "AFTER ctor3 0x1db9a40 replay");
+            }
             /* Diagnostic opt-in only: the canonical profile skips ctor[1].
              * Kept behind SOBER_CTOR1 for A/B comparison during triage. */
             if (i == 6 && !all_ranges && getenv("SOBER_CTOR1")) {
