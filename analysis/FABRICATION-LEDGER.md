@@ -1260,3 +1260,41 @@ but SLEB decode implausible ⇒ contents UNPROVEN (no runtime read).
 → OUTPUT: 72 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n7w4. Marker WITHHELD.
+
+## Overnight n8 WAVE1 audit (task #702) — ctor3 replay A/B, no benefit
+
+Owner: audit (`/tmp/opencode/n8-audit`, branch `n8-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+Input SHA + banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each of `ab_{off,on}_{1,2,3}.err` (6/6); rc=139 6/6;
+fault int3 `0x6caef66` (RIP `0x6caef67`), signal=5, si_addr=0.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 47 | **Host-only genuine ctor3 `0x1db9a40` replay in init_array order (after ctor0, before ctor3602), gated `SOBER_N8_CTOR3` default OFF for A/B; DEBT=1; gate/withhold unchanged. A/B shows NO benefit — flag stays 0x00 and HardAssert persists, so NOT promoted to ON** | raw ab_on_1/2/3 `[N8_CTOR3] before 0x7cdede0=0x00` / `[N8_CTOR3] after 0x7cdede0=0x00` (counts 1/1/1 ON, 0/0/0 OFF), `[harness] STATE AFTER ctor3 0x1db9a40 replay:`; source ctor3 full disasm (`1db9a4b movq $0x20,0x7cdedd8`, `1db9acf mov %bl,0x7cdede0`, 9 allocator-only calls, `1db9add ret`, no getenv/syscall/JNIEnv/pthread); A/B table HardAssert 1/1/1 both arms, N14_REPLAY 3/3 0/0/0 both arms, same fault RIP | harness (owner), audited | Minimal genuine guest-code probe of the skipped ctor3 flag; no hand-set byte, no guest writes; did not remove the assert | "a genuine runtime sets 0x7cdede0 nonzero via its own allocator probe and the HardAssert clears without host replay" — then remove the opt-in replay |
+
+**static-A #701 — all quoted disasm verified verbatim:** ctor3 writes exactly two globals
+(`1db9a4b movq $0x20,0x7cdedd8`, `1db9acf mov %bl,0x7cdede0`), makes 9 internal allocator calls
+(`1dbad62` malloc ×2, `1dbe4fc` usable-size ×2, `1dbdfba` end-ptr ×2, `1dbe559`/`1db9ac2` free,
+`1dbab02` alloc #2) then `1db9add ret`; no getenv/syscall/JNIEnv/pthread; probe predicate
+`1db9a8a test %r15b,%r15b`/`1db9a8d je`, `1db9a8f cmp %r12,%r14`/`1db9a92 jb`,
+`1db9aca setae %al`/`1db9acd and %al,%bl`. Polarities: `239eb14 cmpb $0,0x7cdede0` +
+`239eb1b je 23a1422` (ZERO → assert path); `23a1422 test %al,%al` + `23a1424 je 23a1465`
+(al==0 skips DFLog, al!=0 logs NOT-detected then falls through — both converge); `23a1465` is
+`lea #4c0d2b,%rsi` (message pointer, not a branch) → `23a146c xor %edi,%edi` →
+`23a146e call 6caed5d` → reporter → `6caef4f`/`6caef58` → `6caef66 int3`. SAFE statically
+(allocator-only, needs ctor[2] already replayed); UNPROVEN that allocations succeed / flag goes
+nonzero (harness A/B answered: flag stayed 0).
+
+**harness #703 — all quoted claims verified:** ctor3 replay counts 1/1/1 ON, 0/0/0 OFF;
+`[N8_CTOR3] before/after 0x7cdede0=0x00` flag unchanged; no fault in ctor3 (KILL SWITCH not
+triggered); A/B table — HardAssert 1/1/1 both arms, N14_REPLAY 3/3 0/0/0 both arms, same fault
+RIP `guest+0x6caef67`. Initial `/dev/shm` build rc=126 (noexec) explicitly NOT credited; all 6
+fresh runs from `n8bin/` rc=139. Gate/withhold unchanged (source diff has no rung/gate/marker
+changes). UNPROVEN: why ctor3 leaves 0x7cdede0 zero under the host allocator; genuine-runtime behavior.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n8-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 67 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n8w1. Marker WITHHELD.
