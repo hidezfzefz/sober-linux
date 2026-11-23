@@ -251,6 +251,59 @@ static int n7b_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
     if (fcntl(fd, F_SETFL, O_ASYNC) != 0) return -5;
     return ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0 ? -6 : 0;
 }
+/* ---- n8 WAVE2: ctor3 allocator probe bps, armed before ctor replay ------
+ * One shared handler; tagging by RIP so a single signal covers all sites. */
+static long n8p_hits[6];
+static const uintptr_t n8p_addrs[6] = {
+    0x1dbad62u, 0x1dbe4fcu, 0x1dbdfbau,
+    0x1db9a8fu, 0x1db9ac7u, 0x1db9acfu
+};
+static const char *n8p_tags[6] = {
+    "[N8P MALLOC 1dbad62]", "[N8P USABLE 1dbe4fc]", "[N8P ENDP 1dbdfba]",
+    "[N8P CMP1 1db9a8f]", "[N8P CMP2 1db9ac7]", "[N8P STORE 1db9acf]"
+};
+static void n8p_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rip = (uintptr_t)c->uc_mcontext.gregs[REG_RIP];
+    int idx = -1;
+    if (n7b_base) for (int i = 0; i < 6; ++i)
+        if (rip == n7b_base + n8p_addrs[i]) { idx = i; break; }
+    if (idx < 0) return;
+    long n = __atomic_fetch_add(&n8p_hits[idx], 1, __ATOMIC_RELAXED) + 1;
+    char b[384], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, n8p_tags[idx]);
+    w24_put(&p, " hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    static const struct { const char *n; int g; } rg[] = {
+        {"rdi",REG_RDI},{"rax",REG_RAX},{"rbx",REG_RBX},{"r12",REG_R12},
+        {"r14",REG_R14},{"r15",REG_R15}
+    };
+    for (unsigned i = 0; i < sizeof(rg)/sizeof(rg[0]); ++i) {
+        w24_put(&p, " "); w24_put(&p, rg[i].n); w24_put(&p, "=");
+        w24_u64(&p, (uint64_t)c->uc_mcontext.gregs[rg[i].g], 1);
+    }
+    w24_line(&p, b, end);
+}
+static void n8p_arm_all(uintptr_t base)
+{
+    n7b_base = base;
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = n8p_sig; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
+    sigaction(40, &sa, NULL);
+    int fd[6], rc[6];
+    for (int i = 0; i < 6; ++i) {
+        fd[i] = n7b_perf(base + n8p_addrs[i]);
+        rc[i] = n7b_arm(fd[i], 40, n8p_sig);
+    }
+    fprintf(stderr, "[N8P_ARM] base=%p fds=%d/%d/%d/%d/%d/%d rc=%d/%d/%d/%d/%d/%d\n",
+            (void *)base, fd[0],fd[1],fd[2],fd[3],fd[4],fd[5],
+            rc[0],rc[1],rc[2],rc[3],rc[4],rc[5]);
+}
+
 static void n7b_arm_all(uintptr_t base)
 {
     n7b_base = base;
@@ -1102,6 +1155,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "[harness] guest base=%p\n", (void *)base);
     /* n7 WAVE2: arm ctor3602 exec bps HERE, before drive_constructors(). */
     if (getenv("SOBER_N7B_BEFORE")) n7b_arm_all(base);
+    if (getenv("SOBER_N8_PROBE")) n8p_arm_all(base);
     sober_guest_elf_describe(&elf);
 
     size_t applied = 0, relative = 0, symbolic = 0, unknown = 0, unresolved = 0;
