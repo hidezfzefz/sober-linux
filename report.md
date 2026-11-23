@@ -1,67 +1,57 @@
-# n2 #668 STEP 2 — DEX type of #552 arg + guest JNIEnv method list
+# n3 #673 static-B — rbx@6c8e512 origin + wrapper table pointer (READ-ONLY)
 
-Read-only; cores 2-3. Every success claim quotes a raw line. Evidence:
-`raw_dex_signature.txt`, `raw_dex_callsite.txt`, `raw_dex_codeconst.txt`,
-`raw_jnienv_calls.txt`, `raw_strings.txt`, `dex_parse.py`, `dex_callsite.py`.
+Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n3-static-b.
+FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (RA `0x6ca8014`).
 
-## DEX (authoritative classes2.dex from base.apk SHA 114a6f8e)
+## RESULT
 
-Quoted raw parse output:
-> `METHOD idx=15180 class=Lcom/roblox/engine/jni/NativeGLInterface; name=nativePostClientSettingsLoadedInitialization3 proto='(Ljava/util/List;)V'`
-> `CLASS_DEF idx=1953 access=0x1 super=Ljava/lang/Object; interfaces_off=0 class_data_off=5571488`
-> `CLASS_DATA static_fields=0 instance_fields=0 direct_methods=83`
+1. `rbx` at `6c8e512` = the builder's entry `rdi` = **`*(caller's rsi argument)`** — a slot in a **host/bridge-provided callback argument struct**, not a guest heap allocation. The guest pre-seeds that slot with the original JNIEnv table pointer.
+2. At wrapper `6ca8008: mov (%rax),%rax`, `rax` is the getter-`6c89e70` buffer and `[rax]` is the **ORIGINAL table pointer**, captured before the builder swaps the holder to the copy. The wrapper dereferences the **original**, not the patched copy.
 
-So declared parameter = **`Ljava/util/List;`** (one param), declaring class
-`Lcom/roblox/engine/jni/NativeGLInterface;` (super Object, **no interfaces**,
-**no fields**).
+## PROVEN — rbx chain (quoted raw)
 
-Java call site, verified from raw DEX `invoke-static` at file offset `0x335152`:
-> `CALLER class=Luh/e$f; method=b proto=(Ljava/lang/Integer;)V access=0x1 code_off=0x335124 insns=0x335134..0x33517c target=0x335152`
+Builder `0x6c8d840` (dis_builder_fn.txt):
+```
+6c8d84a: 48 89 fb        mov    %rdi,%rbx     ; rbx = entry rdi
+6c8d85e: 4c 8b 3b        mov    (%rbx),%r15   ; r15 = *(rbx)
+6c8d86f: 4c 89 38        mov    %r15,(%rax)   ; buffer[6c89e70][0] = *(rbx)
+6c8e512: 4c 89 33        mov    %r14,(%rbx)   ; *(rbx) = copy
+```
+Caller `0x6c8e8a8` (dis_callers_fn.txt): `6c8e8bd: mov %rsi,%rbx`; `6c8e9a5: mov (%rbx),%rdi`; `6c8e9a8: mov %rdi,0x18(%rax)`; `6c8e9ac: call 6c8d840`. So builder rdi = `*(caller rsi)`.
+Caller `0x6c8ea52` seeds that same slot explicitly from the saved original:
+```
+6c8eb79: 49 8b 47 18     mov    0x18(%r15),%rax   ; buffer[6c89e50][0x18] = original table
+6c8eb7d: 48 89 03        mov    %rax,(%rbx)       ; *(rbx) = original table
+6c8eb80: 48 8b 3b        mov    (%rbx),%rdi
+6c8eb83: e8 b8 ec ff ff  call   6c8d840
+```
+(identical seeding at `6c8ef2b/6c8ef2f/6c8ef32/6c8ef35`). Sender of `0x18(%r15)`: `6c8e9a8: mov %rdi,0x18(%rax)`.
+Host ownership: JNI_OnLoad registers the caller function pointer into a global, and the argument struct is tagged (dis_jnionload_reg.txt):
+```
+227b979: 48 8d 05 28 2f a1 04  lea ... # 6c8e8a8
+227b980: 48 89 05 c9 32 a6 05  mov %rax,0x5a632c9(%rip)  # 7cdec50
+227b9b1: 4c 89 33              mov %r14,(%rbx)           ; tag [arg]=0x7cdec20
+```
+No guest-side reader of global `0x7cdec50` exists in the engine (only the JNI_OnLoad writer), so the callback is invoked by the host/bridge; its `rsi` is host-supplied. The guest-side host table is global `0x7cdec60` (`6c8e987: mov ... # 7cdec60; call *0x30(%rax)`).
 
-Prior callgraph doc line (quoted): `| nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V | 0x2383c18 | 1 | classes2.dex:000e ← Luh/e$f;->b(Ljava/lang/Integer;)V |`.
+## PROVEN — wrapper table pointer (dis_wrapper_6ca8008.txt)
 
-Object construction/factory, resolved from the caller's code constants
-(`raw_dex_codeconst.txt`):
-> `method[12921] Lcom/roblox/client/RobloxApplication;->f()Landroid/content/Context;`
-> `method[44244] Lyj/l2;->a(Landroid/content/Context;)Ljava/util/List;`
-> `method[15180] Lcom/roblox/engine/jni/NativeGLInterface;->nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V`
+```
+6ca7ffa: e8 51 1e fe ff  call   6c89e50
+6ca7fff: 48 8b 58 18     mov    0x18(%rax),%rbx  ; rbx = original table (env arg)
+6ca8003: e8 68 1e fe ff  call   6c89e70
+6ca8008: 48 8b 00        mov    (%rax),%rax      ; rax = buffer[6c89e70][0]
+6ca800b: 48 89 df        mov    %rbx,%rdi
+6ca800e: ff 90 20 07 00 00  call   *0x720(%rax)
+```
+`buffer[6c89e70][0]` is written ONLY by `6c8d86f: mov %r15,(%rax)` (sole `mov ...,(%rax)` after `call 6c89e70` in the whole engine). Guard `6c8d861: cmp %rax,%r15; 6c8d864: je 6c8e515` skips the builder once holder[0] == copy, so the buffer keeps the ORIGINAL pointer captured at the first build. The copy (buffer from `6c89e90`) is stored only into `*(rbx)` at `6c8e512` and is NOT what the wrapper reads.
 
-So `Luh/e$f;->b()` obtains a Context via `RobloxApplication.f()`, calls
-`Lyj/l2.a(Context)` to get the `List`, and passes it to the native method.
+## UNPROVEN / RETRACTED
 
-## Guest #552 JNIEnv calls on the argument
+- UNPROVEN: how the harness observed `[bridge_table+0x720]==base+0x6ca7f72` given that this path writes fn224 into the COPY while the wrapper reads the ORIGINAL. Could be pointer identity (harness sampling holder[0] after `6c8e512`) or a separate in-place writer not located here. Needs harness pointer comparison, not a static claim.
+- UNPROVEN: exact host struct type at `caller rsi`; only that it is host-supplied via the global callback registration and seeded by the guest.
+- RETRACTED: any claim that `6c8e512` makes the wrapper use the copy — it does not.
 
-`0x2383c23: mov %rdx,%rbx` and `0x2383c98: mov %rsi,%r14` save the jobject.
-Quoted disassembly with resolved JNI functions:
-> `2383cb6: call *0x30(%rax)` → fn[2] **FindClass**, name `java/util/List`
-> `2383cca: call *0x30(%rax)` → fn[2] **FindClass**, name `com/roblox/engine/jni/model/ApplicationExitInfoCpp`
-> `2383cfc: call *0x108(%rax)` → fn[29] **GetMethodID**(List, `get`, `(I)Ljava/lang/Object;`)
-> `2383d2a: call *0x108(%rax)` → fn[29] **GetMethodID**(List, `size`, `()I`)
-> `2383d33: mov %r14,%rsi` → helper `0x238463c`: `23846b6: call *0x190(%rax)` → fn[46] **CallIntMethodV** (invokes `size`)
-> `2383d6b: mov %r14,%rsi` → helper `0x2315d18`: `2315d92: call *0x118(%rax)` → fn[31] **CallObjectMethodV** (invokes `get`)
-> `2383dac: call *0x2f0(%rax)` → fn[90] **GetFieldID**(ApplicationExitInfoCpp, `mPid`, `I`)
-> `2383dbf: call *0x320(%rcx)` → fn[96] **GetIntField**
+## Evidence / NOT done
 
-Strings quoted: `0x217ca9 'java/util/List'`, `0x46f8ef 'com/roblox/engine/jni/model/ApplicationExitInfoCpp'`, `0x3305b9 'get'`, `0x250e4f '(I)Ljava/lang/Object;'`, `0x54eb7e 'size'`, `0x4a4e18 '()I'`, `0x56d0e9 'mPid'`, `0x532c55 'I'`.
-
-**EXACT method/field list the guest needs:** `java/util/List.size()I`,
-`java/util/List.get(I)Ljava/lang/Object;`, and field
-`com/roblox/engine/jni/model/ApplicationExitInfoCpp.mPid:I`. JNIEnv functions
-used: FindClass, GetMethodID, CallIntMethodV, CallObjectMethodV, GetFieldID,
-GetIntField.
-
-**Limits:** 2 Java methods + 1 field — **NOT >5 methods**. Framework classes = 2
-(`java/util/List`, `com/roblox/engine/jni/model/ApplicationExitInfoCpp`) — **NOT
->3 framework classes**. Both limits are satisfied for a DEX-typed object build.
-
-## What NOT done
-No build, no apply, no harness change, no runs/gdb/perf, no device/AVD/Frida/phone,
-no new captures, no guest writes/gate edits/seeder/fake returns/path remaps, no
-credentials, no captures/logs/tokens in git. Full `Lyj/l2.a()` body not decoded
-(concrete List implementation UNPROVEN); other branches of the 0x2383c18 body
-were not exhaustively attributed to the #552 argument.
-
-## First divergence + next step
-First divergence: capture shows only `[object Object]` while guest requires
-`List.size/get` + `ApplicationExitInfoCpp.mPid`. Next: harness builds a DEX-typed
-object with exactly those methods/fields (within the stated limits).
+Evidence: dis_wrapper_6ca8008.txt, dis_builder_fn.txt, dis_callers_fn.txt, dis_jnionload_reg.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. Input SHA 8215519f per task statement (not re-verified; no new captures).
