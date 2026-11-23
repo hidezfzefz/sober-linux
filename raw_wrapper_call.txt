@@ -1,0 +1,5 @@
+17: 6ca7f95:	e8 b6 b3 d6 fb       	call   2a13350 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29fbb5>
+18: 6ca7f9a:	84 c0                	test   %al,%al
+19: 6ca7f9c:	74 5c                	je     6ca7ffa <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b04cc>
+44: 6ca800e:	ff 90 20 07 00 00    	call   *0x720(%rax)
+45: 6ca8014:	49 8b 0e             	mov    (%r14),%rcx

@@ -1,0 +1,44 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>:
+ 2a0de60:	55                   	push   %rbp
+ 2a0de61:	48 89 e5             	mov    %rsp,%rbp
+ 2a0de64:	48 8d 3d f5 06 82 04 	lea    0x48206f5(%rip),%rdi        # 722e560 <strncat@plt+0x4fa9e0>
+ 2a0de6b:	e8 d0 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0de70:	8a 00                	mov    (%rax),%al
+ 2a0de72:	24 01                	and    $0x1,%al
+ 2a0de74:	3c 00                	cmp    $0x0,%al
+ 2a0de76:	75 36                	jne    2a0deae <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a713>
+ 2a0de78:	e8 53 00 00 00       	call   2a0ded0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a735>
+ 2a0de7d:	48 8d 3d bc 06 82 04 	lea    0x48206bc(%rip),%rdi        # 722e540 <strncat@plt+0x4fa9c0>
+ 2a0de84:	e8 b7 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0de89:	48 8d 3d 50 01 00 00 	lea    0x150(%rip),%rdi        # 2a0dfe0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a845>
+ 2a0de90:	48 8d 15 29 9d 32 04 	lea    0x4329d29(%rip),%rdx        # 6d37bc0 <strncat@plt+0x4040>
+ 2a0de97:	48 89 c6             	mov    %rax,%rsi
+ 2a0de9a:	e8 91 82 49 00       	call   2ea6130 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486300>
+ 2a0de9f:	48 8d 3d ba 06 82 04 	lea    0x48206ba(%rip),%rdi        # 722e560 <strncat@plt+0x4fa9e0>
+ 2a0dea6:	e8 95 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0deab:	c6 00 01             	movb   $0x1,(%rax)
+ 2a0deae:	48 8d 3d 8b 06 82 04 	lea    0x482068b(%rip),%rdi        # 722e540 <strncat@plt+0x4fa9c0>
+ 2a0deb5:	e8 86 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0deba:	48 05 10 04 00 00    	add    $0x410,%rax
+ 2a0dec0:	5d                   	pop    %rbp
+ 2a0dec1:	c3                   	ret
+ 2a0dec2:	cc                   	int3
+ 2a0dec3:	cc                   	int3
+ 2a0dec4:	cc                   	int3
+ 2a0dec5:	cc                   	int3
+ 2a0dec6:	cc                   	int3
+ 2a0dec7:	cc                   	int3
+ 2a0dec8:	cc                   	int3
+ 2a0dec9:	cc                   	int3
+ 2a0deca:	cc                   	int3
+ 2a0decb:	cc                   	int3
+ 2a0decc:	cc                   	int3
+ 2a0decd:	cc                   	int3
+ 2a0dece:	cc                   	int3
+ 2a0decf:	cc                   	int3
