@@ -438,3 +438,74 @@ that must be removed before a clean marker claim; `DEBT=n` means a rung passes w
 
 **Git:** no capture/phone/logcat-named tracked files, no untracked capture-like files; w28-audit /
 w28-static / w28-harness each on its own branch. Marker WITHHELD.
+
+## Wave29 audit (task #634) — leaked-credit downgrade + seeded-state inventory
+
+Owner: audit (worktree `/tmp/opencode/w29-audit`, branch `w29-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. Faulting instruction named first (`0x6ca229c = call *0x548(%rax)`); stack
+RA `0x231555c` is not the fault site.
+
+**LEAKED CREDIT — PROVEN (lead mid-wave correction, verified from raw logs):** across
+`/tmp/opencode/w2[2-8]-harness/*.err` there are **88 `[avd-boundary]` lines, ALL naming
+`/tmp/opencode/w15-flags-1.json` (MODIFIED INPUT, sha256 `4d50a0ec…`)** — no run since wave 22 used
+`w11-arg0.json`. The preceding `[app-shell] AVD boundary provenance` line names
+`file=/tmp/opencode/w11-arg0.json sha256=8215519f…` — that provenance line is misleading: the actual
+boundary input is the modified 78-byte file (example: `w22-harness/runA_1.err:3709-3711`). Therefore
+**all 16 `rung1 PASS-BOUNDARY-REPLAY (DEBT=1)` lines are DOWNGRADED to MODIFIED-INPUT (no credit)**,
+each cited: w23 runA_{1,2,3}:3714, runC_{1,2,3}:3706; w24 ringD:3720, runD_{1,2,3}:3720;
+w25 runD_{1,2,3}:3720; w27 runD_{1,2,3}:3720. The seeder-clobber finding (entry 13) is KEPT — it is
+an independent host-side defect, not a checkpoint credit.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 22 | **W29 leaked-credit finding: all 16 rung1 PASS lines w22-w28 used MODIFIED INPUT (w15-flags-1.json, sha 4d50a0ec), not authoritative w11-arg0.json — PASS downgraded, no credit** | harness logs w22-w28 (`/tmp/opencode/w2[2-8]-harness/*.err`) | lead/audit | 88 `[avd-boundary]` lines all name the modified 78B file; provenance line naming w11-arg0.json is misleading; rung-1 PASS from a modified input cannot count toward any checkpoint | Remove when a rung-1 PASS is reproduced with the authoritative 1,533,221B input (w11-arg0.json) and no modified input, verified from the actual `[avd-boundary]` line |
+
+**Harness-seeded state still active (each with justifying ledger entry):**
+1. AVD boundary replay of 1,533,221B JSON — ledger #1/#2/#3 (provenance class + canonical jstring);
+   in practice superseded by the 78B modified input — see #9/#22.
+2. Modified input `SOBER_AVD_BOUNDARY_PATH` = `/tmp/opencode/w15-flags-1.json` (78B, sha 4d50a0ec) —
+   ledger #9 (diagnostic only, never counts toward a rung), reinforced by #22.
+3. Remaining seeder slots `0x72a2f48..0x72a3050` (34 of 35) still seeded by the host cached-ID
+   seeder; only `0x72a3058` excluded — ledger #13 (defect removal partial). `SOBER_SEEDER_DISABLE`
+   (Run B) — ledger #14 (default OFF).
+4. TSD seed: approved host `seed_stub_tsd` key 3, get non-NULL — ledger #16 (default off opt-in
+   `SOBER_STUB_TSD_SEED` / approved host TSD diag). Guest key `0x72a1b08` created by `0x2ea6640`.
+5. Host value fixes: two distinct mkdtemp base dirs — ledger #19; empty channel — #20; captured-order
+   replay `SOBER_W28_REORDER` — #21.
+6. Default-off diagnostic knobs (no separate numbered entry; all in the `seeded_state` withhold chain
+   in `guest_app_shell.c` ~:1977-2088): SOBER_SEED_JNI_VM, SOBER_SEED_GLOBAL_STRING,
+   SOBER_SEED_JNI_SINGLETON, SOBER_STUB_TSD_SEED, SOBER_NATIVE_OBJECTS, SOBER_JSON_FLAG_BRIDGE,
+   SOBER_SCHEDULER_GUEST, etc. — withheld, not counted as clean.
+
+**Secrets-scan command + output (shown in report):** credential-value regex over `/tmp/opencode/w29-*/`
+→ 3 self-matches (the ledger's own recorded scan command in 3 worktree copies); no credential values.
+**Git:** no capture/phone/logcat-named tracked files; w29 worktrees each on own branch. Marker WITHHELD.
+
+### Additional W29 verifications (audit)
+
+- **static #633 — PROVEN:** guest setspecific writers of key `0x72a1b08` at `0x2ea656e` (accessor
+  `0x2ea6440`) and `0x2ea6695` (dtor `0x2ea6670`); key via once cb `0x2ea6640` /
+  `pthread_key_create` `0x2ea664f`; `0x2ea61b6` is a different key (excluded). TLS value +0 = JNI
+  function-table pointer (holder object, not sched obj). Missing natives: SetPreferencesFile
+  `0x246515d` (capture #613 "prefs"), InitFlags `0x2465210` (capture #614) — symbols confirmed;
+  harness calls only the opt-in `0x2465210`, never `0x246515d`. Threads/boot UNPROVEN.
+- **harness #632 — largely PROVEN, one claim RETRACTED:** default arg0 = authoritative
+  `w11-arg0.json` (`avd_boundary.h:16`, SHA const `:20`), full-JSON runs log `arg0_len=1533221`;
+  TSD seed ON eq=1 for first two call-pairs then guest replaces TLS (writes `0x7265502f666f7270`
+  "profileP"), seed OFF guest-owned TLS `[tls]=0x1`; seed-OFF fault `guest+0x2a13354 = call
+  0x2a0de60` (bytes `e8 07 ab ff ff`), all 8/8 JNI pairs returned; host fault `0x555555586e9b` =
+  `sober_w21_boundary_ok()` (`native_jni.c:184`) caused by `w21_init` early-return leaving
+  `w21_base=0`, host-only NULL guard `if (!w21_base) return 0;` applied at `:187`.
+  **RETRACTED** harness report line 54 claim "Both rows print `guest init complete` + `first frame
+  rendered`": grep of all `/tmp/opencode/w29-harness/*.err` finds NEITHER string; there is NO
+  `W21_LATCH_HIT`; 13× `[checkpoint] rung1 FAIL (DEBT=1)` despite verified SHA — because rung1
+  requires a real latch hit (caller RA `0x2359342`) which is absent. No credit from that line.
+- Harness ledger entries 23-25 added below (exact text, verified in source by audit20-equivalent
+  check: `avd_boundary.h:16/20`, `guest_app_shell.c:121/2257`, `native_jni.c:187`). The 2×3 table
+  and TSD trace are recorded here as audit-verified facts, not as a counted checkpoint.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 23 | **W29 INPUT FIRST: default InitClientSettings arg0 = /tmp/opencode/w11-arg0.json (avd_boundary.h:16), SHA 8215519f verified before call; rung prints MODIFIED-INPUT (no credit) on mismatch; DEBT** | `avd_boundary.h:16/20`, `avd_boundary.c:127`, `guest_app_shell.c:2257` | harness/lead | Restores authoritative default input and makes modified input explicit/non-crediting | Remove when a genuine Java/DEX startup supplies the call and no modified input is used |
+| 24 | **W29 host-only TSD seed OFF switch SOBER_W29_TSD_SEED_OFF added (seed_stub_tsd early return); DEBT** | `guest_app_shell.c:121-122` | harness/lead | Opt-in diagnostic to disable the host TSD seed (default on path unchanged) | Remove when seed-OFF behaviour becomes the default or the diagnostic is no longer needed |
+| 25 | **W29 host-only fix: sober_w21_boundary_ok NULL-guards w21_base before deref at native_jni.c:184 (removed no-bp host fault at [0x7cdd149]); DEBT** | `native_jni.c:184-187` | harness/lead | Prevents the no-breakpoint host crash in the boundary credential check; guest faults remain | Remove when the guest-side boundary path is genuine and the guard is folded into final code |
