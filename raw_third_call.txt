@@ -1,0 +1,21 @@
+        fprintf(stderr, "[app-shell] real-appstate: flag still 0 (set "
+                        "SOBER_REAL_APPSTATE_FLAG=1 to force the diagnostic "
+                        "branch; it then faults at 0x2ec1042 because singleton "
+                        "0x72cb5e0 is unpopulated)\n");
+    /* The flag=1 path resolves the app through singleton 0x72cb5e0, which is
+     * created by nativePostClientSettingsLoadedInitialization3. Replay that
+     * real Java call before anything touches the flag-enabled branch. */
+    /* Doing this with our synthetic List faults at 0x2e5d42a: the guest treats
+     * the jobject as a native C++ collection, which our JNI object model does
+     * not reproduce. Kept as a separate opt-in for study, not on by default. */
+    if (getenv("SOBER_REAL_APPSTATE_POSTSETTINGS")) {
+        void *list = sober_jni_new_native_object(j, "java/util/List", 0x40, NULL);
+        ((void (*)(void *, void *, void *))(base + 0x2383c18u))(env, clazz, list);
+        fprintf(stderr, "[app-shell] real-appstate: called "
+                        "nativePostClientSettingsLoadedInitialization3 0x2383c18; "
+                        "app singleton=0x%lx\n",
+                (unsigned long)*(uintptr_t *)(base + 0x72cb5e0u));
+    }
+    void *a = sober_jni_new_string_utf8(j, "AppShellNotifications");
+    void *b = sober_jni_new_string_utf8(j, "123456789");
+    void *c = sober_jni_new_string_utf8(j, "StartConversationWithUserId");
