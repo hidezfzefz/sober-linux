@@ -852,3 +852,44 @@ raw shows only 6/8 (`0x0..0x100` in 2 early scans); BLOCKED conclusion unaffecte
 → OUTPUT: 20 self-matches (ledger's own recorded scan commands + verification-notes); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n1-5. Marker WITHHELD.
+
+## Overnight n2 step 4 audit (task #666) — adjudication + retraction
+
+Owner: audit (`/tmp/opencode/n2-audit`, branch `n2-audit`). Cores 6-7. No device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n2_{1,2,3}.err` (3/3);
+`W24 JNI_OnLoad FIRST … ver=0x10006` and `W30 TSD seed REMOVED` present; rc=139 3/3.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 37 | **RETRACTED: "guest patches harness bridge table IN PLACE" (n2 step-1 kill-switch premise). VERDICT (lead-accepted): POINTER REPLACEMENT — guest builder writes self-pointer into its OWN private copy and installs that copy as the env table; original bridge table unchanged** | raw n2_1.err builder bp `[N2_TABLE builder 0x6c8e4d3] tid=1814063 r14=0x55c5b900c078 bridge_table=0x55c5b91c63e0 r14_is_bridge_table=0 [r14+0x720]=(nil) self=0x7f8671c6ff72`; call720 bp `rax=0x55c5b91c63e0 bridge_table=0x55c5b900c078 rax_is_bridge_table=0 [rax+0x720]=0x55c585a89fd0 [bridge_table+0x720]=0x7f8671c6ff72 bridge_patched=1`; static-B disasm `6c8d84d call 6c89e90`/`6c8d85b mov %rax,%r14`/`6c8e4d3 mov %rax,0x720(%r14)`/`6c8e512 mov %r14,(%rbx)` | audit adjudication (lead accepted) | Original table's +0x720 still holds host bridge fn 0x55c585a89fd0 (not overwritten); the `bridge_table` variable changed from 0x55c5b91c63e0 to guest copy 0x55c5b900c078 — detector followed the replaced pointer. n1 root cause (guest self-pointer in installed table) STANDS; only the in-place framing is retracted | Remove when a raw WRITE watch proves an actual guest store into the original host bridge table's +0x720 |
+| 38 | **Host-only pristine-table fix: `struct SoberJni` keeps pristine `env_table` plus disposable `guest_env_table`; `sr_GetEnv` returns guest env with the copy, `sober_jni_env()` keeps the pristine table. No guest writes/gate/fake returns/path remaps** | `src/jni/native_jni.c:1037-1042` (struct comment), `:1671-1674` (sr_GetEnv), `:1811-1813` (`memcpy(&j->guest_env_table,&j->env_table,…)`, `guest_env_obj.functions=&j->guest_env_table`); host-only, no diff needed (already in base f8a0069) | harness/lead, audited | Prevents guest table mutation from reaching the bridge table; fix premise comment ("patches IN PLACE") is stale per entry 37 but the copy itself is harmless host-only isolation | Remove when the guest uses the pristine env table directly without patching any table, or the isolation is folded into final host code |
+
+**Post-fix verification (n2x_1/2/3):** SHA 3/3, rc=139 3/3. `bridge_patched=1` count 0/0/0,
+`bridge_patched=0` count 30/30/30. Raw `n2x_1.err` call720 (audit-corrected quote):
+`[N2_TABLE call720 0x6ca800e] tid=1821202 rax=0x55b804596b38 bridge_table=0x55b8045963e0
+rax_is_bridge_table=0 guest_copy=0x55b804596b38 rax_is_guest_copy=1 [rax+0x720]=0x55b7d8363fd0
+[bridge_table+0x720]=0x55b7d8363fd0 expect=0x7f1aca3abf72 bridge_patched=0` — real bridge table
+`+0x720` now holds host bridge fn 0x55b7d8363fd0 (same as disposable copy), self-pointer gone.
+Builder bp matches quoted fragments (`r14=0x55b8043dc078 ... r14_is_guest_copy=0 ... [r14+0x720]=(nil)`)
+— a third guest-allocated table, as the report honestly notes. Fault unchanged (`rip=...08ff`,
+si_addr=0x8). **QUOTE-RULE DEFECT flagged and FIXED:** report initially quoted `tid=1814063`
+(pre-fix tid) for the post-fix call720 line; actual raw is `tid=1821202`. Harness corrected
+report to `tid=1821202` (verified in pushed report line 35); no claim remains unsupported.
+
+**HARNESS-JAVA-OBJECT status:** NONE built or credited at step 4. static-A stopped object work
+per kill switch; only prep occurred (DEX extracted OUTSIDE git to `/tmp/opencode/n2-dex/`:
+classes.dex 9057172 B, classes2.dex 6145160 B, classes3.dex 6983328 B; apktool; authoritative
+base.apk `/tmp/opencode/auth-base.apk` sha 114a6f8e). No DEX method/field extraction, no #552
+param type, no JNIEnv call list, no object tier. If a HARNESS-JAVA-OBJECT is later built, it
+MUST carry an owner + removal condition in this ledger before any credit.
+
+**Hard-fail/stop limits:** kill switch stopped steps 2-3 object work immediately (respected);
+no host fix applied while adjudication pending (respected); read-only exec bps only, no
+guest writes/gate/seeder/fake returns/path remaps; no object credited.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n2-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 36 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n2. Marker WITHHELD.
