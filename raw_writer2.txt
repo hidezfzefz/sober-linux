@@ -1,0 +1,11 @@
+ 2a13620:	0f 57 c0             	xorps  %xmm0,%xmm0
+ 2a13623:	0f 11 07             	movups %xmm0,(%rdi)
+ 2a13626:	88 57 25             	mov    %dl,0x25(%rdi)
+ 2a13629:	66 c7 47 26 01 00    	movw   $0x1,0x26(%rdi)
+ 2a1362f:	48 c7 47 28 00 00 00 	movq   $0x0,0x28(%rdi)
+ 2a13636:	00 
+ 2a13637:	0f 29 47 10          	movaps %xmm0,0x10(%rdi)
+ 2a1363b:	48                   	rex.W
+ 2a1363c:	c7                   	.byte 0xc7
+ 2a1363d:	47                   	rex.RXB
+ 2a1363e:	1d                   	.byte 0x1d

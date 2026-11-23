@@ -1,0 +1,21 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002a13350 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29fbb5>:
+ 2a13350:	55                   	push   %rbp
+ 2a13351:	48 89 e5             	mov    %rsp,%rbp
+ 2a13354:	e8 07 ab ff ff       	call   2a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>
+ 2a13359:	e8 02 ab ff ff       	call   2a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>
+ 2a1335e:	48 8b 00             	mov    (%rax),%rax
+ 2a13361:	48 83 78 28 00       	cmpq   $0x0,0x28(%rax)
+ 2a13366:	0f 95 c0             	setne  %al
+ 2a13369:	5d                   	pop    %rbp
+ 2a1336a:	c3                   	ret
+ 2a1336b:	cc                   	int3
+ 2a1336c:	cc                   	int3
+ 2a1336d:	cc                   	int3
+ 2a1336e:	cc                   	int3
+ 2a1336f:	cc                   	int3
