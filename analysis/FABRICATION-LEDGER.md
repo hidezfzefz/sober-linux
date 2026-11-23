@@ -1171,3 +1171,48 @@ Why real boot does not trap on zero `0x7cef650` UNPROVEN.
 → OUTPUT: 70 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n7w2. Marker WITHHELD.
+
+## Overnight n7 WAVE3 audit (task #696) — 3rd replay entered, two fatal reporters
+
+Owner: audit (`/tmp/opencode/n7-audit`, branch `n7-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n7c_{1,2,3}.err` (3/3); rc=139 3/3;
+fault int3 `0x6caef66` (RIP `0x6caef67`), `[N7_FAULT_BYTES] [0x7cdd149]=1 [0x7cef650]=0` 3/3.
+
+**harness #695 — all quoted claims verified:** `[N7B_ARM] base=0x7f7ade34c000 fds=4/5/6/7 rc=0/0/0/0`
+(log line 8, before ctor[3602] 3653); 3rd native ENTERED 1/1/1:
+`[N7C_THIRD 0x2383c18] hit=1 tid=2081900 rdi=0x000055ec633cc2d0 rsi=0x000055ec64cb9260
+rdx=0x000055ec63806e80 rcx=0x000055ec63806e80` — audit confirmed `rdx==rcx==shared_param_obj`
+from `[app-shell] JNI args: … shared_param_obj=0x55ec63806e80 (blob=0x1000)`. Order: line 3735 bp
+hit → 3736 `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)` →
+3737 `W30_FAULT`; `N14_REPLAY 3/3` count 0/0/0. **Refinement (PROVEN):** 3rd replay is not merely
+"faulted before log line" — it is ENTERED and the HardAssert fires INSIDE its execution; no host
+return to the logger. UNPROVEN: exact inner instruction triggering the assert, why no return.
+
+**static-A #694 — all quoted claims verified:** source `guest_app_shell.c:1760-1761` call
+`((long (*)(void*,void*,void*))(base+0x2383c18u))(env, app_class, opaque)` with `opaque = param_obj`
+at `:1736` (comment "real native-backed shared_param_obj, not a fabricated empty object"),
+`:1755-1758` opt-in DEX-typed List; fprintf at `:1762-1764` immediately follows the call with NO
+intervening statement → absent log means call never returned (consistent with harness bp). Raw
+n14_1.err lines 3724/3726/3728/3730 verified; whole-file `N14_REPLAY 3/3` count 0. Exact inner
+`fflush@plt` caller supplying NULL rdi UNPROVEN (entry rdx valid per n3; named sites FLog 0x2e61ca0
+and fatal helper 0x2ea6a10 not proven to be the one). Separate opt-in call at `:897` noted.
+
+**static-B #693 — all quoted disasm verified:** two DISTINCT fatal reporters RETRACTED-from-conflation:
+(A) unwind reporter `0x2ea6a10` prints `libunwind: _Unwind_Resume - _Unwind_Resume() can't return`
+(strings 0x2345cf/0x517ec0/0x2a4d76, fprintf 2ea6a8c, fflush 2ea6a94, abort 2ea6a99) called from
+#552 catch `23845d5 call 2ea6a10` (with `23845cd call 1dbe5be` cleanup); (B) HardAssert reporter
+`0x6caed7c` via dispatcher `0x6caed5d` (`23a1465 lea #4c0d2b`, `23a146e call 6caed5d`, table
+#721fbd0 relocation-filled), assert `6caef4f/6caef58 cmpb` + `je 6caef66 cc int3` (the actual n7
+fault). `_Unwind_Resume` needs `dl_iterate_phdr` callbacks; shim TRAMP (bionic_libc.c:459-470,
+`:919 native_lookup`) returns 0 with no callback if pointer NULL. After `size()==0` the path
+`2383d40 test eax,eax` / `2383d42 jle 23844e9` is a NORMAL early return — no `__cxa_throw` located;
+exception driving reporter A UNPROVEN, and whether HardAssert is reached via unwind failure UNPROVEN.
+RETRACTED: size()==0 directly throws / unwind proven to cause the mimalloc HardAssert.
+
+**Secrets-scan command + output (final wave3):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n7-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 71 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n7w3. Marker WITHHELD.

@@ -29,5 +29,15 @@ SHA banner + w11-arg0.json 8215519f quoted every run. Rate limit wait 5min x3 th
   "genuine boot leaves it nonzero" RETRACTED/UNPROVEN. Ledger 46.
 - static-B #692: real-boot load-to-AppStart table (10 rows) all quoted lines verified.
 - Ledger entries 45 (early-arming closes entry 44 UNPROVEN) + 46 (BLOCKED).
+
+## Wave3 verification (task #696)
+- harness #695: SHA+banner 3/3; 3rd native ENTERED 1/1/1 `[N7C_THIRD 0x2383c18] hit=1 … rdx=rcx=shared_param_obj`
+  (audit verified rdx==shared_param_obj=0x55ec63806e80); N14_REPLAY 3/3 count 0/0/0; order 3735 bp hit
+  -> 3736 HardAssert -> 3737 W30_FAULT => assert fires INSIDE 3rd native. Refinement over w1/w2.
+- static-A #694: call site source 1760-1761, opaque=param_obj 1736, log 1762 immediately after call;
+  n14_1.err 3724/3726/3728/3730 verified; exact inner NULL-rdi fflush caller UNPROVEN.
+- static-B #693: two distinct reporters (unwind 0x2ea6a10 vs HardAssert 0x6caed7c) — CONFLATION RETRACTED;
+  size()==0 early normal return, no throw located; UNPROVEN items preserved.
+- Secrets scan 71 self-matches; git no captures/tokens.
 - Git index writes still fail -> commit/push via plumbing (fresh index built by update-index --index-info
   from git ls-tree -r HEAD with the two changed paths replaced; commit-tree; direct ref file write; push).
