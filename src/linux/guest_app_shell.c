@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "guest_app_shell.h"
@@ -117,6 +118,28 @@ static void emit_marker(const char *text, const char *env_name)
  * 512-slot TSD array (worker-2's Bionic fix), whereas worker-2's seed helper
  * calls glibc's pthread_setspecific -- a different store. Seed the STUB's TSD
  * explicitly using its versioned pthread_setspecific@@LIBC. */
+/* n1-4: read-only obj+0x28 sampler.  Calls the genuine guest slot getter
+ * 0x2a0de60 (same one the predicate uses) via the host bridge, then reads
+ * slot -> obj -> obj+0x28 with process_vm_readv.  No guest writes. */
+static long n14_readmem(uintptr_t addr, void *dst, size_t len)
+{
+    struct iovec li = { dst, len }, ri = { (void *)addr, len };
+    return process_vm_readv((pid_t)getpid(), &li, 1UL, &ri, 1UL, 0UL);
+}
+static void n14_log_guard(uintptr_t base, const char *tag)
+{
+    uintptr_t (*slot_getter)(void) =
+        (uintptr_t (*)(void))(base + 0x2a0de60u);
+    uintptr_t slot = slot_getter();
+    uintptr_t obj = 0; uint64_t guard = 0;
+    long g1 = n14_readmem(slot, &obj, 8u);
+    long g2 = g1 == 8 ? n14_readmem(obj + 0x28u, &guard, 8u) : -1;
+    fprintf(stderr, "[N14_GUARD %s] slot=%p obj=%p guard=%s%016lx tid=%ld\n",
+            tag, (void *)slot, (void *)obj,
+            g2 == 8 ? "" : "UNREADABLE-", (unsigned long)guard,
+            (long)getpid());
+}
+
 uintptr_t g_w29_tsd_state;   /* read-only by the W29 perf trace */
 static void seed_stub_tsd(uintptr_t base)
 {
@@ -1594,9 +1617,41 @@ int guest_app_shell_run(uintptr_t base)
                     "am=%p cfg=%p shared_param_obj=%p (blob=%#zx)\n",
             s_base1, s_base2, s_ver, s_chan, am, cfg, param_obj, sizeof(params));
 
+    /* n1-4 host-only: replay the three AVD-captured pre-BaseDirs natives in
+     * captured order (#67, #105, #552).  Genuine guest natives via host bridge;
+     * no guest bytes/gate/fake returns/path remaps.  Sample obj+0x28 read-only
+     * after each one. */
+    long rc;
+    if (!getenv("SOBER_N1_NO_PREBASE_REPLAY")) {
+        void *s_splash = sober_jni_new_string_utf8(j, "ActivitySplash");
+        /* #552's argument is logged only as opaque [object Object]; use the
+         * harness's real native-backed shared_param_obj (not a fabricated
+         * empty object) as the closest genuine host-bridge value. */
+        void *opaque = param_obj;
+        rc = ((long (*)(void *, void *, void *))(base + 0x23239c5u))
+                 (env, app_class, s_splash);
+        fprintf(stderr, "[N14_REPLAY 1/3] nativeOnPreCreated 0x23239c5"
+                        "(\"ActivitySplash\") -> rc=%ld\n", rc);
+        n14_log_guard(base, "after nativeOnPreCreated");
+
+        rc = ((long (*)(void *, void *, void *))(base + 0x2328066u))
+                 (env, app_class, s_splash);
+        fprintf(stderr, "[N14_REPLAY 2/3] nativeOnResumed 0x2328066"
+                        "(\"ActivitySplash\") -> rc=%ld\n", rc);
+        n14_log_guard(base, "after nativeOnResumed");
+
+        if (!getenv("SOBER_N1_SKIP_THIRD")) {
+          rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
+                   (env, app_class, opaque);
+          fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
+                          "Initialization3 0x2383c18([object Object])"
+                          " -> rc=%ld\n", rc);
+          n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
+        } else fprintf(stderr, "[N14_REPLAY 3/3] SKIPPED (diagnostic)\n");
+    }
+
     /* Generic SysV calls: first 6 pointer args in registers, remainder on the
      * stack. Each JNI static native method takes (JNIEnv*, jclass, ...). */
-    long rc;
     rc = ((long (*)(void *, void *, void *, void *))(base + 0x24650a9u))
              (env, app_class, s_base1, s_base2);
     fprintf(stderr, "[app-shell] guest call 0x24650a9 nativeSetBaseDataDirectories"

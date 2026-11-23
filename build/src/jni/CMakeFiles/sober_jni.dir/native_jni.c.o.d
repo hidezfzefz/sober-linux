@@ -71,4 +71,34 @@ src/jni/CMakeFiles/sober_jni.dir/native_jni.c.o: \
  /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
  /usr/include/bits/getopt_core.h /usr/include/bits/unistd.h \
  /usr/include/bits/unistd-decl.h /usr/include/bits/unistd_ext.h \
- /usr/include/linux/close_range.h
+ /usr/include/linux/close_range.h /usr/include/signal.h \
+ /usr/include/bits/signum-generic.h /usr/include/bits/signum-arch.h \
+ /usr/include/bits/types/sig_atomic_t.h \
+ /usr/include/bits/types/siginfo_t.h /usr/include/bits/types/__sigval_t.h \
+ /usr/include/bits/siginfo-arch.h /usr/include/bits/siginfo-consts.h \
+ /usr/include/bits/siginfo-consts-arch.h \
+ /usr/include/bits/types/sigval_t.h /usr/include/bits/types/sigevent_t.h \
+ /usr/include/bits/sigevent-consts.h /usr/include/bits/sigaction.h \
+ /usr/include/bits/sigcontext.h /usr/include/bits/types/stack_t.h \
+ /usr/include/sys/ucontext.h /usr/include/bits/sigstack.h \
+ /usr/include/bits/sigstksz.h /usr/include/bits/ss_flags.h \
+ /usr/include/bits/types/struct_sigstack.h /usr/include/bits/sigthread.h \
+ /usr/include/bits/signal_ext.h /usr/include/fcntl.h \
+ /usr/include/bits/fcntl.h /usr/include/bits/fcntl-linux.h \
+ /usr/include/bits/types/struct_iovec.h /usr/include/bits/cloexec.h \
+ /usr/include/linux/falloc.h /usr/include/linux/openat2.h \
+ /usr/include/bits/openat2.h /usr/include/bits/fcntl-linux-fortify.h \
+ /usr/include/bits/stat.h /usr/include/bits/struct_stat.h \
+ /usr/include/bits/fcntl2.h /usr/include/sys/ioctl.h \
+ /usr/include/bits/ioctls.h /usr/include/asm/ioctls.h \
+ /usr/include/asm-generic/ioctls.h /usr/include/linux/ioctl.h \
+ /usr/include/asm/ioctl.h /usr/include/asm-generic/ioctl.h \
+ /usr/include/linux/sockios.h /usr/include/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h /usr/include/bits/ioctl-types.h \
+ /usr/include/sys/ttydefaults.h /usr/include/sys/syscall.h \
+ /usr/include/asm/unistd.h /usr/include/asm/unistd_64.h \
+ /usr/include/bits/syscall.h /usr/include/ucontext.h \
+ /usr/include/bits/indirect-return.h /usr/include/linux/perf_event.h \
+ /usr/include/asm/byteorder.h \
+ /usr/include/linux/byteorder/little_endian.h /usr/include/linux/swab.h \
+ /usr/include/asm/swab.h /usr/include/linux/hw_breakpoint.h

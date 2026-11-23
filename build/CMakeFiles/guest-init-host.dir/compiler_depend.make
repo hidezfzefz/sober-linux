@@ -9,6 +9,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/app488_fix.h \
   /home/user/sober-linux/src/jni/app488_inner.h \
   /home/user/sober-linux/src/jni/app_singleton_bridge.h \
+  /home/user/sober-linux/src/jni/avd_boundary.h \
   /home/user/sober-linux/src/jni/controller_default.h \
   /home/user/sober-linux/src/jni/crashpad_return.h \
   /home/user/sober-linux/src/jni/delegate_default.h \
@@ -24,6 +25,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /home/user/sober-linux/src/jni/frame_thread.h \
   /home/user/sober-linux/src/jni/game_params.h \
   /home/user/sober-linux/src/jni/global_string_seed.h \
+  /home/user/sober-linux/src/jni/hw_breakpoint.h \
   /home/user/sober-linux/src/jni/javavm_default.h \
   /home/user/sober-linux/src/jni/javavm_semantics.h \
   /home/user/sober-linux/src/jni/jni_arrays.h \
@@ -178,6 +180,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /usr/include/linux/falloc.h \
   /usr/include/linux/openat2.h \
   /usr/include/linux/posix_types.h \
+  /usr/include/linux/prctl.h \
   /usr/include/linux/stddef.h \
   /usr/include/linux/types.h \
   /usr/include/signal.h \
@@ -189,6 +192,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: /home/user/sober-l
   /usr/include/strings.h \
   /usr/include/sys/cdefs.h \
   /usr/include/sys/mman.h \
+  /usr/include/sys/prctl.h \
   /usr/include/sys/select.h \
   /usr/include/sys/socket.h \
   /usr/include/sys/types.h \
@@ -222,11 +226,15 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/asm/socket.h \
   /usr/include/asm/sockios.h \
   /usr/include/asm/types.h \
+  /usr/include/asm/unistd.h \
+  /usr/include/asm/unistd_64.h \
   /usr/include/bits/atomic_wide_counter.h \
   /usr/include/bits/byteswap.h \
   /usr/include/bits/cloexec.h \
   /usr/include/bits/confname.h \
   /usr/include/bits/cpu-set.h \
+  /usr/include/bits/dirent.h \
+  /usr/include/bits/dirent_ext.h \
   /usr/include/bits/dl_find_object.h \
   /usr/include/bits/dlfcn.h \
   /usr/include/bits/elfclass.h \
@@ -246,6 +254,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/bits/libc-header-start.h \
   /usr/include/bits/link.h \
   /usr/include/bits/link_lavcurrent.h \
+  /usr/include/bits/local_lim.h \
   /usr/include/bits/long-double.h \
   /usr/include/bits/mman-linux.h \
   /usr/include/bits/mman-map-flags-generic.h \
@@ -253,6 +262,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/bits/mman.h \
   /usr/include/bits/mman_ext.h \
   /usr/include/bits/openat2.h \
+  /usr/include/bits/posix1_lim.h \
   /usr/include/bits/posix_opt.h \
   /usr/include/bits/pthread_stack_min-dynamic.h \
   /usr/include/bits/pthreadtypes-arch.h \
@@ -297,6 +307,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/bits/struct_mutex.h \
   /usr/include/bits/struct_rwlock.h \
   /usr/include/bits/struct_stat.h \
+  /usr/include/bits/syscall.h \
   /usr/include/bits/thread-shared-types.h \
   /usr/include/bits/time.h \
   /usr/include/bits/time64.h \
@@ -346,6 +357,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/bits/waitstatus.h \
   /usr/include/bits/wchar.h \
   /usr/include/bits/wordsize.h \
+  /usr/include/dirent.h \
   /usr/include/dlfcn.h \
   /usr/include/elf.h \
   /usr/include/endian.h \
@@ -360,6 +372,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/linux/close_range.h \
   /usr/include/linux/errno.h \
   /usr/include/linux/falloc.h \
+  /usr/include/linux/limits.h \
   /usr/include/linux/openat2.h \
   /usr/include/linux/posix_types.h \
   /usr/include/linux/sched/types.h \
@@ -380,6 +393,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o: /home/user/sober
   /usr/include/sys/select.h \
   /usr/include/sys/socket.h \
   /usr/include/sys/stat.h \
+  /usr/include/sys/syscall.h \
   /usr/include/sys/types.h \
   /usr/include/sys/ucontext.h \
   /usr/include/time.h \
@@ -547,6 +561,22 @@ guest-init-host: /lib64/ld-linux-x86-64.so.2 \
 
 src/jni/libsober_jni.a:
 
+libsober_bootstrap.a:
+
+CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
+
+CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
+
+/usr/lib64/libc_nonshared.a:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s_asneeded.so:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so.1:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
+
 /usr/include/bits/time64.h:
 
 /usr/include/bits/stdlib-float.h:
@@ -555,6 +585,10 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/types/time_t.h:
 
+CMakeFiles/guest-init-host.dir/src/linux/guest_render.c.o:
+
+/usr/include/bits/struct_mutex.h:
+
 /home/user/sober-linux/src/jni/startgame_v2.h:
 
 /usr/include/bits/string_fortified.h:
@@ -562,6 +596,10 @@ src/jni/libsober_jni.a:
 /usr/include/bits/stdlib-bsearch.h:
 
 /usr/include/bits/stdio2-decl.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
+
+/usr/include/bits/stdio_lim.h:
 
 /usr/include/bits/types/__mbstate_t.h:
 
@@ -573,6 +611,8 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/socket.h:
 
+/home/user/sober-linux/src/jni/hw_breakpoint.h:
+
 /home/user/sober-linux/src/jni/frame_surface.h:
 
 /usr/include/time.h:
@@ -580,8 +620,6 @@ src/jni/libsober_jni.a:
 /usr/include/bits/signum-generic.h:
 
 /usr/include/bits/strings_fortified.h:
-
-/usr/include/bits/signum-arch.h:
 
 /usr/include/bits/siginfo-consts-arch.h:
 
@@ -621,6 +659,10 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/cloexec.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
+
+/usr/include/bits/siginfo-arch.h:
+
 /home/user/sober-linux/src/linux/guest_app_shell.h:
 
 /usr/include/bits/types/struct_sched_param.h:
@@ -633,7 +675,11 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/endianness.h:
 
-/usr/include/bits/timesize.h:
+/usr/include/bits/dirent.h:
+
+/usr/include/asm/types.h:
+
+/usr/include/sys/prctl.h:
 
 /home/user/sober-linux/src/jni/delegate_default.h:
 
@@ -661,25 +707,15 @@ src/jni/libsober_jni.a:
 
 /usr/include/dlfcn.h:
 
-/home/user/sober-linux/src/jni/jni_strings.h:
-
-/usr/include/bits/signal_ext.h:
-
-/usr/include/stdc-predef.h:
-
-/usr/include/sys/ucontext.h:
-
-/home/user/sober-linux/src/linux/guest_app_shell.c:
-
-/home/user/sober-linux/src/jni/frame_evidence.h:
-
 /usr/include/bits/openat2.h:
 
 /usr/include/sys/cdefs.h:
 
 /home/user/sober-linux/src/jni/render_guest.h:
 
-/usr/include/asm/types.h:
+/home/user/sober-linux/src/jni/frame_evidence.h:
+
+/home/user/sober-linux/src/linux/guest_app_shell.c:
 
 /home/user/sober-linux/src/jni/javavm_semantics.h:
 
@@ -696,8 +732,6 @@ src/jni/libsober_jni.a:
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h:
 
 /usr/include/asm/errno.h:
-
-/home/user/sober-linux/src/jni/javavm_default.h:
 
 /usr/include/bits/floatn-common.h:
 
@@ -719,6 +753,14 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/floatn.h:
 
+/home/user/sober-linux/src/jni/jni_strings.h:
+
+/usr/include/bits/signal_ext.h:
+
+/usr/include/stdc-predef.h:
+
+/usr/include/sys/ucontext.h:
+
 /usr/include/bits/confname.h:
 
 /home/user/sober-linux/src/jni/frame_draw.h:
@@ -731,17 +773,21 @@ src/jni/libsober_jni.a:
 
 /usr/include/linux/errno.h:
 
-/usr/include/bits/mman-linux.h:
-
-/usr/include/alloca.h:
-
-/home/user/sober-linux/src/jni/jni_native_objects.h:
-
 /home/user/sober-linux/src/compat/android_compat.h:
 
 /usr/include/bits/dlfcn.h:
 
 /usr/include/bits/cpu-set.h:
+
+/home/user/sober-linux/src/jni/javavm_default.h:
+
+/usr/include/bits/types/__locale_t.h:
+
+/usr/include/bits/sigthread.h:
+
+/usr/include/alloca.h:
+
+/usr/include/bits/mman-linux.h:
 
 /usr/include/bits/byteswap.h:
 
@@ -752,6 +798,8 @@ src/jni/libsober_jni.a:
 /home/user/sober-linux/src/jni/jni_arrays.h:
 
 /home/user/sober-linux/src/jni/frame_callbacks.h:
+
+/usr/include/dirent.h:
 
 /home/user/sober-linux/src/jni/scheduler_guest.h:
 
@@ -795,7 +843,13 @@ src/jni/libsober_jni.a:
 
 /usr/include/bits/types/struct_statx.h:
 
-CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
+libsober_compat.a:
+
+/home/user/sober-linux/src/jni/fflag_default.h:
+
+/usr/include/bits/local_lim.h:
+
+/home/user/sober-linux/src/jni/jni_native_objects.h:
 
 /home/user/sober-linux/src/jni/crashpad_return.h:
 
@@ -833,23 +887,13 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o:
 
 /usr/include/bits/environments.h:
 
-/usr/include/bits/stdio_lim.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
-
 /home/user/sober-linux/src/render/native_render.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s_asneeded.so:
-
-/usr/include/bits/sigthread.h:
 
 /lib64/libm.so.6:
 
 /usr/include/bits/fcntl.h:
 
 /home/user/sober-linux/src/jni/notifier_probe.h:
-
-CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/asm-generic/sockios.h:
 
@@ -867,6 +911,8 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 
 /usr/include/asm/bitsperlong.h:
 
+/usr/include/bits/timesize.h:
+
 /usr/include/bits/dl_find_object.h:
 
 /usr/include/bits/types.h:
@@ -874,6 +920,8 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o:
 /usr/include/linux/posix_types.h:
 
 /usr/include/bits/mman-map-flags-generic.h:
+
+/home/user/sober-linux/src/jni/avd_boundary.h:
 
 /usr/include/bits/types/FILE.h:
 
@@ -885,8 +933,6 @@ libsober_platform.a:
 
 /usr/include/bits/types/clock_t.h:
 
-/usr/include/bits/types/__locale_t.h:
-
 /usr/include/bits/types/__sigset_t.h:
 
 /usr/include/bits/stdint-intn.h:
@@ -894,6 +940,8 @@ libsober_platform.a:
 /usr/include/bits/types/clockid_t.h:
 
 /usr/include/bits/types/cookie_io_functions_t.h:
+
+/usr/include/asm/unistd_64.h:
 
 /usr/include/bits/types/__fpos_t.h:
 
@@ -953,6 +1001,8 @@ libsober_platform.a:
 
 /usr/include/linux/openat2.h:
 
+/usr/include/linux/prctl.h:
+
 /usr/include/linux/stddef.h:
 
 /usr/include/linux/types.h:
@@ -965,11 +1015,15 @@ libsober_platform.a:
 
 /usr/include/stdint.h:
 
+/usr/include/linux/limits.h:
+
 /usr/include/bits/socket_type.h:
 
 /usr/include/string.h:
 
 /usr/include/sys/mman.h:
+
+/usr/include/asm/unistd.h:
 
 /usr/include/bits/types/once_flag.h:
 
@@ -989,9 +1043,13 @@ libsober_platform.a:
 
 /home/user/sober-linux/src/linux/android_relocs.h:
 
+/usr/include/bits/dirent_ext.h:
+
 /usr/include/asm-generic/errno.h:
 
 /usr/include/bits/link_lavcurrent.h:
+
+/usr/include/bits/posix1_lim.h:
 
 /usr/include/bits/pthread_stack_min-dynamic.h:
 
@@ -999,15 +1057,13 @@ libsober_platform.a:
 
 /usr/include/bits/statx.h:
 
-/usr/include/bits/waitstatus.h:
+/usr/include/bits/syscall.h:
 
 /usr/include/bits/wchar.h:
 
+/usr/include/bits/waitstatus.h:
+
 /usr/include/bits/types/struct___jmp_buf_tag.h:
-
-/usr/include/bits/siginfo-arch.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
 
 /usr/include/bits/types/struct_statx_timestamp.h:
 
@@ -1025,6 +1081,10 @@ libsober_platform.a:
 
 /usr/include/sched.h:
 
+/usr/include/bits/signum-arch.h:
+
+/usr/include/sys/syscall.h:
+
 /lib64/ld-linux-x86-64.so.2:
 
 /usr/include/bits/wordsize.h:
@@ -1034,8 +1094,6 @@ libsober_platform.a:
 /usr/lib64/crti.o:
 
 /usr/lib64/crtn.o:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
 
 /usr/lib64/libc.so:
 
@@ -1048,19 +1106,3 @@ src/render/libsober_render.a:
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so:
 
 /usr/lib64/libpthread.a:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc.a:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libgcc_s.so.1:
-
-/usr/lib64/libc_nonshared.a:
-
-/usr/include/bits/struct_mutex.h:
-
-CMakeFiles/guest-init-host.dir/src/linux/guest_render.c.o:
-
-libsober_bootstrap.a:
-
-/home/user/sober-linux/src/jni/fflag_default.h:
-
-libsober_compat.a:

@@ -30,20 +30,26 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /usr/include/bits/pthreadtypes-arch.h \
  /usr/include/bits/atomic_wide_counter.h /usr/include/bits/struct_mutex.h \
  /usr/include/bits/struct_rwlock.h /usr/include/bits/sigthread.h \
- /usr/include/bits/signal_ext.h /usr/include/stdlib.h \
- /usr/include/bits/libc-header-start.h /usr/include/bits/waitflags.h \
- /usr/include/bits/waitstatus.h /usr/include/bits/floatn.h \
- /usr/include/bits/floatn-common.h /usr/include/bits/types/locale_t.h \
- /usr/include/bits/types/__locale_t.h /usr/include/sys/types.h \
- /usr/include/bits/types/clock_t.h /usr/include/bits/types/clockid_t.h \
- /usr/include/bits/types/timer_t.h /usr/include/bits/stdint-intn.h \
- /usr/include/endian.h /usr/include/bits/byteswap.h \
- /usr/include/bits/uintn-identity.h /usr/include/sys/select.h \
- /usr/include/bits/select.h /usr/include/bits/types/struct_timeval.h \
- /usr/include/bits/select2.h /usr/include/bits/select-decl.h \
- /usr/include/alloca.h /usr/include/bits/stdlib-bsearch.h \
- /usr/include/bits/types/once_flag.h /usr/include/bits/stdlib-float.h \
- /usr/include/bits/stdlib.h \
+ /usr/include/bits/signal_ext.h /usr/include/sys/prctl.h \
+ /usr/include/linux/prctl.h /usr/include/linux/types.h \
+ /usr/include/asm/types.h /usr/include/asm-generic/types.h \
+ /usr/include/asm-generic/int-ll64.h /usr/include/asm/bitsperlong.h \
+ /usr/include/asm-generic/bitsperlong.h /usr/include/linux/posix_types.h \
+ /usr/include/linux/stddef.h /usr/include/asm/posix_types.h \
+ /usr/include/asm/posix_types_64.h /usr/include/asm-generic/posix_types.h \
+ /usr/include/stdlib.h /usr/include/bits/libc-header-start.h \
+ /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
+ /usr/include/bits/floatn.h /usr/include/bits/floatn-common.h \
+ /usr/include/bits/types/locale_t.h /usr/include/bits/types/__locale_t.h \
+ /usr/include/sys/types.h /usr/include/bits/types/clock_t.h \
+ /usr/include/bits/types/clockid_t.h /usr/include/bits/types/timer_t.h \
+ /usr/include/bits/stdint-intn.h /usr/include/endian.h \
+ /usr/include/bits/byteswap.h /usr/include/bits/uintn-identity.h \
+ /usr/include/sys/select.h /usr/include/bits/select.h \
+ /usr/include/bits/types/struct_timeval.h /usr/include/bits/select2.h \
+ /usr/include/bits/select-decl.h /usr/include/alloca.h \
+ /usr/include/bits/stdlib-bsearch.h /usr/include/bits/types/once_flag.h \
+ /usr/include/bits/stdlib-float.h /usr/include/bits/stdlib.h \
  /home/user/sober-linux/src/linux/guest_app_shell.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
@@ -82,13 +88,12 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /usr/include/sys/socket.h /usr/include/bits/types/struct_iovec.h \
  /usr/include/bits/socket.h /usr/include/bits/socket_type.h \
  /usr/include/bits/sockaddr.h /usr/include/asm/socket.h \
- /usr/include/asm-generic/socket.h /usr/include/linux/posix_types.h \
- /usr/include/linux/stddef.h /usr/include/asm/posix_types.h \
- /usr/include/asm/posix_types_64.h /usr/include/asm-generic/posix_types.h \
- /usr/include/asm/bitsperlong.h /usr/include/asm-generic/bitsperlong.h \
- /usr/include/asm/sockios.h /usr/include/asm-generic/sockios.h \
+ /usr/include/asm-generic/socket.h /usr/include/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h \
  /usr/include/bits/types/struct_osockaddr.h /usr/include/bits/socket2.h \
  /home/user/sober-linux/src/jni/tsd_default.h \
+ /home/user/sober-linux/src/jni/avd_boundary.h \
+ /home/user/sober-linux/src/jni/hw_breakpoint.h \
  /home/user/sober-linux/src/jni/fields_default.h \
  /home/user/sober-linux/src/jni/javavm_default.h \
  /home/user/sober-linux/src/jni/fflag_default.h \
@@ -114,8 +119,6 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o: \
  /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/fcntl-linux.h /usr/include/bits/cloexec.h \
  /usr/include/linux/falloc.h /usr/include/linux/openat2.h \
- /usr/include/linux/types.h /usr/include/asm/types.h \
- /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h \
  /usr/include/bits/openat2.h /usr/include/bits/fcntl-linux-fortify.h \
  /usr/include/bits/stat.h /usr/include/bits/struct_stat.h \
  /usr/include/bits/fcntl2.h /usr/include/string.h /usr/include/strings.h \

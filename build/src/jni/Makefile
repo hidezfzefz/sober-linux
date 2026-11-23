@@ -298,6 +298,30 @@ app_singleton_bridge.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/app_singleton_bridge.c.s
 .PHONY : app_singleton_bridge.c.s
 
+avd_boundary.o: avd_boundary.c.o
+.PHONY : avd_boundary.o
+
+# target to build an object file
+avd_boundary.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/avd_boundary.c.o
+.PHONY : avd_boundary.c.o
+
+avd_boundary.i: avd_boundary.c.i
+.PHONY : avd_boundary.i
+
+# target to preprocess a source file
+avd_boundary.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/avd_boundary.c.i
+.PHONY : avd_boundary.c.i
+
+avd_boundary.s: avd_boundary.c.s
+.PHONY : avd_boundary.s
+
+# target to generate assembly for a file
+avd_boundary.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/avd_boundary.c.s
+.PHONY : avd_boundary.c.s
+
 callback_provenance.o: callback_provenance.c.o
 .PHONY : callback_provenance.o
 
@@ -705,6 +729,30 @@ global_string_seed.s: global_string_seed.c.s
 global_string_seed.c.s:
 	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/global_string_seed.c.s
 .PHONY : global_string_seed.c.s
+
+hw_breakpoint.o: hw_breakpoint.c.o
+.PHONY : hw_breakpoint.o
+
+# target to build an object file
+hw_breakpoint.c.o:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/hw_breakpoint.c.o
+.PHONY : hw_breakpoint.c.o
+
+hw_breakpoint.i: hw_breakpoint.c.i
+.PHONY : hw_breakpoint.i
+
+# target to preprocess a source file
+hw_breakpoint.c.i:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/hw_breakpoint.c.i
+.PHONY : hw_breakpoint.c.i
+
+hw_breakpoint.s: hw_breakpoint.c.s
+.PHONY : hw_breakpoint.s
+
+# target to generate assembly for a file
+hw_breakpoint.c.s:
+	cd /home/user/sober-linux/build && $(MAKE) $(MAKESILENT) -f src/jni/CMakeFiles/sober_jni.dir/build.make src/jni/CMakeFiles/sober_jni.dir/hw_breakpoint.c.s
+.PHONY : hw_breakpoint.c.s
 
 javavm_default.o: javavm_default.c.o
 .PHONY : javavm_default.o
@@ -1335,6 +1383,9 @@ help:
 	@echo "... app_singleton_bridge.o"
 	@echo "... app_singleton_bridge.i"
 	@echo "... app_singleton_bridge.s"
+	@echo "... avd_boundary.o"
+	@echo "... avd_boundary.i"
+	@echo "... avd_boundary.s"
 	@echo "... callback_provenance.o"
 	@echo "... callback_provenance.i"
 	@echo "... callback_provenance.s"
@@ -1386,6 +1437,9 @@ help:
 	@echo "... global_string_seed.o"
 	@echo "... global_string_seed.i"
 	@echo "... global_string_seed.s"
+	@echo "... hw_breakpoint.o"
+	@echo "... hw_breakpoint.i"
+	@echo "... hw_breakpoint.s"
 	@echo "... javavm_default.o"
 	@echo "... javavm_default.i"
 	@echo "... javavm_default.s"

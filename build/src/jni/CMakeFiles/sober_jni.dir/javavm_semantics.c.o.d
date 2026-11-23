@@ -13,7 +13,8 @@ src/jni/CMakeFiles/sober_jni.dir/javavm_semantics.c.o: \
  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
  /usr/include/bits/time64.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
- /usr/include/bits/stdint-least.h /usr/include/pthread.h \
+ /usr/include/bits/stdint-least.h \
+ /home/user/sober-linux/src/jni/scheduler_guest.h /usr/include/pthread.h \
  /usr/include/sched.h /usr/include/bits/types/time_t.h \
  /usr/include/bits/types/struct_timespec.h /usr/include/bits/endian.h \
  /usr/include/bits/endianness.h /usr/include/bits/sched.h \
@@ -55,4 +56,11 @@ src/jni/CMakeFiles/sober_jni.dir/javavm_semantics.c.o: \
  /usr/include/bits/types/once_flag.h /usr/include/bits/stdlib-float.h \
  /usr/include/bits/stdlib.h /usr/include/string.h /usr/include/strings.h \
  /usr/include/bits/strings_fortified.h \
- /usr/include/bits/string_fortified.h
+ /usr/include/bits/string_fortified.h /usr/include/unistd.h \
+ /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
+ /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
+ /usr/include/bits/getopt_core.h /usr/include/bits/unistd.h \
+ /usr/include/bits/unistd-decl.h /usr/include/bits/unistd_ext.h \
+ /usr/include/linux/close_range.h /usr/include/sys/syscall.h \
+ /usr/include/asm/unistd.h /usr/include/asm/unistd_64.h \
+ /usr/include/bits/syscall.h

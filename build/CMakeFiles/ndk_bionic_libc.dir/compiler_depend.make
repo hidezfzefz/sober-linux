@@ -78,14 +78,27 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o: /home/user/sober-l
   /usr/include/alloca.h \
   /usr/include/bits/atomic_wide_counter.h \
   /usr/include/bits/byteswap.h \
+  /usr/include/bits/confname.h \
   /usr/include/bits/dl_find_object.h \
   /usr/include/bits/dlfcn.h \
+  /usr/include/bits/elfclass.h \
   /usr/include/bits/endian.h \
   /usr/include/bits/endianness.h \
+  /usr/include/bits/environments.h \
   /usr/include/bits/floatn-common.h \
   /usr/include/bits/floatn.h \
+  /usr/include/bits/getopt_core.h \
+  /usr/include/bits/getopt_posix.h \
   /usr/include/bits/libc-header-start.h \
+  /usr/include/bits/link.h \
+  /usr/include/bits/link_lavcurrent.h \
   /usr/include/bits/long-double.h \
+  /usr/include/bits/mman-linux.h \
+  /usr/include/bits/mman-map-flags-generic.h \
+  /usr/include/bits/mman-shared.h \
+  /usr/include/bits/mman.h \
+  /usr/include/bits/mman_ext.h \
+  /usr/include/bits/posix_opt.h \
   /usr/include/bits/pthreadtypes-arch.h \
   /usr/include/bits/pthreadtypes.h \
   /usr/include/bits/select-decl.h \
@@ -101,6 +114,8 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o: /home/user/sober-l
   /usr/include/bits/stdlib-bsearch.h \
   /usr/include/bits/stdlib-float.h \
   /usr/include/bits/stdlib.h \
+  /usr/include/bits/string_fortified.h \
+  /usr/include/bits/strings_fortified.h \
   /usr/include/bits/struct_mutex.h \
   /usr/include/bits/struct_rwlock.h \
   /usr/include/bits/thread-shared-types.h \
@@ -127,23 +142,33 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o: /home/user/sober-l
   /usr/include/bits/types/timer_t.h \
   /usr/include/bits/typesizes.h \
   /usr/include/bits/uintn-identity.h \
+  /usr/include/bits/unistd-decl.h \
+  /usr/include/bits/unistd.h \
+  /usr/include/bits/unistd_ext.h \
   /usr/include/bits/waitflags.h \
   /usr/include/bits/waitstatus.h \
   /usr/include/bits/wchar.h \
   /usr/include/bits/wordsize.h \
   /usr/include/dlfcn.h \
+  /usr/include/elf.h \
   /usr/include/endian.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
   /usr/include/gnu/stubs-64.h \
   /usr/include/gnu/stubs.h \
+  /usr/include/link.h \
+  /usr/include/linux/close_range.h \
   /usr/include/stdc-predef.h \
   /usr/include/stdint.h \
   /usr/include/stdio.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
   /usr/include/sys/cdefs.h \
+  /usr/include/sys/mman.h \
   /usr/include/sys/select.h \
   /usr/include/sys/types.h \
+  /usr/include/unistd.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stddef.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h
@@ -258,6 +283,26 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic_asneeded.so:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
+
+/usr/lib64/libc.so:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
+
+/usr/lib64/crtn.o:
+
+/usr/lib64/crti.o:
+
+/lib64/libc.so.6:
+
+/lib64/ld-linux-x86-64.so.2:
+
+/usr/lib64/libdl.a:
+
+/home/user/sober-linux/src/compat/bionic_libc.map:
+
+/usr/include/signal.h:
+
 /usr/include/dlfcn.h:
 
 /usr/include/endian.h:
@@ -280,17 +325,13 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/include/bits/stdio2.h:
 
-/lib64/libc.so.6:
+/usr/include/bits/mman-shared.h:
 
 /usr/include/bits/uintn-identity.h:
 
 /usr/include/bits/types/clockid_t.h:
 
 /usr/include/errno.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so:
-
-/usr/lib64/crtn.o:
 
 /usr/include/bits/stdio_lim.h:
 
@@ -344,13 +385,11 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/include/string.h:
 
-/usr/lib64/libc.so:
-
-/usr/include/bits/byteswap.h:
-
 /usr/include/bits/waitflags.h:
 
 /usr/include/bits/types/__sigset_t.h:
+
+/usr/include/bits/mman-linux.h:
 
 /usr/include/alloca.h:
 
@@ -380,6 +419,8 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/include/bits/struct_mutex.h:
 
+/usr/include/bits/mman_ext.h:
+
 /usr/include/bits/sigstksz.h:
 
 /usr/include/bits/types/error_t.h:
@@ -397,8 +438,6 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 /usr/include/stdc-predef.h:
 
 /usr/include/bits/string_fortified.h:
-
-/usr/include/signal.h:
 
 /usr/include/bits/endianness.h:
 
@@ -434,11 +473,19 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/include/sys/select.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
+
+/usr/include/bits/environments.h:
+
 /usr/include/sys/types.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdarg.h:
 
 /usr/include/bits/getopt_posix.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/bits/link.h:
 
 /usr/include/bits/types/time_t.h:
 
@@ -446,23 +493,15 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_libc.c.o:
 
 /usr/include/asm-generic/errno-base.h:
 
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o:
-
-/usr/include/bits/stdint-least.h:
-
-/usr/include/bits/wchar.h:
-
-/usr/include/stdint.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h:
-
-/home/user/sober-linux/src/compat/bionic_signal.c:
-
-/usr/include/asm-generic/errno.h:
-
 /usr/include/bits/confname.h:
 
-/usr/include/bits/errno.h:
+/usr/include/bits/link_lavcurrent.h:
+
+/usr/include/bits/mman-map-flags-generic.h:
+
+/usr/include/link.h:
+
+/usr/include/bits/mman.h:
 
 CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o:
 
@@ -470,11 +509,39 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o:
 
 /usr/include/bits/posix_opt.h:
 
+/usr/include/bits/stdint-least.h:
+
+/usr/include/bits/elfclass.h:
+
+/usr/include/bits/unistd-decl.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/elf.h:
+
+/usr/include/bits/stdint-intn.h:
+
+/usr/include/linux/close_range.h:
+
+/usr/include/stdint.h:
+
+/usr/include/sys/mman.h:
+
+/usr/include/unistd.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/16/include/stdint.h:
+
+/home/user/sober-linux/src/compat/bionic_signal.c:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/bits/errno.h:
+
 /usr/include/bits/sigcontext.h:
 
-/home/user/sober-linux/src/compat/bionic_libc.c:
-
 /usr/include/sys/ucontext.h:
+
+/home/user/sober-linux/src/compat/bionic_libc.c:
 
 /usr/include/bits/signal_ext.h:
 
@@ -494,24 +561,4 @@ CMakeFiles/ndk_bionic_libc.dir/src/compat/bionic_sf_full.c.o:
 
 /usr/include/bits/types/sigval_t.h:
 
-/usr/include/bits/environments.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o:
-
-/usr/include/bits/unistd-decl.h:
-
-/usr/lib64/crti.o:
-
-/usr/include/bits/stdint-intn.h:
-
-/usr/include/linux/close_range.h:
-
 /usr/include/linux/errno.h:
-
-/usr/include/unistd.h:
-
-/lib64/ld-linux-x86-64.so.2:
-
-/home/user/sober-linux/src/compat/bionic_libc.map:
-
-/usr/lib64/libdl.a:

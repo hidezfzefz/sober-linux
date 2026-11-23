@@ -10,6 +10,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /home/user/sober-linux/src/jni/app488_fix.h
  /home/user/sober-linux/src/jni/app488_inner.h
  /home/user/sober-linux/src/jni/app_singleton_bridge.h
+ /home/user/sober-linux/src/jni/avd_boundary.h
  /home/user/sober-linux/src/jni/controller_default.h
  /home/user/sober-linux/src/jni/crashpad_return.h
  /home/user/sober-linux/src/jni/delegate_default.h
@@ -25,6 +26,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /home/user/sober-linux/src/jni/frame_thread.h
  /home/user/sober-linux/src/jni/game_params.h
  /home/user/sober-linux/src/jni/global_string_seed.h
+ /home/user/sober-linux/src/jni/hw_breakpoint.h
  /home/user/sober-linux/src/jni/javavm_default.h
  /home/user/sober-linux/src/jni/javavm_semantics.h
  /home/user/sober-linux/src/jni/jni_arrays.h
@@ -179,6 +181,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /usr/include/linux/falloc.h
  /usr/include/linux/openat2.h
  /usr/include/linux/posix_types.h
+ /usr/include/linux/prctl.h
  /usr/include/linux/stddef.h
  /usr/include/linux/types.h
  /usr/include/signal.h
@@ -190,6 +193,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_app_shell.c.o
  /usr/include/strings.h
  /usr/include/sys/cdefs.h
  /usr/include/sys/mman.h
+ /usr/include/sys/prctl.h
  /usr/include/sys/select.h
  /usr/include/sys/socket.h
  /usr/include/sys/types.h
@@ -224,11 +228,15 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/asm/socket.h
  /usr/include/asm/sockios.h
  /usr/include/asm/types.h
+ /usr/include/asm/unistd.h
+ /usr/include/asm/unistd_64.h
  /usr/include/bits/atomic_wide_counter.h
  /usr/include/bits/byteswap.h
  /usr/include/bits/cloexec.h
  /usr/include/bits/confname.h
  /usr/include/bits/cpu-set.h
+ /usr/include/bits/dirent.h
+ /usr/include/bits/dirent_ext.h
  /usr/include/bits/dl_find_object.h
  /usr/include/bits/dlfcn.h
  /usr/include/bits/elfclass.h
@@ -248,6 +256,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/bits/libc-header-start.h
  /usr/include/bits/link.h
  /usr/include/bits/link_lavcurrent.h
+ /usr/include/bits/local_lim.h
  /usr/include/bits/long-double.h
  /usr/include/bits/mman-linux.h
  /usr/include/bits/mman-map-flags-generic.h
@@ -255,6 +264,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/bits/mman.h
  /usr/include/bits/mman_ext.h
  /usr/include/bits/openat2.h
+ /usr/include/bits/posix1_lim.h
  /usr/include/bits/posix_opt.h
  /usr/include/bits/pthread_stack_min-dynamic.h
  /usr/include/bits/pthreadtypes-arch.h
@@ -299,6 +309,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/bits/struct_mutex.h
  /usr/include/bits/struct_rwlock.h
  /usr/include/bits/struct_stat.h
+ /usr/include/bits/syscall.h
  /usr/include/bits/thread-shared-types.h
  /usr/include/bits/time.h
  /usr/include/bits/time64.h
@@ -348,6 +359,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/bits/waitstatus.h
  /usr/include/bits/wchar.h
  /usr/include/bits/wordsize.h
+ /usr/include/dirent.h
  /usr/include/dlfcn.h
  /usr/include/elf.h
  /usr/include/endian.h
@@ -362,6 +374,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/linux/close_range.h
  /usr/include/linux/errno.h
  /usr/include/linux/falloc.h
+ /usr/include/linux/limits.h
  /usr/include/linux/openat2.h
  /usr/include/linux/posix_types.h
  /usr/include/linux/sched/types.h
@@ -382,6 +395,7 @@ CMakeFiles/guest-init-host.dir/src/linux/guest_dlopen_host.c.o
  /usr/include/sys/select.h
  /usr/include/sys/socket.h
  /usr/include/sys/stat.h
+ /usr/include/sys/syscall.h
  /usr/include/sys/types.h
  /usr/include/sys/ucontext.h
  /usr/include/time.h
