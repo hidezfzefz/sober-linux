@@ -287,6 +287,19 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     } else w24_put(&p, "UNREADABLE");
     w24_line(&p, buf, end);
 
+    /* n7 WAVE1: read-only predicate bytes at fault, via process_vm_readv. */
+    {
+        unsigned char b0 = 0, b1 = 0;
+        long g0 = base ? w30_readmem(base + 0x7cdd149u, &b0, 1u) : -1;
+        long g1 = base ? w30_readmem(base + 0x7cef650u, &b1, 1u) : -1;
+        w24_put(&p, "[N7_FAULT_BYTES] tid=");
+        w24_num(&p, (long)syscall(SYS_gettid));
+        w24_put(&p, " [0x7cdd149]=");
+        if (g0 == 1) w24_u64(&p, b0, 1); else w24_put(&p, "UNREADABLE");
+        w24_put(&p, " [0x7cef650]=");
+        if (g1 == 1) w24_u64(&p, b1, 1); else w24_put(&p, "UNREADABLE");
+        w24_line(&p, buf, end);
+    }
     w24_put(&p, "[W23_ASYNC_SAFE] ===== GUEST FAULT =====\n");
     w24_put(&p, "signal="); w24_num(&p, sig);
     w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));

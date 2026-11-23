@@ -804,6 +804,30 @@ static void n3_entry_sig(int s, siginfo_t *si, void *uc)
     #undef P
 }
 
+/* ---- n7 WAVE1: read-only exec bps on ctor3602 entry/store ---------------
+ * 0x2279a47 = ctor3602 prologue; 0x2279a8f = `mov [0x7cef650], al` (al=0). */
+static uintptr_t n7_base;
+static long n7_entry_hits, n7_store_hits;
+static void n7_entry_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si; (void)uc;
+    long n = __atomic_fetch_add(&n7_entry_hits, 1, __ATOMIC_RELAXED) + 1;
+    fprintf(stderr, "[N7_CTOR3602 entry 0x2279a47] hit=%ld tid=%ld\n",
+            n, (long)syscall(SYS_gettid));
+}
+static void n7_store_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    long n = __atomic_fetch_add(&n7_store_hits, 1, __ATOMIC_RELAXED) + 1;
+    unsigned long rax = c ? (unsigned long)c->uc_mcontext.gregs[REG_RAX] : 0;
+    unsigned char stored = (unsigned char)(rax & 0xffu);
+    fprintf(stderr,
+            "[N7_CTOR3602 store 0x2279a8f] hit=%ld tid=%ld al=0x%02x "
+            "[0x7cef650]=0x%02lx\n", n, (long)syscall(SYS_gettid),
+            stored, stored ? 1u : 0u);
+}
+
 static void w21_init(uintptr_t base)
 {
     if (getenv("SOBER_N2_TABLE")) {
@@ -814,6 +838,16 @@ static void w21_init(uintptr_t base)
         int a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, n2_call720_sig) : -1;
         fprintf(stderr, "[N2_TABLE_ARM] base=%p bridge_env=%p builder=%d call720=%d\n",
                 (void *)n2_base, (void *)(uintptr_t)g_bridge_env_ptr, a1, a2);
+        return;
+    }
+    if (getenv("SOBER_N7_CTOR")) {
+        n7_base = base;
+        int f1 = w21_perf(n7_base + 0x2279a47u);
+        int f2 = w21_perf(n7_base + 0x2279a8fu);
+        int a1 = f1 >= 0 ? w21_arm(f1, SIGUSR1, n7_entry_sig) : -1;
+        int a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, n7_store_sig) : -1;
+        fprintf(stderr, "[N7_CTOR_ARM] base=%p entry=%d store=%d\n",
+                (void *)n7_base, a1, a2);
         return;
     }
     if (getenv("SOBER_N3_ENTRY")) {
