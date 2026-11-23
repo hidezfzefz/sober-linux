@@ -47,3 +47,12 @@ No guest writes/hand-set bytes/fake returns/seeder/remaps. Rate limit wait 5min 
 - harness #707: SHA+banner 3/3; [N8G AFTER_CTOR3]/[AT_FAULT] identical; audit recomputed bit41=43,
   ptidx=0x2b05c, p<low-bound=True; ptword=0 => two independent rejections by 1dbe4fc => flag stays 0.
 - Secrets scan 69 self-matches; git no captures/tokens. No new ledger entry (entry 47 covers replay).
+
+## Wave4 verification (task #710)
+- static-A #711 RETRACTS/REFINES #697 'no edge': chain exists via worker ret + wrapper tail-jump
+  2383c7f jmp 239d1c7 -> printer preds -> 239d215 -> flag test -> 23a146e -> int3. All quoted
+  addresses verified in saved files. UNPROVEN which printer predecessor fires.
+- harness #712 verified: SHA+banner 3/3; arm 4/7 (FLAG_BR/AL_TEST/ASSERT_CALL failed perf limit);
+  order SIZE_RET(rax=0,ZF=1) -> AFTER_SIZE(ZF=1, jle taken) -> PRINTER -> FLAG_TEST -> HardAssert
+  all 3/3 on same tid; jle directly supported by ZF=1; je 23a1422 inferred (bp unarmed).
+- Ledger 48 (retraction). Secrets scan 70 self-matches; git no captures/tokens.
