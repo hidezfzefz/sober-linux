@@ -335,3 +335,33 @@ GetStringUTFChars call, while the bridge env is valid and on the stack; cause st
 
 **Secrets:** clean (ledger's own "Cookie:" note, 2 redacted `@rbxinfra.com`, 1 local author email).
 **Git:** no captures, no phone logs, no wave/capture/phone-named files. Marker WITHHELD.
+
+## Wave26 audit (task #624) — claim verification vs raw files
+
+Owner: audit (branch `w26-audit`). Audit files out of git `/tmp/opencode/w26-audit/`. No device,
+no phone agent, no runs by audit. Engine SHA `3e498d64`.
+
+- **static #623 — PROVEN:** captured `w12-j2n-300.log:627` J2N #612 gives 2 Java String args
+  (Android internal/external dirs); harness `guest_app_shell.c:1498-1504,1530` calls
+  `0x24650a9` as `(env, app_class, s_base1, s_base2)` with both bases the same Linux path —
+  4 native vs 2 Java args is consistent with the `(JNIEnv*, jclass, …)` prefix; **values mismatch**.
+  `nativeSetRobloxVersion` matches (`2.740.931`); `nativeSetRobloxChannel` mismatches (`"LIVE"`
+  vs `""`). Disassembly: `0x24650b9 mov %rdi,%r14` (env), `0x24650c3 mov (%r15),%rax` is the
+  **canary** from `0x72293f8`, helper `0x231554b mov (%rsi),%rax` is the JNIEnv function-table
+  field, `0x2315556 call *0x548(%rax)` = fn[165] GetStringUTFChars. Verified in raw
+  `capture_line.txt`/`capture_others.txt`/`dis_*.txt`. No usernames in captured paths.
+- **harness #625 — PROVEN incl. RETRACTION:** `runD_{1,2,3}.err` perf breakpoints at
+  `0x24650a9` and `0x2315556` show `rdi=0x555555ad9ae8` = bridge env (`is_bridge_env=1`) with
+  non-NULL `fn_table=[rdi]=0x5555558fc018` at **both** entry and GetStringUTFChars call (3/3).
+  **RETRACTED** W25's "NULL JNIEnv / rdi=0 at GetStringUTFChars": the W25 fault-time `rdi=0,rax=0`
+  was a **post-call** snapshot (registers overwritten after the call); the call-time env was valid.
+  Fault `rip=base+0x6ca229c` (arithmetic verified: `0x7fffef8de29c - 0x7fffe8c3c000`), fp#0
+  `guest+0x231555c` / fp#1 `guest+0x24650d6`, rc=139 3/3, no `0x6ca8014` recursion. Seeder OFF,
+  JNI_OnLoad-first ON.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 18 | **W26 env valid at 0x24650a9 and GetStringUTFChars call (bridge env, non-NULL table); W25 NULL-env claim RETRACTED; fault guest+0x6ca229c, DEBT** | harness perf breakpoints / `guest_app_shell.c` | harness/lead | Call-time env and fn table valid (3/3); W25's NULL-env reading was a post-call register snapshot; fault now in guest post-return assert path `0x6ca229c` | Remove when Run D/E reaches genuine callback + guest frame with clean state and lead closes it |
+
+**Secrets:** clean (2 redacted `@rbxinfra.com`, 1 local author email; captured paths contain no
+usernames). **Git:** no captures, no phone logs, no wave/capture/phone-named files. Marker WITHHELD.
