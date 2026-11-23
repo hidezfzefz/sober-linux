@@ -88,8 +88,113 @@ static void emit(const char *fmt, ...)
 /* ------------------------------------------------------------------ */
 /* crash instrumentation                                               */
 /* ------------------------------------------------------------------ */
+/* ---- W23 async-signal-safe crash dump ---------------------------------- *
+ * The handler uses ONLY write(2) into a fixed stack buffer plus raw ucontext
+ * reads: no printf/vsnprintf, no malloc, no backtrace/dladdr/opendir/getenv,
+ * no strsignal.  libc base is precomputed at install time for offset labeling.
+ */
+static volatile uintptr_t g_libc_lo, g_libc_hi;
+static void w24_put(char **p, const char *s)
+{
+    while (*s) *(*p)++ = *s++;
+}
+static void w24_u64(char **p, uint64_t v, int with_prefix)
+{
+    static const char hx[] = "0123456789abcdef";
+    if (with_prefix) { *(*p)++ = '0'; *(*p)++ = 'x'; }
+    for (int i = 60; i >= 0; i -= 4) *(*p)++ = hx[(v >> i) & 0xfu];
+}
+static void w24_num(char **p, long v)
+{
+    char tmp[24]; int n = 0;
+    unsigned long u = v < 0 ? (unsigned long)(-v) : (unsigned long)v;
+    if (v < 0) *(*p)++ = '-';
+    if (!u) *(*p)++ = '0';
+    while (u) { tmp[n++] = (char)('0' + (u % 10)); u /= 10; }
+    while (n) *(*p)++ = tmp[--n];
+}
+static void w24_line(char **p, char *base, char *end)
+{
+    *(*p)++ = '\n';
+    if (*p > end - 256) {
+        ssize_t u = write(STDERR_FILENO, base, (size_t)(*p - base));
+        (void)u; *p = base;
+    }
+}
+
 static void crash_handler(int sig, siginfo_t *si, void *ucontext)
 {
+    alarm(5);   /* bound the dump itself; SA_RESETHAND prevents recursion */
+    char buf[16384], *p = buf, *end = buf + sizeof(buf) - 1;
+    ucontext_t *uc = (ucontext_t *)ucontext;
+    uintptr_t base = g_guest_base;
+    uintptr_t fault = (uintptr_t)(si ? si->si_addr : NULL);
+    uintptr_t rip = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RIP] : 0;
+    uintptr_t rsp = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RSP] : 0;
+
+    w24_put(&p, "\n[W23_ASYNC_SAFE] ===== GUEST FAULT =====\n");
+    w24_put(&p, "signal="); w24_num(&p, sig);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_put(&p, " rip="); w24_u64(&p, rip, 1);
+    w24_put(&p, " si_addr="); w24_u64(&p, fault, 1);
+    w24_put(&p, " rsp="); w24_u64(&p, rsp, 1); w24_line(&p, buf, end);
+    if (uc) {
+        static const struct { const char *n; int g; } regs[] = {
+            {"r15",REG_R15},{"r14",REG_R14},{"r13",REG_R13},{"r12",REG_R12},
+            {"rbp",REG_RBP},{"rbx",REG_RBX},{"r11",REG_R11},{"r10",REG_R10},
+            {"r9",REG_R9},{"r8",REG_R8},{"rax",REG_RAX},{"rcx",REG_RCX},
+            {"rdx",REG_RDX},{"rsi",REG_RSI},{"rdi",REG_RDI},{"rsp",REG_RSP},
+            {"rip",REG_RIP}
+        };
+        for (unsigned i = 0; i < sizeof(regs)/sizeof(regs[0]); ++i) {
+            w24_put(&p, " "); w24_put(&p, regs[i].n); w24_put(&p, "=");
+            w24_u64(&p, (uint64_t)uc->uc_mcontext.gregs[regs[i].g], 1);
+            if ((i & 3u) == 3u) w24_line(&p, buf, end);
+        }
+        w24_line(&p, buf, end);
+    }
+    /* 256 stack qwords: guest values as RVAs, libc values as offsets. */
+    w24_put(&p, "[W23_STACK_SCAN] rsp_base="); w24_u64(&p, rsp, 1);
+    w24_line(&p, buf, end);
+    for (unsigned i = 0; i < 256u; ++i) {
+        uintptr_t v = 0;
+        if (rsp) v = *(const uintptr_t *)(rsp + (size_t)i * 8u);
+        w24_put(&p, "["); w24_num(&p, (long)i); w24_put(&p, "]=");
+        if (base && v >= base && v < base + 0x8000000u) {
+            w24_put(&p, "guest+0x"); w24_u64(&p, v - base, 0);
+        } else if (g_libc_lo && v >= g_libc_lo && v < g_libc_hi) {
+            w24_put(&p, "libc+0x"); w24_u64(&p, v - g_libc_lo, 0);
+        } else {
+            w24_u64(&p, v, 1);
+        }
+        if ((i & 3u) == 3u) w24_line(&p, buf, end);
+    }
+    w24_line(&p, buf, end);
+    w24_put(&p, "[W23_FP] from rbp=");
+    w24_u64(&p, uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RBP] : 0, 1);
+    w24_line(&p, buf, end);
+    uintptr_t fp = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RBP] : 0;
+    for (unsigned i = 0; i < 24u && fp >= 0x10000u; ++i) {
+        uintptr_t ret = *(const uintptr_t *)(fp + 8);
+        uintptr_t nxt = *(const uintptr_t *)fp;
+        w24_put(&p, " fp#"); w24_num(&p, (long)i); w24_put(&p, "=");
+        if (base && ret >= base && ret < base + 0x8000000u) {
+            w24_put(&p, "guest+0x"); w24_u64(&p, ret - base, 0);
+        } else w24_u64(&p, ret, 1);
+        w24_line(&p, buf, end);
+        if (nxt <= fp || nxt > fp + 0x100000u) break;
+        fp = nxt;
+    }
+    {
+        ssize_t u = write(STDERR_FILENO, buf, (size_t)(p - buf));
+        (void)u;
+    }
+    _exit(139);
+}
+
+static void crash_handler_legacy_unused(int sig, siginfo_t *si, void *ucontext)
+{
+    (void)sig; (void)si; (void)ucontext;
     ucontext_t *uc = (ucontext_t *)ucontext;
     uintptr_t rip = 0, rsp = 0, rbp = 0, rdi = 0, r14 = 0;
     if (uc) {
@@ -321,6 +426,14 @@ static int install_crash_handlers(void)
     if (sigaltstack(&ss, NULL) != 0) {
         perror("[harness] sigaltstack");
         return -1;
+    }
+    /* W23: precompute the libc mapping window for async-safe offset labels. */
+    {
+        Dl_info li;
+        if (dladdr((void *)(uintptr_t)&write, &li) && li.dli_fbase) {
+            g_libc_lo = (uintptr_t)li.dli_fbase;
+            g_libc_hi = g_libc_lo + 0x400000u;   /* generous fixed window */
+        }
     }
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
