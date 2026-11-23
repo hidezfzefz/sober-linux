@@ -7,11 +7,11 @@ Faulting instruction first (harness recursion): `6ca800e: ff 90 20 07 00 00 call
 
 TLS getters (file dis_6c89e50_70.txt):
 ```
-6c89e50: lea 0x5f81ed(%rip),%rdi # 7282048
+6c89e54: lea 0x5f81ed(%rip),%rdi # 7282048
 6c89e5b: call 2ea6440
-6c89e70: lea 0x5f81ed(%rip),%rdi # 7282068
+6c89e74: lea 0x5f81ed(%rip),%rdi # 7282068
 6c89e7b: call 2ea6440
-6c89e90: lea 0x5f81ed(%rip),%rdi # 7282088
+6c89e94: lea 0x5f81ed(%rip),%rdi # 7282088
 ```
 Keys = globals 0x7282048 / 0x7282068 / 0x7282088. Their shared getter 2ea6440 (dis_2ea6440.txt):
 ```
