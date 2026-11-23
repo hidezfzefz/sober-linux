@@ -254,6 +254,7 @@ static int n7b_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
 /* ---- n8 WAVE2: ctor3 allocator probe bps, armed before ctor replay ------
  * One shared handler; tagging by RIP so a single signal covers all sites. */
 static long n8p_hits[6];
+static uintptr_t n8g_alloc_ptr;   /* ctor3 alloc base from first USABLE hit */
 static const uintptr_t n8p_addrs[6] = {
     0x1dbad62u, 0x1dbe4fcu, 0x1dbdfbau,
     0x1db9a8fu, 0x1db9ac7u, 0x1db9acfu
@@ -273,6 +274,8 @@ static void n8p_sig(int s, siginfo_t *si, void *uc)
         if (rip == n7b_base + n8p_addrs[i]) { idx = i; break; }
     if (idx < 0) return;
     long n = __atomic_fetch_add(&n8p_hits[idx], 1, __ATOMIC_RELAXED) + 1;
+    if (idx == 1 && n == 1)
+        n8g_alloc_ptr = (uintptr_t)c->uc_mcontext.gregs[REG_RDI];
     char b[384], *p = b, *end = b + sizeof(b) - 1;
     w24_put(&p, n8p_tags[idx]);
     w24_put(&p, " hit="); w24_num(&p, n);
@@ -287,6 +290,37 @@ static void n8p_sig(int s, siginfo_t *si, void *uc)
     }
     w24_line(&p, b, end);
 }
+/* n8 WAVE3: read-only mimalloc private-global sampler (process_vm_readv).
+ * Lookup per static-A #705: low bound [7cd8ff8]; commit bitmap [7cd9048]
+ * bit (p>>41); page table [7cd9040] indexed by (p>>29). */
+static void n8g_log(const char *tag)
+{
+    uintptr_t b = n7b_base;
+    uint64_t lo = 0, bm = 0, pt = 0, pw = 0;
+    long g1 = b ? w30_readmem(b + 0x7cd8ff8u, &lo, 8u) : -1;
+    long g2 = b ? w30_readmem(b + 0x7cd9048u, &bm, 8u) : -1;
+    long g3 = b ? w30_readmem(b + 0x7cd9040u, &pt, 8u) : -1;
+    uintptr_t p = n8g_alloc_ptr;
+    int bit = (int)((p >> 41) & 63u);
+    uintptr_t idx = p >> 29;
+    if (g3 == 8 && pt >= 0x10000u)
+        (void)w30_readmem(pt + idx * 8u, &pw, 8u);
+    char buf[512], *q = buf, *end = buf + sizeof(buf) - 1;
+    w24_put(&q, tag);
+    w24_put(&q, " [7cd8ff8]="); w24_u64(&q, lo, 1);
+    w24_put(&q, " [7cd9048]="); w24_u64(&q, bm, 1);
+    w24_put(&q, " [7cd9040]="); w24_u64(&q, pt, 1);
+    w24_put(&q, " alloc="); w24_u64(&q, p, 1);
+    w24_put(&q, " bit41="); w24_num(&q, bit);
+    w24_put(&q, " bitmap_bit=");
+    w24_u64(&q, (g2 == 8) ? ((bm >> bit) & 1u) : 0u, 0);
+    w24_put(&q, " ptidx="); w24_u64(&q, idx, 0);
+    w24_put(&q, " ptword="); w24_u64(&q, pw, 1);
+    w24_line(&q, buf, end);
+    ssize_t uw = write(STDERR_FILENO, buf, (size_t)(q - buf));
+    (void)uw;
+}
+
 static void n8p_arm_all(uintptr_t base)
 {
     n7b_base = base;
@@ -496,6 +530,7 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
         if (g1 == 1) w24_u64(&p, b1, 1); else w24_put(&p, "UNREADABLE");
         w24_line(&p, buf, end);
     }
+    n8g_log("[N8G AT_FAULT]");
     w24_put(&p, "[W23_ASYNC_SAFE] ===== GUEST FAULT =====\n");
     w24_put(&p, "signal="); w24_num(&p, sig);
     w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
@@ -1060,6 +1095,7 @@ static int drive_constructors(uintptr_t base,
                 g = w30_readmem(base + 0x7cdede0u, &v, 1u);
                 fprintf(stderr, "[N8_CTOR3] after 0x7cdede0=%s0x%02x\n",
                         (g == 1) ? "" : "UNREADABLE-", (unsigned)v);
+                n8g_log("[N8G AFTER_CTOR3]");
                 dump_state(base, "AFTER ctor3 0x1db9a40 replay");
             }
             /* Diagnostic opt-in only: the canonical profile skips ctor[1].
