@@ -271,3 +271,35 @@ stays `PASS-BOUNDARY-REPLAY(DEBT=n)`, never CLEAN.
 **Secrets:** clean (2 redacted `@rbxinfra.com` in flag JSON, 1 local `@sober-linux.local` author
 email in a worktree doc; no tokens/cookies/IDs). **Git:** no wave/capture-named tracked files, no
 untracked capture-like files. Marker WITHHELD.
+
+## Wave24 audit (task #618) — claim verification vs raw files
+
+Owner: audit (branch `w24-audit`). Audit files out of git `/tmp/opencode/w24-audit/`. No device
+handling, no runs by audit. Engine SHA `3e498d64`.
+
+- **static-recursion #615 — PROVEN** (minor source line drift): `0x6ca8014` is the epilogue of
+  the ExceptionCheck wrapper `0x6ca7f72`; predicate `0x2a13350` calls `0x2a0de60` and tests
+  `*(obj+0x28)!=0`; FALSE path `call *0x720(%rax)` at `0x6ca800e` (fn[224] ExceptionCheck, pure),
+  TRUE path lambda `0x6ca805b` → `0x2a13560` → dispatcher `0x2a12e80` (nesting `obj+0x70`,
+  schedule `0x2a1e3a0`, clear `0x2a12f34`, `0x3f` panic). **NOT FindClass** (`*0x30` is in the other
+  wrapper `0x6c8f340`). Verified in `dis_*.txt`. No diff applied; guest-state fix forbidden.
+- **phone #616 — PROVEN for (a)+(d); logcat correctly NOT started.** Phone base.apk SHA
+  `2badef75…` ≠ authoritative `114a6f8e…` (I independently re-ran sha256sum; on-device build
+  differs, not a modded APK by the agent); ARM64. `roblox://placeId=…` resolves to
+  `.ActivityProtocolLaunch` (passive `resolve-activity`). **No logcat capture exists** and none
+  will be verified until the user says "logged in" — that signal has not occurred in team
+  messages. No credentials/cookies handled.
+- **harness #617 — PROVEN:** `runD_{1,2,3}.err` all show `JNI_OnLoad FIRST ver=0x10006`, rung1
+  `PASS-BOUNDARY-REPLAY (DEBT=1)`, `rc=139`, and **no `0x6ca8014` recursion**; new fault
+  `si_addr=0x548`, `rdi=0`, `rax=0`, fp#0 `guest+0x231555c` / fp#1 `guest+0x24650d6` (NULL
+  `GetStringUTFChars` at JNI slot 0xa5). `ringD.err` ring dump shows non-NULL FindClass/GetStringUTFChars
+  returns. `bigstack.err` fails earlier in host code. Seeder OFF throughout; no gate change.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 17 | **W24 host order fix JNI_OnLoad-first removes 0x6ca8014 recursion; new fault NULL GetStringUTFChars at guest+0x231555c (RA 0x24650d6), DEBT** | `guest_app_shell.c` (`SOBER_JNI_ONLOAD_FIRST`) | harness/lead | Ordering fix eliminates the ExceptionCheck-wrapper recursion (3/3) but exposes a NULL jstring at the GetStringUTFChars bridge; still no genuine callback/frame, debt remains | Remove when Run D/E reaches a genuine callback + guest frame with clean state and lead closes it |
+
+**Secrets:** clean (APK bundled Roblox "Cookie:" log strings are app code, not live credentials;
+`@2x.png` false-positive emails). **Git:** no captures, no phone logs, no wave/capture/phone-named
+tracked files, no untracked capture-like files. Rung1 stays `PASS-BOUNDARY-REPLAY(DEBT=n)`, never
+CLEAN; seeder OFF. Marker WITHHELD.

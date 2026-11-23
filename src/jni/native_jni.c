@@ -49,6 +49,57 @@
 #include <linux/perf_event.h>
 #include <linux/hw_breakpoint.h>
 
+/* ---- W24 read-only JNIEnv call ring (last 64 calls) --------------------- */
+struct w24_ring_ent {
+    uint32_t  slot;
+    uint32_t  exc_pending;
+    uintptr_t arg0, arg1;
+    uintptr_t ret;
+    char      name[32];
+};
+static struct w24_ring_ent w24_ring[64];
+static volatile unsigned w24_ring_pos;
+static void w24_ring_note(uint32_t slot, const char *name,
+                          uintptr_t a0, uintptr_t a1, uintptr_t ret,
+                          int exc)
+{
+    unsigned i = __atomic_fetch_add(&w24_ring_pos, 1, __ATOMIC_RELAXED) & 63u;
+    struct w24_ring_ent *e = &w24_ring[i];
+    e->slot = slot; e->arg0 = a0; e->arg1 = a1; e->ret = ret;
+    e->exc_pending = (uint32_t)(exc ? 1 : 0);
+    unsigned n = 0;
+    if (name) while (n < sizeof(e->name) - 1u && name[n]) {
+        e->name[n] = name[n]; ++n;
+    }
+    e->name[n] = 0;
+}
+/* Async-safe dump for the harness crash handler: write(2) only, fixed buffer.
+ * Returns the number of bytes written. */
+long sober_jni_ring_dump_async(int fd)
+{
+    char buf[8192], *p = buf, *end = buf + sizeof(buf) - 1;
+    static const char hx[] = "0123456789abcdef";
+    #define WP(s) do { const char *_x=(s); while (*_x && p<end) *p++=*_x++; } while(0)
+    #define WH(v) do { uintptr_t _v=(uintptr_t)(v); \
+        if (p+2<end){*p++='0';*p++='x';} \
+        for(int _i=(int)(sizeof(uintptr_t)*8)-4;_i>=0&&p<end;_i-=4) \
+            *p++=hx[(_v>>_i)&0xfu]; } while(0)
+    WP("[W24_JNI_RING] last 64 calls (slot,name,arg0,arg1,ret,exc):\n");
+    unsigned pos = __atomic_load_n(&w24_ring_pos, __ATOMIC_RELAXED);
+    unsigned start = pos > 64u ? pos - 64u : 0u;
+    for (unsigned i = start; i < pos; ++i) {
+        struct w24_ring_ent *e = &w24_ring[i & 63u];
+        WP("["); WH((uintptr_t)(i - start)); WP("] slot="); WH(e->slot);
+        WP(" name="); WP(e->name); WP(" a0="); WH(e->arg0);
+        WP(" a1="); WH(e->arg1); WP(" ret="); WH(e->ret);
+        WP(" exc="); WH(e->exc_pending); WP("\n");
+    }
+    #undef WP
+    #undef WH
+    ssize_t u = write(fd, buf, (size_t)(p - buf));
+    return (long)(u > 0 ? u : 0);
+}
+
 /* ---- W21 read-only perf exec watcher (host-side instrumentation only) ---- *
  * SOBER_W21_WATCH=1 arms hardware EXEC breakpoints (perf_event_open, no guest
  * byte patches) at guest 0x2eb7520 (latch writer) and 0x23115c8 (RSI origin).
@@ -510,6 +561,7 @@ static void *sr_FindClass(void *env, const char *name)
     j->env_calls++;
     SrObject *o = sr_find_class_object(j, name);
     sr_add_log(j, "FindClass(%s) -> %p", name ? name : "(null)", (void *)o);
+    w24_ring_note(2u, name, (uintptr_t)name, 0u, (uintptr_t)o, 0);
     return o;
 }
 
@@ -674,6 +726,8 @@ static intptr_t sr_dispatch_call(SoberJni *j, void *obj, void *method,
         result = (intptr_t)safe;
     }
     sr_in_dispatch = 0;
+    w24_ring_note(142u, name ? name : "?", (uintptr_t)obj, (uintptr_t)method,
+                  (uintptr_t)result, 0);
     return result;
 }
 
@@ -833,9 +887,15 @@ static const char *sr_GetStringUTFChars(void *env, void *str, sr_jboolean *isCop
     if (getenv("SOBER_JNI_STRING_DEBUG"))
         fprintf(stderr, "[jni-str] GetStringUTFChars(%p) -> o=%p payload='%s'\n",
                 str, (void *)o, o && o->payload ? (const char *)o->payload : "(null)");
-    if (o && o->payload) return (const char *)o->payload;
+    if (o && o->payload) {
+        w24_ring_note(165u, "GetStringUTFChars", (uintptr_t)str,
+                      (uintptr_t)isCopy, (uintptr_t)o->payload, 0);
+        return (const char *)o->payload;
+    }
     /* Unknown / foreign handle: hand back a safe static empty C string. */
     static const char empty[] = "";
+    w24_ring_note(165u, "GetStringUTFChars", (uintptr_t)str,
+                  (uintptr_t)isCopy, (uintptr_t)empty, 0);
     return empty;
 }
 static void sr_ReleaseStringUTFChars(void *env, void *str, const char *chars)
