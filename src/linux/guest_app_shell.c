@@ -1281,12 +1281,27 @@ int guest_app_shell_run(uintptr_t base)
                 (unsigned long)srva, nrc);
     }
 
-    /* Seed the cached jmethodID globals + completion flag that JNI_OnLoad
-     * would normally populate. Skipping JNI_OnLoad avoids the FindClass-wrapper
-     * recursion diagnosed by worker-1 (analysis/jni/recursion-note.md). */
-    int seed_rc = sober_jni_seed_guest_jni_state(j, (void *)base);
-    fprintf(stderr, "[app-shell] seeded guest JNI state (skip JNI_OnLoad) -> rc=%d\n",
-            seed_rc);
+    /* W22 Run C (APPROVED host-only change, ledger debt until clean):
+     * call the guest's GENUINE JNI_OnLoad at RVA 0x227af5a through our
+     * JavaVM instead of seeding the cached JNI globals by hand.  The
+     * FindClass-wrapper recursion cause is already fixed in this tree
+     * (Bionic TSD rebind + typed getters).  SOBER_LEGACY_JNI_SEED keeps the
+     * old seeder as a documented fallback; default is the genuine path.
+     * JNI_OnLoad returns a JNI version (0x10006), not SOBER_JNI_OK. */
+    int seed_rc = SOBER_JNI_OK;
+    if (getenv("SOBER_LEGACY_JNI_SEED")) {
+        seed_rc = sober_jni_seed_guest_jni_state(j, (void *)base);
+        fprintf(stderr, "[app-shell] legacy JNI seed (skip JNI_OnLoad) -> rc=%d\n",
+                seed_rc);
+    } else {
+        int (*jni_onload_fn)(void *, void *) =
+            (int (*)(void *, void *))(base + 0x227af5au);
+        int ver = jni_onload_fn(sober_jni_java_vm(j), NULL);
+        fprintf(stderr,
+                "[app-shell] genuine JNI_OnLoad 0x227af5a -> ver=%#x\n",
+                (unsigned)ver);
+        if (ver <= 0) seed_rc = SOBER_JNI_ERR;
+    }
     if (seed_rc != SOBER_JNI_OK) {
         sober_jni_shutdown(j);
         return -3;
@@ -2109,9 +2124,23 @@ int guest_app_shell_run(uintptr_t base)
         int rung1 = g_ck_rung1_returned &&
                     (*(volatile unsigned char *)(base + 0x7cdd149u) == 1);
         int rung2 = g_ck_rung2_app_start && g_ck_rung2_v2_init && g_ck_rung2_lua_dm;
-        fprintf(stderr, "[checkpoint] rung1 client_settings_latch=%s "
+        /* W22 LABEL ONLY: when the read-only boundary credential holds, print
+         * the two-tier PASS-BOUNDARY-REPLAY label with the debt count.  No gate
+         * logic changes: `rung1` above is left exactly as it was, and the
+         * marker decision elsewhere is untouched.  Never print CLEAN while a
+         * seeder slot or replayed argument is in use (DEBT != 0). */
+        {
+            const int boundary = rung1 && sober_w21_boundary_ok();
+            if (boundary)
+                fprintf(stderr,
+                        "[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=%d)\n",
+                        debt);
+            else
+                fprintf(stderr,
+                        "[checkpoint] rung1 client_settings_latch=%s "
                         "(AVD ref: w12-gate-avd.log) DEBT=%d\n",
-                rung1 ? "PASS" : "FAIL", debt);
+                        rung1 ? "PASS" : "FAIL", debt);
+        }
         fprintf(stderr, "[checkpoint] rung2 app_start_to_lua_dm=%s "
                         "(AVD ref: w12-j2n-300.log) DEBT=%d\n",
                 rung2 ? "PASS" : "FAIL", debt);

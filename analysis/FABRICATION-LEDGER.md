@@ -193,3 +193,38 @@ debuggable / no frida-server; AVD boot killed by server restart), so no device-s
 **Comparison `[0x72a3058]` / `[ctx+0]` at `0x23115c8` (Run A vs Run B vs device):** currently
 UNPROVEN for all three sides; w19 baseline (before removal) was harness synthetic host object /
 "cachedMe" vs AVD `0x7c9ec02fa098` real pointer. Marker WITHHELD.
+
+## Wave22 audit (task #608) — claim verification + user decisions
+
+Owner: audit (branch `w22-audit`). Engine SHA `3e498d64`. Audit work out of git in
+`/tmp/opencode/w22-audit/`. No device work, no new captures, no runs by audit.
+
+**Claim verdicts vs raw files (all PROVEN):**
+- static-skip #610: FindClass-wrapper recursion path `0x6c8f340 → 0x2a13350 → 0x2a0de60 →
+  0x2ea6440 → getspecific(0x72a1b08)`; stale `0xABCDEF0123456789`; TSD GOT rebind at
+  `guest_app_shell.c:1018`, typed getters `native_jni.c:1187-1215`, `JNI_OnLoad` returns `0x10006`
+  at `0x227b840` — all verified in raw `src_*.txt`/`recurse_note_*.txt` + source + objdump.
+  "Recursion fixed" is UNPROVEN (diff not applied by that agent; Run C later FAILED).
+- static-jni3 #609: last-third calls; sole writer of `0x72a3058` at `0x230cce4` (1 write / 50 refs
+  in `refs_72a3058.txt`), value `&0x72a31c8` singleton, read `0x227b204` / virtual call `*0x8(%rax)`
+  `0x227b213`, 32/35 slots via JNI lookups, 3 exceptions — verified in `last_third.dis`.
+  Exact vtable callee RVA UNPROVEN (relocation-resolved; agent states so).
+- harness #607: `runC.err` shows `ver=0x10006`, `[W21_LATCH_HIT] callerRA base+0x2359342`,
+  `rcx=0xabcdef0123456789`, `si_addr=0x7fffff7feff8`, ld-linux+0x18ef4, fp#0 `0x2a13359` /
+  fp#1 `0x6ca7f9a` / 10+ repeated `0x6ca8014` frames — all match. Run A: 1 latch hit per run,
+  10/10 rc=124 with fault banner (verified in `runA_*.err`). Dumps: `[0x72a3058]` NULL at entry →
+  guest singleton after (lazy-init PROVEN); `ctx+0` genuine guest code pointer (not host
+  "cachedMe"); RSI at `0x23115c8` UNPROVEN (perf 0/10).
+
+**User decisions recorded and verified in source:** seeder removed / replaced by genuine
+`JNI_OnLoad` (`guest_app_shell.c:1288-1301`, `SOBER_LEGACY_JNI_SEED` fallback), stays **ledger debt
+until Run C works** — Run C FAILS, so debt remains. Rung output two tiers, **labeling only, no gate
+logic change** (`guest_app_shell.c:2127-2143`: `rung1` variable and marker decision untouched).
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 15 | **Run C genuine JNI_OnLoad: FindClass-wrapper recursion / stack exhaustion (`rcx=0xabcdef0123456789`), DEBT** | `guest_app_shell.c:1288-1301` | harness/lead | Genuine JNI_OnLoad returns `0x10006` and latch fires, but execution recurses in `0x6ca8014` with stale TSD sentinel → stack overflow in ld-linux; seeder removed but Run C does not work | Remove when Run C reaches the boundary without recursion (Bionic TSD rebind on the Run C thread verified) and lead closes it |
+
+**Secrets scan:** clean — only 2 `<redacted>@rbxinfra.com` infra addresses in authoritative flag
+JSON; no tokens/cookies/user/device IDs. **Git:** no wave/capture-named tracked files, no
+untracked capture-like files in repo. Marker WITHHELD.
