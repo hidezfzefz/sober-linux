@@ -114,8 +114,14 @@ static void emit_marker(const char *text, const char *env_name)
  * 512-slot TSD array (worker-2's Bionic fix), whereas worker-2's seed helper
  * calls glibc's pthread_setspecific -- a different store. Seed the STUB's TSD
  * explicitly using its versioned pthread_setspecific@@LIBC. */
+uintptr_t g_w29_tsd_state;   /* read-only by the W29 perf trace */
 static void seed_stub_tsd(uintptr_t base)
 {
+    /* W29 host-only TSD-seed OFF switch (default: enabled). */
+    if (getenv("SOBER_W29_TSD_SEED_OFF")) {
+        fprintf(stderr, "[app-shell] W29 TSD seed OFF (SOBER_W29_TSD_SEED_OFF)\n");
+        return;
+    }
     void *stub = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
     if (!stub) {
         fprintf(stderr, "[app-shell] stub libc.so handle not found: %s\n", dlerror());
@@ -138,10 +144,12 @@ static void seed_stub_tsd(uintptr_t base)
         fprintf(stderr, "[app-shell] stub-TSD seed: calloc failed\n");
         return;
     }
+    g_w29_tsd_state = (uintptr_t)state;
     int rc = stub_setspecific((unsigned long)key, state);
     fprintf(stderr,
-            "[app-shell] stub-TSD seed: key=%u state=%p rc=%d\n",
-            (unsigned)key, (void *)state, rc);
+            "[app-shell] stub-TSD seed: key=%u state=%p [state+0]=%#lx rc=%d\n",
+            (unsigned)key, (void *)state,
+            (unsigned long)*(unsigned long *)state, rc);
 }
 
 /* Native guest patches (DECISIONS 014/015). Verify the original bytes before
@@ -2239,7 +2247,16 @@ int guest_app_shell_run(uintptr_t base)
          * seeder slot or replayed argument is in use (DEBT != 0). */
         {
             const int boundary = rung1 && sober_w21_boundary_ok();
-            if (boundary)
+            /* W29 INPUT FIRST: a SHA-mismatched / modified boundary input can
+             * never earn a pass label.  Label-only change; no gate logic. */
+            extern int g_w29_arg0_sha_ok;
+            const int modified_input = !g_w29_arg0_sha_ok ||
+                getenv(SOBER_AVD_BOUNDARY_UNVERIFIED) != NULL;
+            if (modified_input) {
+                fprintf(stderr,
+                        "[checkpoint] rung1 MODIFIED-INPUT (no credit) "
+                        "DEBT=%d\n", debt);
+            } else if (boundary)
                 fprintf(stderr,
                         "[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=%d)\n",
                         debt);

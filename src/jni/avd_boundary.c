@@ -91,6 +91,8 @@ int sober_avd_boundary_should_withhold(void)
     return sober_avd_boundary_enabled();
 }
 
+int g_w29_arg0_sha_ok;   /* W29: 1 only when arg0 SHA matches the capture */
+
 int sober_avd_boundary_load(char **buf, size_t *len)
 {
     if (!buf || !len) return -1;
@@ -122,7 +124,8 @@ int sober_avd_boundary_load(char **buf, size_t *len)
     for (int i = 0; i < 32; ++i) snprintf(hex + i*2, 3, "%02x", digest[i]);
     hex[64] = '\0';
 
-    if (!modified && strcmp(hex, SOBER_AVD_BOUNDARY_SHA256) != 0) {
+    g_w29_arg0_sha_ok = (strcmp(hex, SOBER_AVD_BOUNDARY_SHA256) == 0);
+    if (!modified && !g_w29_arg0_sha_ok) {
         fprintf(stderr, "[avd-boundary] SHA-256 MISMATCH got=%s want=%s\n",
                 hex, SOBER_AVD_BOUNDARY_SHA256);
         free(data);
