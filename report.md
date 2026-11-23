@@ -1,88 +1,67 @@
-# n6 #683 — mimalloc anchors, ctor skip, 0x7cef650 writer/assert
+# n6 #684 static-B — weak mi_malloc + malloc/new resolution (READ-ONLY)
 
-Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
-Evidence: `raw_mimalloc_strings.txt`, `raw_mimalloc_xrefs.txt`, `raw_assert.txt`,
-`raw_ctor3.txt`, `source_fflag.txt`.
+FAULTING INSTRUCTION FIRST (n5 new divergence): `guest+0x6caef67` SIGTRAP, real trap `6caef66: cc int3` in HardAssert reporter `0x6caed7c`; log `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`. All quotes raw.
 
-Faulting instruction first (prior wave, host): `7c8ff: 48 8b 47 08 mov
-rax,[rdi+0x8]` = `_IO_fflush+0x9f`, NULL rdi.
+## (a) PROVEN — "host binds weak mi_malloc" is a README claim, not an active code path
 
-## (a) Anchors / containing functions — PROVEN
+Exact declarations (all in the **compat bootstrap shim**, `src/compat/bionic_bootstrap/bionic_bootstrap.c`, NOT the harness app-shell `guest_app_shell.c` and NOT the ELF loader `android_relocs.c`):
+```
+175:extern void *mi_malloc(size_t) __attribute__((weak));
+176:extern void *mi_calloc(size_t, size_t) __attribute__((weak));
+262:extern void  mi_free(void *) __attribute__((weak));
+263:extern void *mi_realloc(void *, size_t) __attribute__((weak));
+264:extern void *mi_aligned_alloc(size_t, size_t) __attribute__((weak));
+265:extern size_t mi_usable_size(const void *) __attribute__((weak));
+```
+**RETRACTED as an active mechanism:** these six weak symbols are *declared but never referenced* in any compiled source — repo-wide grep finds only these declaration lines plus prose in `README.md:46,49,51,242`. The actual bridge ops are bound in `bb_resolve_alloc_ops()` (`bionic_bootstrap.c:585`):
+```
+591:    g_bb_ops.allocate      = host_allocate;
+593:    g_bb_ops.free          = host_free;
+594:    g_bb_ops.usable_size   = host_usable_size;
+595:    g_bb_ops.realloc       = host_reallocate;
+596:    g_bb_ops.aligned_alloc = host_aligned_allocate;
+```
+and `host_allocate` (`bionic_bootstrap.c:271-276`) is plain glibc:
+```
+271:static void *host_allocate(size_t n)
+274:    void *p = malloc(n);
+274:    if (p) memset(p, 0, n);
+```
+So the n5 phrase "host binds weak mi_malloc" refers to **documentation intent** (`README.md:55`: "mimalloc is used if the process already exports it; otherwise native glibc malloc is used"; `README.md:246`: "allocator is glibc malloc when mimalloc is absent"), not to a live weak-symbol call. The library truly has **zero** `mi_*` dynamic symbols (`nm -D` over all 1132 dynsyms returns none) — the weak refs would only bind if the *host process* exported mimalloc; it does not, and they are unused anyway.
 
-Quoted rodata (`strings -t x`):
-> `4c0d2b Expect to have mimalloc working, but it was not detected!`
-> `3a3078 [DFLog::Mimalloc] Mimalloc integration is NOT detected`
-> `36a5f0 [DFLog::Mimalloc] Mimalloc integration detected, settings:`
-> `2bfdf9 [DFLog::Mimalloc] mi_option_verbose={}`
-> `231741 environment option "mimalloc_%s" is deprecated ...`
-> `287e15 environment option mimalloc_%s has an invalid value.`
+**Where guest malloc/new resolve:** the engine's allocator is **embedded** (statically linked mimalloc); guest allocator calls are direct internal calls, not PLT/dynsym. The harness patches **eight** bridge thunks (README says "six", code has eight) via `install_bridges()` at `bionic_bootstrap.c:875-908`; RVAs from `bootstrap_profile.h:62-74`:
+```
+62:#define SOBER_BRIDGE_ALLOC_SMALL_RVA   0x1dbad62u
+63:#define SOBER_BRIDGE_USABLE_SIZE_RVA   0x1dbdfbau
+64:#define SOBER_BRIDGE_REALLOCATE_RVA    0x227aafau
+65:#define SOBER_BRIDGE_ALLOCATE_RVA      0x1dbab02u
+66:#define SOBER_BRIDGE_ALIGNED_ALLOC_RVA 0x1dd60e5u
+67:#define SOBER_BRIDGE_FREE_RVA          0x1dbe559u
+71:#define SOBER_BRIDGE_CALLOC_RVA        0x253225eu
+74:#define SOBER_BRIDGE_CALLOC_RUNTIME_RVA 0x231f0e2u
+```
+i.e. guest embedded allocator wins for all ordinary calls; shims (glibc malloc/free) win **only** at those eight patched thunks.
 
-Raw xrefs (quoted):
-> `239eb44: lea … # 36a5f0` and `239edb2/239ee23: lea … # 2bfdf9`
-> `23a1445: lea … # 3a3078`, `23a1465: lea … # 4c0d2b`
-> `6c80008/6c8020a/6c80232: lea … # 231741 / # 287e15`
+## (b) PROVEN — premise false: no library-defined malloc/new symbol has a GOT slot
 
-Containing functions: `0x239ead3` (prologue `55 48 89 e5 … sub $0x58,%rsp`) =
-mi_option dump printer, reached by #552: quoted caller `239d215: call 239ead3`
-(inside #552 body `0x2383c18..0x23c1200`). The "NOT detected" / "Expect to have
-mimalloc working" strings are used in the `0x23a14xx` region; the exact
-containing function start was not recovered (no standard prologue found in
-`0x239f000..0x23a1450`) — **UNPROVEN**. `mimalloc_%s` env-option handling is in
-function `0x6c7ff41` (`55 48 89 e5 … sub $0xb0,%rsp`).
+For **each** of `malloc, free, calloc, realloc, posix_memalign, memalign, aligned_alloc, _Znwm, _Znam, _ZdlPv, _ZdaPv, _Znwj`:
+- `nm -D --defined-only libroblox.so` → **no match** (none defined/exported);
+- `readelf -rW libroblox.so` → **no relocation** mentioning any of them (all 542 dynamic relocs are `R_X86_64_JUMP_SLOT`, none for these names).
 
-## (b) Ctor reach + decision 008 skip — PROVEN
+Therefore there is **no per-symbol loader code to quote** — no guest GOT slot exists for any of these symbols. The only generic symbolic-GOT resolution in the loader is `src/linux/android_relocs.c:262-286`:
+```
+262:                const char *name = symidx ? symbol_name(elf, symidx) : NULL;
+263:                void *value = name ? dlsym(RTLD_DEFAULT, name) : NULL;
+...
+276:                    *target = (uint64_t)(uintptr_t)value +
+277:                              (type == 1 ? (uint64_t)r_addend : 0);
+278:                    ++symbolic;
+```
+This would make a **host shim win** over a library definition for any symbolic relocation (dlsym RTLD_DEFAULT searches the host first), but it never applies to malloc/new here because none are relocated. `src/trace/native_trace.c:389-393` (`real_malloc = sr_resolve("malloc", "__libc_malloc")` etc.) is an **optional LD_PRELOAD tracer**, not the guest loader.
+Verdict: **the library's own embedded allocator wins** for guest malloc/operator-new; shims only via the eight patched bridge RVAs.
 
-Quoted source `fflag_default.c:109-114`:
-> `{ 3u, 0x1db9a40u, "mimalloc usable-size/allocator feature probe (globals 0x7cdedd8/0x7cdede0); only reader 0x239eb14 selects a DFLog string -> no functional effect" }`
+## UNPROVEN / NOT done
 
-Ctor 3 (`0x1db9a40`) is **SKIPPED** by decision 008 (it is one of the three
-`k_skipped` entries; ctors 1/3/4 not required). Raw ctor body writes:
-> `1db9a4b: movq $0x20,0x7cdedd8` ; `1db9acf: mov %bl,0x7cdede0`
-
-The only reader of `0x7cdede0` is quoted:
-> `239eb14: cmpb $0x0,0x7cdede0` (in printer `0x239ead3`), followed by
-> `239eb1b: je 23a1422`, `239eb21: test %al,%al`, `239eb23: je 239eb6b`,
-> then `239eb44: lea … # 36a5f0` (a DFLog string).
-
-So the mimalloc feature probe is read only to select DFLog text ⇒
-**`mimalloc probe=DFLog-only` is PROVEN** (both source comment and the quoted
-disassembly show no functional consumer). The `mimalloc_%s` env-option
-functions (`0x6c7ff41`) are **not** the skipped ctor 3; their ctor membership
-is UNPROVEN.
-
-## (c) 0x7cef650 writer and assert test — PROVEN
-
-Quoted raw lines:
-> writer: `2279a8f: mov %al,0x7cef650` — in function `0x2279a47`, which is
-> **init_array ctor index 3602** (from `init-array.json`: `{"index":3602,"rva":"0x2279a47"}`).
-> That index is inside decision 008's replay range `[5,3618)` — it is **NOT
-> skipped** (the three skipped are 1/3/4/0 per `fflag_default.c`), so it runs.
-
-Assert (quoted `6caef4f..6caef69`):
-> `cmpb $0,0x7cdd149` (latch) ; `je 6caef66`
-> `cmpb $0,0x7cef650` ; `je 6caef66`
-> `call 6d320d0 <abort@plt>`
-
-The assert is a **flag-nonzero byte test** (`cmpb $0` then abort when nonzero),
-gated by the latch byte — **NOT** a pointer-range check and **NOT** a version
-call. A separate version-style check does exist in the printer
-(`239eb03: cmp $0x6,%bl`; `239eb09: test $0xff00,%ebx`), but that is a
-different site, on `0x7cdf560`, not the `0x7cef650` assert.
-
-## ADD: mi_option dump printer + ctor — PROVEN/UNPROVEN
-Printer = `0x239ead3` (quoted prologue and `239eb44: lea … # 36a5f0`,
-`239edb2: lea … # 2bfdf9`); reached from #552 via `239d215: call 239ead3`. It
-is **not** an init_array ctor itself (no ctor RVA equals it); whether its
-ctor-3 caller chain is reachable when ctor 3 is skipped is UNPROVEN — the
-printer is still reached from #552 through a non-ctor path.
-
-## What NOT done
-No apply/build, no runs/gdb/perf, no device/AVD/Frida/phone, no new captures,
-no guest writes, gate edits, seeder, fake returns or path remaps, no
-credentials, no captures/logs/tokens in git.
-
-## First divergence + next step
-First divergence: skipped ctor 3 leaves mimalloc flag `0x7cdede0` unset, so the
-printer selects "NOT detected"/"Expect to have mimalloc working" DFLog lines;
-ctor 3602 still writes `0x7cef650`. Next: harness logs which mimalloc DFLog
-line is emitted in Run D.
+- UNPROVEN: whether the eight bridge RVAs are the *only* allocator indirection (full static enumeration of direct calls to embedded allocator not done); exact property that makes the guest's mimalloc detection false (static-A scope).
+- RETRACTED: n5's "weak mi_malloc binding" as the cause of the HardAssert — the weak refs are dead declarations.
+- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; no captures/tokens in git.
