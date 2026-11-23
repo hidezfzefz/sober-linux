@@ -1,0 +1,30 @@
+  1028f Java_com_roblox_client_purchase_IAPPurchaseManager_nativePerformSubscriptionPurchase
+ 21b254 PerformDeleteOutfit
+ 21bd5e [DFLog::RbxTransportDummyClient] Performance test is disabled in this build configuration
+ 21bea1 Performance_LessThan100Counter
+ 21bec0 Performance_From8To16kCounter
+ 21c32f EnablePerfStatsAPI
+ 21c5c2 ShadowMapPerform
+ 21c5d3 ShadowMapForward_PerformTime_
+ 21c626 Perform culling
+ 21ee22 PerformGetHeadShapes
+ 21f656 MarketplaceService:PerformPurchase() failed
+ 222240 LocServicePerformanceAnalyticsEnabled
+ 22669a ReportPath2DAnalyticsEnabled_Perf
+ 228bb1 [FLog::PerformanceTelemetry] Throttled, creating subsystem with ThrottledPerformanceTelemetry
+ 2290b6 prof/total/scripts
+ 22bb59 PerformanceControlAudioLatencyHardcodeWeight
+ 22bb9f PerformanceControlMemoryCategoriesTelemetryEnabledHundrethPercentage
+ 22bc39 PerformanceControlMemoryBufferModificationsEnabledJson
+ 22bc9c PerformanceControlComputePrimaryTunableConfigDefaultStepsPerTurn
+ 22bcdd PerformanceControlComputePrimaryTunableConfigJson
+ 22cc9f vkUninitializePerformanceApiINTEL
+ 2310c3 prof/Physics/Simulation_other_max
+ 236f9f PerfStatNetworkPingEnabled2
+ 23810a AddFrustumPerfTelemetry
+ 23867d Client Performance
+ 238f23 RenderPerformanceOverlay
+ 23907a ShadowMapSystem::updatePerform
+ 239baf [FLog::TextureManager2] PerfControl: TextureCache: new budget {} MB  becomes new OrphanBudget {} MB
+ 239c8c GraphicsReportCloudsPerfData
+ 23ba32 PerformSaveAvatar

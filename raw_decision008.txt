@@ -1,0 +1,3 @@
+# Decision 008 — Android packed RELA must be applied before bootstrap
+packed relocations. Without applying them, `ctor[0]` is a NULL call and the
+  `ctor[0]=0x2e62390`, `ctor[1]=0x1dba8f3`.
