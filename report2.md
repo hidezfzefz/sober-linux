@@ -1,46 +1,58 @@
-# n1-2 #648 static-B — fn224 writer (READ-ONLY)
+# n5 follow-up — new fault at guest+0x6caef67 (READ-ONLY)
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n1-static-b.
-Faulting instruction first: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` — the fn[224] slot of the JNIEnv-style table in `rax` is dereferenced.
-
-## PROVEN — writer is GENUINE GUEST CODE (not a host patch)
-
-Quoted from dis_fn224_writer.txt (guest engine):
+FAULTING INSTRUCTION FIRST (harness n5_1/2/3.err:3730-3735, 3/3):
 ```
-6c8e4cc: 48 8d 05 9f 9a 01 00  lea 0x19a9f(%rip),%rax  # 6ca7f72
-6c8e4d3: 49 89 86 20 07 00 00  mov %rax,0x720(%r14)
+RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)
+[W30_FAULT] rip=0x00007f12da5d6f67 si_addr=0x0000000000000000 ... insn=0000000000000089 00000000000000c0 00000000000000e8 ...
+[W28_FAULT_INSN] rip=... guest_rva=0x06caef67
+signal=5 tid=1952583 rip=... si_addr=0x0000000000000000
 ```
-Guest function `0x6c8e…` (the JNIEnv-style vtable builder, called from
-`227bde8: e8 33 27 a1 04 call 6c8e520` in JNI_OnLoad+0xe8e and from
-`6c8e5f2: call 6c8e691`) writes the address of the wrapper prologue `0x6ca7f72`
-into table offset `0x720` (= fn[224] of a JNINativeInterface_-sized table with
-writes at 0x0..0x740). This is a **SELF-REFERENCE**: the wrapper at 0x6ca7f72
-calls `call *0x720(%rax)`, and the table it reads holds 0x6ca7f72 itself.
-The neighbour writes confirm it is a function table:
+The reported RIP `0x6caef67` is the instruction **after** the trap `6caef66: cc int3`. Bytes `89 c0 e8 62` = `89 c0 mov %eax,%eax; e8 62 31 08 00 call abort@plt` (dis_6caef67.txt).
+
+## PROVEN — containing function + message
+
+Function containing the trap: **`0x6caed7c`** (`push rbp` prologue), a reporter taking `(rdi = tag from table, rsi = message)`. It is reached via dispatcher `0x6caed5d`:
 ```
-6c8e4c5: mov %rax,0x718(%r14)   # 6ca7e40
-6c8e4da: lea ... # 6ca80a6
-6c8e4e1: mov %rax,0x728(%r14)
+6caed5d: push %rbp
+6caed61: cmp $0xa,%edi
+6caed69: cmovb %edi,%eax
+6caed6c: lea 0x570e5d(%rip),%rcx   # 721fbd0
+6caed73: mov (%rcx,%rax,8),%rdi
+6caed77: call 6caed7c
+6caef4f: cmpb $0x0,0x102e1f3(%rip) # 7cdd149
+6caef56: je 6caef66
+6caef58: cmpb $0x0,0x10406f1(%rip) # 7cef650
+6caef5f: je 6caef66
+6caef61: call 6d320d0 <abort@plt>
+6caef66: cc int3
 ```
-Host source check: native_jni.c only installs `SETFN(*t, 224, sr_ExceptionCheck)`
-(line 1560) plus an unrelated slot-165 safety override; there is NO host patch
-to fn[224] after setup. javavm_semantics.c:435 puts `fj_ExceptionCheck` in its
-own table. So the harness flip host+0x2e690 -> guest+0x6ca7f72 is the guest's
-own table-builder writing its wrapper, seen by the harness breakpoint.
+Message producer (dis_assert_msg.txt): `23a1465: lea -0x1ee0741(%rip),%rsi # 4c0d2b`, `23a146c: xor %edi,%edi`, `23a146e: call 6caed5d`. Strings verified from engine bytes: `0x4c0d2b="Expect to have mimalloc working, but it was not detected!"`, `0x3a30df="RBXCRASH"`, `0x3a30e8="HardAssert"`, `0x3a3078="[DFLog::Mimalloc] Mimalloc integration is NOT detected"`. Harness RET64 first guest RVA `guest+0x3a30e8` and `guest+0x4c0d2b` are exactly these strings — confirming this call chain.
 
-## Real boot / ART self-reference
+## PROVEN — predicate bytes and their writers
 
-Real boot receives JNIEnv from ART: fn[224] = ART's ExceptionCheck in ART's
-table (guest cannot patch ART memory). The guest's separately-built wrapper
-table (0x6c8e4cc builder) holds 0x6ca7f72 in real boot too — this is genuine
-guest behaviour. ART's ExceptionCheck itself cannot self-reference the guest
-wrapper; the self-reference exists only in the guest-built wrapper table.
+The assert requires **both** globals nonzero (either zero -> int3):
+- `0x7cdd149` — written to 1 by `2eb7520: c6 05 ... 01 movb $0x1,... # 7cdd149` (the W18 per-activation latch write; other writers `2ec9fae`, `56d31a3`, `56d3386`, `56d6a4b`, `56d6b80`).
+- `0x7cef650` — initialized **zero** by `2279a8f: 88 05 ... mov %al,... # 7cef650` (in the JNI_OnLoad init path where `xor %eax,%eax` at `2279a4b`; dis_mimalloc_flag.txt), and referenced at `227d51f: lea ... # 7cef650` alongside FFlag name `0x3a30af="DebugForceTerminateOnRbxCrash"`.
 
-## Evidence / NOT done
+Within the reporter function, `6caed9b: mov 0x...(%rip),%rax # 7cef6c0; 6caedaa: call *%rax` invokes a global reporter before the byte checks.
 
-Evidence: dis_fn224_writer.txt, stores_720_all.txt, writes_720.txt,
-callers_2a13370.txt, /tmp/opencode/n1-harness/report.md lines 32-37.
-NOT DONE: no runs/device/captures/guest writes/gate/seeder/apply; no fix.
-UNPROVEN: exact containing-function entry and real-boot ART pointer value
-(no capture). Next smallest step: read-only confirm in harness which table
-(rax) is held at 0x6ca800e hit 100 vs hit 1 (already N1_CALL720 evidence).
+## Startup step that normally makes mimalloc detection true
+
+`src/compat/bionic_bootstrap/README.md:42-55` (verbatim):
+```
+**Six mimalloc bridges** (guest RVA → native host function):
+| allocate (small) | `0x1dbad62` | `malloc`/`mi_malloc` |
+mimalloc is used if the process already exports it;
+otherwise native glibc malloc is used.
+```
+and `README.md:242-246`:
+```
+   allocator is glibc malloc when mimalloc is absent — still fully native.
+```
+`bionic_bootstrap.c:175`: `extern void *mi_malloc(size_t) __attribute__((weak));`
+The harness redirects the six guest allocator thunks to host `malloc`/`free` and binds mimalloc with **weak** symbols; when the host process does not export mimalloc, the bridges use glibc malloc, so the guest's own mimalloc-integration detection returns false — logging `[DFLog::Mimalloc] Mimalloc integration is NOT detected` and firing this HardAssert. The genuine app has mimalloc loaded, so the detection is true and the trap is not reached.
+
+## UNPROVEN / NOT done
+
+- UNPROVEN: exact detection call that produces the boolean tested at `23a1422: test %al,%al; je 23a1465`; which of the two predicate bytes is specifically "mimalloc detected" vs the latch/FFlag gate; whether writing either byte alone clears the assert.
+- NOT DONE: no apply/runs/device/captures/guest writes/gate edits/seeder/fake returns/path remaps; object OFF. Evidence: report2.md, dis_6caef67.txt, dis_assert_msg.txt, dis_mimalloc_flag.txt, dis_mimalloc_set.txt, n5-harness/report_n5.md.

@@ -1,0 +1,28 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002279a40 <Java_com_roblox_engine_jni_NativeGLInterface_shouldDisplayOpenGLUnsupportedMessage@@LIBROBLOX+0x489360>:
+ 2279a40:	89 c7                	mov    %eax,%edi
+ 2279a42:	e8 80 1d c3 00       	call   2eab7c7 <Java_com_roblox_universalapp_call_JNICallProtocol_receiveCall@@LIBROBLOX+0x537>
+ 2279a47:	55                   	push   %rbp
+ 2279a48:	48 89 e5             	mov    %rsp,%rbp
+ 2279a4b:	31 c0                	xor    %eax,%eax
+ 2279a4d:	88 05 d5 5b a7 05    	mov    %al,0x5a75bd5(%rip)        # 7cef628 <__stop_pb_defaults@@Base+0xa6d170>
+ 2279a53:	48 8d 0d 2d 64 04 fe 	lea    -0x1fb9bd3(%rip),%rcx        # 2bfe87 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b17419>
+ 2279a5a:	48 89 0d cf 5b a7 05 	mov    %rcx,0x5a75bcf(%rip)        # 7cef630 <__stop_pb_defaults@@Base+0xa6d178>
+ 2279a61:	48 c7 05 cc 5b a7 05 	movq   $0x1c,0x5a75bcc(%rip)        # 7cef638 <__stop_pb_defaults@@Base+0xa6d180>
+ 2279a68:	1c 00 00 00 
+ 2279a6c:	48 8d 0d c3 3a 00 00 	lea    0x3ac3(%rip),%rcx        # 227d536 <JNI_OnLoad@@LIBROBLOX+0x25dc>
+ 2279a73:	48 89 0d c6 5b a7 05 	mov    %rcx,0x5a75bc6(%rip)        # 7cef640 <__stop_pb_defaults@@Base+0xa6d188>
+ 2279a7a:	48 8d 0d bf 5b a7 05 	lea    0x5a75bbf(%rip),%rcx        # 7cef640 <__stop_pb_defaults@@Base+0xa6d188>
+ 2279a81:	48 8b 15 e0 50 a6 05 	mov    0x5a650e0(%rip),%rdx        # 7cdeb68 <__stop_pb_defaults@@Base+0xa5c6b0>
+ 2279a88:	48 89 15 b9 5b a7 05 	mov    %rdx,0x5a75bb9(%rip)        # 7cef648 <__stop_pb_defaults@@Base+0xa6d190>
+ 2279a8f:	88 05 bb 5b a7 05    	mov    %al,0x5a75bbb(%rip)        # 7cef650 <__stop_pb_defaults@@Base+0xa6d198>
+ 2279a95:	48 8d 05 13 96 12 fe 	lea    -0x1ed69ed(%rip),%rax        # 3a30af <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a341f1>
+ 2279a9c:	48                   	rex.W
+ 2279a9d:	89                   	.byte 0x89
+ 2279a9e:	05                   	.byte 0x5
+ 2279a9f:	b5                   	.byte 0xb5
