@@ -140,6 +140,63 @@ static long w30_readmem(uintptr_t addr, void *dst, size_t len)
                    &li, 1UL, &ri, 1UL, 0UL);
 }
 
+/* n4 HOST-ONLY: /proc/self/maps reader using only open/read/close/write.
+ * No stdio, no malloc — safe inside the signal handler.  Prints the whole
+ * maps line for an address plus addr - mapping_start as the offset. */
+static unsigned long w40_hexval(const char **pp)
+{
+    const char *q = *pp;
+    unsigned long v = 0;
+    while (*q) {
+        unsigned d;
+        if (*q >= '0' && *q <= '9') d = (unsigned)(*q - '0');
+        else if (*q >= 'a' && *q <= 'f') d = (unsigned)(*q - 'a' + 10);
+        else if (*q >= 'A' && *q <= 'F') d = (unsigned)(*q - 'A' + 10);
+        else break;
+        v = (v << 4) | d; ++q;
+    }
+    *pp = q;
+    return v;
+}
+static void w40_maps(char **p, char *base, char *end, uintptr_t addr,
+                     const char *tag)
+{
+    static char maps[65536];
+    int fd = open("/proc/self/maps", O_RDONLY);
+    if (fd < 0) return;
+    size_t total = 0;
+    while (total < sizeof(maps) - 1u) {
+        ssize_t n = read(fd, maps + total, sizeof(maps) - 1u - total);
+        if (n <= 0) break;
+        total += (size_t)n;
+    }
+    close(fd);
+    maps[total] = '\0';
+    w24_put(p, tag); w24_u64(p, addr, 1); w24_put(p, " ");
+    const char *ln = maps, *stop = maps + total;
+    int found = 0;
+    while (ln < stop) {
+        const char *nl = ln;
+        while (nl < stop && *nl != '\n') ++nl;
+        const char *q = ln;
+        unsigned long lo = w40_hexval(&q);
+        if (*q == '-') { ++q; unsigned long hi = w40_hexval(&q);
+            if (addr >= lo && addr < hi) {
+                w24_put(p, "offset=0x"); w24_u64(p, (uint64_t)(addr - lo), 0);
+                w24_put(p, " maps='");
+                for (const char *c = ln; c < nl && *p < end - 2u; ++c)
+                    *(*p)++ = *c;
+                w24_put(p, "'");
+                found = 1;
+            }
+        }
+        if (found) break;
+        ln = (nl < stop) ? nl + 1 : stop;
+    }
+    if (!found) w24_put(p, "maps=NOT_FOUND");
+    w24_line(p, base, end);
+}
+
 static void crash_handler(int sig, siginfo_t *si, void *ucontext)
 {
     alarm(5);   /* bound the dump itself; SA_RESETHAND prevents recursion */
@@ -242,6 +299,7 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     if (delta >= 0 && delta < 65536u) {
         w24_put(&p, "[W30_RET64] rsp="); w24_u64(&p, rsp, 1);
         w24_line(&p, buf, end);
+        uintptr_t ret64_first[3]; unsigned nret64 = 0;
         for (unsigned i = 0; i < 64u; ++i) {
             uintptr_t v = 0;
             long got = w30_readmem(rsp + (size_t)i * 8u, &v, 8u);
@@ -250,10 +308,19 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
             else if (base && v >= base && v < base + 0x8000000u) {
                 w24_put(&p, "guest+0x"); w24_u64(&p, v - base, 0);
             } else w24_u64(&p, v, 1);
+            if (got == 8 && nret64 < 3u) ret64_first[nret64++] = v;
             if ((i & 3u) == 3u) w24_line(&p, buf, end);
         }
         w24_line(&p, buf, end);
+        for (unsigned k = 0; k < nret64; ++k) {
+            char tg[32];
+            w24_put(&p, "[W40_RET64_MAP #"); w24_num(&p, (long)k);
+            w24_put(&p, "] "); w24_line(&p, buf, end);
+            w40_maps(&p, buf, end, ret64_first[k], "addr");
+        }
     }
+    /* RIP mapping line + offset */
+    w40_maps(&p, buf, end, rip, "[W40_RIP_MAP] rip");
 
     /* Fault args: raw values only; RDI bytes via process_vm_readv. */
     uintptr_t rdi = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RDI] : 0;
