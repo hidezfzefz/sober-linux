@@ -1080,3 +1080,54 @@ FunctionMarshal / RBX Worker A); 3rd N14 replay `0x2383c18` source; J2N #67/#105
 → OUTPUT: 62 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n5. Marker WITHHELD.
+
+## Overnight n7 WAVE1 audit (task #686) — ctor3602 adjudication
+
+Owner: audit (`/tmp/opencode/n7-audit`, branch `n7-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+Input SHA + banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n7_{1,2,3}.err` (3/3);
+`W24 JNI_OnLoad FIRST … ver=0x10006` 3/3; `[W28_FAULT_INSN] … guest_rva=0x06caef67`, rc=139 3/3.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 44 | **RETRACTED: "ctor3602 never runs in Run D (zero bp hits)". The exec bps WERE armed, but 30 log lines TOO LATE — ctor3602 demonstrably executed first. Zero hits are a watcher-timing artifact, not proof of non-execution** | raw n7_1/2/3.err line **3652** `[harness] ctor[3602] rva=0x2279a47` BEFORE line **3682** `[N7_CTOR_ARM] base=0x… entry=0 store=0`; source `native_jni.c:840-849` prints `entry=a1` where `a1 = f1>=0 ? w21_arm(...) : -1` and `w21_arm` (`:154+`) returns 0 on success (negative on sigaction/fcntl/ioctl failure) => `entry=0 store=0` = BOTH ARMED; `guest_dlopen_host.c:867` logs ctor index immediately BEFORE `:875 ((void (*)(void))fn)()`; `w21_init()` called at `guest_app_shell.c:2337` (after ctor replay loop `:833-875`) | audit adjudication (lead notified) | A zero-hit observation was misread as non-execution; log order disproves it. ctor3602 DID run 3/3; tid/order/stored-value remain UNPROVEN (no bp observation) | Remove when an exec bp armed BEFORE ctor replay quotes a hit/tid/value at 0x2279a8f, or the early-execution log is shown to be non-causal |
+
+**Faulting instruction first (PROVEN):** guest `int3` at `0x6caef66` (`cc`, HardAssert trap);
+crash handler reports next RIP `guest+0x6caef67` (`89 c0 mov eax,eax`; then `e8 call abort@plt`).
+Raw `[W28_FAULT_INSN] rip=0x00007fdcec9f2f67 guest_rva=0x06caef67`, `signal=5 tid=2053520
+rip=0x00007fdcec9f2f67 si_addr=0x0`. objdump decode `6caef66: cc int3`, `6caef67: 89 c0`,
+`6caef69: e8 … call abort@plt`. `[N7_FAULT_BYTES] [0x7cdd149]=0x…01 [0x7cef650]=0x…00`
+(3/3, tids 2053520/2053705/2053936).
+
+**harness #685 — all quoted claims verified, one interpretation RETRACTED (entry 44):** SHA+banner
+3/3, fault line/bytes, predicate bytes 3/3, `[N7_CTOR_ARM]`, zero ctor-hit counts (arithmetically
+correct but causally misattributed — see entry 44). Last order markers are host lines
+`[app-shell] W24 JNI_OnLoad FIRST` / `AVD boundary nativeInitClientSettings … latch=1`.
+`[0x7cef650]=0` at fault is consistent with BSS-zero; whether ctor3602's (late-unobserved) store
+caused it remains UNPROVEN.
+
+**static-A #687 — all quoted disasm verified verbatim:** ctor3602 `0x2279a47` writes
+`0x7cef650` UNCONDITIONALLY — `2279a4b xor %eax,%eax`, `2279a8f mov %al,0x7cef650`, no
+test/getenv/GOT/import/syscall/CPU-feature/detection call between; only later calls
+`2279adf call 1dc1208` / `2279b48 call 2e8afb0` build objects. RETRACTED the detection-call premise.
+Assert polarity: `6caef4f cmpb $0,0x7cdd149` (latch FIRST), `6caef56 je 6caef66`,
+`6caef58 cmpb $0,0x7cef650` (mimalloc SECOND), `6caef5f je 6caef66`, `6caef61 call abort@plt`,
+`6caef66 int3` — `je` on ZERO ⇒ int3 when EITHER byte zero; explicit abort only when BOTH nonzero.
+static-A could not quote a local SHA banner (UNPROVEN from its side; harness covers it 3/3).
+NOTE: static-A reported its branch push BLOCKED ('unable to write new index file'), files on disk.
+
+**static-B #688 — all quoted source/log lines verified verbatim:** `guest_dlopen_host.c:819-875`
+std ranges `{2,3},{5,3618}` (3602 in replay set), loop `:833`, call `:875`; log
+`[harness] ctor[3602] rva=0x2279a47` (n5_1.err:3652, also n7 line 3652); ctor3602 runs before
+ctor0 replay/scheduler install/latch flip (n5 order 3652/3687/3689/3706); real boot runs skipped
+ctor 0/1/3/4 via Android linker (decision-008 ctor0 skip); `dl_iterate_phdr` export
+(bionic_libc.map:348), TRAMP macro (:459-470: `:464 movq fn,%rax`, `:465 test`, `:466 jz 1f`,
+`:467 jmp *%rax`, `:468 xorl %eax,%eax`, `:469 ret`), fn fill `:919 native_lookup`; returns 0
+with NO callback if pointer NULL — which branch runs UNPROVEN (no runs by static-B).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n7-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 70 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n7. Marker WITHHELD.
