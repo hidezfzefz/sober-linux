@@ -1,0 +1,43 @@
+     * after each one. */
+    long rc;
+    if (!getenv("SOBER_N1_NO_PREBASE_REPLAY")) {
+        void *s_splash = sober_jni_new_string_utf8(j, "ActivitySplash");
+        /* #552's argument is logged only as opaque [object Object]; use the
+         * harness's real native-backed shared_param_obj (not a fabricated
+         * empty object) as the closest genuine host-bridge value. */
+        void *opaque = param_obj;
+        rc = ((long (*)(void *, void *, void *))(base + 0x23239c5u))
+                 (env, app_class, s_splash);
+        fprintf(stderr, "[N14_REPLAY 1/3] nativeOnPreCreated 0x23239c5"
+                        "(\"ActivitySplash\") -> rc=%ld\n", rc);
+        n14_log_guard(base, "after nativeOnPreCreated");
+
+        rc = ((long (*)(void *, void *, void *))(base + 0x2328066u))
+                 (env, app_class, s_splash);
+        fprintf(stderr, "[N14_REPLAY 2/3] nativeOnResumed 0x2328066"
+                        "(\"ActivitySplash\") -> rc=%ld\n", rc);
+        n14_log_guard(base, "after nativeOnResumed");
+
+        if (!getenv("SOBER_N1_SKIP_THIRD")) {
+          if (getenv("SOBER_N2_JAVA_OBJECT")) {
+            n2_obj_active = 1;
+            sober_jni_set_callback_handler(j, "size", n2_size_handler, NULL);
+            sober_jni_set_callback_handler(j, "get",  n2_get_handler,  NULL);
+            opaque = sober_native_java_list(j, NULL, 0);
+            fprintf(stderr, "[N2_OBJ BUILT] DEX-typed java/util/List "
+                            "size=0 get=(I)Ljava/lang/Object; mPid=I "
+                            "class=ApplicationExitInfoCpp list=%p\n", opaque);
+          }
+          rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
+                   (env, app_class, opaque);
+          fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
+                          "Initialization3 0x2383c18([object Object])"
+                          " -> rc=%ld\n", rc);
+          n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
+        } else fprintf(stderr, "[N14_REPLAY 3/3] SKIPPED (diagnostic)\n");
+    }
+
+    if (getenv("SOBER_N15_SCAN")) n15_scan_closures(base);
+
+    /* Generic SysV calls: first 6 pointer args in registers, remainder on the
+     * stack. Each JNI static native method takes (JNIEnv*, jclass, ...). */
