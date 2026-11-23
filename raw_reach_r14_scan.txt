@@ -1,0 +1,25 @@
+=== reachability: calls to 2a14330 in lifecycle native ranges ===
+nativeOnPreCreated range hits: 0
+nativeOnResumed range hits: 0
+nativePostClientSettingsLoadedInitialization3 range hits: 1
+    23c1136:	e8 f5 31 65 00       	call   2a14330
+=== r14 setup in 0x2a0e8c0 fn ===
+ 2a0e90a:	4c 21 f2             	and    %r14,%rdx
+ 2a0e980:	4d 21 f2             	and    %r14,%r10
+ 2a0e98e:	4d 21 f3             	and    %r14,%r11
+ 2a0e9b6:	4d 21 f1             	and    %r14,%r9
+ 2a0e9c3:	4d 21 f2             	and    %r14,%r10
+ 2a0ea10:	4c 21 f0             	and    %r14,%rax
+ 2a0ea47:	4c 89 f1             	mov    %r14,%rcx
+ 2a0ea4e:	4c 09 f1             	or     %r14,%rcx
+ 2a0eb0c:	4c 89 f6             	mov    %r14,%rsi
+ 2a0eb55:	4c 89 f2             	mov    %r14,%rdx
+ 2a0eb85:	4c 89 f0             	mov    %r14,%rax
+ 2a0ebe4:	4c 21 f0             	and    %r14,%rax
+ 2a0ebed:	4c 01 f2             	add    %r14,%rdx
+ 2a0ec0c:	4c 21 f3             	and    %r14,%rbx
+ 2a0ec66:	4d 21 f1             	and    %r14,%r9
+ 2a0ec9c:	4d 21 f0             	and    %r14,%r8
+ 2a0ed12:	4d 21 f7             	and    %r14,%r15
+ 2a0ed35:	4c 89 73 38          	mov    %r14,0x38(%rbx)
+ 2a0ed39:	4c 89 73 40          	mov    %r14,0x40(%rbx)
