@@ -185,6 +185,28 @@ static void n7b_after_sig(int s, siginfo_t *si, void *uc)
              (g == 1) ? "" : "UNREADABLE-", (unsigned)v);
     n7b_log("[N7B_AFTER 0x2279a95]", n, extra);
 }
+/* n7 WAVE3: read-only exec bp at 0x2383c18 (3rd replay) armed at the same
+ * earliest guest-base hook, before the constructor replay loop. */
+static long n7b_third_hits;
+static void n7b_third_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n7b_third_hits, 1, __ATOMIC_RELAXED) + 1;
+    char b[320], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, "[N7C_THIRD 0x2383c18] hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    static const struct { const char *n; int g; } rr[] = {
+        {"rdi",REG_RDI},{"rsi",REG_RSI},{"rdx",REG_RDX},{"rcx",REG_RCX}
+    };
+    for (unsigned i = 0; i < sizeof(rr)/sizeof(rr[0]); ++i) {
+        w24_put(&p, " "); w24_put(&p, rr[i].n); w24_put(&p, "=");
+        w24_u64(&p, (uint64_t)c->uc_mcontext.gregs[rr[i].g], 1);
+    }
+    w24_line(&p, b, end);
+}
+
 static int n7b_perf(uintptr_t addr)
 {
     struct perf_event_attr a; memset(&a, 0, sizeof(a));
@@ -216,8 +238,11 @@ static void n7b_arm_all(uintptr_t base)
     int a1 = n7b_arm(f1, SIGUSR1, n7b_entry_sig);
     int a2 = n7b_arm(f2, SIGUSR2, n7b_store_sig);
     int a3 = n7b_arm(f3, 36, n7b_after_sig);
-    fprintf(stderr, "[N7B_ARM] base=%p fds=%d/%d/%d rc=%d/%d/%d\n",
-            (void *)base, f1, f2, f3, a1, a2, a3);
+    int f4 = n7b_perf(base + 0x2383c18u);
+    int a4 = n7b_arm(f4, 37, n7b_third_sig);
+    fprintf(stderr,
+            "[N7B_ARM] base=%p fds=%d/%d/%d/%d rc=%d/%d/%d/%d\n",
+            (void *)base, f1, f2, f3, f4, a1, a2, a3, a4);
 }
 
 /* n4 HOST-ONLY: /proc/self/maps reader using only open/read/close/write.
