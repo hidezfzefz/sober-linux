@@ -1,0 +1,8 @@
+85:J2N #70 t=2422ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetRobloxChannel("")
+542:J2N #527 t=290171ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetRobloxChannel("")
+549:J2N #534 t=290179ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetRobloxVersion("2.740.931")
+556:J2N #541 t=290202ms com.roblox.engine.jni.NativeGLInterface.nativeGameGlobalInit()
+566:J2N #551 t=290317ms com.roblox.engine.jni.NativeGLInterface.nativeInitClientSettings("{"applicationSettings":{"DFFlagConsumePlatformNameOverAlternateName":"False","DFFlagDebugEnableRemoteProfiling2":"True",...", null, "GoogleAndroidApp")
+627:J2N #612 t=290866ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetBaseDataDirectories("/data/user/0/com.roblox.client", "/storage/emulated/0/Android/data/com.roblox.client")
+628:J2N #613 t=290868ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetPreferencesFile("prefs")
+629:J2N #614 t=290891ms com.roblox.client.flags.FlagJniInterface.nativeInitializeNativeFlags(EnableAndroidBinaryChannelDownloadTiming,PgsTreatmentActive,EnableLazyWorkManagerInit,EnableAppPlatformQoSEmergencyOnAnd...)

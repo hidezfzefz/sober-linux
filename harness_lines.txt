@@ -1,0 +1,7 @@
+3675:[render] guest call 0x649d422 swap(ctx=0x7fffffffcc10, egl=0x5555558f3e80, surf=0x5555559199b0) -> rc=0 | guest-driven swaps observed: 1
+3706:[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 D08_len=0 latch=1 CF0=0 72a31b8=0x1
+3715:[app-shell] genuine JNI_OnLoad 0x227af5a -> ver=0x10006
+3724:[app-shell] guest call 0x24650a9 nativeSetBaseDataDirectories(base1,base2) -> rc=-6066930334832433271
+3725:[app-shell] guest call 0x232d484 nativeSetRobloxVersion(ver) -> rc=-6066930334832433271
+3726:[app-shell] guest call 0x2326e2e nativeSetRobloxChannel(chan) -> rc=-6066930334832433271
+3727:[app-shell] guest call 0x233762c nativeGameGlobalInit() -> rc=-6066930334832433271
