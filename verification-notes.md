@@ -1,38 +1,51 @@
-# W29 audit verification notes (worktree w29-audit)
+# W30 audit verification notes (worktree w30-audit)
 
-Engine SHA `3e498d64`. No device, no runs by audit. Faulting instruction named first.
+Engine SHA `3e498d64`. NEW RULE: every success claim must QUOTE its raw log line.
 
-## Secrets scan (command + output)
-COMMAND: `grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/w29-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
-OUTPUT: 3 matches, all the SAME self-match — the ledger's own recorded w28 secrets-scan
-command line (in each of the 3 worktree copies of FABRICATION-LEDGER.md:432). No credential values.
+## Secrets scan (command + output) — see final report
+Credential-value regex over /tmp/opencode/w30-*/ → expected self-matches only.
 
 ## Git / branches
-`git ls-files | grep -iE '(w2[0-9]-|arg0|\.pcap$|\.dump$|frida|logcat|phone|base\.apk)'` →
-(no capture/phone/logcat files tracked). Worktrees w29-audit/w29-static/w29-harness each on own branch.
+No capture/phone/logcat tracked files; w30 worktrees each on own branch.
 
-## Agent claim verification
+## RECHECK of W29 harness report (task requirement) — with quoted lines
 
-### static #633 — VERIFIED (PROVEN)
-Evidence `/tmp/opencode/w29-static/{report.md,dis_*.txt,symbols.txt,capture_missing_natives.txt}`.
-- FAULTING INSTR 0x6ca229c = call *0x548(%rax) (bytes ff9005480000, verified earlier); stack RA
-  0x231555c NOT fault. (Prior-wave fact, restated; no new evidence needed.)
-- 2 guest setspecific writers of key 0x72a1b08: 0x2ea656e `call pthread_setspecific@plt` in
-  accessor 0x2ea6440 (fresh calloc state, +0=1 @0x2ea6555), 0x2ea6695 `jmp pthread_setspecific@plt`
-  in dtor 0x2ea6670 — verified in dis_tls_key3.txt / dis_tls_destructor.txt. 0x2ea61b6 is a
-  different key (excluded) — dis_key_other.txt. Key created @0x2ea664f by once cb 0x2ea6640.
-  Threads UNPROVEN. JNI_OnLoad no setspecific (PROVEN).
-- Missing natives: SetPreferencesFile 0x246515d (capture #613 "prefs"), InitFlags 0x2465210
-  (capture #614 flag String[]) — symbols.txt confirms both RVAs; harness 0x2465210 opt-in,
-  0x246515d never. PROVEN.
+PROVEN (each with quoted raw line):
+1. Source defs: quote `avd_boundary.h:16 #define SOBER_AVD_BOUNDARY_PATH "/tmp/opencode/w11-arg0.json"`,
+   `:18 UNVERIFIED`, `:19 PATH_ENV`, `:20 SHA256 8215519f…`; `avd_boundary.c:102-104` consumed.
+2. Modified-input exports: quote `w20-harness/memrun.sh:7 export SOBER_AVD_BOUNDARY_PATH=/tmp/opencode/w15-flags-1.json`,
+   `w22-harness/runbatch.sh:9 ...`, `w29-harness/runall.sh:15 ...`.
+3. Full-JSON runs: quote `full_on_1.err:3703 [avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519f...`
+   and `:3704 [app-shell] AVD boundary pre: arg0_len=1533221 ...`.
+4. (b) TSD trace: quote `tsdtrace2.err:3706 [W29_TLS 0x2315556] ... key=3 ... eq=1`,
+   `:3727 ... tls=0x55555721ec90 ... [seed]=0x7265502f666f7270 eq=0`;
+   `seedoff_trace.err:3701 [app-shell] W29 TSD seed OFF`, `:3706 ... tls=0x55555568b230 [tls]=0x1`.
+5. (c) seed-OFF fault: quote `seedoff_pairs_1.err:3763 [W28_FAULT_INSN] ... guest_rva=0x02a13354`
+   and `:3762 signal=11 ... si_addr=0x00007fffff7feff8`, 3/3; pairs W28_POST2315 #1-#8 in each of 3 runs.
+6. (d) host fault + fix: quote `native_jni.c:182-188` with `if (!w21_base) return 0;` at :187.
+7. (e) seed-ON table: quote `full_on_*.err [W28_FAULT_INSN] ... guest_rva=0x06ca229c` 3/3.
+8. RETRACTED section: quote `full_{on,off}_*.err`: NO init/frame strings (they are in *.out only, e.g.
+   `full_off_1.out`); NO W21_LATCH_HIT; `13x [checkpoint] rung1 FAIL (DEBT=1)`.
+
+UNSUPPORTED claims in W29 harness report (to flag):
+A. "w28-harness/rund3.sh" cited as modified-input export — FILE DOES NOT EXIST (w28-harness has only
+   run6.sh). Other script citations (memrun.sh:7, runbatch.sh:9, runall.sh:15) are valid.
+B. Table seed-OFF row attributes the masked fault to `full_off_*.err`; THOSE LOGS CONTAIN NO FAULT LINES.
+   The masked-fault evidence is core.1529212 (verified last wave: tid 1529212, rip 0x5555555690b0,
+   r13=si_addr=0x7fffff7fefc0) from coretry, not the full_off runs. Attribution unsupported.
+
+## Agent claim verification (W30)
+
+### static #635 — VERIFIED (all quoted lines match raw files exactly)
+- Quote `'[W29_TLS 0x6ca228b] tid=1521493 key=3 tls=0x55555568b230 [tls]=0x1 ... seed=(nil) [seed]=0 eq=0'`
+  → found verbatim in w29-harness seedoff_trace.err. Quote `'[app-shell] pre-OnLoad TSD key=3
+  get=0x55555568b230'` → found verbatim. Guest TLS supplier claim PROVEN.
+- 8/8 quotes `'[W28_PRE2315 #1] ... tid=1521155'`, `'[W28_POST6CA2 #1]'`, `'[W28_POST2315 #1]'`
+  → found verbatim in seedoff_pairs_1.err (#2..#8 likewise, 3 runs).
+- Capture order quotes: J2N #70 Channel(""), #534 Version("2.740.931"), #541 GameGlobalInit(),
+  #612 BaseDirs(2 Android dirs) → all found verbatim in raw_capture_order.txt.
+- Static terminator (predicate 0x6ca21f4, je 0x6ca2282) PROVEN from disasm prior waves; real-boot
+  +0x28 zeroing UNPROVEN (agent states so).
 
 ## Pending
-harness — no formal report at time of writing.
-
-## Seeded-state inventory (from ledger + source, to be finalized)
-- Modified inputs: SOBER_AVD_BOUNDARY_REPLAY 1,533,221B JSON (ledger #1/#2/#3); SOBER_AVD_BOUNDARY_PATH
-  78B w15-flags-1.json (ledger #9).
-- TSD seed: SOBER_STUB_TSD_SEED / approved host TSD seed key3 non-NULL (ledger #16).
-- Remaining seeder slots: 0x72a2f48..0x72a3050 still seeded; only 0x72a3058 excluded (ledger #13).
-- Host value fixes: distinct base dirs (#19), empty channel (#20), captured-order replay (#21).
-- Default-off diag knobs (no ledger line each): many SOBER_* in withhold chain.
+harness #636 — no formal W30 report at time of writing.
