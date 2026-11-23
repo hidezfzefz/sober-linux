@@ -877,12 +877,41 @@ si_addr=0x8). **QUOTE-RULE DEFECT flagged and FIXED:** report initially quoted `
 (pre-fix tid) for the post-fix call720 line; actual raw is `tid=1821202`. Harness corrected
 report to `tid=1821202` (verified in pushed report line 35); no claim remains unsupported.
 
+**Step 2 (static-A #668) — all quoted claims verified:** authoritative DEX classes2.dex from
+`/tmp/opencode/auth-base.apk` sha 114a6f8e (rivals w24-phone/base.apk 2badef75db6f and
+sober-rea-fresh/work/base.apk fff6fcb4b29a rejected), extracted OUTSIDE git to `/tmp/opencode/n2-dex/`.
+Quoted `METHOD idx=15180 class=Lcom/roblox/engine/jni/NativeGLInterface; name=nativePostClientSettingsLoadedInitialization3
+proto='(Ljava/util/List;)V'`, `CLASS_DEF idx=1953 super=Ljava/lang/Object; interfaces_off=0`,
+static_fields=0 instance_fields=0; caller `Luh/e$f;->b(Ljava/lang/Integer;)V` @0x335152; factory
+`Lyj/l2;->a(Landroid/content/Context;)Ljava/util/List;`. JNIEnv calls verified verbatim in raw
+disasm/strings: `2383cb6 call *0x30 (%rax)` FindClass `java/util/List`,
+`2383cfc call *0x108` GetMethodID `get (I)Ljava/lang/Object;`, `2383d2a` GetMethodID `size ()I`,
+`23846b6 call *0x190` CallIntMethodV, `2315d92 call *0x118` CallObjectMethodV (verified by direct
+objdump; absent from saved evidence files), `2383dac call *0x2f0` GetFieldID `mPid I`,
+`2383dbf call *0x320` GetIntField. Needs 2 methods + 1 field, 2 framework classes — within
+<=5 methods / <=3 classes limits (lead-confirmed). Concrete List impl UNPROVEN.
+
 **HARNESS-JAVA-OBJECT status:** NONE built or credited at step 4. static-A stopped object work
 per kill switch; only prep occurred (DEX extracted OUTSIDE git to `/tmp/opencode/n2-dex/`:
 classes.dex 9057172 B, classes2.dex 6145160 B, classes3.dex 6983328 B; apktool; authoritative
 base.apk `/tmp/opencode/auth-base.apk` sha 114a6f8e). No DEX method/field extraction, no #552
-param type, no JNIEnv call list, no object tier. If a HARNESS-JAVA-OBJECT is later built, it
-MUST carry an owner + removal condition in this ledger before any credit.
+param type, no JNIEnv call list, no object tier at step 4. If a HARNESS-JAVA-OBJECT is later built,
+it MUST carry an owner + removal condition in this ledger before any credit.
+
+### Step 3 object tier (task #669) — audit verified, all limits respected
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 39 | **HARNESS-JAVA-OBJECT: DEX-typed `java/util/List` with exactly `size()I`, `get(I)Ljava/lang/Object;`, `mPid:I` on `ApplicationExitInfoCpp` (2 methods + 1 field, 2 framework classes); built from authoritative DEX 114a6f8e with NO fabrication, HARD-FAIL on unimplemented methods (no silent defaults), env switch `SOBER_N2_JAVA_OBJECT` default OFF; rung1 stays `PASS-BOUNDARY-REPLAY (DEBT=1)` label only, gate never CLEAN, marker WITHHELD. Result: guard still 0, recursion NOT gone — STOP, no extension** | raw obj_on_1/2/3 `[N2_OBJ BUILT] DEX-typed java/util/List size=0 get=(I)Ljava/lang/Object; mPid=I class=ApplicationExitInfoCpp list=0x…`, `[N2_OBJ size] List.size()I -> 0 (Collections.EMPTY_LIST DEX path)`; source `guest_app_shell.c:145/157 [N2_OBJ HARD_FAIL]`, `:1751 if (getenv("SOBER_N2_JAVA_OBJECT"))`; raw 6 runs `[[rax]+0x28]=0` (18 lines), rung1 PASS DEBT=1 6/6, rc=139 6/6, fault `rip=...08ff si_addr=0x8` | harness (owner), audited | Minimal DEX-typed probe of #552 object within <=5 methods / <=3 classes; did not change guard or terminate recursion; no credit claimed | "a genuine Java runtime supplies this" (lead's exact wording) — remove when a real Java/DEX runtime supplies the List/ApplicationExitInfoCpp object on the authoritative input and no harness-built object is needed |
+
+**Hard-fail/stop limits — all respected:** class/fields/signatures quoted from authoritative DEX
+114a6f8e (static-A #668); 2 methods + 1 field (<=5), 2 framework classes (<=3); `HARD_FAIL`
+handlers at `guest_app_shell.c:145/157` (no silent defaults; 0 HARD_FAIL lines because `size()=0`
+skips the loop at `0x2383d40: jle 23844e9`); env `SOBER_N2_JAVA_OBJECT` opt-in default OFF
+(`:1751`); rung1 PASS (DEBT=1) label only, gate never CLEAN, marker WITHHELD; guard 0 in all
+18 observations; rc=139 6/6; STOP honored (no extension, no broader object, no extra methods).
+Source diff (f8a0069→HEAD) touches only `src/jni/native_jni.c` + `src/linux/guest_app_shell.c`;
+only `memcpy` is host-struct (`guest_env_table`), no guest byte writes; no rung/gate/marker changes.
 
 **Hard-fail/stop limits:** kill switch stopped steps 2-3 object work immediately (respected);
 no host fix applied while adjudication pending (respected); read-only exec bps only, no
@@ -890,6 +919,6 @@ guest writes/gate/seeder/fake returns/path remaps; no object credited.
 
 **Secrets-scan command + output:**
 `grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n2-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
-→ OUTPUT: 36 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+→ OUTPUT: 38 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n2. Marker WITHHELD.
