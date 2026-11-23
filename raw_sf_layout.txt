@@ -1,0 +1,31 @@
+    n = cident(s["name"])
+    lines.append(f"void *sober_libc_fn_{n};")
+lines.append("")
+for s in objs:
+    n = cident(s["name"])
+    # __sF must cover Bionic's FILE __sF[3] (0x198 bytes): the guest derives
+    # stdout/stderr as __sF+0x98 / __sF+0x130.
+    obj_size = "0x200" if n == "__sF" else "64"
+    lines.append(f"unsigned char sober_libc_obj_{n}[{obj_size}];")
+lines.append("")
+
+lines.append("#define TRAMP(name) \\")
+lines.append("    __asm__ volatile ( \\")
+lines.append('        ".globl " #name "\\n\\t" \\')
+lines.append('        ".type " #name ", @function\\n\\t" \\')
+lines.append('        #name ":\\n\\t" \\')
+lines.append('        "movq sober_libc_fn_" #name "(%%rip), %%rax\\n\\t" \\')
+lines.append('        "testq %%rax, %%rax\\n\\t" \\')
+lines.append('        "jz 1f\\n\\t" \\')
+lines.append('        "jmp *%%rax\\n\\t" \\')
+lines.append('        "1: xorl %%eax, %%eax\\n\\t" \\')
+lines.append('        "ret\\n\\t" \\')
+lines.append('        ".size " #name ", .-" #name "\\n\\t" \\')
+lines.append("        : : : \"memory\")")
+lines.append("")
+
+# Bionic stdio: __sF[3] uses a Bionic FILE layout (stride 0x98), so a guest
+# fflush() on those objects must be mapped to the host streams.  glibc's
+# fflush would interpret the Bionic struct as a glibc FILE and crash.
+lines.append("/* Bionic stdio stream translation (__sF stride 0x98). */")
+lines.append("static FILE *sober_host_stdin, *sober_host_stdout, *sober_host_stderr;")

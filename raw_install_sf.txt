@@ -1,0 +1,46 @@
+/* src/compat/bionic_sf_full.c lives in the dlopened libc.so stub, not in this
+ * executable; resolve its opt-in installer through the stub handle. */
+static uintptr_t g_sf_base;
+
+static void install_sf_full(uintptr_t base)
+{
+    g_sf_base = base;
+    void *stub = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
+    if (!stub) return;
+    void (*fn)(unsigned char *) =
+        (void (*)(unsigned char *))dlsym(stub, "sober_bionic_sf_full_install");
+    if (fn) fn(__sF);
+    fprintf(stderr, "[bionic-sf] guest GOT __sF=%p | android_compat __sF=%p "
+                    "| libc-stub __sF=%p\n",
+            (void *)*(uintptr_t *)(g_sf_base + 0x72281d8u),
+            (void *)__sF, dlsym(stub, "__sF"));
+}
+
+/* Task #466: getter handlers for the Java StartGameParams builder. Values are
+ * neutral stand-ins; the point is to let the genuine guest game-load path run
+ * and reach notifier 0x27eaf6e -> gameLoadedCallback(J)V. */
+static intptr_t game_params_get(void *env, void *obj, const char *name,
+                                const char *sig, void *args, void *user)
+{
+    (void)env; (void)obj; (void)sig; (void)args;
+    SoberJni *j = (SoberJni *)user;
+    if (!j || !name) return 0;
+    if (!strcmp(name, "gameId") || !strcmp(name, "placeId"))
+        return (intptr_t)sober_jni_new_string_utf8(j, "123456789");
+    if (!strcmp(name, "accessCode"))
+        return (intptr_t)sober_jni_new_string_utf8(j, "");
+    if (!strcmp(name, "username"))
+        return (intptr_t)sober_jni_new_string_utf8(j, "SoberUser");
+    return 0;  /* userId / isUnder13: neutral integers */
+}
+
+int guest_app_shell_run(uintptr_t base)
+{
+    if (getenv("SOBER_ABRT_DIAG")) {
+        g_abrt_base = base;
+        signal(SIGABRT, sober_abrt_diag);
+    }
+    SoberJniOptions opts;
+    memset(&opts, 0, sizeof(opts));
+    opts.app_name = "sober-native-app-shell";
+    opts.verbose = getenv("SOBER_JNI_VERBOSE") ? 1 : 0;
