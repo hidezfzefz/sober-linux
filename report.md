@@ -1,69 +1,88 @@
-# n5 #680 static-B — after-#552 calls, threads, 3rd N14 replay (READ-ONLY)
+# n6 #683 — mimalloc anchors, ctor skip, 0x7cef650 writer/assert
 
-FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f`, `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=0 (n4 audit #677, ledger 42). Object OFF. All quotes raw from saved source/captures.
+Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
+Evidence: `raw_mimalloc_strings.txt`, `raw_mimalloc_xrefs.txt`, `raw_assert.txt`,
+`raw_ctor3.txt`, `source_fflag.txt`.
 
-## (a) PROVEN — harness calls after #552 returns (src/linux/guest_app_shell.c)
+Faulting instruction first (prior wave, host): `7c8ff: 48 8b 47 08 mov
+rax,[rdi+0x8]` = `_IO_fflush+0x9f`, NULL rdi.
 
-Source lines 1768-1845, in order:
-```
-if (getenv("SOBER_N15_SCAN")) n15_scan_closures(base);
-    rc = ((long (*)(void *, void *, void *, void *))(base + 0x24650a9u))
-             (env, app_class, s_base1, s_base2);
-      rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
-               (env, app_class, s_ver);
-      rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
-               (env, app_class, s_chan);
-        rc = ((long (*)(void *, void *, void *))(base + 0x246515du))
-                 (env, app_class, s_prefs);
-        rc = ((long (*)(void *, void *, void *))(base + 0x2465210u))
-                 (env, app_class, flags);
-      rc = call_jni_static(base + 0x233762cu, env, app_class);
-    rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
-             (env, app_class, param_obj);
-```
-(Line-wrapped call expressions quoted verbatim; intervening `fprintf(stderr,"[app-shell]...")` log lines omitted for brevity but present in source.)
-Each is followed by `fprintf(stderr, "[app-shell] ... -> rc=%ld\n", rc)` — host stderr logging, **not** the guest fflush shim. Note: in object-OFF Run D, #552 faults internally and never returns; this sequence is only reached when #552 returns.
+## (a) Anchors / containing functions — PROVEN
 
-**Next 3 guest threads** by first appearance in `/tmp/opencode/w18-avd/peract2.log` (after Main seq1 / DefaultDispatch seq6):
-```
-{"seq":71,"phase":"PRE_LATCH_WR","site":"ENTRY@0x2312009","tid":4572,"thread":"AsyncTask #3","depth":16,...,
-{"seq":89,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4605,"thread":"FunctionMarshal","depth":16,...,
-{"seq":100,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4585,"thread":"RBX Worker A","depth":3,...,
-```
-(`...` marks truncated tail of each JSON line; prefix is verbatim.)
-Further: HttpClientHandl seq=115, RBX Worker B seq=122. Temporal alignment of these first appearances to #552's return is **UNPROVEN** (peract2 has no #552 marker).
+Quoted rodata (`strings -t x`):
+> `4c0d2b Expect to have mimalloc working, but it was not detected!`
+> `3a3078 [DFLog::Mimalloc] Mimalloc integration is NOT detected`
+> `36a5f0 [DFLog::Mimalloc] Mimalloc integration detected, settings:`
+> `2bfdf9 [DFLog::Mimalloc] mi_option_verbose={}`
+> `231741 environment option "mimalloc_%s" is deprecated ...`
+> `287e15 environment option mimalloc_%s has an invalid value.`
 
-**Which logs through fflush:** guest-side only — FLog logger `0x2e61ca0` (`0x2e61ce2: mov 0x40(%rbx),%rcx; ... call fwrite@plt (0x2e61cf1)` / `0x2e61d0f: mov 0x40(%rbx),%rdi; call fflush@plt (0x2e61d13)`, per w18-avd/analysis/fflag-registry-fault2-stdio.md:87-91) and fatal helper `0x2ea6a10` (`2ea6a8c: call fprintf@plt; 2ea6a94: call fflush@plt`, format `0x2345cf="libunwind: %s - %s\n"`, n4 #675). Shim `src/compat/bionic_libc.c:487`: `int fflush(FILE *stream)` maps `__sF+0x98/+0x130` then `return real ? real(mapped) : 0;` — NULL mapped stream reaches glibc `_IO_fflush` and faults.
+Raw xrefs (quoted):
+> `239eb44: lea … # 36a5f0` and `239edb2/239ee23: lea … # 2bfdf9`
+> `23a1445: lea … # 3a3078`, `23a1465: lea … # 4c0d2b`
+> `6c80008/6c8020a/6c80232: lea … # 231741 / # 287e15`
 
-## (b) PROVEN — 3rd N14 replay + threads after OnResumed
+Containing functions: `0x239ead3` (prologue `55 48 89 e5 … sub $0x58,%rsp`) =
+mi_option dump printer, reached by #552: quoted caller `239d215: call 239ead3`
+(inside #552 body `0x2383c18..0x23c1200`). The "NOT detected" / "Expect to have
+mimalloc working" strings are used in the `0x23a14xx` region; the exact
+containing function start was not recovered (no standard prologue found in
+`0x239f000..0x23a1450`) — **UNPROVEN**. `mimalloc_%s` env-option handling is in
+function `0x6c7ff41` (`55 48 89 e5 … sub $0xb0,%rsp`).
 
-`src/linux/guest_app_shell.c:1759-1766`:
-```
-rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
-         (env, app_class, opaque);
-fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
-                "Initialization3 0x2383c18([object Object])"
-                " -> rc=%ld\n", rc);
-n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
-```
-It is the third of the AVD-captured pre-BaseDirs natives: #67 `nativeOnPreCreated` (`0x23239c5`), #105 `nativeOnResumed` (`0x2328066`), #552 `nativePostClientSettingsLoadedInitialization3` (`0x2383c18`). `opaque = param_obj` (harness's real native-backed `shared_param_obj`); with `SOBER_N2_JAVA_OBJECT` it is a DEX-typed `java/util/List` from `sober_native_java_list(j, NULL, 0)` (**object OFF in this wave**). Capture `w12-j2n-300.log:82,120,567`:
-```
-J2N #67 t=2406ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnPreCreated("ActivitySplash")
-J2N #105 t=20511ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnResumed("ActivitySplash")
-J2N #552 t=290696ms com.roblox.engine.jni.NativeGLInterface.nativePostClientSettingsLoadedInitialization3([object Object])
-```
-**Threads after OnResumed** — `w18-avd/report.md:30` POST_LATCH_WR phase:
-```
-threads: RBX Worker A x19, FunctionMarshal x15, DefaultDispatch x13,
-         Main x4, AsyncTask #3 x2, HttpClientHandl x1, RBX Worker B x2
-```
-These are the worker threads present in the post-latch phase; that phase follows the lifecycle replay in the AVD capture, but exact per-thread start times vs J2N #105 are **UNPROVEN**.
+## (b) Ctor reach + decision 008 skip — PROVEN
 
-## RETRACTED / UNPROVEN
+Quoted source `fflag_default.c:109-114`:
+> `{ 3u, 0x1db9a40u, "mimalloc usable-size/allocator feature probe (globals 0x7cdedd8/0x7cdede0); only reader 0x239eb14 selects a DFLog string -> no functional effect" }`
 
-- RETRACTED: treating host `[app-shell]`/`[N14_REPLAY]` lines as guest-fflush logs (they are host `fprintf(stderr,...)`).
-- UNPROVEN: exact thread set at the instant #552 returns; exact producer of rdi=0 among guest fflush sites; typed object path (object OFF).
+Ctor 3 (`0x1db9a40`) is **SKIPPED** by decision 008 (it is one of the three
+`k_skipped` entries; ctors 1/3/4 not required). Raw ctor body writes:
+> `1db9a4b: movq $0x20,0x7cdedd8` ; `1db9acf: mov %bl,0x7cdede0`
 
-## Evidence / NOT done
+The only reader of `0x7cdede0` is quoted:
+> `239eb14: cmpb $0x0,0x7cdede0` (in printer `0x239ead3`), followed by
+> `239eb1b: je 23a1422`, `239eb21: test %al,%al`, `239eb23: je 239eb6b`,
+> then `239eb44: lea … # 36a5f0` (a DFLog string).
 
-Evidence: report.md; sources quoted in place (guest_app_shell.c, bionic_libc.c, fflag-registry-fault2-stdio.md, w18-avd/report.md, w18-avd/peract2.log, w12-j2n-300.log). NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.
+So the mimalloc feature probe is read only to select DFLog text ⇒
+**`mimalloc probe=DFLog-only` is PROVEN** (both source comment and the quoted
+disassembly show no functional consumer). The `mimalloc_%s` env-option
+functions (`0x6c7ff41`) are **not** the skipped ctor 3; their ctor membership
+is UNPROVEN.
+
+## (c) 0x7cef650 writer and assert test — PROVEN
+
+Quoted raw lines:
+> writer: `2279a8f: mov %al,0x7cef650` — in function `0x2279a47`, which is
+> **init_array ctor index 3602** (from `init-array.json`: `{"index":3602,"rva":"0x2279a47"}`).
+> That index is inside decision 008's replay range `[5,3618)` — it is **NOT
+> skipped** (the three skipped are 1/3/4/0 per `fflag_default.c`), so it runs.
+
+Assert (quoted `6caef4f..6caef69`):
+> `cmpb $0,0x7cdd149` (latch) ; `je 6caef66`
+> `cmpb $0,0x7cef650` ; `je 6caef66`
+> `call 6d320d0 <abort@plt>`
+
+The assert is a **flag-nonzero byte test** (`cmpb $0` then abort when nonzero),
+gated by the latch byte — **NOT** a pointer-range check and **NOT** a version
+call. A separate version-style check does exist in the printer
+(`239eb03: cmp $0x6,%bl`; `239eb09: test $0xff00,%ebx`), but that is a
+different site, on `0x7cdf560`, not the `0x7cef650` assert.
+
+## ADD: mi_option dump printer + ctor — PROVEN/UNPROVEN
+Printer = `0x239ead3` (quoted prologue and `239eb44: lea … # 36a5f0`,
+`239edb2: lea … # 2bfdf9`); reached from #552 via `239d215: call 239ead3`. It
+is **not** an init_array ctor itself (no ctor RVA equals it); whether its
+ctor-3 caller chain is reachable when ctor 3 is skipped is UNPROVEN — the
+printer is still reached from #552 through a non-ctor path.
+
+## What NOT done
+No apply/build, no runs/gdb/perf, no device/AVD/Frida/phone, no new captures,
+no guest writes, gate edits, seeder, fake returns or path remaps, no
+credentials, no captures/logs/tokens in git.
+
+## First divergence + next step
+First divergence: skipped ctor 3 leaves mimalloc flag `0x7cdede0` unset, so the
+printer selects "NOT detected"/"Expect to have mimalloc working" DFLog lines;
+ctor 3602 still writes `0x7cef650`. Next: harness logs which mimalloc DFLog
+line is emitted in Run D.

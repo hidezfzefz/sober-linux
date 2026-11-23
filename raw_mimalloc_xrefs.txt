@@ -1,0 +1,8 @@
+1316053: 239eb44:	48 8d 0d a5 ba fc fd 	lea    -0x203455b(%rip),%rcx        # 36a5f0 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a6ccb0>
+1316199: 239edb2:	48 8d 0d 40 10 f2 fd 	lea    -0x20defc0(%rip),%rcx        # 2bfdf9 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b174a7>
+1316226: 239ee23:	48 8d 0d cf 0f f2 fd 	lea    -0x20df031(%rip),%rcx        # 2bfdf9 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b174a7>
+1318513: 23a1445:	48 8d 0d 2c 1c 00 fe 	lea    -0x1ffe3d4(%rip),%rcx        # 3a3078 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a34228>
+1318519: 23a1465:	48 8d 35 bf f8 11 fe 	lea    -0x1ee0741(%rip),%rsi        # 4c0d2b <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1916575>
+21025910: 6c80008:	48 8d 3d 32 17 5b f9 	lea    -0x6a4e8ce(%rip),%rdi        # 231741 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1ba5b5f>
+21026050: 6c8020a:	48 8d 3d 04 7c 60 f9 	lea    -0x69f83fc(%rip),%rdi        # 287e15 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b4f48b>
+21026058: 6c80232:	48 8d 3d dc 7b 60 f9 	lea    -0x69f8424(%rip),%rdi        # 287e15 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b4f48b>

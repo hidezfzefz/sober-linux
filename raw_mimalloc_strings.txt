@@ -1,0 +1,40 @@
+ 231741 environment option "mimalloc_%s" is deprecated -- use "mimalloc_%s" instead.
+ 231876 [DFLog::Mimalloc] mi_option_disallow_os_alloc={}
+ 2318a7 [DFLog::Mimalloc] mi_option_guarded_sample_seed={}
+ 24e8a8 [DFLog::Mimalloc] mi_option_abandoned_page_purge={}
+ 24e8dc [DFLog::Mimalloc] mi_option_deprecated_purge_extend_delay={}
+ 26bd4e [DFLog::Mimalloc] mi_option_eager_commit={}
+ 287e15 environment option mimalloc_%s has an invalid value.
+ 287f47 [DFLog::Mimalloc] mi_option_allow_large_os_pages={}
+ 287f7b [DFLog::Mimalloc] mi_option_guarded_precise={}
+ 287faa [DFLog::Mimalloc] {}
+ 2a28d9 [DFLog::Mimalloc] mi_option_os_tag={}
+ 2a28ff [DFLog::Mimalloc] mi_option_page_full_retain={}
+ 2bfdf9 [DFLog::Mimalloc] mi_option_verbose={}
+ 2bfe20 [DFLog::Mimalloc] mi_option_arena_eager_commit={}
+ 2bfe52 [DFLog::Mimalloc] mi_option_page_commit_on_demand={}
+ 2dcfa8 [DFLog::Mimalloc] mi_option_destroy_on_exit={}
+ 2f898e [DFLog::Mimalloc] mi_option_deprecated_max_segment_reclaim={}
+ 313509 [DFLog::Mimalloc] mi_option_purge_delay={}
+ 313534 [DFLog::Mimalloc] mi_option_retry_on_oom={}
+ 330473 [DFLog::Mimalloc] mi_option_max_warnings={}
+ 34d922 [DFLog::Mimalloc] mi_option_use_numa_nodes={}
+ 34d950 [DFLog::Mimalloc] mi_option_guarded_max={}
+ 36a5f0 [DFLog::Mimalloc] Mimalloc integration detected, settings:
+ 36a62b [DFLog::Mimalloc] mi_option_disallow_arena_alloc={}
+ 36a65f [DFLog::Mimalloc] mi_option_guarded_sample_rate={}
+ 3a3078 [DFLog::Mimalloc] Mimalloc integration is NOT detected
+ 3dc33f [DFLog::Mimalloc] mi_option_deprecated_page_reset={}
+ 3dc374 [DFLog::Mimalloc] mi_option_deprecated_segment_reset={}
+ 3dc3ac [DFLog::Mimalloc] mi_option_page_max_reclaim={}
+ 3f8c53 [DFLog::Mimalloc] mi_option_arena_reserve={}
+ 416003 [DFLog::Mimalloc] mi_option_reserve_os_memory={}
+ 432ebf [DFLog::Mimalloc] mi_option_max_vabits={}
+ 450f23 [DFLog::Mimalloc] mi_option_show_stats={}
+ 450f4d [DFLog::Mimalloc] mi_option_arena_purge_mult={}
+ 488c02 [DFLog::Mimalloc] mi_option_purge_decommits={}
+ 4a4cb7 [DFLog::Mimalloc] mi_option_deprecated_segment_cache={}
+ 4c0cfc [DFLog::Mimalloc] mi_option_visit_abandoned={}
+ 4c0d2b Expect to have mimalloc working, but it was not detected!
+ 515985 [DFLog::Mimalloc] mi_option_show_errors={}
+ 5159b0 [DFLog::Mimalloc] mi_option_page_cross_thread_max_reclaim={}

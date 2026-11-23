@@ -1,0 +1,6 @@
+/* The three constructors DECISION 008 skips that are NOT required. */
+static const SoberFflagSkippedCtor k_skipped[] = {
+    { 1u, 0x1dba8f3u,
+      "protobuf defaults/descriptor pool; body 0x1dba8f8 already called lazily "
+      "by replayed ctor[6] (0x1dbef4a: call 0x1dba8f8) -> no replay needed" },
+    { 3u, 0x1db9a40u,
