@@ -1,84 +1,70 @@
-# WAVE28 #629 — full wrapper disasm, rax provenance, byte/slot checks
+# W29 #632 — harness (one page)
 
-Read-only; no runs/device. Engine SHA `3e498d64…`. Faulting instruction named
-first per the new rule; no stack return address is treated as the fault site.
-Evidence: `dis_6ca21c6_6ca22b0.txt`, `dis_2315556.txt`, `bytes.txt`,
-`dis_accessor_2ea6440.txt`, `dis_2a0de60.txt`, `dis_2a0ed45.txt`,
-`dis_2a1362f.txt`, `capture_lines.txt`.
+Worktree `/tmp/opencode/w29-harness`, branch w29-harness. Engine SHA `3e498d64`.
+flock held for all runs. No device/guest writes/gate edits; seeder OFF.
+Faulting instruction named FIRST; stack RAs are not faults. Evidence:
+`tsdtrace2.err`, `seedoff_pairs_*.err`, `seedoff_trace.err`, `full_{on,off}_*.err`, `runall.sh`.
 
-## (a) Full wrapper `0x6ca21c6..0x6ca22b0` — PROVEN
+## (a) INPUT FIRST — PROVEN
+Default arg0 file is `/tmp/opencode/w11-arg0.json`, set at
+`src/jni/avd_boundary.h:16` (`SOBER_AVD_BOUNDARY_PATH`) and consumed at
+`src/jni/avd_boundary.c:101-102`; SHA constant at `avd_boundary.h:20`.
+W28 Run D overrode it to the 78-byte `w15-flags-1.json` via
+`SOBER_AVD_BOUNDARY_PATH` + `SOBER_AVD_BOUNDARY_UNVERIFIED=1`.
+W29: default unchanged (already authoritative); added SHA result export
+`g_w29_arg0_sha_ok` (`avd_boundary.c`) and the rung printer now emits
+`rung1 MODIFIED-INPUT (no credit) DEBT=n` on mismatch/unverified
+(`guest_app_shell.c`). Full-JSON runs log `verified ... sha256=8215519f...`,
+`arg0_len=1533221`. Ledger entry sent audit.
 
-**Faulting instruction: `0x6ca229c: ff 90 48 05 00 00 = call *0x548(%rax)`.**
-It dereferences **RAX** as a base, loads the 8-byte function pointer at
-`[rax+0x548]`, and calls it. It is the FALSE (non-scheduler) inner JNI call of
-the wrapper; the TRUE path uses the lambda at `0x6ca22ee`, which calls the same
-slot at `0x6ca2340`.
+## (b) TSD trace at 0x2315556 / 0x6ca228b — PROVEN
+TSD seed **is active** in Run D: `seed_stub_tsd()` (`guest_app_shell.c:117`)
+called from the OnLoad-first path (~:1109) and again (~:1360); key=3,
+`[seed+0]=0` initially, later `0x7265502f666f7270` ("profileP" LE — guest wrote it).
+With seed ON the live TLS equals the seed for the first two call-pairs (`eq=1`),
+then the guest replaces it (`tls=0x55555721ec90 != seed`, `eq=0`).
+With seed OFF the live TLS is still `0x55555568b230`, `[tls]=0x1` — **the guest
+sets its own TLS value**; no seed required.
 
-Provenance of that rax (no global, no direct obj field):
-```
-6ca228b  call 0x6c89e70        ; -> 0x2ea6440(0x7282068) TLS descriptor accessor
-6ca2290  mov (%rax),%rax       ; rax = *(field +0 of the TLS-resident object)
-6ca2293  mov %r15,%rdi         ; r15 = [0x6ca2287] = *(0x6c89e50()+0x18) (env obj)
-6ca2296  mov %r14,%rsi         ; r14 = arg2 saved at 0x6ca21db
-6ca2299  mov %rbx,%rdx         ; rbx = arg3 saved at 0x6ca21d8
-6ca229c  call *0x548(%rax)
-```
-`0x6c89e50/0x6c89e70` both `lea` a TLS descriptor (`0x7282048`/`0x7282068`)
-and call `0x2ea6440`; that accessor reads key `0x72a1b08`, calls
-`pthread_getspecific`, and returns `state[desc+0x10 index + 1]`. So rax is a
-**field (+0x00) of a TLS-resident object**, not the scheduler `obj`.
+## (c) Run D x3, TSD seed OFF (host-only env, modified input, pairs bp) — PROVEN
+rc=139 3/3. Faulting instruction **changed**:
+`guest+0x2a13354`, bytes `e8 07 ab ff ff` = **`call 0x2a0de60`** — the
+TLS-object accessor used by the predicate at `0x6ca21f4` (static #629).
+`si_addr=0x7fffff7feff8`. Pair counts `pre2315=8, post2315=8` — **all JNI calls
+returned**; no unmatched instance (contrast seed ON: 3 pre / 2 post).
 
-Predicate at `0x6ca21f4 call 0x2a13350` then `test %al,%al; je 0x6ca2282`
-tests `*(obj+0x28) != 0`, where `obj = *(TLS[0x722e540] + 0x410)` via
-`0x2a0de60` (`0x2a0de64` descriptor `0x722e560`, `0x2a0de7d` descriptor
-`0x722e540`, `0x2a0deba add $0x410,%rax`; predicate `0x2a1335e mov (%rax),%rax;
-0x2a13361 cmpq $0,0x28(%rax)`).
+## (d) Host fault resolution — PROVEN + FIXED
+`0x555555586e9b` (PIE base `0x555555554000` → file offset `0x32e9b`, W29 build
+`0x3329b`) = `sober_w21_boundary_ok()` at `native_jni.c:184`,
+`movzx edx, BYTE PTR [rax+0x7cdd149]` with `rax=w21_base=0`.
+Cause: `w21_init()` returns early when no watch env is set, leaving
+`w21_base=0`; the function dereferenced before its `w21_base &&` check.
+Depends on `SOBER_W28_PAIRS`: **yes** — that env sets `w21_base=base`, so the
+with-breakpoint path never hit the host fault; the no-bp path did.
+Host-only fix applied: `if (!w21_base) return 0;` before the read. Ledger sent.
+After the fix, seed-ON no-bp faults in the GUEST (`0x6ca229c`), not the host.
 
-**Guest writers found (PROVEN as instructions; exhaustiveness UNPROVEN):**
-- `0x2a0ed45: mov %r15,0x28(%rbx)` — scheduler-object initializer (writes the
-  callback word during construction).
-- `0x2a1362f: movq $0x0,0x28(%rdi)` — struct zero-init (clears +0x28).
-- The host-side `sober_jni_neutralize_guest_scheduler` memset at `p+0x28` is
-  **not** a guest writer and is excluded by scope.
-- `0x2ea6555: movq $0x1,(%r14)` / `0x2ea6561: mov %r12,0x8(%r14)` and
-  `0x2ea656e: pthread_setspecific` populate the TLS state that ultimately
-  supplies rax; no other guest writer of that field was located statically.
+## (e) 2×3 table — FULL captured JSON, NO breakpoints
 
-Capture-order natives before BaseDirs: `nativeSetRobloxChannel("")` (#70/#542),
-`nativeSetRobloxVersion("2.740.931")` (#534), `nativeGameGlobalInit()` (#541).
-Whether a `+0x28` writer sits on any of their paths is **UNPROVEN** statically
-(no dynamic trace in this wave).
+| seed | rc | faulting instruction | insn bytes |
+|---|---|---|---|
+| ON (3) | 139 ×3 | `guest+0x6ca229c` `call QWORD PTR [rax+0x548]`, `si_addr=0x548` | `ff 90 48 05 00 00 00 00` |
+| OFF (3) | 139 ×3 | crash handler ENTERED but faulted again while dumping (`guest-init-host+0x150b0` = `mov rax,[r13]`, `r13=0x7fffff7fefc0`); primary fault masked. Pairs-bp primary: `guest+0x2a13354` `call 0x2a0de60`, `si_addr≈0x7fffff7feff8` | pairs: `e8 07 ab ff ff` |
 
-## (b) Byte verification — PROVEN
-Raw file bytes at both sites are `ff 90 48 05 00 00`:
-`0x6ca229c` and `0x2315556` are both `call *0x548(%rax)`. Hence `0x6ca229c`
-is this wrapper's inner JNI call and **its return point is `0x6ca22a2`**
-(`mov (%r12),%rcx` canary check). The rax supplying register/field at
-`0x6ca229c` is `*(TLS[0x7282068]-resident object + 0x00)`; at `0x2315556` rax
-is `*(env+0x00)` from `0x231554b mov (%rsi),%rax`. Stack RA `0x231555c` is
-**not** the faulting instruction.
+**RETRACTED (lead/audit, verified against raw logs):** neither `guest init complete` nor `first frame rendered` appears in ANY `/tmp/opencode/w29-harness/*.err`; there is no `W21_LATCH_HIT` in any w29 log. All 13 full-JSON runs print `[checkpoint] rung1 FAIL (DEBT=1)` despite the verified SHA — the rung requires a real latch hit (RA `0x2359342`), which is absent.
 
-## (c) Slot convention (stated once) — PROVEN
-`SRNativeInterface` = 4 reserved pointers then `fn[231]` at `+0x20`, so
-`offset = 0x20 + 8*idx`, `fn[0] = GetVersion`, and the standard JNI index
-(including the 4 reserved slots) is `idx + 4`. Thus `0x548 -> idx 165 ->
-standard 169 -> GetStringUTFChars`; `0x550 -> idx 166`; `fn[169]` proper is at
-`0x568` (GetObjectArrayElement).
+Evidence for the masked no-bp case: `core.1529212`, parsed via `readelf -n` /
+NT_PRSTATUS: crashing tid 1529212 `rip=0x5555555690b0` (`guest-init-host+0x150b0`,
+inside `crash_handler`), `r13=0x7fffff7fefc0`, NT_SIGINFO `si_addr=0x7fffff7fefc0`
+= `r13`, so the handler itself faulted dereferencing that pointer while hex-
+printing a ring field. This is a separate host-only defect (ledger entry sent).
 
-## RA
-`0x6ca21c6 -> 0x2a13350 (obj+0x28 predicate) -> FALSE 0x6ca2282/0x6ca228b ->
-0x6ca2290 -> 0x6ca229c call *0x548(%rax) -> 0x6ca22a2 return/chk`.
-Parallel helper: `0x2315532 -> 0x231554b mov (%rsi),%rax -> 0x2315556 call
-*0x548(%rax) -> 0x231555c`.
-
-## What NOT done
-No diff applied/proposed for application, no harness edit, no runs/gdb/perf,
-no device/AVD/Frida/phone, no new captures, no guest writes, no gate edits,
-no ledger edits, no credentials. Writer exhaustiveness and dynamic predicate
-value are UNPROVEN.
-
-## First divergence + next step
-First divergence: the `*(obj+0x28)!=0` scheduler gate on these GetStringUTFChars
-wrappers and the capture-order/value deviations. Next: harness (faulting
-instruction `0x6ca229c`, then registers) logs rax at `0x6ca2290` and the
-predicate at `0x6ca21f4`.
+## NOT DONE / first divergence
+No device, no guest bytes/gate edits; no ledger edit by me; the masked primary
+fault in seed-OFF no-bp is inferred from the pairs-bp run (same code path) —
+gdb batch could not complete on the 450 MB core (killed). **First divergence:**
+seed ON → TLS is the seeded object but is later replaced, and the 3rd
+`GetStringUTFChars` call (`0x6ca229c`) faults; seed OFF → guest-owned TLS
+`[tls]=1` makes the predicate's `call 0x2a0de60` (`0x2a13354`) fault. Next
+smallest step: resolve that accessor's bad target (static scope) and make the
+crash handler's ring dump robust against guest-derived pointers (host scope).

@@ -181,8 +181,12 @@ static void w21_latch_sig(int s, siginfo_t *si, void *uc)
  * caller RA == AVD reference 0x2359342. */
 int sober_w21_boundary_ok(void)
 {
+    /* W29 host-only fix: the NULL guard must precede the dereference.  With no
+     * watch env w21_init returns early leaving w21_base=0, so the old order
+     * faulted at [0x7cdd149] in the no-breakpoint Run D path. */
+    if (!w21_base) return 0;
     unsigned char after = *(volatile unsigned char *)(w21_base + 0x7cdd149u);
-    return w21_base && __atomic_load_n(&w21_latch_hits, __ATOMIC_RELAXED) > 0 &&
+    return __atomic_load_n(&w21_latch_hits, __ATOMIC_RELAXED) > 0 &&
            w21_latch_before == 0 && after == 1 &&
            w21_caller_ra_rva == 0x2359342L;
 }
@@ -274,8 +278,56 @@ static void w28_post_6ca2(int s, siginfo_t *si, void *uc)
             __atomic_fetch_add(&w28_hits[3],1,__ATOMIC_RELAXED)+1);
 }
 
+/* W29: per-pre-call TLS trace at 0x2315556 and 0x6ca228b. */
+uintptr_t g_w29_tsd_state __attribute__((weak));
+static void *(*g_w29_getspecific)(unsigned long);
+static void w29_tsd_sig(int s, siginfo_t *si, void *uc, const char *tag)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c || !w21_base) return;
+    uint32_t key = *(volatile uint32_t *)(w21_base + 0x72a1b08u);
+    uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t rsi = (uintptr_t)c->uc_mcontext.gregs[REG_RSI];
+    uintptr_t seed = g_w29_tsd_state;
+    uintptr_t tls = g_w29_getspecific
+                    ? (uintptr_t)g_w29_getspecific((unsigned long)key) : 0u;
+    fprintf(stderr,
+            "[W29_TLS %s] tid=%ld key=%u tls=%p [tls]=%p "
+            "rax=%p rsi=%p seed=%p [seed]=%#lx eq=%d\n",
+            tag, (long)syscall(SYS_gettid), key,
+            (void *)tls,
+            (tls >= 0x10000u && tls < 0x0000800000000000ULL)
+                ? (void *)*(uintptr_t *)tls : NULL,
+            (void *)rax, (void *)rsi, (void *)seed,
+            seed ? (unsigned long)*(unsigned long *)seed : 0ul,
+            (seed && tls == seed) ? 1 : 0);
+}
+static void w29_tsd_2315(int s, siginfo_t *si, void *uc)
+{
+    w29_tsd_sig(s, si, uc, "0x2315556");
+}
+static void w29_tsd_6ca2(int s, siginfo_t *si, void *uc)
+{
+    w29_tsd_sig(s, si, uc, "0x6ca228b");
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_W29_TSD_TRACE")) {
+        w21_base = base;
+        void *stub = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
+        if (stub)
+            g_w29_getspecific = (void *(*)(unsigned long))
+                dlvsym(stub, "pthread_getspecific", "LIBC");
+        int f1 = w21_perf(w21_base + 0x2315556u);
+        int f2 = w21_perf(w21_base + 0x6ca228bu);
+        int a1 = f1 >= 0 ? w21_arm(f1, SIGUSR1, w29_tsd_2315) : -1;
+        int a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, w29_tsd_6ca2) : -1;
+        fprintf(stderr, "[W29_TSD_TRACE] armed=%d/%d base=%p\n", a1, a2,
+                (void *)w21_base);
+        return;
+    }
     if (getenv("SOBER_W28_PAIRS")) {
         w21_base = base;
         static int fds[4] = {-1,-1,-1,-1};
