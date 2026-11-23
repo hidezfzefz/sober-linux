@@ -228,3 +228,46 @@ logic change** (`guest_app_shell.c:2127-2143`: `rung1` variable and marker decis
 **Secrets scan:** clean — only 2 `<redacted>@rbxinfra.com` infra addresses in authoritative flag
 JSON; no tokens/cookies/user/device IDs. **Git:** no wave/capture-named tracked files, no
 untracked capture-like files in repo. Marker WITHHELD.
+
+## Wave23 audit (task #614) — claim verification vs raw files
+
+Owner: audit (branch `w23-audit`). Audit work out of git `/tmp/opencode/w23-audit/`. No device,
+no new captures, no runs by audit. Engine SHA `3e498d64`.
+
+- **static-onload #612 — PROVEN** (minor line drift): `ver=0x10006` is the RETURN of guest
+  `JNI_OnLoad` (`guest_app_shell.c:1316-1318` calls `jni_onload_fn(sober_jni_java_vm(j),NULL)`
+  at `base+0x227af5a`; `if (ver<=0) seed_rc=ERR` at :1321); `runC.err:3715` logs
+  `genuine JNI_OnLoad 0x227af5a -> ver=0x10006` after the call ⇒ JNI_OnLoad DID return. Separate
+  GetEnv `0x10006` at `native_jni.c:1617` / `runC.err:3732 rdx=0x10006`. Settings run before
+  JNI_OnLoad (`guest_app_shell.c:1169` → log ~3705 vs :1318 → 3715). `runC.rc=139`.
+- **static-tsd #613 — PROVEN incl. RETRACTION:** sentinel `0xABCDEF0123456789` is host
+  `__stack_chk_guard` (`android_compat.c:45`) exported via GOT `0x72293f8` — **the canary, not a
+  TSD result**; `runC.err:3732 rcx` is incidental canary. **RETRACTED:** "shim getspecific returns
+  sentinel for unset key" — FALSE: `bionic_libc.c:550-554` returns a zero-init `_Thread_local`
+  array ⇒ NULL; `gen_bionic_libc.py:260` emits no TSD trampoline. Rebind at
+  `guest_app_shell.c:1018` was a no-op in Run C (`runC.err:3679` before==after). Key `0x72a1b08`
+  created by guest `pthread_once` cb `0x2ea6640` (verified: `lea 0x72a1b08,%rdi; lea
+  0x2ea6670,%rsi; call pthread_key_create@plt`); creating thread UNPROVEN. Fault thread tid
+  `1376232` = Main. **Actual recursion trigger (`*(obj+0x28)!=0` at `0x6ca8014`) remains
+  UNPROVEN.** Proposed host-only TSD-seed+diag diff NOT APPLIED (lead go-ahead required).
+- **harness #611 — VERIFIED (PROVEN):** `runC_{1,2,3}.err` all show
+  `pre-OnLoad TSD key=3 get=0x555555bef090/0x555555bef010` (non-NULL — agent2's "get=(nil)"
+  hypothesis not observed), `genuine JNI_OnLoad 0x227af5a -> ver=0x10006`, `[W23_ASYNC_SAFE]`
+  dumps, `rip=ld-linux+0x18ef4`, `si_addr=0x7fffff7feff8` beside `rsp=0x7fffff7ff008`,
+  `rcx=0xabcdef0123456789` (canary per agent2), repeated `guest+0x6ca8014` (30 stack-scan
+  hits), `runC_*.rc=139` (3/3), seeder OFF (`SOBER_SEEDER_DISABLE=1`). Run A: 1
+  `PASS-BOUNDARY-REPLAY (DEBT=1)` line in each of runA_{1,2,3}.err; never CLEAN. All match raw
+  logs. Async-safe dump rewrite in `guest_dlopen_host.c` — code change by harness, out of audit scope.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 16 | **Run C x3: approved TSD seed non-NULL (get=0x555555bef090), genuine JNI_OnLoad ver=0x10006, recursion at guest+0x6ca8014 -> stack overflow rc=139, DEBT** | `guest_app_shell.c:1288-1301` + host TSD diag | harness/lead | TSD key 3 seeded on OnLoad thread (non-NULL) yet recursion persists identically 3/3; canary rcx is incidental; seeder OFF, no gate change | Remove when Run C reaches the boundary without `0x6ca8014` recursion and lead closes it |
+
+Wave22 ENTRY 15 corroboration update: its `rcx=0xabcdef0123456789` descriptor is now known to be
+the canary, not TSD state; the entry's DEBT stands until Run C works, but the stated TSD-sentinel
+causal framing is RETRACTED by static-tsd #613. No gate edits; seeder stays OFF in Run C; rung1
+stays `PASS-BOUNDARY-REPLAY(DEBT=n)`, never CLEAN.
+
+**Secrets:** clean (2 redacted `@rbxinfra.com` in flag JSON, 1 local `@sober-linux.local` author
+email in a worktree doc; no tokens/cookies/IDs). **Git:** no wave/capture-named tracked files, no
+untracked capture-like files. Marker WITHHELD.

@@ -1168,6 +1168,25 @@ int guest_app_shell_run(uintptr_t base)
             long cs_rc = ((long (*)(void *, void *, void *, void *, void *))
                 (base + 0x2359277u))(cs_env, cs_cls, a, b, c);
             g_ck_rung1_returned = 1;
+            /* W23: emit the rung1 line IMMEDIATELY on return with write(2),
+             * before any later phase can fault.  Label only: PASS-BOUNDARY-
+             * REPLAY(DEBT=n) when the read-only credential holds; never CLEAN.
+             */
+            {
+                const int boundary = sober_w21_boundary_ok();
+                const int debt = sober_avd_boundary_enabled() ? 1 : 0;
+                char rb[160]; int rn = 0;
+                static const char pre[] = "[checkpoint] rung1 ";
+                for (unsigned k = 0; k < sizeof(pre) - 1; ++k) rb[rn++] = pre[k];
+                static const char pass[] = "PASS-BOUNDARY-REPLAY (DEBT=";
+                static const char fail[] = "FAIL (DEBT=";
+                const char *lab = boundary ? pass : fail;
+                for (unsigned k = 0; lab[k]; ++k) rb[rn++] = lab[k];
+                rb[rn++] = (char)('0' + (debt & 7));
+                rb[rn++] = ')'; rb[rn++] = '\n';
+                ssize_t u = write(STDERR_FILENO, rb, (size_t)rn);
+                (void)u;
+            }
             fprintf(stderr, "[app-shell] AVD boundary nativeInitClientSettings "
                             "0x2359277 -> rc=%ld D08_len=%#x latch=%u "
                             "CF0=%#x 72a31b8=%#x\n",
@@ -1294,6 +1313,21 @@ int guest_app_shell_run(uintptr_t base)
         fprintf(stderr, "[app-shell] legacy JNI seed (skip JNI_OnLoad) -> rc=%d\n",
                 seed_rc);
     } else {
+        /* W23 approved host-only TSD seed + read-only diagnostic (agent2).
+         * Writes ONLY the host _Thread_local stub array; no guest bytes, no
+         * cached-jmethodID seeder. */
+        seed_stub_tsd((uintptr_t)base);
+        {
+            void *h = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
+            void *(*getspecific_fn)(unsigned int) = h
+                ? (void *(*)(unsigned int))dlvsym(h, "pthread_getspecific",
+                                                  "LIBC") : NULL;
+            unsigned key = *(volatile unsigned int *)
+                ((unsigned char *)base + 0x72a1b08u);
+            void *got = getspecific_fn ? getspecific_fn(key) : NULL;
+            fprintf(stderr,
+                    "[app-shell] pre-OnLoad TSD key=%u get=%p\n", key, got);
+        }
         int (*jni_onload_fn)(void *, void *) =
             (int (*)(void *, void *))(base + 0x227af5au);
         int ver = jni_onload_fn(sober_jni_java_vm(j), NULL);
