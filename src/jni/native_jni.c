@@ -1417,16 +1417,39 @@ SR_API int sober_jni_seed_guest_jni_state(SoberJni *j, void *guest_base)
         { 0x72a2f48u, 0x72a3058u },
         { 0x72ca178u, 0x72ca1e0u },
     };
-    for (size_t r = 0; r < sizeof(ranges) / sizeof(ranges[0]); ++r) {
+    /* W20 approved host-side defect removal (ledger: "harness seeder clobbered
+     * guest FFlag ctx global; defect removal").  The first range used to end
+     * INCLUSIVELY at 0x72a3058, which is ALSO the guest FFlag context global
+     * consumed at 0x23232ab -> 0x23115c8.  Seeding it with a synthetic
+     * "cachedMethod@72a3058" object made genuine guest code read host memory
+     * and produce RSI=0x30.  Default behaviour now EXCLUDES that one slot
+     * (Run A).  SOBER_SEEDER_DISABLE=1 disables the whole cached-ID seeder
+     * (Run B); default off.  No guest byte is patched and no gate is touched.
+     */
+    const int seeder_disabled =
+        getenv("SOBER_SEEDER_DISABLE") != NULL;   /* any presence disables */
+    if (!seeder_disabled) {
+      for (size_t r = 0; r < sizeof(ranges) / sizeof(ranges[0]); ++r) {
         for (uintptr_t a = ranges[r][0]; a <= ranges[r][1]; a += 8u) {
+            if (a == 0x72a3058u) continue;      /* guest FFlag ctx global */
             void **slot = (void **)((unsigned char *)guest_base + a);
             if (*slot == NULL) {
                 char name[64];
                 snprintf(name, sizeof(name), "cachedMethod@%lx", (unsigned long)a);
-                *slot = sr_find_method_object(j, NULL, name, "()V");
+                void *v = sr_find_method_object(j, NULL, name, "()V");
+                *slot = v;
                 seeded++;
+                /* W20 diagnostic: log every first-range slot we write. */
+                if (r == 0u)
+                    fprintf(stderr,
+                            "[SEEDER_WRITE] rva=0x%lx value=%p\n",
+                            (unsigned long)a, v);
             }
         }
+      }
+    } else {
+      fprintf(stderr, "[SEEDER_WRITE] SOBER_SEEDER_DISABLE: cached-ID seeder "
+                      "fully disabled\n");
     }
 
     /* Both JNI_OnLoad completion flags (worker-1/lead decision 013). */
