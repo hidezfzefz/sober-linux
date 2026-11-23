@@ -117,9 +117,13 @@ static void emit_marker(const char *text, const char *env_name)
 uintptr_t g_w29_tsd_state;   /* read-only by the W29 perf trace */
 static void seed_stub_tsd(uintptr_t base)
 {
-    /* W29 host-only TSD-seed OFF switch (default: enabled). */
-    if (getenv("SOBER_W29_TSD_SEED_OFF")) {
-        fprintf(stderr, "[app-shell] W29 TSD seed OFF (SOBER_W29_TSD_SEED_OFF)\n");
+    /* W30: REMOVED by default.  This TSD seed is harness-fabricated state and
+     * caused the 0x6ca229c fault (see ledger).  Only an explicit diagnostic
+     * opt-in can re-enable it; Run D never does. */
+    (void)base;
+    if (!getenv("SOBER_W30_TSD_SEED_OPTIN")) {
+        fprintf(stderr, "[app-shell] W30 TSD seed REMOVED (default OFF; "
+                        "harness-fabricated state)\n");
         return;
     }
     void *stub = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
