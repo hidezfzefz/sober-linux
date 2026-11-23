@@ -396,3 +396,45 @@ use entry/call-site breakpoints, ring data or static disassembly.
 **Git:** no captures, no phone logs, no wave/capture-named files; no untracked capture-like files.
 **Branches:** w27-audit / w27-static / w27-harness worktrees each on their own branch; main has
 only build artifacts. Marker WITHHELD.
+
+## Wave28 audit (task #630) — claim verification vs raw files
+
+Owner: audit (worktree `/tmp/opencode/w28-audit`, branch `w28-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. **RULE CHANGE honored/recorded:** the W27 "no fault-time registers" rule is
+RETRACTED; new rule = name the faulting instruction first, then interpret registers; a stack return
+address is NEVER the faulting instruction.
+
+- **static #629 — PROVEN:** faulting instruction `0x6ca229c = ff 90 48 05 00 00 = call *0x548(%rax)`
+  (bytes verified at both `0x6ca229c` and `0x2315556`); return point `0x6ca22a2`, stack RA
+  `0x231555c` is NOT the fault. rax provenance: `0x6ca228b call 0x6c89e70` (TLS desc `0x7282068`
+  → `0x2ea6440` getspecific key `0x72a1b08`), `0x6ca2290 mov (%rax),%rax` = field +0 of a
+  TLS-resident object. Predicate `0x6ca21f4 call 0x2a13350` tests `*(obj+0x28)!=0`. Guest `+0x28`
+  writers `0x2a0ed45` / `0x2a1362f` verified as instructions; exhaustiveness UNPROVEN. All in raw
+  `bytes.txt` / `dis_*.txt`.
+- **harness #631 — PROVEN:** 6 runs (3 with `SOBER_W28_PAIRS=1` breakpoints, 3 without), rc=139
+  all. Faulting instructions differ: WITH bp → guest `0x6ca229c` (`ff 90 48 05 00 00`,
+  `call *0x548(%rax)`, si_addr `0x548`); WITHOUT bp → host `0x555555586e9b`
+  (`0f b6 90 49 d1 cd 07`, `movzx edx, byte ptr [rax+0x7cdd149]`, si_addr `0x7cdd149`). Byte dumps
+  confirm both. Pair counts `pre2315=3/post2315=2` (3rd unmatched) 3/3. arg0 = 78-byte modified
+  input (`w15-flags-1.json`); authoritative `w11-arg0.json` remains 1,533,221 B / SHA
+  `8215519f…` — not used in Run D. Full captured-order replay NOT applied (UNPROVEN/NOT DONE).
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 21 | **W28 host-only captured-order replay applied (OnLoad, Channel empty, Version, GameGlobalInit before InitClientSettings/BaseDirs); fault unchanged; DEBT** | w28-harness worktree (`SOBER_W28_REORDER=1`, `guest_app_shell.c:1122`) | harness/lead | Opt-in reorder verified in `reorder_{1,2,3}.err` 3/3: OnLoad (3702) → Channel("") (3707) → Version (3712) → GameGlobalInit (3713) → InitClientSettings (3727) → BaseDirs; fault UNCHANGED at `guest+0x6ca229c`, rc=139. Supersedes the earlier "order replay not applied" wording. PreferencesFile("prefs")/InitFlags still a GAP (no safe call contract) — UNPROVEN | Remove when full captured order incl. the 2 missing natives reconciles and lead closes it |
+
+**Mechanical offset check** `offset = 0x20 + 8*idx` (fn[0]=GetVersion, standard JNI idx = idx+4):
+fn[2] FindClass 0x30, fn[17] NewGlobalRef 0xa8, fn[109] GetStaticMethodID 0x388, fn[165]
+GetStringUTFChars 0x548, fn[166] Release 0x550, fn[169] GetObjectArrayElement 0x568, fn[224]
+ExceptionCheck 0x720 — all 7 calc == observed (OK). Confirms W27's `0x548→fn[165]` retraction.
+
+**Secrets-scan command (run from w28-audit worktree):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/w28-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ **output: (empty)** — no credential values. A broader keyword scan returned only code/API names
+(`session`, `token`, `userId`) in analysis docs.
+
+**DEBT (one line):** count of active host-side workarounds, diagnostic toggles or value substitutions
+that must be removed before a clean marker claim; `DEBT=n` means a rung passes with n such items.
+
+**Git:** no capture/phone/logcat-named tracked files, no untracked capture-like files; w28-audit /
+w28-static / w28-harness each on its own branch. Marker WITHHELD.
