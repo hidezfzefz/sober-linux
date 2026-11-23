@@ -44,6 +44,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 #include <sys/syscall.h>
 #include <ucontext.h>
 #include <linux/perf_event.h>
@@ -312,8 +313,201 @@ static void w29_tsd_6ca2(int s, siginfo_t *si, void *uc)
     w29_tsd_sig(s, si, uc, "0x6ca228b");
 }
 
+/* ---- W31 instrumentation ------------------------------------------------
+ * (a) perf exec breakpoints at 0x2a13350 (entry) and 0x2a1335e (obj ready):
+ *     log tid, obj, [obj+0x28] and 64 bytes at obj via process_vm_readv.
+ * (b) perf HW WRITE watch on obj+0x28, armed at 0x2a0deba (accessor return).
+ * (d) perf exec watch at 0x2eb7520 using the existing w21_latch_sig (produces
+ *     the real [W21_LATCH_HIT] line).
+ * No guest bytes are written: perf breakpoints are hardware debug registers.
+ */
+static uintptr_t w31_base;
+static long w31_obj_calls;
+static long w31_watch_fd = -1;
+static uintptr_t w31_watched_obj;
+
+static long w31_read(uintptr_t addr, void *dst, size_t len)
+{
+    struct iovec li = { dst, len }, ri = { (void *)addr, len };
+    return syscall(SYS_process_vm_readv, (long)getpid(), &li, 1UL, &ri, 1UL, 0UL);
+}
+static void w31_hex(char **p, uint64_t v)
+{
+    static const char hx[] = "0123456789abcdef";
+    for (int i = 60; i >= 0; i -= 4) *(*p)++ = hx[(v >> i) & 0xfu];
+}
+static char *w31_lim;
+static void w31_puts(char **p, const char *s)
+{
+    while (*s && *p < w31_lim - 1) *(*p)++ = *s++;
+}
+static void w31_hex_lim(char **p, uint64_t v)
+{
+    static const char hx[] = "0123456789abcdef";
+    for (int i = 60; i >= 0 && *p < w31_lim - 1; i -= 4) *(*p)++ = hx[(v >> i) & 0xfu];
+}
+
+/* WRITE-watch handler: report writer RIP, guest RA, value and tid.  All guest
+ * memory is read with process_vm_readv; no direct dereference. */
+static void w31_write_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rip = (uintptr_t)c->uc_mcontext.gregs[REG_RIP];
+    uintptr_t rbp = (uintptr_t)c->uc_mcontext.gregs[REG_RBP];
+    uintptr_t ra = 0;
+    (void)w31_read(rbp + 8u, &ra, 8u);
+    uint64_t v28 = 0;
+    (void)w31_read(w31_watched_obj + 0x28u, &v28, 8u);
+    uint64_t rax = (uint64_t)c->uc_mcontext.gregs[REG_RAX];
+    uint64_t rdx = (uint64_t)c->uc_mcontext.gregs[REG_RDX];
+    char line[1024], *p = line; w31_lim = line + sizeof(line);
+    w31_puts(&p, "[W31_WRITE] tid=");
+    { char t[32]; snprintf(t,sizeof(t),"%ld",(long)syscall(SYS_gettid)); w31_puts(&p,t); }
+    w31_puts(&p, " si_addr="); { char t[32]; snprintf(t,sizeof(t),"%p", si?si->si_addr:NULL); w31_puts(&p,t); }
+    w31_puts(&p, " writer_rip=");
+    if (w31_base && rip >= w31_base) { w31_puts(&p,"guest+0x"); w31_hex(&p,(uint64_t)(rip-w31_base)); }
+    else { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rip); w31_puts(&p,t); }
+    w31_puts(&p, " guest_RA=");
+    if (w31_base && ra >= w31_base && ra < w31_base + 0x8000000u) { w31_puts(&p,"guest+0x"); w31_hex(&p,(uint64_t)(ra-w31_base)); }
+    else { char t[32]; snprintf(t,sizeof(t),"%p",(void*)ra); w31_puts(&p,t); }
+    w31_puts(&p, " [obj+0x28]="); w31_hex(&p, v28);
+    w31_puts(&p, " rax="); w31_hex(&p, rax);
+    w31_puts(&p, " rdx="); w31_hex(&p, rdx);
+    *p++ = '\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p - line)); (void)u;
+}
+
+/* (c) allocation site: 0x2ea6534 is the call into guest allocator 0x1dbad62
+ * with rdi = requested size; 0x2ea6539 is the return with rax = state base. */
+static void w31_alloc_size_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uint64_t rdi = (uint64_t)c->uc_mcontext.gregs[REG_RDI];
+    uint64_t r12 = (uint64_t)c->uc_mcontext.gregs[REG_R12];
+    fprintf(stderr, "[W31_ALLOC_SIZE] tid=%ld rdi(size)=%lu r12=%lu\n",
+            (long)syscall(SYS_gettid), (unsigned long)rdi, (unsigned long)r12);
+}
+static void w31_alloc_ret_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uint64_t rax = (uint64_t)c->uc_mcontext.gregs[REG_RAX];
+    fprintf(stderr, "[W31_ALLOC_RET] tid=%ld state=%p\n",
+            (long)syscall(SYS_gettid), (void *)(uintptr_t)rax);
+}
+
+static void w31_entry_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&w31_obj_calls, 1, __ATOMIC_RELAXED) + 1;
+    fprintf(stderr, "[W31_ENTRY #%ld] tid=%ld rip=base+0x%lx rbp=%p\n", n,
+            (long)syscall(SYS_gettid),
+            (unsigned long)((uintptr_t)c->uc_mcontext.gregs[REG_RIP] - w31_base),
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_RBP]);
+}
+static void w31_obj_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t holder = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t obj = 0;
+    long got = w31_read(holder, &obj, 8u);
+    if (got != 8) {
+        fprintf(stderr, "[W31_OBJ] holder=%p UNREADABLE tid=%ld\n",
+                (void *)holder, (long)syscall(SYS_gettid));
+        return;
+    }
+    uint64_t v28 = 0;
+    long g28 = w31_read(obj + 0x28u, &v28, 8u);
+    /* Recursion can call this thousands of times: full 64-byte dump only for
+     * the first 8 and every 64th thereafter; every call still logs obj/value. */
+    long on = __atomic_load_n(&w31_obj_calls, __ATOMIC_RELAXED);
+    int full = (on <= 8) || ((on % 64) == 0);
+    unsigned char b[64];
+    long gb = full ? w31_read(obj, b, sizeof(b)) : 0;
+    int ascii = (g28 == 8);
+    if (ascii) for (int i = 0; i < 8; ++i) {
+        unsigned ch = (unsigned)((v28 >> (i * 8)) & 0xffu);
+        if (ch < 0x20u || ch > 0x7eu) { ascii = 0; break; }
+    }
+    char line[2048], *p = line; w31_lim = line + sizeof(line);
+    w31_puts(&p, "[W31_OBJ] tid=");
+    { char t[32]; int n = snprintf(t, sizeof(t), "%ld", (long)syscall(SYS_gettid));
+      for (int i = 0; i < n; ++i) *p++ = t[i]; }
+    w31_puts(&p, " holder="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)holder); w31_puts(&p,t); }
+    w31_puts(&p, " obj="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)obj); w31_puts(&p,t); }
+    w31_puts(&p, " [obj+0x28]=");
+    if (g28 == 8) { w31_hex(&p, v28); }
+    else w31_puts(&p, "UNREADABLE");
+    w31_puts(&p, " ascii28="); *p++ = (char)('0' + ascii);
+    w31_puts(&p, " ascii28_text='");
+    if (g28 == 8) for (int i = 0; i < 8; ++i) {
+        unsigned ch = (unsigned)((v28 >> (i * 8)) & 0xffu);
+        *p++ = (ch >= 0x20u && ch <= 0x7eu) ? (char)ch : '.';
+    }
+    w31_puts(&p, "' bytes64=");
+    if (!full) w31_puts(&p, "OMITTED");
+    else if (gb > 0) for (long i = 0; i < gb; ++i) {
+        w31_hex_lim(&p, b[i]); if (*p < w31_lim - 1) *p++ = ' ';
+    } else w31_puts(&p, "UNREADABLE");
+    *p++ = '\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p - line)); (void)u;
+
+    /* (b) arm HW WRITE watch on obj+0x28 as soon as the accessor returned. */
+    if (getenv("SOBER_W31_WRITE_WATCH") && obj && obj != w31_watched_obj) {
+        w31_watched_obj = obj;
+        if (w31_watch_fd >= 0) { close(w31_watch_fd); w31_watch_fd = -1; }
+        struct perf_event_attr a; memset(&a, 0, sizeof(a));
+        a.type = PERF_TYPE_BREAKPOINT; a.size = sizeof(a);
+        a.bp_type = HW_BREAKPOINT_W; a.bp_addr = (uint64_t)(obj + 0x28u);
+        a.bp_len = HW_BREAKPOINT_LEN_8; a.disabled = 1; a.sample_period = 1;
+        a.wakeup_events = 1; a.exclude_kernel = 1; a.exclude_hv = 1;
+        int fd = (int)syscall(SYS_perf_event_open, &a, 0, -1, -1, 0);
+        if (fd >= 0) {
+            struct sigaction sa; memset(&sa, 0, sizeof(sa));
+            sa.sa_sigaction = w31_write_sig; sa.sa_flags = SA_SIGINFO;
+            sigemptyset(&sa.sa_mask);
+            sigaction(SIGRTMIN + 3, &sa, NULL);
+            fcntl(fd, F_SETSIG, SIGRTMIN + 3);
+            fcntl(fd, F_SETOWN, getpid());
+            fcntl(fd, F_SETFL, O_ASYNC);
+            ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
+            w31_watch_fd = fd;
+            fprintf(stderr, "[W31_WRITE_ARM] obj=%p watch=%p tid=%ld\n",
+                    (void *)obj, (void *)(obj + 0x28u), (long)syscall(SYS_gettid));
+        } else fprintf(stderr, "[W31_WRITE_ARM] FAILED obj=%p\n", (void *)obj);
+    }
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_W31_OBJ_TRACE") || getenv("SOBER_W31_LATCH_WATCH")) {
+        w21_base = w31_base = base;
+        int a1 = -1, a2 = -1, a3a = -1, a3b = -1;
+        if (getenv("SOBER_W31_OBJ_TRACE")) {
+            int f1 = w21_perf(w31_base + 0x2a13350u);   /* predicate entry */
+            int f2 = w21_perf(w31_base + 0x2a1335eu);   /* obj = *rax ready */
+            a1 = f1 >= 0 ? w21_arm(f1, SIGUSR1, w31_entry_sig) : -1;
+            a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, w31_obj_sig) : -1;
+        }
+        int a3 = -1;
+        if (getenv("SOBER_W31_LATCH_WATCH")) {
+            w21_fd_latch = w21_perf(w21_base + 0x2eb7520u);
+            a3 = w21_fd_latch >= 0
+                 ? w21_arm(w21_fd_latch, SIGRTMIN + 2, w21_latch_sig) : -1;
+        }
+        fprintf(stderr, "[W31_ARM] base=%p entry=%d obj=%d alloc=%d/%d latch=%d\n",
+                (void *)w31_base, a1, a2, a3a, a3b, a3);
+        return;
+    }
     if (getenv("SOBER_W29_TSD_TRACE")) {
         w21_base = base;
         void *stub = dlopen("libc.so", RTLD_NOLOAD | RTLD_LAZY);
