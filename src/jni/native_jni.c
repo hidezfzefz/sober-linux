@@ -154,7 +154,11 @@ static int w21_perf(uintptr_t addr)
 static int w21_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
 {
     struct sigaction sa; memset(&sa, 0, sizeof(sa));
-    sa.sa_sigaction = fn; sa.sa_flags = SA_SIGINFO; sigemptyset(&sa.sa_mask);
+    /* n1-3 rule 1: perf handlers MUST run on the process altstack installed
+     * by install_crash_handlers(); without SA_ONSTACK they faulted on the
+     * exhausted guest stack in 2/3 with-bp runs.  Host-only, ledgered. */
+    sa.sa_sigaction = fn; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
     if (sigaction(signo, &sa, NULL) != 0) return -1;
     if (fcntl(fd, F_SETSIG, signo) != 0) return -2;
     if (fcntl(fd, F_SETOWN, getpid()) != 0) return -3;
