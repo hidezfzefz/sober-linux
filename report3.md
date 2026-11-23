@@ -1,63 +1,73 @@
-# n1-3 #653 static-B — 2a12e80 dispatcher terminus (READ-ONLY)
+# n7w3 #693 static-B — exception path into fatal reporters (READ-ONLY)
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n1-static-b.
-Faulting instruction first: `6ca800e: call *0x720(%rax)` (fn224 ExceptionCheck) re-entered by this dispatcher's scheduled closure.
+FAULTING INSTRUCTION FIRST (n7w1/2): guest `int3 0x6caef66` (reported RIP `0x6caef67`: `89 c0 mov %eax,%eax; e8 62... call abort@plt`), SIGTRAP, `[0x7cdd149]=1, [0x7cef650]=0` 3/3. No runs/writes.
 
-## PROVEN — 2a12e80 full (dis_2a12e80.txt)
+## PROVEN — two distinct fatal reporters, both reachable from #552 code
 
-All addresses, bytes and mnemonics below are verbatim from the saved disassembly;
-only the long export symbol names are abbreviated as `<...+offset>`.
-
+**A. Unwind reporter `0x2ea6a10`** (dis_n5 dis_fflush_helper.txt / n5 static-A):
 ```
- 2a12e98:	e8 c3 af ff ff	call   2a0de60 <...+0x29a6c5>
- 2a12e9d:	48 8b 18       	mov    (%rax),%rbx
- 2a12ea0:	4c 8b 63 68    	mov    0x68(%rbx),%r12
- 2a12ea4:	4d 8b 7c 24 70 	mov    0x70(%r12),%r15
- 2a12ea9:	45 89 fd       	mov    %r15d,%r13d
- 2a12eac:	41 83 e5 3f    	and    $0x3f,%r13d
- 2a12eb0:	48 8b 05 59 ba 86 04 	mov    0x486ba59(%rip),%rax  # 727e910
- 2a12ed2:	ff d0          	call   *%rax
- 2a12ed4:	49 ff c5       	inc    %r13
- 2a12ed7:	49 83 e7 c0    	and    $0xffffffffffffffc0,%r15
- 2a12edb:	4d 09 ef       	or     %r13,%r15
- 2a12ede:	4d 89 7c 24 70 	mov    %r15,0x70(%r12)
- 2a12eef:	48 83 7b 28 00 	cmpq   $0x0,0x28(%rbx)
- 2a12ef4:	74 2b          	je     2a12f21
- 2a12ef6:	48 8b 53 68    	mov    0x68(%rbx),%rdx
- 2a12efa:	48 8b 73 70    	mov    0x70(%rbx),%rsi
- 2a12efe:	48 83 e6 c0    	and    $0xffffffffffffffc0,%rsi
- 2a12f0e:	48 89 df       	mov    %rbx,%rdi
- 2a12f11:	41 b8 01 00 00 00 	mov    $0x1,%r8d
- 2a12f1a:	e8 81 b4 00 00 	call   2a1e3a0 <...+0x2aac05>
- 2a12f21:	49 8b 7e 08    	mov    0x8(%r14),%rdi
- 2a12f27:	41 ff 16       	call   *(%r14)
- 2a12f2a:	49 8b 7e 08    	mov    0x8(%r14),%rdi
- 2a12f31:	41 ff 16       	call   *(%r14)
- 2a12f34:	49 c7 06 00 00 00 00 	movq   $0x0,(%r14)
- 2a12f6a:	49 ff cf       	dec    %r15
- 2a12f6d:	49 83 e6 c0    	and    $0xffffffffffffffc0,%r14
- 2a12f71:	4d 09 fe       	or     %r15,%r14
- 2a12f74:	4c 89 73 70    	mov    %r14,0x70(%rbx)
- 2a12f86:	c3             	ret
+2ea6a66: mov $0x130,%ebx
+2ea6a6b: add 0x...(%rip),%rbx   # 72281d8  (__sF+0x130 stderr)
+2ea6a72: lea ... # 2345cf       ; "libunwind: %s - %s\n"
+2ea6a79: lea ... # 517ec0       ; "_Unwind_Resume"
+2ea6a80: lea ... # 2a4d76       ; "_Unwind_Resume() can't return"
+2ea6a8c: call 6d31aa0 <fprintf@plt>
+2ea6a91: mov %rbx,%rdi
+2ea6a94: call 6d32020 <fflush@plt>
+2ea6a99: call 6d320d0 <abort@plt>
 ```
-
-Semantics (my reading of the quoted lines):
-- obj+0x70 = tagged word whose **low 6 bits** are a nesting counter. ENTER: `2a12ed4 inc %r13` / `2a12edb or` / `2a12ede mov %r15,0x70(%r12)`. LEAVE: `2a12f6a dec %r15` / `2a12f71 or` / `2a12f74 mov %r14,0x70(%rbx)`.
-- Two RSL assert paths: ENTER calls handler at `0x727e910` via `call *%rax` (`2a12ed2`) when counter==0x3f and handler installed (guard `2a12eb0..2a12ec9`, `cmp $0x3f,%r13`); LEAVE calls same handler (`2a12f68: call *%rax`) when counter==0 and handler installed (`2a12f50..2a12f5f`, `and $0x3f,%r15`, `sete %dl`).
-- Closure word test: `2a12eef cmpq $0x0,0x28(%rbx)` / `2a12ef4 je 2a12f21`.
-  - TRUE path (closure != 0) TERMINAL CALL is guest **`2a1e3a0: call`** (`2a12f1a`) — a scheduler task-dispatch function, **not** a JNI table call. No `call *0x7xx(%rax)` in this dispatcher.
-  - FALSE path (closure == 0) calls the closure's function pointer (ctx at +8) **twice** — `2a12f27 call *(%r14)` and `2a12f31 call *(%r14)` — then **clears it** with `2a12f34 movq $0x0,(%r14)`. That clear is the re-entry stop: a later dispatch sees NULL and cannot call the closure again.
-
-## obj+0x28 = closure/task function pointer (not jmethodID)
-
-Quoted from dis_2a0ed45.txt and verified via disassembly:
+Strings verified from engine bytes: `0x2345cf="libunwind: %s - %s\n"`, `0x517ec0="_Unwind_Resume"`, `0x2a4d76="_Unwind_Resume() can't return"`. This is the `_Unwind_Resume can't return` path. It is called from a C++ exception catch block inside the #552 body `0x2383c84`:
 ```
- 2a0ed45:	4c 89 7b 28    	mov    %r15,0x28(%rbx)
- 2a0ed0f:	4c 8b 38       	mov    (%rax),%r15
- 2a0e83b:	e8 80 00 00 00 	call   2a0e8c0 <...+0x29b125>
+23845cd: call 1dbe5be      ; destructor cleanup
+23845d2: mov %rbx,%rdi
+23845d5: call 2ea6a10      ; <-- unwind fatal reporter
 ```
-`r15` is loaded from a caller-supplied stack arg pointer's first word (`mov (%rax),%r15`), i.e. `obj+0x28` holds a pointer to a closure object whose fn ptr is at offset 0 and ctx at +8 (consumed at `2a12f21/2a12f27/2a12f31`). The predicate `2a13361: cmpq $0x0,0x28(%rax)` tests this word; harness proved it 0 at the fault.
+(also hundreds of analogous catch blocks in `0x1dba..0x6ca1` regions).
 
-## Evidence / NOT done
+**B. HardAssert reporter `0x6caed7c`** — the actual n7 fault. Message producer and dispatcher (n5 dis_assert_msg.txt / n7w1):
+```
+23a1465: lea -0x1ee0741(%rip),%rsi  # 4c0d2b
+                                   ; "Expect to have mimalloc working, but it was not detected!"
+23a146c: xor %edi,%edi
+23a146e: call 6caed5d               ; dispatcher
+6caed61: cmp $0xa,%edi
+6caed69: cmovb %edi,%eax            ; index = min(edi,10)
+6caed6c: lea 0x570e5d(%rip),%rcx    # 721fbd0  (11-entry table, zero in file, relocated at load)
+6caed73: mov (%rcx,%rax,8),%rdi
+6caed77: call 6caed7c               ; reporter
+6caef4f: cmpb $0x0,0x102e1f3(%rip)  # 7cdd149  (latch, =1)
+6caef56: je 6caef66
+6caef58: cmpb $0x0,0x10406f1(%rip)  # 7cef650  (flag, =0)
+6caef5f: je 6caef66
+6caef61: call 6d320d0 <abort@plt>
+6caef66: cc int3
+```
+Both reporters are generic: dispatcher `0x6caed5d` has many call sites across the engine; the mimalloc message selects this one.
 
-Evidence: dis_2a12e80.txt (144 lines), dis_2a0ed45.txt, dis_2a13560.txt, /tmp/opencode/n1-harness/report.md. NOT DONE: no runs/device/captures/guest writes/gate/seeder/apply. UNPROVEN: exact closure object type/size, which concrete closure the TRUE path dispatches in real boot, and whether `2a1e3a0` itself re-enters the wrapper. Next smallest step: read-only trace `2a1e3a0` to its closure call and confirm `2a12f34` is reached on the harness recursion path.
+## PROVEN — unwind callback requirement and the shim
+
+`_Unwind_Resume` needs frame-descriptor lookup via `dl_iterate_phdr` (libgcc/libunwind walks loaded objects' `.eh_frame`). The guest-facing shim is `TRAMP(dl_iterate_phdr)` at `bionic_libc.c:1356`, macro `:459-470`:
+```
+464: "movq sober_libc_fn_" #name "(%%rip), %%rax"
+465: "testq %%rax, %%rax"
+466: "jz 1f"
+467: "jmp *%%rax"
+468: "1: xorl %%eax, %%eax"
+469: "ret"
+```
+with pointer filled at `:919 sober_libc_fn_dl_iterate_phdr = native_lookup("dl_iterate_phdr")`. When NULL, the shim returns **0 and invokes no callback** (n7w1); when set, it forwards to glibc's iterator over the **host** link map. Guest C++ exception paths (e.g. #552's catch at `0x23845cd-23845d5`) therefore depend on unwind callbacks that the shim may not provide. Which branch occurs at fault time is **UNPROVEN** (no runs this task).
+
+## PROVEN / UNPROVEN — exception after #552 size()=0
+
+`#552` body `0x2383c84` calls `size()` via helper `0x238463c`:
+```
+2383d3b: call 238463c       ; CallIntMethodA("size","()I")
+2383d40: test %eax,%eax
+2383d42: jle 23844e9        ; size<=0 -> early NORMAL return (canary check; 238450a ret)
+```
+So `size()==0` itself does **not** throw — it returns normally; no `__cxa_throw` was located on that path. The exception that would drive reporter A after that point is **UNPROVEN** from static bytes. Equally UNPROVEN: whether the HardAssert path B is reached via an unwind failure (the message table `0x721fbd0` is relocation-filled, so index 0's target cannot be read from the file), and whether `dl_iterate_phdr` returns 0 at fault time.
+
+## RETRACTED / NOT done
+
+- RETRACTED: any claim that `size()==0` directly throws or that the unwind path is proven to cause the mimalloc HardAssert — both are separate reporters.
+- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF; no captures/tokens in git.
