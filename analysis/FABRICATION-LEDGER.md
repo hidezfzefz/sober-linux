@@ -689,3 +689,42 @@ verified: `2ea644c mov 0x10(%rdi),%r13`, `2ea6455 mov … #72a1b08,%edi`, `2ea64
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked. Tracked `.log` files are 18
 pre-existing `appData/logs/*_last.log` (780B–1.5K FLog snippets, added in afed56d) + `build/Testing/Temporary/LastTest.log`;
 no credentials/flag values inside; NOT introduced by n1-1. No new captures this wave. n1 worktrees at 702fae9, own branches. Marker WITHHELD.
+
+## Overnight n1-2 audit (task #651) — quoted-line verification
+
+Owner: audit (`/tmp/opencode/n1-audit`, branch `n1-audit`). Cores 6-7. No device/runs; no questions.
+
+Input SHA: `grep -c 'verified … sha256=8215519f…'` = 1 in each of `n12_with_{1,2,3}.err`,
+`n12_without_{1,2,3}.err` (6/6); `[app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006` 6/6.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 32 | **Fault site varies WITHIN a configuration too — RETRACTED: "with-bp fault is always `mov rax,[rax]` / si_addr=0". WITH bps: 1/3 guest `0x2a1335e mov rax,[rax]` si_addr=0; 2/3 fault INSIDE perf handler `n1_pred_sig` at host+0x372ef (`mov [rsp+0x30],rbp`, si_addr=rsp+0x30; handler lacks SA_ONSTACK). WITHOUT bps: 2/3 `0x6ca7f95 call` (rsp-8), 1/3 `mov [rsp-0x10],rsi` (rsp-0x10) — stack guard sole cause 3/3** | raw n12_with_1 `[W28_FAULT_INSN] … guest_rva=0x02a1335e`; with_2/3 `rip=0x0000563ef03452ef`; without_1/2 `guest_rva=0x06ca7f95`; without_3 `[W30_FAULT] rip=0x00007f05b53beef4 si_addr=0x00007ffe5a9afff8 rsp=0x00007ffe5a9b0008` | harness/lead, audited | Breakpoint handler perturbs the fault site; no single instruction may be claimed even within one configuration | Remove when both configurations are shown to each yield one invariant fault site |
+
+**static-A #650 — all quotes verified verbatim:** only proven writer of TLS state slot
+`2a0df25 call 2ea6440`, `2a0df41 mov %rax,0x408(%r14)`, `2a0df48 mov %rax,0x410(%r14)`,
+value from `2a0df3c call 2a16390` (esi=0x80); NULL path `2a0df52 je 2a0dfc1` (assert 0x727e910);
+caller `2a0de78 call 2a0ded0` in getter 0x2a0de60; predicate `2a1335e mov (%rax),%rax`,
+`2a13361 cmpq $0,0x28(%rax)`. Destructor 2ea6670 has NO slot write (`2ea6677 mov (%rdi),%rax`,
+`2ea6682 mov %rax,(%rbx)`, `2ea6695 jmp pthread_setspecific@plt`; alt free `2ea66b8/2ea66c6`).
+Writer entry native/ctor/tid and indirect slot-128 free UNPROVEN (agent states so).
+
+**harness #649 — all quotes verified verbatim:** SHA+JNI_OnLoad 6/6; fault sites per entry 32;
+`[N1_RING] last 20 pre-call entries at 0x2a1335e …` and exact line
+`[000000000000928f] rax=0x0000562b91e759b0 [rax]=0x00007f4b0da9a280 guard=0x0000000000000000 tid=1641790`;
+20 entries/run, one distinct valid triple, guard=0 — NULL deref NOT explained by ring (agent states UNPROVEN).
+
+**static-B #648 — quotes verified (one citation defect):** writer is genuine guest code
+`6c8e4cc lea … # 6ca7f72`, `6c8e4d3 mov %rax,0x720(%r14)`, neighbours `6c8e4c5 mov %rax,0x718(%r14)`,
+`6c8e4da lea … # 6ca80a6`, `6c8e4e1 mov %rax,0x728(%r14)` — all verbatim in dis_fn224_writer.txt.
+Callers `227bde8: e8 33 27 a1 04 call 6c8e520` and `6c8e5f2: e8 9a 00 00 00 call 6c8e691`
+were quoted in the report but absent from saved evidence files; audit independently verified both
+verbatim by objdump → PROVEN, not retracted. Host source: only `SETFN(*t,224,sr_ExceptionCheck)`
+(actual `native_jni.c:1560`; report's `:1651` is a stale line number — citation defect, substance
+verified), `javavm_semantics.c:435 fj_ExceptionCheck` in its own table. Real-boot ART pointer UNPROVEN.
+
+**Secrets-scan command + output (final):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n1-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 17 self-matches (ledger's own recorded scan commands + verification-notes), no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n1-2. Marker WITHHELD.
