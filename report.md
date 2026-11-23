@@ -79,3 +79,18 @@ credentials, no captures/logs/tokens in git.
 First divergence: harness passes NULL for the #552 jobject (object OFF), so the
 host bridge derefs `[NULL+8]`; capture passed a real Java `List`. Next: harness
 logs the #552 argument at the host bridge entry (faulting instruction first).
+
+## RETRACTION (lead flag, harness n3 entry tracing) — #670 rdi provenance
+
+My earlier claim "the faulting rdi is the NULL jobject argument of the replayed
+#552 native" is **RETRACTED** — it was based on older n14 logs without entry
+tracing. Raw `/tmp/opencode/n3-harness/n3_1.err:3729`:
+> `[N3_552_ENTRY] tid=1876773 rip=base+0x2383c18 rdi=0x56302bd802d0 rsi=0x56302d66d260 rdx=0x56302c1ba750 rcx=0x56302c1ba750 [rdx]=0x56300e0ebec0 [rdx+8]=0x1 rdi_is_env=1`
+
+At #552 entry rdi is the bridge JNIEnv (`rdi_is_env=1`), rsi the jclass, and
+rdx/rcx the jobject — rdx is VALID (`[rdx]=0x56300e0ebec0`, `[rdx+8]=0x1`).
+Harness n3 report quoted: `Counts per run: size 1, get 0, GetObjectClass 0,
+GetMethodID 0`, with `size` a0 == entry rdx — the guest DID read the list.
+So the faulting `rdi=0` (`mov rax,[rdi+8]`, si_addr=0x8) is an **INNER**
+host-bridge argument, not the entry jobject; its precise origin is UNPROVEN.
+All other #670 findings stand.
