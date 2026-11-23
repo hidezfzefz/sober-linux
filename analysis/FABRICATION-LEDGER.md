@@ -365,3 +365,34 @@ no phone agent, no runs by audit. Engine SHA `3e498d64`.
 
 **Secrets:** clean (2 redacted `@rbxinfra.com`, 1 local author email; captured paths contain no
 usernames). **Git:** no captures, no phone logs, no wave/capture/phone-named files. Marker WITHHELD.
+
+## Wave27 audit (task #627) — claim verification vs raw files
+
+Owner: audit (worktree `/tmp/opencode/w27-audit`, branch `w27-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. **NEW RULE obeyed: no conclusion from fault-time registers** — all verdicts
+use entry/call-site breakpoints, ring data or static disassembly.
+
+- **static #626 — PROVEN incl. RETRACTION:** helper `0x2315532` post-return at `0x231555c` is a
+  plain NULL test on the GetStringUTFChars result (`test rax,rax` / `je 0x2315583`, independently
+  re-disassembled), not a length/equality/file check. `0x6ca229c` is inside scheduler-gated JNI
+  wrapper `0x6ca21c6` (predicate `0x2a13350` → `*(obj+0x28)!=0`, `obj` from `0x2a0de60`), FALSE path
+  `call *0x548`, TRUE lambda `0x6ca22ee` calls `*0x548` at `0x6ca2340`. **RETRACTED** "assert with
+  message string": no string RIP-ref in the function (only code `0x6ca22ee` / canary `0x72293f8`).
+  Native sequence: capture Channel("") → Version → GameGlobalInit → InitClientSettings → BaseDirs →
+  PreferencesFile → InitFlags; harness InitClientSettings → JNI_OnLoad → BaseDirs → Version →
+  Channel → GameGlobalInit — 3 inversions, 2 missing, 1 extra, 2 value mismatches; no usernames.
+- **harness #628 — PROVEN:** call-site perf breakpoints (not fault regs) at `0x231555c` and
+  `0x6ca22a2` show non-NULL valid returned strings (strlen 78 JSON / 16 "GoogleAndroidApp") 3/3;
+  applied host-only distinct base dirs (`/tmp/sober-w27-XXXX/data` + `/sdcard`, `distinct=1` logged
+  3/3) and channel `""` (source `guest_app_shell.c:1528`). Run D x3 rc=139, rung1
+  `PASS-BOUNDARY-REPLAY (DEBT=1)`, no recursion; other order/missing-call mismatches NOT applied.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 19 | **W27 host-only base-dir fix: two DISTINCT real dirs under per-run temp root (data + sdcard), DEBT** | `guest_app_shell.c:1511-1523` (w27-harness worktree) | harness/lead | Replaces the single reused Linux path with two distinct mkdtemp dirs, matching the capture's two Android data dirs | Remove when the full native sequence matches the authoritative capture and lead closes it |
+| 20 | **W27 host-only channel fix: pass empty string matching authoritative capture (was LIVE), DEBT** | `guest_app_shell.c:1528` (w27-harness worktree) | harness/lead | Capture shows `nativeSetRobloxChannel("")`; harness previously passed `"LIVE"` | Remove with entry 19 / when ordering + missing natives are reconciled and lead closes it |
+
+**Secrets:** clean (ledger's own "Cookie:" note, 2 redacted `@rbxinfra.com`, 1 local author email).
+**Git:** no captures, no phone logs, no wave/capture-named files; no untracked capture-like files.
+**Branches:** w27-audit / w27-static / w27-harness worktrees each on their own branch; main has
+only build artifacts. Marker WITHHELD.
