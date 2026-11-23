@@ -602,17 +602,64 @@ static void w32_call720_sig(int s, siginfo_t *si, void *uc)
 static long n1_pred_hits, n1_al_hits, n1_call_hits;
 static uintptr_t n1_base, n1_host_base;
 
+/* N1-2: lock-free last-20 pre-call ring at 0x2a1335e, dumped by crash handler.
+ * Written on EVERY predicate hit (not sampled); async-safe dump via write(2). */
+struct n1_ring_ent {
+    uint64_t seq;
+    uintptr_t rax;       /* slot ptr (state+0x410) */
+    uintptr_t obj;       /* [rax] */
+    uint64_t guard;      /* [[rax]+0x28] */
+    long tid;
+};
+static struct n1_ring_ent n1_ring[20];
+static volatile unsigned n1_ring_pos;
+
+/* Async-safe dump called from the host crash handler. */
+long sober_n1_ring_dump_async(int fd)
+{
+    char buf[3072], *p = buf, *end = buf + sizeof(buf) - 1;
+    static const char hx[] = "0123456789abcdef";
+    #define PUT(s) do { const char *_s=(s); while (*_s && p<end-1) *p++=*_s++; } while(0)
+    #define HEX(v) do { uint64_t _v=(uint64_t)(v); \
+        for (int _i=60; _i>=0 && p<end-1; _i-=4) *p++=hx[(_v>>_i)&0xfu]; } while(0)
+    PUT("[N1_RING] last 20 pre-call entries at 0x2a1335e (seq,rax,[rax],[[rax]+0x28],tid):\n");
+    unsigned pos = __atomic_load_n(&n1_ring_pos, __ATOMIC_RELAXED);
+    unsigned start = pos > 20u ? pos - 20u : 0u;
+    for (unsigned i = start; i < pos; ++i) {
+        struct n1_ring_ent *e = &n1_ring[i & 19u];
+        PUT("["); HEX(e->seq); PUT("] rax=0x"); HEX(e->rax);
+        PUT(" [rax]=0x"); HEX(e->obj); PUT(" guard=0x"); HEX(e->guard);
+        PUT(" tid=");
+        { unsigned long t=(unsigned long)e->tid; char tmp[24]; int n=0;
+          if(!t)*p++='0'; while(t){tmp[n++]=(char)('0'+(t%10));t/=10;}
+          while(n)*p++=tmp[--n]; }
+        PUT("\n");
+    }
+    #undef PUT
+    #undef HEX
+    ssize_t u = write(fd, buf, (size_t)(p - buf));
+    return (long)(u > 0 ? u : 0);
+}
+
 static void n1_pred_sig(int s, siginfo_t *si, void *uc)
 {
     (void)s; (void)si;
     ucontext_t *c = (ucontext_t *)uc;
     if (!c) return;
     long n = __atomic_fetch_add(&n1_pred_hits, 1, __ATOMIC_RELAXED) + 1;
-    if (n > 3 && (n % 10000) != 0) return;
     uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
     uintptr_t obj = 0; uint64_t guard = 0;
     long g1 = w31_read(rax, &obj, 8u);
     long g2 = g1 == 8 ? w31_read(obj + 0x28u, &guard, 8u) : -1;
+    /* N1-2: every hit goes into the last-20 ring, readable by crash handler. */
+    {
+        unsigned i = __atomic_fetch_add(&n1_ring_pos, 1, __ATOMIC_RELAXED) & 19u;
+        struct n1_ring_ent *e = &n1_ring[i];
+        e->seq = (uint64_t)n; e->rax = rax; e->obj = obj;
+        e->guard = (g2 == 8) ? guard : 0xdeadbeefcafebabeULL;
+        e->tid = syscall(SYS_gettid);
+    }
+    if (n > 3 && (n % 10000) != 0) return;
     fprintf(stderr,
             "[N1_PRED #%ld] tid=%ld rax=%p [rax]=%p [[rax]+0x28]=%s%016lx\n",
             n, (long)syscall(SYS_gettid), (void *)rax, (void *)obj,
