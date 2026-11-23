@@ -509,3 +509,46 @@ an independent host-side defect, not a checkpoint credit.
 | 23 | **W29 INPUT FIRST: default InitClientSettings arg0 = /tmp/opencode/w11-arg0.json (avd_boundary.h:16), SHA 8215519f verified before call; rung prints MODIFIED-INPUT (no credit) on mismatch; DEBT** | `avd_boundary.h:16/20`, `avd_boundary.c:127`, `guest_app_shell.c:2257` | harness/lead | Restores authoritative default input and makes modified input explicit/non-crediting | Remove when a genuine Java/DEX startup supplies the call and no modified input is used |
 | 24 | **W29 host-only TSD seed OFF switch SOBER_W29_TSD_SEED_OFF added (seed_stub_tsd early return); DEBT** | `guest_app_shell.c:121-122` | harness/lead | Opt-in diagnostic to disable the host TSD seed (default on path unchanged) | Remove when seed-OFF behaviour becomes the default or the diagnostic is no longer needed |
 | 25 | **W29 host-only fix: sober_w21_boundary_ok NULL-guards w21_base before deref at native_jni.c:184 (removed no-bp host fault at [0x7cdd149]); DEBT** | `native_jni.c:184-187` | harness/lead | Prevents the no-breakpoint host crash in the boundary credential check; guest faults remain | Remove when the guest-side boundary path is genuine and the guard is folded into final code |
+
+## Wave30 audit (task #637) — recheck of W29 PROVENs + quoted-line verification
+
+Owner: audit (worktree `/tmp/opencode/w30-audit`, branch `w30-audit`). No device, no runs by audit.
+Engine SHA `3e498d64`. NEW RULE honored: every success claim below QUOTES its raw log line.
+
+**Recheck of all W29 harness report PROVENs (`/tmp/opencode/w29-harness/report.md`, updated 03:32):**
+- PROVEN (quoted): `avd_boundary.h:16` default w11-arg0.json / `:18` UNVERIFIED / `:19` PATH_ENV /
+  `:20` SHA 8215519f; `avd_boundary.c:102-104` consumed. Modified-input exports quoted from
+  `w20-harness/memrun.sh:7`, `w22-harness/runbatch.sh:9`, `w29-harness/runall.sh:15`.
+  `full_on_1.err:3703 [avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519f…`
+  and `:3704 [app-shell] AVD boundary pre: arg0_len=1533221 …`.
+  `tsdtrace2.err:3706/3727` TSD eq=1 then `[seed]=0x7265502f666f7270` eq=0; `seedoff_trace.err:3701`
+  seed OFF / `:3706 [tls]=0x1`. `seedoff_pairs_1.err:3762-3763` fault guest_rva 0x2a13354, si_addr
+  0x7fffff7feff8, 3/3; post2315 #1-#8 each 3 runs. `native_jni.c:182-188` NULL guard at :187.
+  `full_on_*.err` fault guest_rva 0x6ca229c 3/3. RETRACTED section: init/frame strings only in *.out,
+  13× `[checkpoint] rung1 FAIL (DEBT=1)`, no W21_LATCH_HIT.
+- **UNSUPPORTED claim A:** W29 report cites `w28-harness/rund3.sh` as a modified-input export —
+  that file DOES NOT EXIST (w28-harness has only `run6.sh`). Other script citations valid.
+- **UNSUPPORTED claim B:** W29 report 2×3 table seed-OFF row attributes the masked fault to
+  `full_off_*.err`; THOSE LOGS CONTAIN NO FAULT LINES. Masked-fault evidence is `core.1529212` only
+  (audited prior wave: tid 1529212, rip 0x5555555690b0, r13=si_addr=0x7fffff7fefc0).
+
+**W30 agents (all quotes verified verbatim against raw files):**
+- static #635: `'[W29_TLS 0x6ca228b] tid=1521493 key=3 tls=0x55555568b230 [tls]=0x1 … seed=(nil) eq=0'`,
+  `'[app-shell] pre-OnLoad TSD key=3 get=0x55555568b230'`, 8/8 pair quotes, J2N #70/#534/#541/#612
+  — all found verbatim. Real-boot +0x28 zeroing UNPROVEN (agent states so).
+- harness #636: `'[W28_FAULT_INSN] rip=0x00007fffef8e3f95 guest_rva=0x06ca7f95'` 3/3,
+  `'[W30_SI_RSP_DELTA] 8'` 3/3, `'[W30_SIGALTSTACK] installed sp=0x5555555e3a80 size=65536'`,
+  `'[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)'`, verified SHA line,
+  `'[checkpoint] rung1 FAIL (DEBT=1)'` 3/3, 0 W21_LATCH_HIT, 24× fp guest+0x6ca8014,
+  `'[W30_RET64] rsp=0x00007fffff7fefd0'`. Static `0x6ca800e call [rax+0x720]` verified by objdump.
+  FAULTING INSTR: `guest+0x6ca7f95 = e8 b6 b3 d6 fb = call 0x2a13350`, si_addr=rsp-8 stack overflow.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 26 | **W30 TSD seed removed: harness-fabricated state caused the 0x6ca229c fault; DEBT** | `guest_app_shell.c` (W30 harness worktree, default OFF) | harness/lead | Raw `'W30 TSD seed REMOVED (default OFF; harness-fabricated state)'`; with seed gone the guest recurses at 0x6ca8014 and faults at 0x6ca7f95 call 0x2a13350 (stack overflow) — no fabricated TSD state | Remove when the guest's own TLS state produces a genuine callback and no harness seed exists |
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/w30-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 5 self-matches (the ledger's own recorded scan command in 3 worktree copies + 2 verification-notes copies); no credential values.
+**Git:** no capture/phone/logcat/core files tracked (1 false-positive "core." prose match in
+`G6_progress_score.md`); w30 worktrees each on own branch. Marker WITHHELD.
