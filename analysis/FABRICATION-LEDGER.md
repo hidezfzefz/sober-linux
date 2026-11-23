@@ -1013,3 +1013,46 @@ exception producer fires after size()==0 and why rdi=0 vs __sF+0x130; no fabrica
 → OUTPUT: 54 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n4. Marker WITHHELD.
+
+## Overnight n5 audit (task #681) — SF_FULL defect removal + new first divergence
+
+Owner: audit (`/tmp/opencode/n5-audit`, branch `n5-audit`). Cores 6-7. READ-ONLY, no device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n5_{1,2,3}.err` (3/3); object OFF, rc=139 3/3.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 43 | **Bionic `__sF` ABI fidelity, defect removal (host-only): `SOBER_BIONIC_SF_FULL=1` widens exported `__sF` to 0x200 and maps guest `__sF+0x98/+0x130` to real host stdout/stderr with valid `_lock`, removing the earlier host libc `_IO_fflush+0x9f` NULL-FILE fault. DEBT** | raw n5_1.err `[bionic-sf] full __sF stdio bridge installed (host __sF=0x55829d0d5140, size=0x200)`, `[bionic-sf] stdio GOT bound: fwrite 0x7229748 …; fflush 0x7229750 …`; script `rund3_n5.sh:10 export SOBER_BIONIC_SF_FULL=1`; libc objdump `7c8e8 mov rdi,[rdi+0x88]` (_lock load) then `7c8ff mov rax,[rdi+0x8]` NULL with tiny __sF; source `bionic_libc.c:443 sober_libc_obj___sF[0x200]`, `bionic_sf_full.c:4-7` | harness (owner), audited | A genuine host-side ABI fix: no guest bytes/gate/fake returns/remaps; libc fault gone 3/3, replaced by a guest assert (below) | Remove when a real device/AVD boot supplies the full `__sF` bridge natively (no host shim needed) or the opt-in is folded into default host code |
+
+**NEW FAULT (first divergence, PROVEN):** with SF_FULL ON the libc fault is GONE (3/3); new fault
+`guest+0x6caef67`, bytes `89 c0 e8 62 …`, `si_addr=0x0`, **signal=5 SIGTRAP (guest HardAssert)**.
+Raw `[W28_FAULT_INSN] rip=0x00007f12da5d6f67 guest_rva=0x06caef67`, `signal=5 tid=1952583 …`,
+last-15 stderr `RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)`.
+3rd `N14_REPLAY` never printed (assert fires before #552 returns). This is a GUEST-side defect newly
+exposed by removing the host one — not credit; exact assert meaning and mimalloc-detection cause UNPROVEN.
+
+**harness #678 — all quoted claims verified verbatim:** SHA 3/3; SF_FULL installed/GOT-bound lines;
+`[W40_STDIO_RING] last 32 fflush/fwrite/fclose calls …` header present 3/3 but `in_sF` entries 0/0/0
+(GOT rebinding bypasses shims under SF_FULL — UNPROVEN exact bypass path); RET64 count 1/1/1 (vs
+0/0/0 in n4), first guest RVA `guest+0x3a30e8`; last-15 lines (replays 1/3+2/3, HardAssert, no 3/3);
+libc objdump independently confirmed at 0x7c8e8/0x7c8ff. No quantifier overreach found.
+
+**static-A #679 — all quoted claims verified** (fatal helper disasm `2ea6a66/6b/72/79/80/8c/91/94/99`,
+strings `libunwind: %s - %s\n` / `_Unwind_Resume` / `_Unwind_Resume() can't return`, caller `1dba6b7
+call 2ea6a10` verified by direct objdump; `__sF[3]` 0x198 / +0x98 / +0x130 / NULL `_lock` at +0x88
+from source comments; `SOBER_BIONIC_SF_FULL` opt-in). Two of three cited caller addresses
+(`1dceb4f`, `1dcf4c8`) not independently confirmed by spot objdump — not used as a success claim;
+"no caller in #552 body" consistent with prior-wave scans. Fatal helper flushes +0x130 (stderr);
+other logger FILE* from object fields → global "all flushes use one stream" UNPROVEN.
+
+**static-B #680 — all quoted lines verified verbatim:** after-#552 host calls (`0x24650a9/0x232d484/
+0x2326e2e/0x246515d/0x2465210/0x233762c/0x24abf96`) are host `fprintf(stderr,…)`, NOT guest fflush —
+RETRACTED any host-log-as-guest-fflush claim; peract2 thread lines seq71/89/100 (AsyncTask #3 /
+FunctionMarshal / RBX Worker A); 3rd N14 replay `0x2383c18` source; J2N #67/#105/#552
+(w12-j2n-300.log). Thread timing vs #552 UNPROVEN.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n5-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 62 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n5. Marker WITHHELD.
