@@ -1,0 +1,11 @@
+21078340- 6caed5d:	55                   	push   %rbp
+21078341- 6caed5e:	48 89 e5             	mov    %rsp,%rbp
+21078342: 6caed61:	83 ff 0a             	cmp    $0xa,%edi
+21078343- 6caed64:	b8 0a 00 00 00       	mov    $0xa,%eax
+21078344- 6caed69:	0f 42 c7             	cmovb  %edi,%eax
+21078345- 6caed6c:	48 8d 0d 5d 0e 57 00 	lea    0x570e5d(%rip),%rcx        # 721fbd0 <strncat@plt+0x4ec050>
+21078346- 6caed73:	48 8b 3c c1          	mov    (%rcx,%rax,8),%rdi
+21078347- 6caed77:	e8 00 00 00 00       	call   6caed7c <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b724e>
+21078348- 6caed7c:	55                   	push   %rbp
+21078349- 6caed7d:	48 89 e5             	mov    %rsp,%rbp
+21078350- 6caed80:	41 56                	push   %r14
