@@ -769,3 +769,45 @@ verified. Writer tid and the real-boot `+0x28`-setting native UNPROVEN (agent st
 → OUTPUT: 19 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n1-3. Marker WITHHELD.
+
+## Overnight n1-4 audit (task #659) — quoted-line verification + rule-7 boundary
+
+Owner: audit (`/tmp/opencode/n1-audit`, branch `n1-audit`). Cores 6-7. No device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n14_{1,2,3}.err` and `n14s_{1,2,3}.err`
+(6/6); `W24 JNI_OnLoad FIRST … ver=0x10006` 6/6; rc=139 in all 6.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 35 | **RULE-7 BOUNDARY — recursion-removal replays are NOT rung-2 attempts, and are host-only. Replaying captured pre-BaseDirs natives `nativeOnPreCreated 0x23239c5` / `nativeOnResumed 0x2328066` via genuine host bridge changes no guest bytes/gate; guard stays 0, recursion persists (rc=139 6/6), no `[checkpoint] rung2` line emitted in any n14 run, no rung1/rung2 source change in the diff. DEBT** | raw n14 3/3 `[N14_REPLAY 1/3] nativeOnPreCreated 0x23239c5("ActivitySplash") -> rc=-6066930334832433271`, `[N14_GUARD after nativeOnPreCreated] slot=… obj=… guard=0000000000000000 tid=…`, same for 2/3 nativeOnResumed; zero `N14_REPLAY 3/3` / rung2 lines; source diff harness 6a92bd7→d6ac7ed touches only `src/linux/guest_app_shell.c`, no rung1/rung2/guest writes | harness/lead, audited | Prevents recursion-removal diagnostics from being miscredited as rung-2 progress; keeps the ladder boundary explicit | Remove when a genuine rung-2 sequence (app_start→lua_dm) is quoted on the authoritative input without replay diagnostics |
+
+**Harness #657 — PROVEN:** fault sites full replay 3/3 inside 3rd native before its log line
+(`rip=0x00007f6508f078ff si_addr=0x0000000000000008`, bytes `48 8b 47 08 74 05 48 85` =
+`mov rax,[rdi+8]; je; test rax,rax` — NULL+8, not stack guard); diagnostic 3rd skipped 3/3
+stack-guard (`0x06ca7f95` 1/3, `...bef4 mov [rsp-0x10],rsi` 2/3). UNPROVEN: #552 opaque object
+reconstruction (generic Object and real `shared_param_obj` both fault at `[rdi+8]` si_addr=0x8),
+host module at `...08ff`; no fake handle fabricated.
+
+**static-B #658 — all quoted disasm verified:** TRUE path `2a1e3a0` closure call `2a1e4e9 call *%r12`
+(`r12 = 0x40(%rbx)`, `r15 = 0x48(%rbx)`), prior indirect calls `2a1e408`/`2a1e4d9`,
+`2a1e476 jmp *%rdx` → context-copy helper 0x2a1b4e0 (NOT closure call), NULL test `2a1e4ec test
+rax,rax` / `2a1e4ef je 2a1e61f` / `2a1e62d ret` (verified by direct objdump; saved dump truncated
+before that address). `0x6ca7f72` has 0 refs in `2a1e3a0` (whole binary only `6c8e4cc lea` + func
+start) → no static TRUE→wrapper path; runtime re-entry UNPROVEN. `2a132c0` FunctionMarshaller writes
+ONLY `2a1333c mov %r15,0x70(%r14)` (nesting +0x70), zero `0x28(` refs → cannot set obj+0x28 (only
+`2a0ed45` can). UNPROVEN: concrete +0x40 closure value, real-boot TRUE-path correctness.
+
+**static-A #656 — all quoted lines verified:** prologues `23239c5/23239d1`, `2328066/2328072`,
+`2383c18/2383c23/2383c26`; only `nativePostClientSettingsLoadedInitialization3` reaches installer
+(`23c1136 call 2a14330` → `2a14337 jmp 2a0e7c0` → `2a0e83b call 2a0e8c0` → `2a0ed45`), the two
+lifecycle natives do not; closure mask `2a0ebce movabs $0xffffffffffff,%r14`,
+`2a0ed0f mov (%rax),%r15`, `2a0ed12 and %r14,%r15`, `2a0ed18 mov $3,%edx`, `2a0ed1d call 2a13620`,
+`2a0ed45 mov %r15,0x28(%rbx)`, complement `2a0e8e4 movabs $0xffff000000000000`. obj+0x28 =
+canonicalised closure pointer (`tagged & 0x0000ffffffffffff`), not jmethodID/length/flag. Exact
+closure type UNPROVEN.
+
+**Secrets-scan command + output (final):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n1-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 19 self-matches (ledger's own recorded scan commands + verification-notes); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n1-4. Marker WITHHELD.
