@@ -1,0 +1,8 @@
+0x217ca9 'java/util/List'
+0x46f8ef 'com/roblox/engine/jni/model/ApplicationExitInfoCpp'
+0x3305b9 'get'
+0x250e4f '(I)Ljava/lang/Object;'
+0x54eb7e 'size'
+0x4a4e18 '()I'
+0x56d0e9 'mPid'
+0x532c55 'I'

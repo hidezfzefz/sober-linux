@@ -1,63 +1,67 @@
-# n2 step1 #664 static-B — TLS holder writer + table provenance (READ-ONLY)
+# n2 #668 STEP 2 — DEX type of #552 arg + guest JNIEnv method list
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n2-static-b.
-FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (fn[224]); RA `0x6ca8014` (n1 harness). No apply.
+Read-only; cores 2-3. Every success claim quotes a raw line. Evidence:
+`raw_dex_signature.txt`, `raw_dex_callsite.txt`, `raw_dex_codeconst.txt`,
+`raw_jnienv_calls.txt`, `raw_strings.txt`, `dex_parse.py`, `dex_callsite.py`.
 
-## RESULT: NOT an in-place patch. NO immediate alert triggered.
+## DEX (authoritative classes2.dex from base.apk SHA 114a6f8e)
 
-At `6c8e4d3` r14 is a **guest-private copy**, not the table the guest was given. The builder copies vtable entries from the given table into a per-key TLS buffer belonging to a *different* key, then replaces the holder's table pointer with that copy.
+Quoted raw parse output:
+> `METHOD idx=15180 class=Lcom/roblox/engine/jni/NativeGLInterface; name=nativePostClientSettingsLoadedInitialization3 proto='(Ljava/util/List;)V'`
+> `CLASS_DEF idx=1953 access=0x1 super=Ljava/lang/Object; interfaces_off=0 class_data_off=5571488`
+> `CLASS_DATA static_fields=0 instance_fields=0 direct_methods=83`
 
-## PROVEN — [TLS holder+0] writer(s) (quoted raw)
+So declared parameter = **`Ljava/util/List;`** (one param), declaring class
+`Lcom/roblox/engine/jni/NativeGLInterface;` (super Object, **no interfaces**,
+**no fields**).
 
-Getter keys (dis_getters.txt):
-```
-6c89e74: lea 0x5f81ed(%rip),%rdi  # 7282068
-6c89e7b: call 2ea6440
-6c89e94: lea 0x5f81ed(%rip),%rdi  # 7282088
-```
-Shared helper 0x2ea6440 (dis_tls_helper.txt) — the pthread_getspecific holder is a per-thread array; the getter returns a per-key buffer at `+8+index*8`:
-```
-2ea6455: mov 0x43fb6ad(%rip),%edi  # 72a1b08
-2ea645b: call 6d322e0 <pthread_getspecific@plt>
-2ea64fc: mov %r13,0x10(%rbx)      ; key index assigned lazily under mutex
-2ea655a: movq $0x1,(%r14)         ; <-- writes [TLS holder ARRAY +0] = 1 on first alloc
-2ea6561: mov %r12,0x8(%r14)       ; capacity
-2ea656e: call 6d31d10 <pthread_setspecific@plt>
-2ea6573: mov 0x8(%r14,%r13,8),%r15 ; per-key buffer for this getter
-2ea65de: mov %r15,0x8(%r14,%r13,8) ; installs that buffer
-2ea65e3: mov %r15,%rax            ; returned to caller 6c89e70
-```
-The per-key buffer **returned by getter 6c89e70** has its `[0]` written by the vtable builder itself (dis_builder_fn.txt):
-```
-6c8d84a: mov %rdi,%rbx            ; rbx = holder holding given table at [0]
-6c8d84d: call 6c89e90             ; buffer C (key 7282088) -> rax
-6c8d85b: mov %rax,%r14            ; r14 = COPY DESTINATION
-6c8d85e: mov (%rbx),%r15          ; r15 = *(holder) = given table pointer
-6c8d86a: call 6c89e70             ; buffer B (key 7282068)
-6c8d86f: mov %r15,(%rax)          ; <-- writes [getter-6c89e70 buffer +0] = given table ptr
-6c8d872: call 6c89e70
-6c8d877: mov (%rax),%rax
-6c8d87a: mov (%rax),%rax          ; first vtable entry of given table
-6c8d87d: mov %rax,(%r14)          ; copy into buffer C
-```
+Java call site, verified from raw DEX `invoke-static` at file offset `0x335152`:
+> `CALLER class=Luh/e$f; method=b proto=(Ljava/lang/Integer;)V access=0x1 code_off=0x335124 insns=0x335134..0x33517c target=0x335152`
 
-## PROVEN — r14 provenance at 6c8e4d3 (dis_builder_fn.txt / dis_builder_full.txt)
+Prior callgraph doc line (quoted): `| nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V | 0x2383c18 | 1 | classes2.dex:000e ← Luh/e$f;->b(Ljava/lang/Integer;)V |`.
 
-```
-6c8e4cc: lea 0x19a9f(%rip),%rax  # 6ca7f72
-6c8e4d3: mov %rax,0x720(%r14)    ; self-pointer written into the COPY
-6c8e50b: mov %rax,0x740(%r14)
-6c8e512: mov %r14,(%rbx)         ; <-- guest saves the COPY as the real table
-6c8e51f: ret
-```
-r14 is set ONLY at `6c8d85b: mov %rax,%r14` from `call 6c89e90` (key `0x7282088`), distinct from getter `6c89e70` (key `0x7282068`). The neighbour writes `mov %rax,0x8(%r14)`, `0x10(%r14)` … `0x740(%r14)` (dis_builder_full.txt) are a full ~234-entry vtable copy. Builders are called with `rdi = (%rbx)` (given table in holder): `6c8e9ac`, `6c8eb83`, `6c8ef35: call 6c8d840`; at `6c8e9a0/6c8e9a8` the guest also stores the original pointer at `0x18(%rax)` of getter-6c89e50's buffer. `227bde8: call 6c8e520` is a separate function (its own prologue at `6c8e520`), not this builder; exact caller chain from JNI_OnLoad to `6c8d840` is UNPROVEN here.
+Object construction/factory, resolved from the caller's code constants
+(`raw_dex_codeconst.txt`):
+> `method[12921] Lcom/roblox/client/RobloxApplication;->f()Landroid/content/Context;`
+> `method[44244] Lyj/l2;->a(Landroid/content/Context;)Ljava/util/List;`
+> `method[15180] Lcom/roblox/engine/jni/NativeGLInterface;->nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V`
 
-## UNPROVEN / RETRACTED
+So `Luh/e$f;->b()` obtains a Context via `RobloxApplication.f()`, calls
+`Lyj/l2.a(Context)` to get the `List`, and passes it to the native method.
 
-- UNPROVEN: exact identity of `*(rbx)` on the harness path (whether it is literally the bridge table given to JNI_OnLoad); requires harness read-only comparison of `rbx@6c8e4d3`, `[bridge_table+0x720]`, and `rax@6ca800e`.
-- UNPROVEN: whether any *other* code path patches the given table in place — this instruction does not.
-- RETRACTED: any claim that `6c8e4d3` modifies the harness-provided table; it modifies a copy. n1 conclusion "guest self-pointer at fn224" stands, but its storage is the guest copy, not the bridge table.
+## Guest #552 JNIEnv calls on the argument
 
-## Evidence / NOT done
+`0x2383c23: mov %rdx,%rbx` and `0x2383c98: mov %rsi,%r14` save the jobject.
+Quoted disassembly with resolved JNI functions:
+> `2383cb6: call *0x30(%rax)` → fn[2] **FindClass**, name `java/util/List`
+> `2383cca: call *0x30(%rax)` → fn[2] **FindClass**, name `com/roblox/engine/jni/model/ApplicationExitInfoCpp`
+> `2383cfc: call *0x108(%rax)` → fn[29] **GetMethodID**(List, `get`, `(I)Ljava/lang/Object;`)
+> `2383d2a: call *0x108(%rax)` → fn[29] **GetMethodID**(List, `size`, `()I`)
+> `2383d33: mov %r14,%rsi` → helper `0x238463c`: `23846b6: call *0x190(%rax)` → fn[46] **CallIntMethodV** (invokes `size`)
+> `2383d6b: mov %r14,%rsi` → helper `0x2315d18`: `2315d92: call *0x118(%rax)` → fn[31] **CallObjectMethodV** (invokes `get`)
+> `2383dac: call *0x2f0(%rax)` → fn[90] **GetFieldID**(ApplicationExitInfoCpp, `mPid`, `I`)
+> `2383dbf: call *0x320(%rcx)` → fn[96] **GetIntField**
 
-Evidence: dis_tls_helper.txt (159 lines), dis_builder_fn.txt, dis_builder_full.txt, dis_getters.txt, callers_builder.txt, dis_onload_caller.txt, report.md. NOT DONE: no runs/device/emulator/Wine/box64/QEMU/captures; no guest writes/gate edits/seeder/fake returns/path remaps/apply. Input SHA 8215519f per task statement (not re-verified here; no new captures).
+Strings quoted: `0x217ca9 'java/util/List'`, `0x46f8ef 'com/roblox/engine/jni/model/ApplicationExitInfoCpp'`, `0x3305b9 'get'`, `0x250e4f '(I)Ljava/lang/Object;'`, `0x54eb7e 'size'`, `0x4a4e18 '()I'`, `0x56d0e9 'mPid'`, `0x532c55 'I'`.
+
+**EXACT method/field list the guest needs:** `java/util/List.size()I`,
+`java/util/List.get(I)Ljava/lang/Object;`, and field
+`com/roblox/engine/jni/model/ApplicationExitInfoCpp.mPid:I`. JNIEnv functions
+used: FindClass, GetMethodID, CallIntMethodV, CallObjectMethodV, GetFieldID,
+GetIntField.
+
+**Limits:** 2 Java methods + 1 field — **NOT >5 methods**. Framework classes = 2
+(`java/util/List`, `com/roblox/engine/jni/model/ApplicationExitInfoCpp`) — **NOT
+>3 framework classes**. Both limits are satisfied for a DEX-typed object build.
+
+## What NOT done
+No build, no apply, no harness change, no runs/gdb/perf, no device/AVD/Frida/phone,
+no new captures, no guest writes/gate edits/seeder/fake returns/path remaps, no
+credentials, no captures/logs/tokens in git. Full `Lyj/l2.a()` body not decoded
+(concrete List implementation UNPROVEN); other branches of the 0x2383c18 body
+were not exhaustively attributed to the #552 argument.
+
+## First divergence + next step
+First divergence: capture shows only `[object Object]` while guest requires
+`List.size/get` + `ApplicationExitInfoCpp.mPid`. Next: harness builds a DEX-typed
+object with exactly those methods/fields (within the stated limits).
