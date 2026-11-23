@@ -771,6 +771,39 @@ static void n2_call720_sig(int s, siginfo_t *si, void *uc)
             (void *)w, (void *)bw, (void *)expect, (bw == expect) ? 1 : 0);
 }
 
+/* ---- n3 READ-ONLY: #552 native entry exec bp at 0x2383c18 ---------------
+ * Logs rdi/rsi/rdx/rcx plus the inner-rdi source candidates (the jobject is
+ * rdx at JNI entry; [rdx] is its handle/vtable).  No writes of any kind. */
+static uintptr_t n3_base;
+static void n3_entry_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rdi = (uintptr_t)c->uc_mcontext.gregs[REG_RDI];
+    uintptr_t rsi = (uintptr_t)c->uc_mcontext.gregs[REG_RSI];
+    uintptr_t rdx = (uintptr_t)c->uc_mcontext.gregs[REG_RDX];
+    uintptr_t rcx = (uintptr_t)c->uc_mcontext.gregs[REG_RCX];
+    uintptr_t d0 = 0, d8 = 0;
+    long g0 = w31_read(rdx, &d0, 8u), g8 = w31_read(rdx + 8u, &d8, 8u);
+    char line[512], *p = line; static char *lim; lim = line + sizeof(line);
+    #define P(x) do { const char *_s=(x); while (*_s && p<lim-1) *p++=*_s++; } while(0)
+    P("[N3_552_ENTRY] tid=");
+    { char t[32]; snprintf(t,sizeof(t),"%ld",(long)syscall(SYS_gettid)); P(t); }
+    P(" rip=base+0x2383c18 rdi="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rdi); P(t); }
+    P(" rsi="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rsi); P(t); }
+    P(" rdx="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rdx); P(t); }
+    P(" rcx="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rcx); P(t); }
+    P(" [rdx]="); P(g0==8?"":(char*)"UNREADABLE-");
+    { char t[32]; snprintf(t,sizeof(t),"%p",(void*)d0); P(t); }
+    P(" [rdx+8]="); P(g8==8?"":(char*)"UNREADABLE-");
+    { char t[32]; snprintf(t,sizeof(t),"%p",(void*)d8); P(t); }
+    P(" rdi_is_env="); *p++=(char)('0'+(rdi && rdi==g_bridge_env_ptr));
+    *p++='\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p-line)); (void)u;
+    #undef P
+}
+
 static void w21_init(uintptr_t base)
 {
     if (getenv("SOBER_N2_TABLE")) {
@@ -781,6 +814,14 @@ static void w21_init(uintptr_t base)
         int a2 = f2 >= 0 ? w21_arm(f2, SIGUSR2, n2_call720_sig) : -1;
         fprintf(stderr, "[N2_TABLE_ARM] base=%p bridge_env=%p builder=%d call720=%d\n",
                 (void *)n2_base, (void *)(uintptr_t)g_bridge_env_ptr, a1, a2);
+        return;
+    }
+    if (getenv("SOBER_N3_ENTRY")) {
+        n3_base = base;
+        int fd = w21_perf(n3_base + 0x2383c18u);
+        int ok = fd >= 0 ? w21_arm(fd, SIGUSR1, n3_entry_sig) : -1;
+        fprintf(stderr, "[N3_ENTRY_ARM] base=%p fd_rc=%d\n",
+                (void *)n3_base, ok);
         return;
     }
     if (getenv("SOBER_N1_TRACE")) {
