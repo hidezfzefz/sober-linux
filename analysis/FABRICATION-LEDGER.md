@@ -728,3 +728,44 @@ verified), `javavm_semantics.c:435 fj_ExceptionCheck` in its own table. Real-boo
 → OUTPUT: 17 self-matches (ledger's own recorded scan commands + verification-notes), no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n1-2. Marker WITHHELD.
+
+## Overnight n1-3 audit (task #652) — quoted-line verification + host-only fix audit
+
+Owner: audit (`/tmp/opencode/n1-audit`, branch `n1-audit`). Cores 6-7. No device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n13_{1,2,3}.err` (3/3);
+`W24 JNI_OnLoad FIRST … ver=0x10006` 3/3; `W30 TSD seed REMOVED` present.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 33 | **SA_ONSTACK fix is HOST-ONLY: `w21_arm()` sets `sa.sa_flags = SA_SIGINFO \| SA_ONSTACK` on the process altstack (installed by install_crash_handlers, 64 KB). Effect: n1-2 perf-handler fault (host+0x372ef, 2/3) GONE — all n1-3 faults guest-mapped. No guest bytes/gate/fake returns** | raw n13 all 3 faults carry `guest_rva` (`0x02ea6446` 2/3, `0x06ca7f95` 1/3); source diff harness 28c067f→6a92bd7 `src/jni/native_jni.c` adds `sa.sa_flags = SA_SIGINFO \| SA_ONSTACK`; no mprotect/ptrace_poke/guest patch in diff | harness/lead, audited | Host signal delivery fix removes handler self-fault; guest behaviour unchanged | Remove when the fix is folded into final host code or a guest-side cause is proven |
+| 34 | **Rule-6 replay is HOST-ONLY and did NOT terminate: calls genuine guest natives `nativeSetPreferencesFile 0x246515d("prefs")` and `nativeInitializeNativeFlags 0x2465210(String[4])` with verbatim capture tokens (w12-j2n-300.log:629); no guest byte writes, fake returns or path remaps (per-run mkdtemp temp-root env only). rc=139 3/3 — RETRACTED any claim rule 6 terminates** | raw n13 3/3 `[app-shell] N1_RULE6 1 nativeSetPreferencesFile 0x246515d("prefs") -> rc=-6066930334832433271`, `[app-shell] N1_RULE6 2 nativeInitializeNativeFlags 0x2465210(String[4]) -> rc=0`; source diff `guest_app_shell.c` calls `(base+0x246515du)` via host bridge, comment "No guest bytes/gate writes, no fake returns, no path remapping" | harness/lead, audited | Pre-approved host replay of captured natives; measured effect recorded, no termination credit | Remove when a clean Java/DEX boot supplies these natives without harness replay or termination is proven |
+
+**Harness #654 — PROVEN:** fault sites `guest+0x2ea6446: 41 54 push r12` (rsp-8, 2/3),
+`guest+0x6ca7f95 call 0x2a13350` (rsp-8, 1/3); `[N1_AL #1] … al=0x00 al_dec=0`;
+ring `[00000000000092a7] rax=0x00005557be4119b0 [rax]=0x00007f91a8c0c140 guard=0x0000000000000000`;
+fn224 `[N1_CALL720] hit=1 … decode=host+0x2e750` → `hit=100 … decode=guest+0x6ca7f72`;
+`[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)` 3/3 — label only, marker WITHHELD.
+**RETRACTED:** rule-6 termination. UNPROVEN: fn224 guest-pointer writer identity in harness,
+why `prefs` returns the bridge sentinel rc, 4th flag token (capture truncated).
+
+**static-B #653 — all quoted disasm lines verified verbatim:** `2a12e80` dispatcher ENTER
+(`2a12ed4 inc %r13` / `2a12edb or` / `2a12ede mov %r15,0x70(%r12)`), LEAVE (`2a12f6a dec %r15` /
+`2a12f71 or` / `2a12f74 mov %r14,0x70(%rbx)`), RSL asserts via `727e910` (`2a12ed2 call *%rax`),
+closure test `2a12eef cmpq $0x0,0x28(%rbx)` / `2a12ef4 je 2a12f21`; TRUE terminal `2a12f1a call
+2a1e3a0` (guest, not JNI), FALSE `2a12f27`/`2a12f31 call *(%r14)` twice + `2a12f34 movq $0,(%r14)`
+clear = re-entry stop; `2a0ed45 mov %r15,0x28(%rbx)`, `2a0ed0f mov (%rax),%r15`, `2a0e83b call
+2a0e8c0`. Closure type/concrete TRUE-path closure/2a1e3a0 re-entry UNPROVEN (agent states so).
+
+**static-A #655 — claims verified:** thunk `2a14330 movq $0,(%rdi)` / `2a14337 jmp 2a0e7c0`;
+callers `23c1136`, `251e4ce`, `29cb5c5`, `3187fc7` in evidence file; the other five cited callers
+(`251fb4d`, `29f91c9`, `36ddccc`, `447547b`, `49677fe`) and capture line `J2N #612` were absent
+from the saved evidence files but audit independently verified all six verbatim (objdump /
+w12-j2n-300.log) → PROVEN, not retracted. `2a0ed0f mov (%rax),%r15` / `2a0ed12 and %r14,%r15`
+verified. Writer tid and the real-boot `+0x28`-setting native UNPROVEN (agent states so).
+
+**Secrets-scan command + output (final):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n1-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 19 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n1-3. Marker WITHHELD.
