@@ -59,6 +59,7 @@ extern volatile unsigned sober_bootstrap_seed_index __attribute__((weak));
 extern const char *sober_bionic_bootstrap_last_error(void) __attribute__((weak));
 extern long sober_jni_ring_dump_async(int fd) __attribute__((weak));
 extern long sober_javavm_ring_dump_async(int fd) __attribute__((weak));
+extern long sober_n1_ring_dump_async(int fd) __attribute__((weak));
 extern void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm)
     __attribute__((weak));
 
@@ -288,6 +289,7 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     /* Ring dumps are host-internal fixed buffers, never guest pointers. */
     if (sober_jni_ring_dump_async) sober_jni_ring_dump_async(STDERR_FILENO);
     if (sober_javavm_ring_dump_async) sober_javavm_ring_dump_async(STDERR_FILENO);
+    if (sober_n1_ring_dump_async) sober_n1_ring_dump_async(STDERR_FILENO);
     _exit(139);
 }
 
