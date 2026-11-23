@@ -1,0 +1,10 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .plt:
+
+0000000006d32020 <fflush@plt>:
+ 6d32020:	ff 25 2a 77 4f 00    	jmp    *0x4f772a(%rip)        # 7229750 <strncat@plt+0x4f5bd0>
+ 6d32026:	68 67 00 00 00       	push   $0x67
+ 6d3202b:	e9                   	.byte 0xe9

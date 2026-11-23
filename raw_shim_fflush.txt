@@ -1,0 +1,13 @@
+int fflush(FILE *stream)
+{
+    typedef int (*sober_fflush_fn)(FILE *);
+    sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;
+    FILE *mapped = sober_stdio_map(stream);
+    const char *dbg = getenv("SOBER_STDIO_DEBUG");
+    if (dbg && dbg[0] != '0' && sober_host_stderr)
+        fprintf(sober_host_stderr,
+                "[stdio] fflush(%p) -> %p off=%ld\n",
+                (void *)stream, (void *)mapped,
+                (long)((unsigned char *)stream - sober_libc_obj___sF));
+    return real ? real(mapped) : 0;
+    sober_libc_fn_fflush = native_lookup("fflush");
