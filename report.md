@@ -1,83 +1,84 @@
-# WAVE27 #626 — post-return predicate + native sequence table (static)
+# WAVE28 #629 — full wrapper disasm, rax provenance, byte/slot checks
 
-Read-only; no runs/device/phone/emulator. Engine SHA `3e498d64…`.
-No fault-time register is used as evidence (wave rule).
-Evidence: `dis_postreturn.txt`, `dis_6ca21c6.txt`, `dis_lambda_6ca22ee.txt`,
-`capture_lines.txt`, `harness_lines.txt`.
+Read-only; no runs/device. Engine SHA `3e498d64…`. Faulting instruction named
+first per the new rule; no stack return address is treated as the fault site.
+Evidence: `dis_6ca21c6_6ca22b0.txt`, `dis_2315556.txt`, `bytes.txt`,
+`dis_accessor_2ea6440.txt`, `dis_2a0de60.txt`, `dis_2a0ed45.txt`,
+`dis_2a1362f.txt`, `capture_lines.txt`.
 
-## (a) Post-return path — PROVEN
+## (a) Full wrapper `0x6ca21c6..0x6ca22b0` — PROVEN
 
-At helper `0x2315532`, after `call *0x548(%rax)` (`GetStringUTFChars`, fn[165]):
+**Faulting instruction: `0x6ca229c: ff 90 48 05 00 00 = call *0x548(%rax)`.**
+It dereferences **RAX** as a base, loads the 8-byte function pointer at
+`[rax+0x548]`, and calls it. It is the FALSE (non-scheduler) inner JNI call of
+the wrapper; the TRUE path uses the lambda at `0x6ca22ee`, which calls the same
+slot at `0x6ca2340`.
+
+Provenance of that rax (no global, no direct obj field):
 ```
-2315556  call *0x548(%rax)
-231555c  test %rax,%rax          ; <-- NULL test on the returned chars pointer
-231555f  je 2315583              ; NULL -> zero the 24-byte out struct and return
-2315561  mov %rax,%r12
-231556a  call 0x1dc1208          ; build std::string from chars
-231556f  mov (%r15),%rax
-231557b  call *0x550(%rax)       ; ReleaseStringUTFChars
+6ca228b  call 0x6c89e70        ; -> 0x2ea6440(0x7282068) TLS descriptor accessor
+6ca2290  mov (%rax),%rax       ; rax = *(field +0 of the TLS-resident object)
+6ca2293  mov %r15,%rdi         ; r15 = [0x6ca2287] = *(0x6c89e50()+0x18) (env obj)
+6ca2296  mov %r14,%rsi         ; r14 = arg2 saved at 0x6ca21db
+6ca2299  mov %rbx,%rdx         ; rbx = arg3 saved at 0x6ca21d8
+6ca229c  call *0x548(%rax)
 ```
-So the post-return test is a plain **NULL check**, not a length check, not
-string equality, not a file/dir check. PROVEN.
+`0x6c89e50/0x6c89e70` both `lea` a TLS descriptor (`0x7282048`/`0x7282068`)
+and call `0x2ea6440`; that accessor reads key `0x72a1b08`, calls
+`pthread_getspecific`, and returns `state[desc+0x10 index + 1]`. So rax is a
+**field (+0x00) of a TLS-resident object**, not the scheduler `obj`.
 
-`0x6ca229c` is in function **`0x6ca21c6`** (prologue at `0x6ca21c6`, canary
-from `0x72293f8`; full body `dis_6ca21c6.txt`). It is another **scheduler-gated
-JNI wrapper**, this time for `GetStringUTFChars`:
-```
-6ca21f4  call 0x2a13350          ; predicate
-6ca21f9  test %al,%al
-6ca21fb  je 6ca2282              ; FALSE -> direct path
-...      TRUE: closure lambda 0x6ca22ee, call 0x2a13560 (dispatcher)
-6ca2282  call 0x6c89e50 / 0x6ca228b call 0x6c89e70  (JNIEnv TLS getters)
-6ca2290  mov (%rax),%rax
-6ca2296  mov %r14,%rsi ; 6ca2299 mov %rbx,%rdx
-6ca229c  call *0x548(%rax)       ; GetStringUTFChars (fn[165])
-```
-Predicate `0x2a13350` = `*(obj+0x28) != 0` (obj from `0x2a0de60`), the same
-scheduler-installed-callback word as the FindClass/ExceptionCheck wrappers.
-The TRUE-path lambda `0x6ca22ee` also calls `*0x548(%rax)` at `0x6ca2340`.
+Predicate at `0x6ca21f4 call 0x2a13350` then `test %al,%al; je 0x6ca2282`
+tests `*(obj+0x28) != 0`, where `obj = *(TLS[0x722e540] + 0x410)` via
+`0x2a0de60` (`0x2a0de64` descriptor `0x722e560`, `0x2a0de7d` descriptor
+`0x722e540`, `0x2a0deba add $0x410,%rax`; predicate `0x2a1335e mov (%rax),%rax;
+0x2a13361 cmpq $0,0x28(%rax)`).
 
-**Assert with a message string? NO — RETRACTED.** Every RIP-relative reference
-in `0x6ca21c6` and its lambda is either code (`0x6ca22ee`) or the canary global
-`0x72293f8`; no string address is loaded. The harness label "guest assert/fault
-path" for `0x6ca229c` is a misnomer: it is a JNI `GetStringUTFChars` call behind
-the `*(obj+0x28)!=0` scheduler gate. Generic `assertion failed: …` strings exist
-elsewhere in the binary but none is referenced by this function.
+**Guest writers found (PROVEN as instructions; exhaustiveness UNPROVEN):**
+- `0x2a0ed45: mov %r15,0x28(%rbx)` — scheduler-object initializer (writes the
+  callback word during construction).
+- `0x2a1362f: movq $0x0,0x28(%rdi)` — struct zero-init (clears +0x28).
+- The host-side `sober_jni_neutralize_guest_scheduler` memset at `p+0x28` is
+  **not** a guest writer and is excluded by scope.
+- `0x2ea6555: movq $0x1,(%r14)` / `0x2ea6561: mov %r12,0x8(%r14)` and
+  `0x2ea656e: pthread_setspecific` populate the TLS state that ultimately
+  supplies rax; no other guest writer of that field was located statically.
 
-## (b) Native sequence table — PROVEN
+Capture-order natives before BaseDirs: `nativeSetRobloxChannel("")` (#70/#542),
+`nativeSetRobloxVersion("2.740.931")` (#534), `nativeGameGlobalInit()` (#541).
+Whether a `+0x28` writer sits on any of their paths is **UNPROVEN** statically
+(no dynamic trace in this wave).
 
-Harness order from `runC.err` (entry/call-site log lines, not fault registers):
-| # | Harness native | Args (entry log) | Capture (w12 #/args) | Verdict |
-|---|---|---|---|---|
-| 1 | `nativeInitClientSettings 0x2359277` (:3706, AVD-boundary replay) | JSON/null/app tag | #551 `(JSON, null, "GoogleAndroidApp")` t=290317 | MOVED (capture 4th) |
-| 2 | `JNI_OnLoad 0x227af5a` (:3715) | `(vm, NULL)` | no J2N entry (not Java-called) | EXTRA |
-| 3 | `nativeSetBaseDataDirectories 0x24650a9` (:3724) | `(env, jclass, "/tmp/opencode/sober-apk/split" ×2)` | #612 two Android data dirs t=290866 | DIFFERS (value+order) |
-| 4 | `nativeSetRobloxVersion 0x232d484` (:3725) | `(env, jclass, "2.740.931")` | #534 `"2.740.931"` t=290179 | MATCH value, order swapped |
-| 5 | `nativeSetRobloxChannel 0x2326e2e` (:3726) | `(env, jclass, "LIVE")` | #70/#542 `""` t=290171/290179 | DIFFERS (value+order) |
-| 6 | `nativeGameGlobalInit 0x233762c` (:3727) | `(env, jclass)` | #541 no Java args t=290202 | MATCH value, MOVED last |
-| — | `nativeSetPreferencesFile` | not called | #613 `"prefs"` t=290868 | MISSING |
-| — | `nativeInitializeNativeFlags` | not called (opt-in) | #614 t=290891 | MISSING |
+## (b) Byte verification — PROVEN
+Raw file bytes at both sites are `ff 90 48 05 00 00`:
+`0x6ca229c` and `0x2315556` are both `call *0x548(%rax)`. Hence `0x6ca229c`
+is this wrapper's inner JNI call and **its return point is `0x6ca22a2`**
+(`mov (%r12),%rcx` canary check). The rax supplying register/field at
+`0x6ca229c` is `*(TLS[0x7282068]-resident object + 0x00)`; at `0x2315556` rax
+is `*(env+0x00)` from `0x231554b mov (%rsi),%rax`. Stack RA `0x231555c` is
+**not** the faulting instruction.
 
-**Deviation summary:** capture order is Channel → Version → GameGlobalInit →
-InitClientSettings → BaseDirs → PreferencesFile → InitFlags; harness order is
-InitClientSettings → JNI_OnLoad → BaseDirs → Version → Channel → GameGlobalInit.
-Three ordering inversions (BaseDirs/Version/Channel, GameGlobalInit,
-InitClientSettings), two missing natives, one extra JNI_OnLoad, and two value
-mismatches (base paths, channel). No username paths in captures or harness
-args; no redaction needed.
+## (c) Slot convention (stated once) — PROVEN
+`SRNativeInterface` = 4 reserved pointers then `fn[231]` at `+0x20`, so
+`offset = 0x20 + 8*idx`, `fn[0] = GetVersion`, and the standard JNI index
+(including the 4 reserved slots) is `idx + 4`. Thus `0x548 -> idx 165 ->
+standard 169 -> GetStringUTFChars`; `0x550 -> idx 166`; `fn[169]` proper is at
+`0x568` (GetObjectArrayElement).
 
-## RA (entry/call-site based)
-`0x24650a9 -> 0x2315532 -> 0x2315556 GetStringUTFChars -> 0x231555c NULL test`;
-separate wrapper `0x6ca21c6 -> 0x2a13350 predicate *(obj+0x28)!=0 -> FALSE
-0x6ca229c GetStringUTFChars / TRUE 0x6ca22ee -> *0x548 @0x6ca2340`.
+## RA
+`0x6ca21c6 -> 0x2a13350 (obj+0x28 predicate) -> FALSE 0x6ca2282/0x6ca228b ->
+0x6ca2290 -> 0x6ca229c call *0x548(%rax) -> 0x6ca22a2 return/chk`.
+Parallel helper: `0x2315532 -> 0x231554b mov (%rsi),%rax -> 0x2315556 call
+*0x548(%rax) -> 0x231555c`.
 
 ## What NOT done
-No diff proposed/applied, no harness edit, no runs/gdb/perf, no device/AVD/
-emulator/Frida/phone, no new captures, no guest writes, no gate edits, no
-ledger edits, no credentials. No fault-time register used as evidence. No
-dynamic confirmation of the predicate value.
+No diff applied/proposed for application, no harness edit, no runs/gdb/perf,
+no device/AVD/Frida/phone, no new captures, no guest writes, no gate edits,
+no ledger edits, no credentials. Writer exhaustiveness and dynamic predicate
+value are UNPROVEN.
 
 ## First divergence + next step
-First divergence: native call ORDER/VALUE deviation plus the scheduler predicate
-`*(obj+0x28)!=0` gate on the post-return JNI wrapper. Next: harness (entry/call
-breakpoints only) logs `*(obj+0x28)` at `0x6ca21f4` on the Run D thread.
+First divergence: the `*(obj+0x28)!=0` scheduler gate on these GetStringUTFChars
+wrappers and the capture-order/value deviations. Next: harness (faulting
+instruction `0x6ca229c`, then registers) logs rax at `0x6ca2290` and the
+predicate at `0x6ca21f4`.

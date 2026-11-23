@@ -1,0 +1,32 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002a0ed20 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29b585>:
+ 2a0ed20:	00 00                	add    %al,(%rax)
+ 2a0ed22:	48 8d 43 30          	lea    0x30(%rbx),%rax
+ 2a0ed26:	48 c7 43 30 00 00 00 	movq   $0x0,0x30(%rbx)
+ 2a0ed2d:	00 
+ 2a0ed2e:	49 83 c6 b1          	add    $0xffffffffffffffb1,%r14
+ 2a0ed32:	49 21 c6             	and    %rax,%r14
+ 2a0ed35:	4c 89 73 38          	mov    %r14,0x38(%rbx)
+ 2a0ed39:	4c 89 73 40          	mov    %r14,0x40(%rbx)
+ 2a0ed3d:	48 c7 43 48 00 00 00 	movq   $0x0,0x48(%rbx)
+ 2a0ed44:	00 
+ 2a0ed45:	4c 89 7b 28          	mov    %r15,0x28(%rbx)
+ 2a0ed49:	48 89 d8             	mov    %rbx,%rax
+ 2a0ed4c:	48 83 c4 28          	add    $0x28,%rsp
+ 2a0ed50:	5b                   	pop    %rbx
+ 2a0ed51:	41 5c                	pop    %r12
+ 2a0ed53:	41 5d                	pop    %r13
+ 2a0ed55:	41 5e                	pop    %r14
+ 2a0ed57:	41 5f                	pop    %r15
+ 2a0ed59:	5d                   	pop    %rbp
+ 2a0ed5a:	c3                   	ret
+ 2a0ed5b:	cc                   	int3
+ 2a0ed5c:	cc                   	int3
+ 2a0ed5d:	cc                   	int3
+ 2a0ed5e:	cc                   	int3
+ 2a0ed5f:	cc                   	int3
