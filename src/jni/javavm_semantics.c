@@ -14,6 +14,57 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+/* ---- W25 read-only VM-call ring (last 64 ops, async-safe dump) ---------- */
+struct fj_vm_ring {
+    int64_t   tid;
+    uint32_t  op;        /* 1=Attach 2=Detach 3=GetEnv 4=GetJavaVM */
+    int32_t   rc;
+    uintptr_t env;       /* returned JNIEnv* (0 for Detach/GetJavaVM) */
+    char      name[20];  /* thread name from AttachCurrentThread args */
+};
+static struct fj_vm_ring fj_ring[64];
+static volatile unsigned fj_ring_pos;
+static void fj_ring_note(uint32_t op, int32_t rc, uintptr_t env,
+                         const char *name)
+{
+    unsigned i = __atomic_fetch_add(&fj_ring_pos, 1, __ATOMIC_RELAXED) & 63u;
+    struct fj_vm_ring *e = &fj_ring[i];
+    e->tid = (int64_t)syscall(SYS_gettid);
+    e->op = op; e->rc = rc; e->env = env;
+    unsigned n = 0;
+    if (name) while (n < sizeof(e->name) - 1u && name[n]) {
+        e->name[n] = name[n]; ++n;
+    }
+    e->name[n] = 0;
+}
+long sober_javavm_ring_dump_async(int fd)
+{
+    char buf[8192], *p = buf, *end = buf + sizeof(buf) - 1;
+    static const char hx[] = "0123456789abcdef";
+    #define WP(s) do { const char *_s=(s); while (*_s && p<end) *p++=*_s++; } while(0)
+    #define WH(v) do { uintptr_t _v=(uintptr_t)(v); \
+        if (p+2<end){*p++='0';*p++='x';} \
+        for(int _i=(int)(sizeof(uintptr_t)*8)-4;_i>=0&&p<end;_i-=4) \
+            *p++=hx[(_v>>_i)&0xfu]; } while(0)
+    WP("[W25_VM_RING] tid,name,op,rc,env:\n");
+    unsigned pos = __atomic_load_n(&fj_ring_pos, __ATOMIC_RELAXED);
+    unsigned start = pos > 64u ? pos - 64u : 0u;
+    for (unsigned i = start; i < pos; ++i) {
+        struct fj_vm_ring *e = &fj_ring[i & 63u];
+        WP("["); WH((uintptr_t)(i - start)); WP("] tid=");
+        /* tid as hex is fine; report op numerically */
+        WH((uintptr_t)e->tid); WP(" op="); WH(e->op);
+        WP(" rc="); WH((uintptr_t)(int64_t)e->rc);
+        WP(" env="); WH(e->env); WP(" name="); WP(e->name); WP("\n");
+    }
+    #undef WP
+    #undef WH
+    ssize_t u = write(fd, buf, (size_t)(p - buf));
+    return (long)(u > 0 ? u : 0);
+}
 
 /* ---- JNI constants (ABI values from jni.h) ----------------------------- */
 #define FJ_JNI_OK        (0)
@@ -208,6 +259,7 @@ static fj_jint fj_do_attach(void *vm, void **env_out, void *args, int daemon)
     if (env_out) *env_out = &t->env;
     g_attach_calls++;
     if (daemon) g_daemon_attaches++;
+    fj_ring_note(1u, FJ_JNI_OK, (uintptr_t)&t->env, name);
     pthread_mutex_unlock(&g_lock);
 
     fprintf(stderr,
@@ -247,6 +299,7 @@ static fj_jint fj_do_detach(void *vm)
     t->attached = 0;
     (void)pthread_setspecific(g_tls, NULL);
     g_detach_calls++;
+    fj_ring_note(2u, FJ_JNI_OK, 0u, t->name);
     pthread_mutex_unlock(&g_lock);
     fprintf(stderr,
             "[faithful-javavm] DetachCurrentThread name=\"%s\" (detach=%ld)\n",
@@ -301,6 +354,7 @@ static fj_jint fj_GetEnv(void *vm, void **env_out, fj_jint version)
         return FJ_JNI_EDETACHED;
     }
     *env_out = &t->env;
+    fj_ring_note(3u, FJ_JNI_OK, (uintptr_t)&t->env, t->name);
     return FJ_JNI_OK;
 }
 
@@ -358,6 +412,7 @@ static fj_jint fj_GetJavaVM(void *env, void ***vm_out)
     (void)env;
     if (!vm_out) return FJ_JNI_EINVAL;
     *vm_out = (void **)&g_vm;
+    fj_ring_note(4u, FJ_JNI_OK, (uintptr_t)env, "");
     return FJ_JNI_OK;
 }
 

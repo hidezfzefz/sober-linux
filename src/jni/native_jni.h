@@ -171,6 +171,8 @@ const char *sober_jni_describe_activity(SoberJni *j, char *buf, size_t cap);
  * 0x2359342.  Never reads or changes any gate decision. */
 int  sober_w21_boundary_ok(void);
 long sober_w21_latch_hits(void);
+/* W25: bridge JNIEnv and JavaVM pointer values for the read-only fault dump. */
+void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm);
 
 #ifdef __cplusplus
 }

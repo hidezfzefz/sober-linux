@@ -1202,8 +1202,24 @@ SR_API void sober_jni_shutdown(SoberJni *j)
     free(j);
 }
 
-SR_API void *sober_jni_java_vm(SoberJni *j) { return j ? (void *)&j->vm_obj : NULL; }
-SR_API void *sober_jni_env(SoberJni *j) { return j ? (void *)&j->env_obj : NULL; }
+static uintptr_t g_bridge_env_ptr, g_bridge_vm_ptr;
+void sober_jni_bridge_ptrs(uintptr_t *env, uintptr_t *vm)
+{
+    if (env) *env = g_bridge_env_ptr;
+    if (vm) *vm = g_bridge_vm_ptr;
+}
+SR_API void *sober_jni_java_vm(SoberJni *j)
+{
+    void *p = j ? (void *)&j->vm_obj : NULL;
+    if (p) g_bridge_vm_ptr = (uintptr_t)p;
+    return p;
+}
+SR_API void *sober_jni_env(SoberJni *j)
+{
+    void *p = j ? (void *)&j->env_obj : NULL;
+    if (p) g_bridge_env_ptr = (uintptr_t)p;
+    return p;
+}
 SR_API int sober_jni_attach(SoberJni *j, void **env_out)
 {
     if (!j || !env_out) return SOBER_JNI_ERR;
