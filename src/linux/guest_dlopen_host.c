@@ -39,6 +39,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <ucontext.h>
 #include <unistd.h>
 
@@ -126,40 +127,62 @@ static void w24_line(char **p, char *base, char *end)
     }
 }
 
+/* W30: the ONLY way the handler touches memory that may belong to the guest
+ * is process_vm_readv (a raw syscall).  No direct dereference of any
+ * guest-derived pointer (RIP, RSP, RBP, RDI, FP chain) is permitted: a fault in
+ * that read previously masked the primary fault (see w29 core.1529212). */
+static long w30_readmem(uintptr_t addr, void *dst, size_t len)
+{
+    struct iovec li = { (void *)dst, len };
+    struct iovec ri = { (void *)addr, len };
+    return syscall(SYS_process_vm_readv, (long)getpid(),
+                   &li, 1UL, &ri, 1UL, 0UL);
+}
+
 static void crash_handler(int sig, siginfo_t *si, void *ucontext)
 {
     alarm(5);   /* bound the dump itself; SA_RESETHAND prevents recursion */
-    char buf[16384], *p = buf, *end = buf + sizeof(buf) - 1;
+    char buf[32768], *p = buf, *end = buf + sizeof(buf) - 1;
     ucontext_t *uc = (ucontext_t *)ucontext;
     uintptr_t base = g_guest_base;
     uintptr_t fault = (uintptr_t)(si ? si->si_addr : NULL);
     uintptr_t rip = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RIP] : 0;
     uintptr_t rsp = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RSP] : 0;
+    uintptr_t rbp = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RBP] : 0;
 
-    w24_put(&p, "\n[W23_ASYNC_SAFE] ===== GUEST FAULT =====\n");
+    /* W30 FIRST LINE: RIP, si_addr, rsp, rbp, instruction bytes at RIP. */
+    unsigned char ib[16];
+    long ib_n = (rip >= 0x10000u) ? w30_readmem(rip, ib, sizeof(ib)) : -1;
+    w24_put(&p, "[W30_FAULT] rip="); w24_u64(&p, rip, 1);
+    w24_put(&p, " si_addr="); w24_u64(&p, fault, 1);
+    w24_put(&p, " rsp="); w24_u64(&p, rsp, 1);
+    w24_put(&p, " rbp="); w24_u64(&p, rbp, 1);
+    w24_put(&p, " insn=");
+    if (ib_n >= 8) {
+        for (int k = 0; k < 8; ++k) {
+            w24_u64(&p, ib[k], 0); w24_put(&p, " ");
+        }
+    } else w24_put(&p, "UNREADABLE");
+    w24_line(&p, buf, end);
+
+    w24_put(&p, "[W23_ASYNC_SAFE] ===== GUEST FAULT =====\n");
     w24_put(&p, "signal="); w24_num(&p, sig);
     w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
     w24_put(&p, " rip="); w24_u64(&p, rip, 1);
     w24_put(&p, " si_addr="); w24_u64(&p, fault, 1);
     w24_put(&p, " rsp="); w24_u64(&p, rsp, 1); w24_line(&p, buf, end);
-    /* W28: name the FAULTING INSTRUCTION first: 16 raw bytes at RIP. */
     w24_put(&p, "[W28_FAULT_INSN] rip="); w24_u64(&p, rip, 1);
     if (base && rip >= base && rip < base + g_guest_size) {
         w24_put(&p, " guest_rva=0x");
-        for (int sh = 28; sh >= 0; sh -= 4) {
-            unsigned d = (unsigned)((rip - base) >> sh) & 0xfu;
-            if (p < end) *p++ = "0123456789abcdef"[d];
-        }
+        for (int sh = 28; sh >= 0; sh -= 4)
+            if (p < end) *p++ = "0123456789abcdef"[((rip - base) >> sh) & 0xfu];
     }
     w24_line(&p, buf, end);
-    if (rip >= 0x10000u && rip < 0x0000800000000000ULL) {
-        w24_put(&p, "[W28_INSN_BYTES] ");
-        for (unsigned k = 0; k < 16; ++k) {
-            w24_u64(&p, *(const unsigned char *)(rip + k), 0);
-            w24_put(&p, " ");
-        }
-        w24_line(&p, buf, end);
-    }
+    w24_put(&p, "[W28_INSN_BYTES] ");
+    if (ib_n > 0) {
+        for (long k = 0; k < ib_n; ++k) { w24_u64(&p, ib[k], 0); w24_put(&p, " "); }
+    } else w24_put(&p, "UNREADABLE");
+    w24_line(&p, buf, end);
     if (uc) {
         static const struct { const char *n; int g; } regs[] = {
             {"r15",REG_R15},{"r14",REG_R14},{"r13",REG_R13},{"r12",REG_R12},
@@ -175,80 +198,96 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
         }
         w24_line(&p, buf, end);
     }
-    /* 256 stack qwords: guest values as RVAs, libc values as offsets. */
+
+    /* 256 stack qwords, read with process_vm_readv only (never deref). */
     w24_put(&p, "[W23_STACK_SCAN] rsp_base="); w24_u64(&p, rsp, 1);
     w24_line(&p, buf, end);
     for (unsigned i = 0; i < 256u; ++i) {
         uintptr_t v = 0;
-        if (rsp) v = *(const uintptr_t *)(rsp + (size_t)i * 8u);
+        long got = rsp ? w30_readmem(rsp + (size_t)i * 8u, &v, 8u) : -1;
         w24_put(&p, "["); w24_num(&p, (long)i); w24_put(&p, "]=");
-        if (base && v >= base && v < base + 0x8000000u) {
+        if (got != 8) { w24_put(&p, "UNREADABLE"); }
+        else if (base && v >= base && v < base + 0x8000000u) {
             w24_put(&p, "guest+0x"); w24_u64(&p, v - base, 0);
         } else if (g_libc_lo && v >= g_libc_lo && v < g_libc_hi) {
             w24_put(&p, "libc+0x"); w24_u64(&p, v - g_libc_lo, 0);
-        } else {
-            w24_u64(&p, v, 1);
-        }
+        } else w24_u64(&p, v, 1);
         if ((i & 3u) == 3u) w24_line(&p, buf, end);
     }
     w24_line(&p, buf, end);
-    w24_put(&p, "[W23_FP] from rbp=");
-    w24_u64(&p, uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RBP] : 0, 1);
-    w24_line(&p, buf, end);
-    uintptr_t fp = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RBP] : 0;
+
+    /* FP chain, read with process_vm_readv only. */
+    w24_put(&p, "[W23_FP] from rbp="); w24_u64(&p, rbp, 1); w24_line(&p, buf, end);
+    uintptr_t fp = rbp;
     for (unsigned i = 0; i < 24u && fp >= 0x10000u; ++i) {
-        uintptr_t ret = *(const uintptr_t *)(fp + 8);
-        uintptr_t nxt = *(const uintptr_t *)fp;
+        uintptr_t ret = 0, nxt = 0;
+        long gr = w30_readmem(fp + 8u, &ret, 8u);
+        long gn = w30_readmem(fp, &nxt, 8u);
         w24_put(&p, " fp#"); w24_num(&p, (long)i); w24_put(&p, "=");
-        if (base && ret >= base && ret < base + 0x8000000u) {
+        if (gr != 8) w24_put(&p, "UNREADABLE");
+        else if (base && ret >= base && ret < base + 0x8000000u) {
             w24_put(&p, "guest+0x"); w24_u64(&p, ret - base, 0);
         } else w24_u64(&p, ret, 1);
         w24_line(&p, buf, end);
-        if (nxt <= fp || nxt > fp + 0x100000u) break;
+        if (gn != 8 || nxt <= fp || nxt > fp + 0x100000u) break;
         fp = nxt;
     }
-    /* W25 fault argument dump: rdi/rax + 16 bytes at [rdi] (canonical only). */
-    {
-        uintptr_t rdi = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RDI] : 0;
-        uintptr_t rax = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RAX] : 0;
-        w24_put(&p, "[W25_FAULT_ARGS] rdi="); w24_u64(&p, rdi, 1);
-        w24_put(&p, " rax="); w24_u64(&p, rax, 1); w24_line(&p, buf, end);
-        if (rdi >= 0x10000u && rdi < 0x0000800000000000ULL) {
-            w24_put(&p, "[W25_RDI16] ");
-            for (unsigned k = 0; k < 16; ++k) {
-                w24_u64(&p, *(const unsigned char *)(rdi + k), 0);
-                w24_put(&p, " ");
-            }
-            w24_line(&p, buf, end);
-        } else {
-            w24_put(&p, "[W25_RDI16] non-canonical/NULL - no deref\n");
-            w24_line(&p, buf, end);
-        }
-        uintptr_t benv = 0, bvm = 0;
-        sober_jni_bridge_ptrs(&benv, &bvm);
-        w24_put(&p, "[W25_BRIDGE] env="); w24_u64(&p, benv, 1);
-        w24_put(&p, " vm="); w24_u64(&p, bvm, 1);
-        w24_put(&p, " rdi_is_env="); w24_u64(&p, rdi && rdi == benv ? 1 : 0, 0);
+
+    /* W30 stack-return dump when si_addr is within 64 KiB of rsp. */
+    long delta = (long)fault - (long)rsp;
+    if (delta < 0) delta = -delta;
+    w24_put(&p, "[W30_SI_RSP_DELTA] "); w24_num(&p, delta);
+    w24_line(&p, buf, end);
+    if (delta >= 0 && delta < 65536u) {
+        w24_put(&p, "[W30_RET64] rsp="); w24_u64(&p, rsp, 1);
         w24_line(&p, buf, end);
-        if (rsp) {
-            unsigned ne = 0, nv = 0;
-            for (unsigned i = 0; i < 256u; ++i) {
-                uintptr_t v = *(const uintptr_t *)(rsp + (size_t)i * 8u);
-                if (benv && v == benv) ++ne;
-                if (bvm && v == bvm) ++nv;
-            }
-            w24_put(&p, "[W25_STACK_ENV] env_hits="); w24_u64(&p, ne, 0);
-            w24_put(&p, " vm_hits="); w24_u64(&p, nv, 0);
-            w24_line(&p, buf, end);
+        for (unsigned i = 0; i < 64u; ++i) {
+            uintptr_t v = 0;
+            long got = w30_readmem(rsp + (size_t)i * 8u, &v, 8u);
+            w24_put(&p, "["); w24_num(&p, (long)i); w24_put(&p, "]=");
+            if (got != 8) w24_put(&p, "UNREADABLE");
+            else if (base && v >= base && v < base + 0x8000000u) {
+                w24_put(&p, "guest+0x"); w24_u64(&p, v - base, 0);
+            } else w24_u64(&p, v, 1);
+            if ((i & 3u) == 3u) w24_line(&p, buf, end);
         }
+        w24_line(&p, buf, end);
     }
-    {
-        ssize_t u = write(STDERR_FILENO, buf, (size_t)(p - buf));
-        (void)u;
+
+    /* Fault args: raw values only; RDI bytes via process_vm_readv. */
+    uintptr_t rdi = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RDI] : 0;
+    uintptr_t rax = uc ? (uintptr_t)uc->uc_mcontext.gregs[REG_RAX] : 0;
+    w24_put(&p, "[W25_FAULT_ARGS] rdi="); w24_u64(&p, rdi, 1);
+    w24_put(&p, " rax="); w24_u64(&p, rax, 1); w24_line(&p, buf, end);
+    unsigned char rb[16];
+    long rn = (rdi >= 0x10000u) ? w30_readmem(rdi, rb, sizeof(rb)) : -1;
+    w24_put(&p, "[W25_RDI16] ");
+    if (rn > 0) { for (long k = 0; k < rn; ++k) { w24_u64(&p, rb[k], 0); w24_put(&p, " "); } }
+    else w24_put(&p, "UNREADABLE");
+    w24_line(&p, buf, end);
+    uintptr_t benv = 0, bvm = 0;
+    if (sober_jni_bridge_ptrs) sober_jni_bridge_ptrs(&benv, &bvm);
+    w24_put(&p, "[W25_BRIDGE] env="); w24_u64(&p, benv, 1);
+    w24_put(&p, " vm="); w24_u64(&p, bvm, 1);
+    w24_put(&p, " rdi_is_env="); w24_u64(&p, rdi && rdi == benv ? 1 : 0, 0);
+    w24_line(&p, buf, end);
+    if (rsp) {
+        unsigned ne = 0, nv = 0;
+        for (unsigned i = 0; i < 256u; ++i) {
+            uintptr_t v = 0;
+            if (w30_readmem(rsp + (size_t)i * 8u, &v, 8u) != 8) continue;
+            if (benv && v == benv) ++ne;
+            if (bvm && v == bvm) ++nv;
+        }
+        w24_put(&p, "[W25_STACK_ENV] env_hits="); w24_u64(&p, ne, 0);
+        w24_put(&p, " vm_hits="); w24_u64(&p, nv, 0);
+        w24_line(&p, buf, end);
     }
-    /* W24/W25 read-only rings: JNIEnv calls and JavaVM thread ops. */
-    sober_jni_ring_dump_async(STDERR_FILENO);
-    sober_javavm_ring_dump_async(STDERR_FILENO);
+    ssize_t u = write(STDERR_FILENO, buf, (size_t)(p - buf));
+    (void)u;
+    /* Ring dumps are host-internal fixed buffers, never guest pointers. */
+    if (sober_jni_ring_dump_async) sober_jni_ring_dump_async(STDERR_FILENO);
+    if (sober_javavm_ring_dump_async) sober_javavm_ring_dump_async(STDERR_FILENO);
     _exit(139);
 }
 
@@ -487,6 +526,8 @@ static int install_crash_handlers(void)
         perror("[harness] sigaltstack");
         return -1;
     }
+    fprintf(stderr, "[W30_SIGALTSTACK] installed sp=%p size=%zu\n",
+            (void *)altstack, sizeof(altstack));
     /* W23: precompute the libc mapping window for async-safe offset labels. */
     {
         Dl_info li;

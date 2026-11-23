@@ -1,71 +1,59 @@
-# WAVE30 #635 — TLS supplier / 8-of-8 pairs / real-boot terminator
+# W30 #636 — harness (one page)
 
-Read-only; no runs/device/phone. Engine SHA `3e498d64…`. No guest writes.
-Faulting instruction (named first, W28/W29 raw): `0x6ca229c = call *0x548(%rax)`,
-bytes `ff 90 48 05 00 00 00 00`. With seed OFF + pairs bp the primary fault
-moves to `0x2a13354: call 0x2a0de60` (`e8 07 ab ff ff`).
-Evidence files: `raw_tls_seedoff.txt`, `raw_tls_seedon.txt`, `raw_pairs.txt`,
-`raw_capture_order.txt` (each line quoted verbatim from the named log).
+Worktree `/tmp/opencode/w30-harness`, branch w30-harness. Engine SHA `3e498d64`.
+flock held for all runs. No device/guest writes/gate edits; NO seeder;
+JNI_OnLoad-first ON. NEW RULE: success claims quote raw log lines.
+Evidence: `runD_{1,2,3}.err`, `rund3.sh`.
 
-## (a) Supplier of the TLS value + 8/8 match — PROVEN (quoted)
+## FAULTING INSTRUCTION FIRST (Run D ×3, identical) — PROVEN
+`guest+0x6ca7f95`: `e8 b6 b3 d6 fb` = **`call 0x2a13350`** (the TLS predicate
+accessor). Raw line (run 1):
+`[W30_FAULT] rip=0x00007fffef8e3f95 si_addr=0x00007fffff7fefc8 rsp=0x00007fffff7fefd0 rbp=0x00007fffff7ff0a0 insn=00000000000000e8 00000000000000b6 00000000000000b3 00000000000000d6 00000000000000fb 0000000000000084 00000000000000c0 0000000000000074`
+`[W28_FAULT_INSN] rip=0x00007fffef8e3f95 guest_rva=0x06ca7f95`
+**`si_addr - rsp = -8`** (raw: `[W30_SI_RSP_DELTA] 8`): the `call` tried to push
+its return address into the guard page at `rsp-8` → **stack overflow**.
+Static decode: `0x6ca7f95: call 2a13350; 0x6ca7f9a: test al,al; je 6ca7ffa`.
+RA/stack return addresses: `fp#0..fp#23 = guest+0x6ca8014` (all 24):
+`[W23_FP] from rbp=0x00007fffff7ff0a0` / `fp#0=guest+0x0000000006ca8014` ...
 
-The **guest itself** supplies the value; no seed is required. Raw
-`/tmp/opencode/w29-harness/seedoff_trace.err:3707`:
-> `[W29_TLS 0x6ca228b] tid=1521493 key=3 tls=0x55555568b230 [tls]=0x1 rax=0x5555558e6a28 rsi=0x5555562e0fd0 seed=(nil) [seed]=0 eq=0`
+## (a) Crash handler — PROVEN (raw quotes)
+`[W30_SIGALTSTACK] installed sp=0x5555555e3a80 size=65536` — SA_ONSTACK +
+sigaltstack active. First emitted line is the W30_FAULT line above (RIP,
+si_addr, rsp, rbp, insn bytes). **No guest-pointer dereference remains:**
+RIP/RSP/RBP/RDI/FP/stack reads all go through `process_vm_readv`
+(`w30_readmem`); unreadable pages print `UNREADABLE` instead of faulting
+(raw: `[0]=UNREADABLE[1]=UNREADABLE...`). Ring dumps use host-only buffers.
 
-and `seedoff_pairs_1.err:3721`:
-> `[app-shell] pre-OnLoad TSD key=3 get=0x55555568b230`
+## (b) TSD seed REMOVED (default OFF) — PROVEN
+Raw: `[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)`.
+Ledger wording sent: **"harness-fabricated state, caused the 0x6ca229c fault"**.
 
-The only guest `setspecific` writers of key 3 are `0x2ea656e` (accessor
-`0x2ea6440`, lazy branch: `calloc` state, `movq $1,(%r14)` at `0x2ea6555`) and
-`0x2ea6695` (destructor `0x2ea6670`) — static, W29. That matches `[tls]=0x1`
-above: the freshly allocated state's +0 is the initial `1`.
+## (c) Run D ×3 (full JSON, seed OFF, NO breakpoints) — PROVEN
+Raw: `[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b`
+Raw: `[app-shell] AVD boundary pre: arg0_len=1533221 jstr0=0x5555562e2fd0 D08=0 latch=0 ...`
+rc=139 ×3. Per-run: fault `guest+0x6ca7f95` `call 0x2a13350`, `si_addr=0x7fffff7fefc8`,
+delta 8 (3/3). **0x2eb7520 fires: UNPROVEN** — no watcher armed (no breakpoints);
+`grep -c 'W21_LATCH_HIT' runD_*.err = 0/0/0`. Nearest latch raw line:
+`[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 D08_len=0 latch=1 CF0=0 72a31b8=0x1`
+Raw rung line (all 3): `[checkpoint] rung1 FAIL (DEBT=1)`.
 
-Why 8/8 pairs match with seed OFF: all eight `GetStringUTFChars` calls
-returned. Raw `seedoff_pairs_1.err:3707,3709,...;3734,...`:
-> `[W28_PRE2315 #1] rsi=0x5555563f9850 [rsi]=0x5555563f98f0 rax=0x5555558fe0e8 tid=1521155`
-> `[W28_POST6CA2 #1]`
-> `[W28_POST2315 #1]`
-and PRE/POST #2..#8 follow the same shape (harness report: `pre2315=8,
-post2315=8`, contrast seed ON `3 pre / 2 post`). The guest-owned TLS is
-therefore sufficient for every observed JNI call pair.
+## (d) Stack cycle (si_addr within 64 KiB of rsp: delta=8) — PROVEN
+Raw: `[W30_RET64] rsp=0x00007fffff7fefd0`. Index-0..5 = `UNREADABLE` (guard
+page ends at `rsp+48 = 0x7fffff7ff000`). Repeating 15-qword pattern at indices
+**13–27** and **41–55**: `guest+0x221414, 0x3, guest+0x221414, 0x3,
+0x7fffe8c0c76b, 0x5555555addbb8, guest+0x2ea6460, 0x5555555addbb8,
+0x55555555e3060, 0x555555590c830, 0xabcdef0123456789, 0x5555555addbb8,
+0x55555555e3060, <stack ptr>, guest+0x6ca8014`.
+**Cycle period = 28 qwords = 224 bytes/frame; 2 full repetitions in the
+64-word window; recursion depth ≥24** (FP chain capped at 24, all `0x6ca8014`).
 
-What the guest stores into the TLS value besides initial `1`: a guest string
-`0x7265502f666f7270` ("profileP" little-endian) at `[seed+0]`. Raw
-`tsdtrace.err:3727` (seed ON, guest replaced the seeded object):
-> `[W29_TLS 0x2315556] tid=1519045 key=3 rax=0x5555558fe0e8 [rax]=(nil) rsi=0x5555574b3c30 seed=0x5555559f60f0 [seed]=0x7265502f666f7270 eq=0`
+## NOT DONE
+No ledger edit by me (entries sent audit); no device; no guest bytes/gate
+edits; recursion root cause UNPROVEN (static scope); 0x2eb7520 firing not
+observed (no watcher in this configuration). No success claim without a quote.
 
-## (b) What terminates recursion in a real boot — PARTLY PROVEN / UNPROVEN
-
-Static terminator: predicate `*(obj+0x28)!=0` at `0x6ca21f4/0x6ca21f9`; when
-FALSE, `je 0x6ca2282` takes the direct JNIEnv path and the wrapper returns.
-PROVEN from disassembly (quoted instruction bytes in `dis_6ca21c6_6ca22b0.txt`).
-
-Real boot (capture w12) natives before `nativeSetBaseDataDirectories`, quoted
-from `/tmp/opencode/w12-j2n-300.log`:
-> `J2N #70 t=290171ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetRobloxChannel("")`
-> `J2N #534 t=290179ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetRobloxVersion("2.740.931")`
-> `J2N #541 t=290202ms com.roblox.engine.jni.NativeGLInterface.nativeGameGlobalInit()`
-> `J2N #612 t=290866ms com.roblox.engine.jni.NativeSettingsInterface.nativeSetBaseDataDirectories("/data/user/0/com.roblox.client", "/storage/emulated/0/Android/data/com.roblox.client")`
-
-Which of these inputs/natives/thread makes `*(obj+0x28)==0` is **UNPROVEN**:
-no raw line in the capture or harness logs shows a `+0x28` write on those
-paths, and no tid is attached to the static writer sites (`0x2a0ed45`,
-`0x2a1362f`). With seed OFF the harness shows 8/8 pairs returning and the
-primary fault relocated to `0x2a13354` (accessor), so the wrapper recursion
-is not observed in that configuration. A specific real-boot terminator input
-or thread is therefore not claimed.
-
-## RA (static + log lines, not fault-register inference)
-`0x6ca21c6 -> 0x2a13350 (obj+0x28) -> FALSE 0x6ca2282/0x6ca228b -> 0x6ca2290 ->
-0x6ca229c call *0x548(%rax) -> 0x6ca22a2`; log anchors `0x2315556`/`0x6ca228b`.
-
-## What NOT done
-No diff proposed/applied, no harness edit, no runs/gdb/perf, no device/AVD/
-emulator/Frida/phone, no new captures, no guest writes, no gate edits, no
-ledger edits, no credentials. Real-boot terminator native/input/thread UNPROVEN.
-
-## First divergence + next step
-First divergence: guest-owned TLS (`[tls]=0x1`, 8/8 pairs) vs seeded TLS (guest
-replaces it, 3/2 unmatched). Next: harness logs `*(obj+0x28)` at `0x6ca21f4`
-with tid, on a real-boot-order replay.
+## First divergence / next step
+With the fabricated TSD state gone, the guest recurses at `0x6ca8014` until
+`call 0x2a13350` at `0x6ca7f95` overflows the stack (`si_addr=rsp-8`); W25's
+`0x548`/NULL-env fault is RETRACTED for this configuration. Next: static trace
+the `call [rax+0x720]` at `0x6ca800e` that re-enters `0x6ca8014`.
