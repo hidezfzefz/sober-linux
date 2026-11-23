@@ -1,0 +1,17 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002ea61a6 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486376>:
+ 2ea61a6:	49 89 c7             	mov    %rax,%r15
+ 2ea61a9:	8b 3d 51 b9 3f 04    	mov    0x43fb951(%rip),%edi        # 72a1b00 <__stop_pb_defaults@@Base+0x1f648>
+ 2ea61af:	48 8d 35 4a b9 3f 04 	lea    0x43fb94a(%rip),%rsi        # 72a1b00 <__stop_pb_defaults@@Base+0x1f648>
+ 2ea61b6:	e8 55 bb e8 03       	call   6d31d10 <pthread_setspecific@plt>
+ 2ea61bb:	89 c1                	mov    %eax,%ecx
+ 2ea61bd:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+ 2ea61c2:	85 c9                	test   %ecx,%ecx
+ 2ea61c4:	75 0b                	jne    2ea61d1 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x4863a1>
+ 2ea61c6:	41 c6 07 01          	movb   $0x1,(%r15)
+ 2ea61ca:	eb a7                	jmp    2ea6173 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486343>

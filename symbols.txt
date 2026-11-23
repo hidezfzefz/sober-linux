@@ -1,0 +1,2 @@
+0000000002465210 T Java_com_roblox_client_flags_FlagJniInterface_nativeInitializeNativeFlags@@LIBROBLOX
+000000000246515d T Java_com_roblox_engine_jni_NativeSettingsInterface_nativeSetPreferencesFile@@LIBROBLOX
