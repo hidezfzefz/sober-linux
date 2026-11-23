@@ -23,7 +23,7 @@ The neighbour writes confirm it is a function table:
 6c8e4e1: mov %rax,0x728(%r14)
 ```
 Host source check: native_jni.c only installs `SETFN(*t, 224, sr_ExceptionCheck)`
-(line 1651) plus an unrelated slot-165 safety override; there is NO host patch
+(line 1560) plus an unrelated slot-165 safety override; there is NO host patch
 to fn[224] after setup. javavm_semantics.c:435 puts `fj_ExceptionCheck` in its
 own table. So the harness flip host+0x2e690 -> guest+0x6ca7f72 is the guest's
 own table-builder writing its wrapper, seen by the harness breakpoint.

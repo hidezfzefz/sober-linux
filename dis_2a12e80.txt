@@ -1,0 +1,144 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002a12e80 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f6e5>:
+ 2a12e80:	55                   	push   %rbp
+ 2a12e81:	48 89 e5             	mov    %rsp,%rbp
+ 2a12e84:	41 57                	push   %r15
+ 2a12e86:	41 56                	push   %r14
+ 2a12e88:	41 55                	push   %r13
+ 2a12e8a:	41 54                	push   %r12
+ 2a12e8c:	53                   	push   %rbx
+ 2a12e8d:	48 83 ec 28          	sub    $0x28,%rsp
+ 2a12e91:	49 89 f6             	mov    %rsi,%r14
+ 2a12e94:	48 89 7d d0          	mov    %rdi,-0x30(%rbp)
+ 2a12e98:	e8 c3 af ff ff       	call   2a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>
+ 2a12e9d:	48 8b 18             	mov    (%rax),%rbx
+ 2a12ea0:	4c 8b 63 68          	mov    0x68(%rbx),%r12
+ 2a12ea4:	4d 8b 7c 24 70       	mov    0x70(%r12),%r15
+ 2a12ea9:	45 89 fd             	mov    %r15d,%r13d
+ 2a12eac:	41 83 e5 3f          	and    $0x3f,%r13d
+ 2a12eb0:	48 8b 05 59 ba 86 04 	mov    0x486ba59(%rip),%rax        # 727e910 <strncat@plt+0x54ad90>
+ 2a12eb7:	48 85 c0             	test   %rax,%rax
+ 2a12eba:	0f 95 c1             	setne  %cl
+ 2a12ebd:	49 83 fd 3f          	cmp    $0x3f,%r13
+ 2a12ec1:	0f 94 c2             	sete   %dl
+ 2a12ec4:	20 ca                	and    %cl,%dl
+ 2a12ec6:	80 fa 01             	cmp    $0x1,%dl
+ 2a12ec9:	75 09                	jne    2a12ed4 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f739>
+ 2a12ecb:	48 8d 3d a2 31 a0 fd 	lea    -0x25fce5e(%rip),%rdi        # 416074 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x19c122c>
+ 2a12ed2:	ff d0                	call   *%rax
+ 2a12ed4:	49 ff c5             	inc    %r13
+ 2a12ed7:	49 83 e7 c0          	and    $0xffffffffffffffc0,%r15
+ 2a12edb:	4d 09 ef             	or     %r13,%r15
+ 2a12ede:	4d 89 7c 24 70       	mov    %r15,0x70(%r12)
+ 2a12ee3:	48 8b 45 d0          	mov    -0x30(%rbp),%rax
+ 2a12ee7:	48 89 45 b8          	mov    %rax,-0x48(%rbp)
+ 2a12eeb:	4c 89 75 c0          	mov    %r14,-0x40(%rbp)
+ 2a12eef:	48 83 7b 28 00       	cmpq   $0x0,0x28(%rbx)
+ 2a12ef4:	74 2b                	je     2a12f21 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f786>
+ 2a12ef6:	48 8b 53 68          	mov    0x68(%rbx),%rdx
+ 2a12efa:	48 8b 73 70          	mov    0x70(%rbx),%rsi
+ 2a12efe:	48 83 e6 c0          	and    $0xffffffffffffffc0,%rsi
+ 2a12f02:	48 8d 45 b8          	lea    -0x48(%rbp),%rax
+ 2a12f06:	48 89 45 c8          	mov    %rax,-0x38(%rbp)
+ 2a12f0a:	48 8d 4d c8          	lea    -0x38(%rbp),%rcx
+ 2a12f0e:	48 89 df             	mov    %rbx,%rdi
+ 2a12f11:	41 b8 01 00 00 00    	mov    $0x1,%r8d
+ 2a12f17:	45 31 c9             	xor    %r9d,%r9d
+ 2a12f1a:	e8 81 b4 00 00       	call   2a1e3a0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x2aac05>
+ 2a12f1f:	eb 1a                	jmp    2a12f3b <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f7a0>
+ 2a12f21:	49 8b 7e 08          	mov    0x8(%r14),%rdi
+ 2a12f25:	31 f6                	xor    %esi,%esi
+ 2a12f27:	41 ff 16             	call   *(%r14)
+ 2a12f2a:	49 8b 7e 08          	mov    0x8(%r14),%rdi
+ 2a12f2e:	48 89 fe             	mov    %rdi,%rsi
+ 2a12f31:	41 ff 16             	call   *(%r14)
+ 2a12f34:	49 c7 06 00 00 00 00 	movq   $0x0,(%r14)
+ 2a12f3b:	48 8b 5b 68          	mov    0x68(%rbx),%rbx
+ 2a12f3f:	4c 8b 73 70          	mov    0x70(%rbx),%r14
+ 2a12f43:	48 8b 05 c6 b9 86 04 	mov    0x486b9c6(%rip),%rax        # 727e910 <strncat@plt+0x54ad90>
+ 2a12f4a:	48 85 c0             	test   %rax,%rax
+ 2a12f4d:	0f 95 c1             	setne  %cl
+ 2a12f50:	4d 89 f7             	mov    %r14,%r15
+ 2a12f53:	49 83 e7 3f          	and    $0x3f,%r15
+ 2a12f57:	0f 94 c2             	sete   %dl
+ 2a12f5a:	20 ca                	and    %cl,%dl
+ 2a12f5c:	80 fa 01             	cmp    $0x1,%dl
+ 2a12f5f:	75 09                	jne    2a12f6a <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f7cf>
+ 2a12f61:	48 8d 3d 0d 95 9c fd 	lea    -0x2636af3(%rip),%rdi        # 3dc475 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x19fae2b>
+ 2a12f68:	ff d0                	call   *%rax
+ 2a12f6a:	49 ff cf             	dec    %r15
+ 2a12f6d:	49 83 e6 c0          	and    $0xffffffffffffffc0,%r14
+ 2a12f71:	4d 09 fe             	or     %r15,%r14
+ 2a12f74:	4c 89 73 70          	mov    %r14,0x70(%rbx)
+ 2a12f78:	48 83 c4 28          	add    $0x28,%rsp
+ 2a12f7c:	5b                   	pop    %rbx
+ 2a12f7d:	41 5c                	pop    %r12
+ 2a12f7f:	41 5d                	pop    %r13
+ 2a12f81:	41 5e                	pop    %r14
+ 2a12f83:	41 5f                	pop    %r15
+ 2a12f85:	5d                   	pop    %rbp
+ 2a12f86:	c3                   	ret
+ 2a12f87:	cc                   	int3
+ 2a12f88:	cc                   	int3
+ 2a12f89:	cc                   	int3
+ 2a12f8a:	cc                   	int3
+ 2a12f8b:	cc                   	int3
+ 2a12f8c:	cc                   	int3
+ 2a12f8d:	cc                   	int3
+ 2a12f8e:	cc                   	int3
+ 2a12f8f:	cc                   	int3
+ 2a12f90:	55                   	push   %rbp
+ 2a12f91:	48 89 e5             	mov    %rsp,%rbp
+ 2a12f94:	41 57                	push   %r15
+ 2a12f96:	41 56                	push   %r14
+ 2a12f98:	41 55                	push   %r13
+ 2a12f9a:	41 54                	push   %r12
+ 2a12f9c:	53                   	push   %rbx
+ 2a12f9d:	48 81 ec a8 00 00 00 	sub    $0xa8,%rsp
+ 2a12fa4:	48 89 75 d0          	mov    %rsi,-0x30(%rbp)
+ 2a12fa8:	49 89 fe             	mov    %rdi,%r14
+ 2a12fab:	e8 b0 ae ff ff       	call   2a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>
+ 2a12fb0:	48 8b 00             	mov    (%rax),%rax
+ 2a12fb3:	48 8b 58 70          	mov    0x70(%rax),%rbx
+ 2a12fb7:	49 8b 06             	mov    (%r14),%rax
+ 2a12fba:	48 83 f8 02          	cmp    $0x2,%rax
+ 2a12fbe:	74 48                	je     2a13008 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f86d>
+ 2a12fc0:	48 83 e3 c0          	and    $0xffffffffffffffc0,%rbx
+ 2a12fc4:	41 bf 01 00 00 00    	mov    $0x1,%r15d
+ 2a12fca:	31 c0                	xor    %eax,%eax
+ 2a12fcc:	f0 4d 0f b1 3e       	lock cmpxchg %r15,(%r14)
+ 2a12fd1:	75 47                	jne    2a1301a <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29f87f>
+ 2a12fd3:	48 8b 45 d0          	mov    -0x30(%rbp),%rax
+ 2a12fd7:	48 8b 78 08          	mov    0x8(%rax),%rdi
+ 2a12fdb:	31 f6                	xor    %esi,%esi
+ 2a12fdd:	ff 10                	call   *(%rax)
+ 2a12fdf:	31 c9                	xor    %ecx,%ecx
+ 2a12fe1:	48 85 c0             	test   %rax,%rax
+ 2a12fe4:	0f 94 c1             	sete   %cl
+ 2a12fe7:	01 c9                	add    %ecx,%ecx
+ 2a12fe9:	49 89 0e             	mov    %rcx,(%r14)
+ 2a12fec:	48 81 c3 08 07 00 00 	add    $0x708,%rbx
+ 2a12ff3:	e8 68 ae ff ff       	call   2a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>
+ 2a12ff8:	48 8b 30             	mov    (%rax),%rsi
+ 2a12ffb:	ba 01 00 00 00       	mov    $0x1,%edx
+ 2a13000:	48 89 df             	mov    %rbx,%rdi
+ 2a13003:	e8 38 75 00 00       	call   2a1a540 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x2a6da5>
+ 2a13008:	48 81 c4 a8 00 00 00 	add    $0xa8,%rsp
+ 2a1300f:	5b                   	pop    %rbx
+ 2a13010:	41 5c                	pop    %r12
+ 2a13012:	41 5d                	pop    %r13
+ 2a13014:	41 5e                	pop    %r14
+ 2a13016:	41 5f                	pop    %r15
+ 2a13018:	5d                   	pop    %rbp
+ 2a13019:	c3                   	ret
+ 2a1301a:	4c                   	rex.WR
+ 2a1301b:	8d                   	.byte 0x8d
+ 2a1301c:	25                   	.byte 0x25
+ 2a1301d:	e9                   	.byte 0xe9
+ 2a1301e:	59                   	pop    %rcx
+ 2a1301f:	8e                   	.byte 0x8e
