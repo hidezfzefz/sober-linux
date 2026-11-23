@@ -1,57 +1,68 @@
-# n3 #673 static-B — rbx@6c8e512 origin + wrapper table pointer (READ-ONLY)
+# n4 #676 — fflush fault, import/GOT, rdi source, shim
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n3-static-b.
-FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (RA `0x6ca8014`).
+Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
+Evidence: `raw_harness_fault.txt`, `raw_fflush_plt.txt`, `raw_shim_fflush.txt`,
+`raw_fflush_callsites.txt`, `raw_sections.txt`.
 
-## RESULT
+## FAULTING INSTRUCTION FIRST — PROVEN
 
-1. `rbx` at `6c8e512` = the builder's entry `rdi` = **`*(caller's rsi argument)`** — a slot in a **host/bridge-provided callback argument struct**, not a guest heap allocation. The guest pre-seeds that slot with the original JNIEnv table pointer.
-2. At wrapper `6ca8008: mov (%rax),%rax`, `rax` is the getter-`6c89e70` buffer and `[rax]` is the **ORIGINAL table pointer**, captured before the builder swaps the holder to the copy. The wrapper dereferences the **original**, not the patched copy.
+Quoted harness raw line (lead-relayed from n4 harness):
+> `[W40_RIP_MAP] rip0x00007fa51a6518ff offset=0x00000000000588ff maps='7fa51a5f9000-7fa51a749000 r-xp 00024000 00:17 482353 /usr/lib64/libc.so.6'`
 
-## PROVEN — rbx chain (quoted raw)
+Host libc ELF offset `0x7c8ff`; `objdump` quoted by harness:
+> `7c8ff: 48 8b 47 08 mov rax,QWORD PTR [rdi+0x8]`
 
-Builder `0x6c8d840` (dis_builder_fn.txt):
-```
-6c8d84a: 48 89 fb        mov    %rdi,%rbx     ; rbx = entry rdi
-6c8d85e: 4c 8b 3b        mov    (%rbx),%r15   ; r15 = *(rbx)
-6c8d86f: 4c 89 38        mov    %r15,(%rax)   ; buffer[6c89e70][0] = *(rbx)
-6c8e512: 4c 89 33        mov    %r14,(%rbx)   ; *(rbx) = copy
-```
-Caller `0x6c8e8a8` (dis_callers_fn.txt): `6c8e8bd: mov %rsi,%rbx`; `6c8e9a5: mov (%rbx),%rdi`; `6c8e9a8: mov %rdi,0x18(%rax)`; `6c8e9ac: call 6c8d840`. So builder rdi = `*(caller rsi)`.
-Caller `0x6c8ea52` seeds that same slot explicitly from the saved original:
-```
-6c8eb79: 49 8b 47 18     mov    0x18(%r15),%rax   ; buffer[6c89e50][0x18] = original table
-6c8eb7d: 48 89 03        mov    %rax,(%rbx)       ; *(rbx) = original table
-6c8eb80: 48 8b 3b        mov    (%rbx),%rdi
-6c8eb83: e8 b8 ec ff ff  call   6c8d840
-```
-(identical seeding at `6c8ef2b/6c8ef2f/6c8ef32/6c8ef35`). Sender of `0x18(%r15)`: `6c8e9a8: mov %rdi,0x18(%rax)`.
-Host ownership: JNI_OnLoad registers the caller function pointer into a global, and the argument struct is tagged (dis_jnionload_reg.txt):
-```
-227b979: 48 8d 05 28 2f a1 04  lea ... # 6c8e8a8
-227b980: 48 89 05 c9 32 a6 05  mov %rax,0x5a632c9(%rip)  # 7cdec50
-227b9b1: 4c 89 33              mov %r14,(%rbx)           ; tag [arg]=0x7cdec20
-```
-No guest-side reader of global `0x7cdec50` exists in the engine (only the JNI_OnLoad writer), so the callback is invoked by the host/bridge; its `rsi` is host-supplied. The guest-side host table is global `0x7cdec60` (`6c8e987: mov ... # 7cdec60; call *0x30(%rax)`).
+`nm -D` quoted: `_IO_fflush@@GLIBC_2.2.5 at 0x7c860` ⇒ fault = **`_IO_fflush+0x3f`, NULL rdi** (`si_addr=0x8`). RET64 was NOT exercised (si_addr far from rsp), so **there is no first-guest-RVA call site** — PROVEN.
 
-## PROVEN — wrapper table pointer (dis_wrapper_6ca8008.txt)
+The first guest-mapped stack qword `guest+0x00000000072a0818` is **DATA, not a
+call site**: quoted `readelf -SW` `.bss` = `0000000007282500 … b1ad1c`, which
+contains `0x72a0818`. PROVEN.
 
-```
-6ca7ffa: e8 51 1e fe ff  call   6c89e50
-6ca7fff: 48 8b 58 18     mov    0x18(%rax),%rbx  ; rbx = original table (env arg)
-6ca8003: e8 68 1e fe ff  call   6c89e70
-6ca8008: 48 8b 00        mov    (%rax),%rax      ; rax = buffer[6c89e70][0]
-6ca800b: 48 89 df        mov    %rbx,%rdi
-6ca800e: ff 90 20 07 00 00  call   *0x720(%rax)
-```
-`buffer[6c89e70][0]` is written ONLY by `6c8d86f: mov %r15,(%rax)` (sole `mov ...,(%rax)` after `call 6c89e70` in the whole engine). Guard `6c8d861: cmp %rax,%r15; 6c8d864: je 6c8e515` skips the builder once holder[0] == copy, so the buffer keeps the ORIGINAL pointer captured at the first build. The copy (buffer from `6c89e90`) is stored only into `*(rbx)` at `6c8e512` and is NOT what the wrapper reads.
+## Guest import / GOT slot — PROVEN
 
-## UNPROVEN / RETRACTED
+Quoted `.plt` disassembly:
+> `6d32020 <fflush@plt>: ff 25 2a 77 4f 00 jmp *0x4f772a(%rip) # 7229750`
 
-- UNPROVEN: how the harness observed `[bridge_table+0x720]==base+0x6ca7f72` given that this path writes fn224 into the COPY while the wrapper reads the ORIGINAL. Could be pointer identity (harness sampling holder[0] after `6c8e512`) or a separate in-place writer not located here. Needs harness pointer comparison, not a static claim.
-- UNPROVEN: exact host struct type at `caller rsi`; only that it is host-supplied via the global callback registration and seeded by the guest.
-- RETRACTED: any claim that `6c8e512` makes the wrapper use the copy — it does not.
+So the guest imports symbol **`fflush`** via PLT `0x6d32020`, whose GOT slot is
+`0x7229750`. Call sites found (quoted): `232b8d9`, `237d747`, `237d9d3`,
+`2a26665`, `2b5b3e8`, `2cb81a7`, `2e61d13`, `2ea69d1`, … all indirect via that
+PLT.
 
-## Evidence / NOT done
+## rdi just before the call — PROVEN at sampled sites
 
-Evidence: dis_wrapper_6ca8008.txt, dis_builder_fn.txt, dis_callers_fn.txt, dis_jnionload_reg.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. Input SHA 8215519f per task statement (not re-verified; no new captures).
+Quoted raw disassembly:
+> `232b8d2: mov 0x98(%rbx),%rdi` → `232b8d9: call 6d32020 <fflush@plt>`
+> `237d743: mov 0x30(%rbx),%rdi` → `237d747: call 6d32020 <fflush@plt>`
+> `237d9d0: mov %r15,%rdi` → `237d9d3: call 6d32020 <fflush@plt>`
+> `2e61d0f: mov 0x40(%rbx),%rdi` → `2e61d13: call 6d32020 <fflush@plt>`
+
+So rdi is loaded from an **object field / register**, never a global or TLS
+holder. A NULL field/register yields the NULL FILE* that reaches glibc.
+
+## Which shim/trampoline forwards the symbol — PROVEN
+
+Quoted source:
+> `/home/user/sober-linux/src/compat/bionic_libc.c:487: int fflush(FILE *stream)`
+> `:490: sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;`
+> `:653: sober_libc_fn_fflush = native_lookup("fflush");`
+
+`gen_bionic_libc.py:262` quoted: `if s["name"] in ("fflush", "fclose", "fwrite"):` — these are **skipped** by the TRAMP generator, so the stub exports its own C `fflush` directly (not a generated trampoline). Forwarding chain: guest `fflush@plt` → GOT `0x7229750` → stub `fflush@@LIBC` (our `bionic_libc.c:487`) → `sober_libc_fn_fflush` → glibc `_IO_fflush`.
+
+`sober_stdio_map` quoted:
+> `:471: if (!p) return NULL;`
+> `:497: return real ? real(mapped) : 0;`
+
+So a NULL guest stream maps to NULL and is passed straight to glibc — the
+mechanism for the NULL rdi at `_IO_fflush+0x3f`. The exact guest call site on
+the #552 path that supplies NULL is **UNPROVEN** (no `fflush@plt` call inside
+the `0x2383c18` body; the sampled sites load rdi from FILE*-bearing fields).
+
+## What NOT done
+No apply/build, no runs/gdb/perf, no device/AVD/Frida/phone, no new captures,
+no guest writes, gate edits, seeder, fake returns or path remaps, no
+credentials, no captures/logs/tokens in git.
+
+## First divergence + next step
+First divergence: NULL FILE* from a guest FILE*-bearing field reaches host
+`_IO_fflush`; real boot supplies a valid stream. Next: harness logs the guest
+flush call site and its FILE* field on the #552 path.
