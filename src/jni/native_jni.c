@@ -241,8 +241,60 @@ static void w26_getstring_sig(int s, siginfo_t *si, void *uc)
     w26_regs_sig(s, si, uc, "getstring_0x2315556");
 }
 
+/* ---- W28 paired pre/post call hit counters ------------------------------ */
+static long w28_hits[4];   /* 0=pre2315 1=post2315 2=pre6ca2 3=post6ca2 */
+static void w28_pre(int s, siginfo_t *si, void *uc, int which)
+{
+    (void)s; (void)si;
+    long n = __atomic_fetch_add(&w28_hits[which], 1, __ATOMIC_RELAXED) + 1;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t rsi = (uintptr_t)c->uc_mcontext.gregs[REG_RSI];
+    uintptr_t val = (rsi >= 0x10000u && rsi < 0x0000800000000000ULL)
+                    ? *(uintptr_t *)rsi : 0u;
+    fprintf(stderr,
+            "[W28_PRE%s #%ld] rsi=%p [rsi]=%p rax=%p tid=%ld\n",
+            (which == 0 ? "2315" : "6ca2"), n,
+            (void *)rsi, (void *)val,
+            (void *)(uintptr_t)c->uc_mcontext.gregs[REG_RAX],
+            (long)syscall(SYS_gettid));
+}
+static void w28_pre_2315(int s, siginfo_t *si, void *uc) { w28_pre(s,si,uc,0); }
+static void w28_post_2315(int s, siginfo_t *si, void *uc)
+{
+    (void)s;(void)si;(void)uc;
+    fprintf(stderr, "[W28_POST2315 #%ld]\n",
+            __atomic_fetch_add(&w28_hits[1],1,__ATOMIC_RELAXED)+1);
+}
+static void w28_pre_6ca2(int s, siginfo_t *si, void *uc) { w28_pre(s,si,uc,2); }
+static void w28_post_6ca2(int s, siginfo_t *si, void *uc)
+{
+    (void)s;(void)si;(void)uc;
+    fprintf(stderr, "[W28_POST6CA2 #%ld]\n",
+            __atomic_fetch_add(&w28_hits[3],1,__ATOMIC_RELAXED)+1);
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_W28_PAIRS")) {
+        w21_base = base;
+        static int fds[4] = {-1,-1,-1,-1};
+        static const uintptr_t addrs[4] = {
+            0x2315556u, 0x231555cu, 0x6ca229cu, 0x6ca22a2u
+        };
+        static void (*fns[4])(int, siginfo_t *, void *) = {
+            w28_pre_2315, w28_post_2315, w28_pre_6ca2, w28_post_6ca2
+        };
+        static const int sigs[4] = { SIGUSR1, SIGUSR2, 34, 35 };
+        int ok = 1;
+        for (int i = 0; i < 4; ++i) {
+            fds[i] = w21_perf(w21_base + addrs[i]);
+            if (fds[i] < 0) { ok = 0; break; }
+            if (w21_arm(fds[i], sigs[i], fns[i]) != 0) { ok = 0; break; }
+        }
+        fprintf(stderr, "[W28_PAIRS] armed=%d base=%p\n", ok, (void *)w21_base);
+        return;
+    }
     if (!getenv("SOBER_W21_WATCH") && !getenv("SOBER_W26_WATCH")) return;
     w21_base = base;   /* guest already mapped when the seeder runs */
     int w26 = getenv("SOBER_W26_WATCH") != NULL;

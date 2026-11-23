@@ -1115,6 +1115,30 @@ int guest_app_shell_run(uintptr_t base)
                         "ver=%#x\n", (unsigned)ever);
     }
 
+    /* W28 exact captured order (host-only, opt-in): after OnLoad, call
+     * Channel(""), Version and GameGlobalInit BEFORE InitClientSettings.
+     * The three later duplicates are skipped when this runs.  No guest bytes. */
+    static int w28_order_done;
+    if (getenv("SOBER_W28_REORDER") && !w28_order_done) {
+        w28_order_done = 1;
+        void *w28_env = sober_jni_env(j);
+        void *w28_cls = sober_jni_find_class(j,
+            "com/roblox/engine/jni/NativeGLJavaInterface");
+        void *w28_chan = sober_jni_new_string_utf8(j, "");
+        void *w28_ver = sober_jni_new_string_utf8(j, "2.740.931");
+        long w28_rc;
+        w28_rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
+                     (w28_env, w28_cls, w28_chan);
+        fprintf(stderr, "[app-shell] W28_ORDER 1 Channel(\"\") 0x2326e2e rc=%ld\n",
+                w28_rc);
+        w28_rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
+                     (w28_env, w28_cls, w28_ver);
+        fprintf(stderr, "[app-shell] W28_ORDER 2 Version 0x232d484 rc=%ld\n", w28_rc);
+        w28_rc = call_jni_static(base + 0x233762cu, w28_env, w28_cls);
+        fprintf(stderr, "[app-shell] W28_ORDER 3 GameGlobalInit 0x233762c rc=%ld\n",
+                w28_rc);
+    }
+
     int avd_boundary_active = 0;
     if (sober_avd_boundary_enabled()) {
         char prov[256];
@@ -1553,15 +1577,19 @@ int guest_app_shell_run(uintptr_t base)
     fprintf(stderr, "[app-shell] guest call 0x24650a9 nativeSetBaseDataDirectories"
                     "(base1,base2) -> rc=%ld\n", rc);
 
-    rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
-             (env, app_class, s_ver);
-    fprintf(stderr, "[app-shell] guest call 0x232d484 nativeSetRobloxVersion"
-                    "(ver) -> rc=%ld\n", rc);
+    if (!w28_order_done) {
+      rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
+               (env, app_class, s_ver);
+      fprintf(stderr, "[app-shell] guest call 0x232d484 nativeSetRobloxVersion"
+                      "(ver) -> rc=%ld\n", rc);
 
-    rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
-             (env, app_class, s_chan);
-    fprintf(stderr, "[app-shell] guest call 0x2326e2e nativeSetRobloxChannel"
-                    "(chan) -> rc=%ld\n", rc);
+      rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
+               (env, app_class, s_chan);
+      fprintf(stderr, "[app-shell] guest call 0x2326e2e nativeSetRobloxChannel"
+                      "(chan) -> rc=%ld\n", rc);
+    } else {
+      fprintf(stderr, "[app-shell] W28_ORDER skipped duplicate Version/Channel\n");
+    }
 
     int real_path = getenv("SOBER_REAL_APPSTATE_PATH") != NULL;
     if (getenv("SOBER_NATIVE_FLAGS_INIT")) {
@@ -1585,9 +1613,13 @@ int guest_app_shell_run(uintptr_t base)
         real_appstate_prepare(base, env, app_class, j);
     }
 
-    rc = call_jni_static(base + 0x233762cu, env, app_class);
-    fprintf(stderr, "[app-shell] guest call 0x233762c nativeGameGlobalInit() "
-                    "-> rc=%ld\n", rc);
+    if (!w28_order_done) {
+      rc = call_jni_static(base + 0x233762cu, env, app_class);
+      fprintf(stderr, "[app-shell] guest call 0x233762c nativeGameGlobalInit() "
+                      "-> rc=%ld\n", rc);
+    } else {
+      fprintf(stderr, "[app-shell] W28_ORDER skipped duplicate GameGlobalInit\n");
+    }
     if (getenv("SOBER_GSEED_DIAG"))
         fprintf(stderr, "[app-shell] gseed diag: global@0x72a0520 = %p\n",
                 (void *)*(uintptr_t *)(base + 0x72a0520u));
