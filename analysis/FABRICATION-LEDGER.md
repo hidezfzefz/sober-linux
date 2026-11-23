@@ -971,3 +971,45 @@ copy (it reads the original); harness pointer-identity conflict UNPROVEN.
 → OUTPUT: 46 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n3. Marker WITHHELD.
+
+## Overnight n4 audit (task #677) — host fault resolved + retractions
+
+Owner: audit (`/tmp/opencode/n4-audit`, branch `n4-audit`). Cores 6-7. READ-ONLY, no device/runs; no questions.
+
+Input SHA: `verified … sha256=8215519f…` = 1 in each `n4_{1,2,3}.err` (3/3); object OFF, rc=139 3/3.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 41 | **Host-only maps-aware crash handler: `/proc/self/maps` read via `open/read/close` into a fixed buffer + `write(2)` only — no stdio/malloc in the signal path. Prints `[W40_RIP_MAP]` for RIP; RET64 maps lines implemented but NOT EXERCISED (|si_addr−rsp| ≫ 64 KiB, RET64 count 0/0/0). DEBT** | raw n4_1.err `[W40_RIP_MAP] rip0x00007fa51a6518ff offset=0x00000000000588ff maps='7fa51a5f9000-7fa51a749000 r-xp 00024000 00:17 482353 /usr/lib64/libc.so.6'`; source `src/linux/guest_dlopen_host.c:165 open /proc/self/maps`, `:169 read`, `:173 close`, `:144 'No stdio, no malloc — safe inside signal handler'` | harness (owner), audited | Resolves a host fault site without ptrace/stdio in the handler; no guest state touched | Remove when the handler is folded into final host code or maps resolution is no longer needed |
+| 42 | **RETRACTED: fault offset `_IO_fflush+0x3f`. Correct offset is `+0x9f` — `nm -D /usr/lib64/libc.so.6` gives `_IO_fflush@@GLIBC_2.2.5 = 0x7c860`; objdump shows `<...+0x9f>` at `0x7c8ff`; `0x7c8ff−0x7c860 = 0x9f`. Core finding (host libc `_IO_fflush`, NULL rdi, not guest) STANDS** | harness report_n4.md:41/47 and static-B report.md:4 still state +0x3f with self-contradictory arithmetic; audit nm/objdump verification above. static-A CORRECTED to +0x9f with explicit retraction (report.md:72) | audit (lead notified, flagged to harness+static-A+static-B) | A quoted success claim with wrong arithmetic; substance (function identity) independently confirmed | Remove when harness and static-B correct the documents to +0x9f |
+
+**Faulting instruction first (n4, PROVEN):** `rip=0x00007fa51a6518ff`, `48 8b 47 08` =
+`mov rax,[rdi+0x8]`, `si_addr=0x8` = `[NULL+8]`, fault rdi=0, rc=139 3/3. Resolved via
+`[W40_RIP_MAP]` to `/usr/lib64/libc.so.6` mapping-relative offset `0x588ff`, ELF file offset
+`0x24000+0x588ff = 0x7c8ff` = `_IO_fflush@@GLIBC_2.2.5+0x9f` (NULL-FILE `fflush` path), not guest.
+No RET64 line ⇒ no first-guest-RVA call site; `guest+0x72a0818` from `[W23_STACK_SCAN]` lies inside
+`.bss` (`vaddr 0x7282500 size 0xb1ad1c`) ⇒ DATA, not code — RETRACTED as a call site (lead's caution).
+
+**harness #674 — all raw quotes verified:** SHA 3/3, fault line/insn, `[W40_RIP_MAP]`, `[W23_STACK_SCAN]`,
+RET64 counts 0/0/0, maps reader source (open/read/close, no stdio/malloc). Only defect = entry 42 offset.
+
+**static-A #676 — all quoted claims verified:** PLT `6d32020 <fflush@plt>: ff 25 … # 7229750` (verified
+by direct objdump; absent from saved evidence files), call sites `232b8d9/237d747/237d9d3/2e61d13`
+loading rdi from object fields/registers (not global/TLS), shim `bionic_libc.c:487/490/653` +
+`gen_bionic_libc.py:262` skip ⇒ direct stub forwards NULL stream to glibc `_IO_fflush`; `.bss`
+covers 0x72a0818 (DATA). Initially repeated +0x3f; CORRECTED to +0x9f with retraction
+(report.md:72) after audit flag. Exact #552 NULL-passing site UNPROVEN.
+
+**static-B #675 — all quoted disasm verified verbatim:** `2383d16 lea "size"` / `2383d1d lea "()I"`,
+`2383cfc/2383d2a call *0x108` (GetMethodID), `2383d3b call 238463c` (CallIntMethodA via
+`23846b6 call *0x190`), `2383d40 test eax,eax` / `2383d42 jle 23844e9` (size<=0 ⇒ EARLY RETURN,
+`238450a ret`, not immediate abort); fatal helper `23845d5 call 2ea6a10`, inside it `2ea6a6b add
+# 72281d8` (__sF+0x130=stderr), `2ea6a8c call fprintf@plt`, `2ea6a94 call fflush@plt`, `2ea6a99
+call abort@plt`; source `bionic_sf_full.c:4-7` documents NULL `_lock` at FILE+0x88. UNPROVEN which
+exception producer fires after size()==0 and why rdi=0 vs __sF+0x130; no fabricated guest call site.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n4-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 54 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n4. Marker WITHHELD.
