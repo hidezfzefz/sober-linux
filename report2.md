@@ -1,58 +1,24 @@
-# n5 follow-up — new fault at guest+0x6caef67 (READ-ONLY)
+# n7w2 #692 static-B — real boot: library load → AppStart (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST (harness n5_1/2/3.err:3730-3735, 3/3):
-```
-RBXCRASH: HardAssert (Expect to have mimalloc working, but it was not detected!)
-[W30_FAULT] rip=0x00007f12da5d6f67 si_addr=0x0000000000000000 ... insn=0000000000000089 00000000000000c0 00000000000000e8 ...
-[W28_FAULT_INSN] rip=... guest_rva=0x06caef67
-signal=5 tid=1952583 rip=... si_addr=0x0000000000000000
-```
-The reported RIP `0x6caef67` is the instruction **after** the trap `6caef66: cc int3`. Bytes `89 c0 e8 62` = `89 c0 mov %eax,%eax; e8 62 31 08 00 call abort@plt` (dis_6caef67.txt).
+FAULTING INSTRUCTION FIRST (n7w1): guest `int3 0x6caef66` (RIP `0x6caef67`) HardAssert mimalloc; fault bytes `[0x7cdd149]=1, [0x7cef650]=0` 3/3. No runs/writes.
 
-## PROVEN — containing function + message
+## Backlog 5 — real-boot order (all raw quotes)
 
-Function containing the trap: **`0x6caed7c`** (`push rbp` prologue), a reporter taking `(rdi = tag from table, rsi = message)`. It is reached via dispatcher `0x6caed5d`:
-```
-6caed5d: push %rbp
-6caed61: cmp $0xa,%edi
-6caed69: cmovb %edi,%eax
-6caed6c: lea 0x570e5d(%rip),%rcx   # 721fbd0
-6caed73: mov (%rcx,%rax,8),%rdi
-6caed77: call 6caed7c
-6caef4f: cmpb $0x0,0x102e1f3(%rip) # 7cdd149
-6caef56: je 6caef66
-6caef58: cmpb $0x0,0x10406f1(%rip) # 7cef650
-6caef5f: je 6caef66
-6caef61: call 6d320d0 <abort@plt>
-6caef66: cc int3
-```
-Message producer (dis_assert_msg.txt): `23a1465: lea -0x1ee0741(%rip),%rsi # 4c0d2b`, `23a146c: xor %edi,%edi`, `23a146e: call 6caed5d`. Strings verified from engine bytes: `0x4c0d2b="Expect to have mimalloc working, but it was not detected!"`, `0x3a30df="RBXCRASH"`, `0x3a30e8="HardAssert"`, `0x3a3078="[DFLog::Mimalloc] Mimalloc integration is NOT detected"`. Harness RET64 first guest RVA `guest+0x3a30e8` and `guest+0x4c0d2b` are exactly these strings — confirming this call chain.
-
-## PROVEN — predicate bytes and their writers
-
-The assert requires **both** globals nonzero (either zero -> int3):
-- `0x7cdd149` — written to 1 by `2eb7520: c6 05 ... 01 movb $0x1,... # 7cdd149` (the W18 per-activation latch write; other writers `2ec9fae`, `56d31a3`, `56d3386`, `56d6a4b`, `56d6b80`).
-- `0x7cef650` — initialized **zero** by `2279a8f: 88 05 ... mov %al,... # 7cef650` (in the JNI_OnLoad init path where `xor %eax,%eax` at `2279a4b`; dis_mimalloc_flag.txt), and referenced at `227d51f: lea ... # 7cef650` alongside FFlag name `0x3a30af="DebugForceTerminateOnRbxCrash"`.
-
-Within the reporter function, `6caed9b: mov 0x...(%rip),%rax # 7cef6c0; 6caedaa: call *%rax` invokes a global reporter before the byte checks.
-
-## Startup step that normally makes mimalloc detection true
-
-`src/compat/bionic_bootstrap/README.md:42-55` (verbatim):
-```
-**Six mimalloc bridges** (guest RVA → native host function):
-| allocate (small) | `0x1dbad62` | `malloc`/`mi_malloc` |
-mimalloc is used if the process already exports it;
-otherwise native glibc malloc is used.
-```
-and `README.md:242-246`:
-```
-   allocator is glibc malloc when mimalloc is absent — still fully native.
-```
-`bionic_bootstrap.c:175`: `extern void *mi_malloc(size_t) __attribute__((weak));`
-The harness redirects the six guest allocator thunks to host `malloc`/`free` and binds mimalloc with **weak** symbols; when the host process does not export mimalloc, the bridges use glibc malloc, so the guest's own mimalloc-integration detection returns false — logging `[DFLog::Mimalloc] Mimalloc integration is NOT detected` and firing this HardAssert. The genuine app has mimalloc loaded, so the detection is true and the trap is not reached.
+| # | Real-boot step | Evidence | Harness divergence |
+|---|---|---|---|
+| 1 | Android linker applies `DT_ANDROID_RELA` (APS2) and runs **all 3618** init_array ctors | `android_relocs.h:8-12` "plain dlopen() leaves the 3618-entry DT_INIT_ARRAY at RVA 0x7220e58 zero-filled"; `guest_dlopen_host.c:824` std ranges `{2,3},{5,3618}` | replays only 2 and 5..3617; skips 0,1,3,4 |
+| 2 | ctor[0] FFlag registry `0x2e62390` runs as a genuine ctor | `guest_app_shell.c:1411-1419` decision 008 deliberate skip; log `n5_1.err:3687 [fflag-default] replayed guest ctor 0x2e62390 (FFlag registry): guard=257 ... ctors 1/3/4 not required ...` | skipped genuine call; host-side replay **after** ctor3602 (3687 > 3652) |
+| 3 | ctor[1] protobuf once-guard `0x1dba8f3`, ctor[3] allocator thread init `0x1e47927`, ctor[4] time baseline run | `guest_dlopen_host.c:824` skip; `:850-857` `SOBER_CTOR1`; `:851-854` "allocator thread init after ctor[2]" only native/all ranges; log line 3687 names them | never run in std profile |
+| 4 | ctor3602 `0x2279a47` writes `0x7cef650` (mimalloc/FFlag byte) unconditionally to 0 | static-A #687: `2279a4b xor %eax,%eax; 2279a8f mov %al,0x7cef650`, no detection call; log `n5_1.err:3652 [harness] ctor[3602] rva=0x2279a47` | same write; harness then faults because byte stays 0 |
+| 5 | ART VM calls `JNI_OnLoad` `0x227af5a` | `n5_1.err:3702 [app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006` | harness calls it explicitly first (JNI_OnLoad-first ON) |
+| 6 | Lifecycle natives in captured order: #67 PreCreated (2406ms), #100 PreResumed (18665ms), #105 OnResumed (20511ms) | `w12-j2n-300.log:82,115,120` quoted in report.md | N14 replays only #67 `0x23239c5` and #105 `0x2328066` (`guest_app_shell.c:1738-1748`), pre-BaseDirs |
+| 7 | Scheduler guard latch `0x7cdd149` 0→1 (real AVD: write at `0x2eb7520`) | `w18-avd/peract2.log:19 HOOK LATCH_WR 0x2eb7520 OK`; harness `n5_1.err:3706 [W32_LATCH_RO] before=0 after=1` | harness flips it immediately before nativeInitClientSettings, after ctor replay (3652→3706) |
+| 8 | #551 `nativeInitClientSettings` then #552 `nativePostClientSettingsLoadedInitialization3` | `w12-j2n-300.log:566` (`t=290317ms`), `:567` (`t=290696ms ...([object Object])`) | N14 3rd replay `0x2383c18` with opaque param_obj (`guest_app_shell.c:1759-1766`) |
+| 9 | Mimalloc probe byte `0x7cdede0` can be nonzero via ctor3 `0x1db9a40` (`1db9acf mov %bl,0x7cdede0`), which real boot runs | static-A #691: ctor3 skipped by decision 008 (`fflag_default.c:111-113`), harness "mimalloc probe=DFLog-only"; n6 static-B: glibc bridges | harness skips ctor3 → probe zero; **RETRACTED** the claim that genuine boot leaves `0x7cef650` nonzero — static-A #691 finds NO nonzero writer for it anywhere |
+| 10 | Java calls `nativeAppBridgeAppStart` `0x247dc8d`, then `nativeAppBridgeV2StartAppWithParams` | `guest_app_shell.c:1919-1931` call + log line; `:1961-1964` "Java follows nativeAppBridgeAppStart with nativeAppBridgeV2StartAppWithParams(StartAppParams)" | harness call is opt-in and never reached while HardAssert fires at step 4/9 |
 
 ## UNPROVEN / NOT done
 
-- UNPROVEN: exact detection call that produces the boolean tested at `23a1422: test %al,%al; je 23a1465`; which of the two predicate bytes is specifically "mimalloc detected" vs the latch/FFlag gate; whether writing either byte alone clears the assert.
-- NOT DONE: no apply/runs/device/captures/guest writes/gate edits/seeder/fake returns/path remaps; object OFF. Evidence: report2.md, dis_6caef67.txt, dis_assert_msg.txt, dis_mimalloc_flag.txt, dis_mimalloc_set.txt, n5-harness/report_n5.md.
+- UNPROVEN: why real boot does not trap on the same zero `0x7cef650` — static-A #691 exhaustively scanned: exactly 3 refs (`2279a8f` only write = zero, `227d51f` lea, `6caef58` cmpb); no nonzero writer exists. `227d51f: lea ...#7cef650` passes the address with FFlag name `DebugForceTerminateOnRbxCrash` (`0x3a30af`) but no write was located.
+- UNPROVEN: exact real-boot timestamp of nativeAppBridgeAppStart (not in w12 300-line capture).
+- RETRACTED: none. NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF, no captures/tokens in git.
