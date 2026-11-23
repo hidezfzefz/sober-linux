@@ -1,61 +1,69 @@
-# n5 #679 — fatal helper format/callers + Bionic FILE layout
+# n5 #680 static-B — after-#552 calls, threads, 3rd N14 replay (READ-ONLY)
 
-Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
-Evidence: `dis_fatal.txt`, `raw_messages.txt`, `raw_install_sf.txt`,
-`raw_sf_layout.txt`, `raw_sf_full.txt`, `raw_sf_refs.txt`.
+FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f`, `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=0 (n4 audit #677, ledger 42). Object OFF. All quotes raw from saved source/captures.
 
-Faulting instruction first (n4 harness): host libc
-`7c8ff: 48 8b 47 08 mov rax,[rdi+0x8]` = `_IO_fflush+0x9f`, NULL rdi.
+## (a) PROVEN — harness calls after #552 returns (src/linux/guest_app_shell.c)
 
-## (a) Fatal helper `0x2ea6a10` — format string and callers — PROVEN
+Source lines 1768-1845, in order:
+```
+if (getenv("SOBER_N15_SCAN")) n15_scan_closures(base);
+    rc = ((long (*)(void *, void *, void *, void *))(base + 0x24650a9u))
+             (env, app_class, s_base1, s_base2);
+      rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
+               (env, app_class, s_ver);
+      rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
+               (env, app_class, s_chan);
+        rc = ((long (*)(void *, void *, void *))(base + 0x246515du))
+                 (env, app_class, s_prefs);
+        rc = ((long (*)(void *, void *, void *))(base + 0x2465210u))
+                 (env, app_class, flags);
+      rc = call_jni_static(base + 0x233762cu, env, app_class);
+    rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
+             (env, app_class, param_obj);
+```
+(Line-wrapped call expressions quoted verbatim; intervening `fprintf(stderr,"[app-shell]...")` log lines omitted for brevity but present in source.)
+Each is followed by `fprintf(stderr, "[app-shell] ... -> rc=%ld\n", rc)` — host stderr logging, **not** the guest fflush shim. Note: in object-OFF Run D, #552 faults internally and never returns; this sequence is only reached when #552 returns.
 
-Quoted disassembly:
-> `2ea6a66: mov $0x130,%ebx`
-> `2ea6a6b: add 0x72281d8(%rip),%rbx`     (`rbx = __sF + 0x130` = stderr)
-> `2ea6a72: lea … # 2345cf,%rsi`
-> `2ea6a79: lea … # 517ec0,%rdx`
-> `2ea6a80: lea … # 2a4d76,%rcx`
-> `2ea6a8c: call 6d31aa0 <fprintf@plt>`
-> `2ea6a91: mov %rbx,%rdi`
-> `2ea6a94: call 6d32020 <fflush@plt>`
-> `2ea6a99: call 6d320d0 <abort@plt>`
+**Next 3 guest threads** by first appearance in `/tmp/opencode/w18-avd/peract2.log` (after Main seq1 / DefaultDispatch seq6):
+```
+{"seq":71,"phase":"PRE_LATCH_WR","site":"ENTRY@0x2312009","tid":4572,"thread":"AsyncTask #3","depth":16,...,
+{"seq":89,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4605,"thread":"FunctionMarshal","depth":16,...,
+{"seq":100,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4585,"thread":"RBX Worker A","depth":3,...,
+```
+(`...` marks truncated tail of each JSON line; prefix is verbatim.)
+Further: HttpClientHandl seq=115, RBX Worker B seq=122. Temporal alignment of these first appearances to #552's return is **UNPROVEN** (peract2 has no #552 marker).
 
-Raw rodata strings (quoted):
-> `0x2345cf 'libunwind: %s - %s\n'`
-> `0x517ec0 '_Unwind_Resume'`
-> `0x2a4d76 "_Unwind_Resume() can't return"`
+**Which logs through fflush:** guest-side only — FLog logger `0x2e61ca0` (`0x2e61ce2: mov 0x40(%rbx),%rcx; ... call fwrite@plt (0x2e61cf1)` / `0x2e61d0f: mov 0x40(%rbx),%rdi; call fflush@plt (0x2e61d13)`, per w18-avd/analysis/fflag-registry-fault2-stdio.md:87-91) and fatal helper `0x2ea6a10` (`2ea6a8c: call fprintf@plt; 2ea6a94: call fflush@plt`, format `0x2345cf="libunwind: %s - %s\n"`, n4 #675). Shim `src/compat/bionic_libc.c:487`: `int fflush(FILE *stream)` maps `__sF+0x98/+0x130` then `return real ? real(mapped) : 0;` — NULL mapped stream reaches glibc `_IO_fflush` and faults.
 
-So the helper prints exactly **`libunwind: _Unwind_Resume - _Unwind_Resume() can't return`** to `__sF+0x130`, flushes that stream, then aborts.
+## (b) PROVEN — 3rd N14 replay + threads after OnResumed
 
-Callers: a direct-call scan found the helper invoked from the `0x1dba..–0x1dcf..` region (libunwind fatal/unwind-failure paths), e.g. quoted:
-> `1dba6b7: call 2ea6a10`, `1dceb4f: call 2ea6a10`, `1dcf4c8: call 2ea6a10`
+`src/linux/guest_app_shell.c:1759-1766`:
+```
+rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
+         (env, app_class, opaque);
+fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
+                "Initialization3 0x2383c18([object Object])"
+                " -> rc=%ld\n", rc);
+n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
+```
+It is the third of the AVD-captured pre-BaseDirs natives: #67 `nativeOnPreCreated` (`0x23239c5`), #105 `nativeOnResumed` (`0x2328066`), #552 `nativePostClientSettingsLoadedInitialization3` (`0x2383c18`). `opaque = param_obj` (harness's real native-backed `shared_param_obj`); with `SOBER_N2_JAVA_OBJECT` it is a DEX-typed `java/util/List` from `sober_native_java_list(j, NULL, 0)` (**object OFF in this wave**). Capture `w12-j2n-300.log:82,120,567`:
+```
+J2N #67 t=2406ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnPreCreated("ActivitySplash")
+J2N #105 t=20511ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnResumed("ActivitySplash")
+J2N #552 t=290696ms com.roblox.engine.jni.NativeGLInterface.nativePostClientSettingsLoadedInitialization3([object Object])
+```
+**Threads after OnResumed** — `w18-avd/report.md:30` POST_LATCH_WR phase:
+```
+threads: RBX Worker A x19, FunctionMarshal x15, DefaultDispatch x13,
+         Main x4, AsyncTask #3 x2, HttpClientHandl x1, RBX Worker B x2
+```
+These are the worker threads present in the post-latch phase; that phase follows the lifecycle replay in the AVD capture, but exact per-thread start times vs J2N #105 are **UNPROVEN**.
 
-**No caller lies inside the `#552` body (`0x2383c18..0x23c1200`)** — the scan over that range returned none. So the fatal helper is not directly reachable from #552 code; it is an unwind-failure path reachable from whichever thread throws (logger/other threads). Direct reachability from #552 is **UNPROVEN**; attribution to any specific thread is **UNPROVEN** from static data.
+## RETRACTED / UNPROVEN
 
-## (b) Bionic FILE layout / `_lock` / streams — PROVEN
+- RETRACTED: treating host `[app-shell]`/`[N14_REPLAY]` lines as guest-fflush logs (they are host `fprintf(stderr,...)`).
+- UNPROVEN: exact thread set at the instant #552 returns; exact producer of rdi=0 among guest fflush sites; typed object path (object OFF).
 
-Quoted source:
-> `bionic_libc.c:443 unsigned char sober_libc_obj___sF[0x200];`
-> `gen_bionic_libc.py:97 # __sF must cover Bionic's FILE __sF[3] (0x198 bytes): the guest derives`
-> `:98 # stdout/stderr as __sF+0x98 / __sF+0x130.`
-> `bionic_sf_full.c:4-7 The guest derives its stdout/stderr FILE* as __sF+0x98 and __sF+0x130 ... glibc's _IO_fflush faults reading the NULL _lock at FILE+0x88.`
+## Evidence / NOT done
 
-So the exported layout is `FILE __sF[3]`, Bionic stride `0x98`, object widened to `0x200` bytes. **Each Bionic FILE does NOT have a valid `_lock` at +0x88** — it is zeroed, so glibc's lock path (`_IO_fflush` reading `_lock+0x88`) faults. PROVEN from the quoted source comment; no per-FILE lock initializer was found.
-
-`install_sf_full` (quoted `guest_app_shell.c:1089-1102`) resolves `sober_bionic_sf_full_install` from the dlopened `libc.so` stub and calls it with `__sF`; it is opt-in via `SOBER_BIONIC_SF_FULL` (quoted `bionic_sf_full.c`: `if (!getenv("SOBER_BIONIC_SF_FULL")) return;`). With it enabled, `host_stream_for` quoted maps:
-> `if (addr == base + 0x098u) return stdout;   /* Bionic stdout */`
-> `if (addr == base + 0x130u) return stderr;   /* Bionic stderr */`
-
-and rebinds the two stdio PLT GOT slots (quoted log format `fflush 0x7229750 …`). With object OFF / default OFF, no mapping is installed and the zeroed `__sF+0x130` FILE reaches glibc.
-
-**Which stream the fatal helper flushes:** `__sF+0x130` (**stderr**) — PROVEN by `2ea6a66/6b/91` above. Other guest logger flush sites load FILE* from object fields (`mov 0x30(%rbx),%rdi` at `237d743`, `mov 0x98(%rbx),%rdi` at `232b8d2`), so a global claim that all logger flushes use only +0x98 or only +0x130 is **UNPROVEN**.
-
-## What NOT done
-No apply, no build, no runs/gdb/perf, no device/AVD/Frida/phone, no new
-captures, no guest writes, gate edits, seeder, fake returns or path remaps, no
-credentials, no captures/logs/tokens in git.
-
-## First divergence + next step
-First divergence: zeroed Bionic `_lock` at FILE+0x88 (no full stdio bridge)
-vs real host streams on a genuine boot. Next: harness `SOBER_BIONIC_SF_FULL`
-Run D x3 with the shim ring (owned by harness in this wave).
+Evidence: report.md; sources quoted in place (guest_app_shell.c, bionic_libc.c, fflag-registry-fault2-stdio.md, w18-avd/report.md, w18-avd/peract2.log, w12-j2n-300.log). NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.
