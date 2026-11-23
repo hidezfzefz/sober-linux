@@ -14,11 +14,11 @@ FAULTING INSTRUCTION FIRST (n7w1): guest `int3 0x6caef66` (RIP `0x6caef67`) Hard
 | 6 | Lifecycle natives in captured order: #67 PreCreated (2406ms), #100 PreResumed (18665ms), #105 OnResumed (20511ms) | `w12-j2n-300.log:82,115,120` quoted in report.md | N14 replays only #67 `0x23239c5` and #105 `0x2328066` (`guest_app_shell.c:1738-1748`), pre-BaseDirs |
 | 7 | Scheduler guard latch `0x7cdd149` 0→1 (real AVD: write at `0x2eb7520`) | `w18-avd/peract2.log:19 HOOK LATCH_WR 0x2eb7520 OK`; harness `n5_1.err:3706 [W32_LATCH_RO] before=0 after=1` | harness flips it immediately before nativeInitClientSettings, after ctor replay (3652→3706) |
 | 8 | #551 `nativeInitClientSettings` then #552 `nativePostClientSettingsLoadedInitialization3` | `w12-j2n-300.log:566` (`t=290317ms`), `:567` (`t=290696ms ...([object Object])`) | N14 3rd replay `0x2383c18` with opaque param_obj (`guest_app_shell.c:1759-1766`) |
-| 9 | Mimalloc integration detected true (real Bionic + engine allocator loaded) | static-A #683 "mimalloc probe=DFLog-only" in harness; n6 static-B: kernel glibc bridges | real boot has genuine mimalloc; harness DFLog-only → HardAssert |
+| 9 | Mimalloc probe byte `0x7cdede0` can be nonzero via ctor3 `0x1db9a40` (`1db9acf mov %bl,0x7cdede0`), which real boot runs | static-A #691: ctor3 skipped by decision 008 (`fflag_default.c:111-113`), harness "mimalloc probe=DFLog-only"; n6 static-B: glibc bridges | harness skips ctor3 → probe zero; **RETRACTED** the claim that genuine boot leaves `0x7cef650` nonzero — static-A #691 finds NO nonzero writer for it anywhere |
 | 10 | Java calls `nativeAppBridgeAppStart` `0x247dc8d`, then `nativeAppBridgeV2StartAppWithParams` | `guest_app_shell.c:1919-1931` call + log line; `:1961-1964` "Java follows nativeAppBridgeAppStart with nativeAppBridgeV2StartAppWithParams(StartAppParams)" | harness call is opt-in and never reached while HardAssert fires at step 4/9 |
 
 ## UNPROVEN / NOT done
 
-- UNPROVEN: why real boot does not trap on the same zero `0x7cef650` — possibly a later FFlag write via `227d51f: lea ...#7cef650` with name `DebugForceTerminateOnRbxCrash`, not located statically.
+- UNPROVEN: why real boot does not trap on the same zero `0x7cef650` — static-A #691 exhaustively scanned: exactly 3 refs (`2279a8f` only write = zero, `227d51f` lea, `6caef58` cmpb); no nonzero writer exists. `227d51f: lea ...#7cef650` passes the address with FFlag name `DebugForceTerminateOnRbxCrash` (`0x3a30af`) but no write was located.
 - UNPROVEN: exact real-boot timestamp of nativeAppBridgeAppStart (not in w12 300-line capture).
 - RETRACTED: none. NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF, no captures/tokens in git.
