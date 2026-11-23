@@ -1131,3 +1131,43 @@ with NO callback if pointer NULL — which branch runs UNPROVEN (no runs by stat
 → OUTPUT: 70 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n7. Marker WITHHELD.
+
+## Overnight n7 WAVE2 audit (task #690) — early-arming confirms zero write; BLOCKED
+
+Owner: audit (`/tmp/opencode/n7-audit`, branch `n7-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n7b_{1,2,3}.err` (3/3); rc=139 3/3;
+`[N7_FAULT_BYTES] [0x7cdd149]=1 [0x7cef650]=0` 3/3; fault int3 `0x6caef66` (RIP `0x6caef67`).
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 45 | **Wave1 timing artifact resolved by EARLY arming: ctor3602 exec bps armed at log line 8 (before ctor replay at 3653) now hit 1/1/1 — entry, store (`al=0x00` → `0x7cef650`), and after-bp readback `[0x7cef650]=0x00`. This closes entry 44's UNPROVEN stored-value/tid** | raw n7b_1.err line 7 `[harness] guest base=0x7f7031c70000`, line 8 `[N7B_ARM] base=0x7f7031c70000 fds=4/5/6 rc=0/0/0`, line 3653 `[harness] ctor[3602] rva=0x2279a47`, 3654 `[N7B_ENTRY 0x2279a47] hit=1 tid=2074238`, 3655 `[N7B_STORE 0x2279a8f] hit=1 tid=2074238 al=0x00 store_to=0x7cef650`, 3656 `[N7B_AFTER 0x2279a95] hit=1 tid=2074238 [0x7cef650]=0x00`; counts entry=1/store=1/after=1 in all 3 runs; arming hook at `guest_dlopen_host.c:942-944` before `drive_constructors()` (`:1048`) | harness, audited | Directly observes the runtime zero write that wave1's late arming could not; confirms entry 44 retraction and static-A's unconditional-write decode | Remove when a different guest path is shown to write 0x7cef650 nonzero before the assert |
+| 46 | **BLOCKED: no nonzero writer for `0x7cef650` exists in the engine — premise "a genuine boot leaves it nonzero so the assert passes" RETRACTED/UNPROVEN. Exhaustive scan: exactly 3 refs (`2279a8f` write al=0, `227d51f` lea argument, `6caef58` assert read); the only nonzero-capable writer is ctor3 → `0x7cdede0`, which decision 008 SKIPS** | raw scans `raw_all_7cef650.txt` (3 lines), `raw_all_7cdede0.txt` (`1db9acf mov %bl,0x7cdede0` only write, `239eb14 cmpb $0` read), ctor3 probe `1db9aab mov %eax,%ebx` / `1db9aca setae %al` / `1db9acd and %al,%bl`, decision 008 skip `fflag_default.c:111-113` ctor3 entry, `227d51f lea #7cef650` (external/FFlag path UNPROVEN) | static-A, audited (lead/harness scope decision) | If true, the int3 HardAssert fires on every boot unless an external actor writes the byte — a gate/scope decision, not a credit claim | Remove when a raw line shows `0x7cef650` written nonzero by any code path (or a real capture shows the byte set) |
+
+**harness #689 — all quoted claims verified verbatim:** SHA+banner 3/3, fault line/bytes,
+`[N7B_ARM] … fds=4/5/6 rc=0/0/0` (all armed), hit lines/counts/readback (entry 45), order
+ctor 3653-3656 → JNI_OnLoad 3706 → nativeInitClientSettings 3712. Host-only arming added at
+`guest_dlopen_host.c:942-944`, no guest writes/remaps/hand-setting.
+
+**static-A #691 — all quoted claims verified verbatim:** exhaustive reference scan counts
+(3 for 0x7cef650, 2 for 0x7cdede0) with all cited addresses present in saved raw files;
+ctor3 probe chain and decision-008 skip entry; ctor3602 has no input before the zero store
+(`2279adf`/`2279b48` calls come after) — no capture/DEX value can change the zero write (PROVEN).
+`227d51f lea #7cef650` (address taken as argument, possibly FFlag `DebugForceTerminateOnRbxCrash`)
+not shown to write the byte — UNPROVEN. static-A reported its own git push BLOCKED (index write
+fault); files on disk.
+
+**static-B #692 — all quoted real-boot-order lines verified verbatim:** linker APS2/all-3618 ctors
+(`android_relocs.h:8-12`, `guest_dlopen_host.c:824`), ctor0 deliberate skip + opt-in replay
+(`guest_app_shell.c:1411-1419`, n5_1.err:3687), ctor1/3/4 skip (`:850-857`), ctor3602 replay
+(n5_1.err:3652), JNI_OnLoad (n5:3702), lifecycle #67/#100/#105 (`w12-j2n-300.log:82/115/120`),
+latch write (`w18-avd/peract2.log:19 HOOK LATCH_WR 0x2eb7520 OK`, n5:3706), #551/#552
+(w12:566/567), AppStart `0x247dc8d` (`guest_app_shell.c:1919-1931`, `:1961-1964`) never reached.
+Why real boot does not trap on zero `0x7cef650` UNPROVEN.
+
+**Secrets-scan command + output (final wave2):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n7-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 70 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n7w2. Marker WITHHELD.
