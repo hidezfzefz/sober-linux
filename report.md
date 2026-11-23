@@ -1,7 +1,7 @@
 # n4 #675 static-B — #552 chain to fflush(NULL) (READ-ONLY)
 
 Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n4-static-b.
-FAULTING INSTRUCTION FIRST (lead/harness): host libc `fflush+0x3f`, `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=NULL — **not guest code**. RET64 absent.
+FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f` (audit #677 correction; earlier +0x3f retracted), `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=NULL — **not guest code**. RET64 absent.
 
 ## PROVEN — "first guest RVA" 0x72a0818 is DATA, not a call site
 
