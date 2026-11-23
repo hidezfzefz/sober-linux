@@ -1,0 +1,12 @@
+`w12-j2n-300.log:567`: `J2N #552 ... nativePostClientSettingsLoadedInitialization3([object Object])`
+— the argument is opaque in the capture. A generic `java/lang/Object` and then
+the harness's real native-backed `shared_param_obj` were both tried; both fault
+at `[rdi+8]` with `si_addr=0x8`. No faithful reconstruction is possible from the
+capture; no fake handle was fabricated.
+
+## Ledger + NOT DONE
+Ledger entry sent lead: "n1-4 replay of captured pre-BaseDirs natives
+0x23239c5/0x2328066 genuine via host bridge; #552 opaque object unreconstructable;
+guard stays 0; recursion persists; DEBT". No ledger edit by me; rate limit not
+hit. UNPROVEN: the real #552 object's type/native handle, whether a genuine
+real-boot #552 would set +0x28, and the host module at `...08ff`. No questions
