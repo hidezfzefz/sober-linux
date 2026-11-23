@@ -1,57 +1,59 @@
-# n3 #673 static-B — rbx@6c8e512 origin + wrapper table pointer (READ-ONLY)
+# n4 #675 static-B — #552 chain to fflush(NULL) (READ-ONLY)
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n3-static-b.
-FAULTING INSTRUCTION FIRST: `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (RA `0x6ca8014`).
+Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n4-static-b.
+FAULTING INSTRUCTION FIRST (lead/harness): host libc `fflush+0x3f`, `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=NULL — **not guest code**. RET64 absent.
 
-## RESULT
+## PROVEN — "first guest RVA" 0x72a0818 is DATA, not a call site
 
-1. `rbx` at `6c8e512` = the builder's entry `rdi` = **`*(caller's rsi argument)`** — a slot in a **host/bridge-provided callback argument struct**, not a guest heap allocation. The guest pre-seeds that slot with the original JNIEnv table pointer.
-2. At wrapper `6ca8008: mov (%rax),%rax`, `rax` is the getter-`6c89e70` buffer and `[rax]` is the **ORIGINAL table pointer**, captured before the builder swaps the holder to the copy. The wrapper dereferences the **original**, not the patched copy.
+`readelf -S`: `.bss NOBITS vaddr 0x7282500 size 0xb1ad1c` (covers 0x72a0818). RETRACTED: treating it as an instruction address.
 
-## PROVEN — rbx chain (quoted raw)
+## PROVEN — List.size() call site and immediate post-`size()==0` action
 
-Builder `0x6c8d840` (dis_builder_fn.txt):
+`0x2383c18` (nativePostClientSettingsLoadedInitialization3) calls main body `0x2383c84` at `2383c6d`. Inside it (dis_552_body.txt):
 ```
-6c8d84a: 48 89 fb        mov    %rdi,%rbx     ; rbx = entry rdi
-6c8d85e: 4c 8b 3b        mov    (%rbx),%r15   ; r15 = *(rbx)
-6c8d86f: 4c 89 38        mov    %r15,(%rax)   ; buffer[6c89e70][0] = *(rbx)
-6c8e512: 4c 89 33        mov    %r14,(%rbx)   ; *(rbx) = copy
+2383d16: lea -0x1e3519f(%rip),%rdx   # 54eb7e   ; "size"
+2383d1d: lea -0x1edef0c(%rip),%rcx   # 4a4e18   ; "()I"
+2383cfc/2383d2a: call *0x108(%rax)   ; GetMethodID("size","()I")
+2383d2a: (rax = methodID)
+2383d30: mov %r13,%rdi
+2383d33: mov %r14,%rsi              ; rsi = jobject (entry rdx)
+2383d36: mov %rax,%rdx
+2383d39: xor %eax,%eax
+2383d3b: call 238463c               ; <-- CallIntMethodA wrapper (size())
+2383d40: test %eax,%eax
+2383d42: jle 23844e9                ; size() <= 0 -> EARLY NORMAL RETURN
+23844e9: mov 0x4ea4f08(%rip),%rax   # 72293f8  (stack canary)
+23844f3: cmp -0x30(%rbp),%rax
+23844f7: jne 2384510
+238450a: ret
 ```
-Caller `0x6c8e8a8` (dis_callers_fn.txt): `6c8e8bd: mov %rsi,%rbx`; `6c8e9a5: mov (%rbx),%rdi`; `6c8e9a8: mov %rdi,0x18(%rax)`; `6c8e9ac: call 6c8d840`. So builder rdi = `*(caller rsi)`.
-Caller `0x6c8ea52` seeds that same slot explicitly from the saved original:
-```
-6c8eb79: 49 8b 47 18     mov    0x18(%r15),%rax   ; buffer[6c89e50][0x18] = original table
-6c8eb7d: 48 89 03        mov    %rax,(%rbx)       ; *(rbx) = original table
-6c8eb80: 48 8b 3b        mov    (%rbx),%rdi
-6c8eb83: e8 b8 ec ff ff  call   6c8d840
-```
-(identical seeding at `6c8ef2b/6c8ef2f/6c8ef32/6c8ef35`). Sender of `0x18(%r15)`: `6c8e9a8: mov %rdi,0x18(%rax)`.
-Host ownership: JNI_OnLoad registers the caller function pointer into a global, and the argument struct is tagged (dis_jnionload_reg.txt):
-```
-227b979: 48 8d 05 28 2f a1 04  lea ... # 6c8e8a8
-227b980: 48 89 05 c9 32 a6 05  mov %rax,0x5a632c9(%rip)  # 7cdec50
-227b9b1: 4c 89 33              mov %r14,(%rbx)           ; tag [arg]=0x7cdec20
-```
-No guest-side reader of global `0x7cdec50` exists in the engine (only the JNI_OnLoad writer), so the callback is invoked by the host/bridge; its `rsi` is host-supplied. The guest-side host table is global `0x7cdec60` (`6c8e987: mov ... # 7cdec60; call *0x30(%rax)`).
+Helper `0x238463c`: `238460c: lea # 4a4e18 ("()I")`; `238461c: call *0x108(%rax)` (GetMethodID); `23846b6: ff 90 90 01 00 00 call *0x190(%rax)` (CallIntMethodA -> eax = size). Strings verified from file: `0x54eb7e="size"`, `0x4a4e18="()I"`, `0x217ca9="java/util/List"`, `0x3305b9="get"`, `0x250e4f="(I)Ljava/lang/Object;"`.
+So **right after size() returns 0: `test eax,eax; jle` -> normal early return**, not an immediate abort.
 
-## PROVEN — wrapper table pointer (dis_wrapper_6ca8008.txt)
+## PROVEN — how fflush(NULL) is reached (fatal-report/abort helper 0x2ea6a10)
 
+`0x2383c84` contains C++ exception cleanup/catch blocks; its catch path calls the fatal helper:
 ```
-6ca7ffa: e8 51 1e fe ff  call   6c89e50
-6ca7fff: 48 8b 58 18     mov    0x18(%rax),%rbx  ; rbx = original table (env arg)
-6ca8003: e8 68 1e fe ff  call   6c89e70
-6ca8008: 48 8b 00        mov    (%rax),%rax      ; rax = buffer[6c89e70][0]
-6ca800b: 48 89 df        mov    %rbx,%rdi
-6ca800e: ff 90 20 07 00 00  call   *0x720(%rax)
+23845d2: mov %rbx,%rdi
+23845d5: e8 36 24 b2 00   call 2ea6a10
 ```
-`buffer[6c89e70][0]` is written ONLY by `6c8d86f: mov %r15,(%rax)` (sole `mov ...,(%rax)` after `call 6c89e70` in the whole engine). Guard `6c8d861: cmp %rax,%r15; 6c8d864: je 6c8e515` skips the builder once holder[0] == copy, so the buffer keeps the ORIGINAL pointer captured at the first build. The copy (buffer from `6c89e90`) is stored only into `*(rbx)` at `6c8e512` and is NOT what the wrapper reads.
+Helper `0x2ea6a10` (dis_fflush_helper.txt):
+```
+2ea6a66: mov $0x130,%ebx
+2ea6a6b: add 0x4381766(%rip),%rbx  # 72281d8  ; __sF base + 0x130 = stderr
+2ea6a8c: call 6d31aa0 <fprintf@plt>
+2ea6a91: mov %rbx,%rdi
+2ea6a94: e8 87 b5 e8 03  call 6d32020 <fflush@plt>
+2ea6a99: call 6d320d0 <abort@plt>
+```
+Format string at `0x2345cf` = `"libunwind: %s - %s\n"`. This matches `/home/user/sober-linux/src/compat/bionic_sf_full.c:5-8`: *"glibc's `_IO_fflush` faults reading the NULL `_lock` at FILE+0x88"* and the guest's `__sF+0x98/+0x130` stderr derivation. The same fatal helper is called from catch blocks in the tail-jumped function `0x239d1c7` (e.g. `239d8ba`, `239da5f`, `239dcf8`). #552's full chain: `0x2383c18 -> 0x2383c84 (size/get loop; catch -> 2ea6a10)` then `2383c72: call 23847db` then `2383c7f: jmp 239d1c7` (more catch -> 2ea6a10).
 
 ## UNPROVEN / RETRACTED
 
-- UNPROVEN: how the harness observed `[bridge_table+0x720]==base+0x6ca7f72` given that this path writes fn224 into the COPY while the wrapper reads the ORIGINAL. Could be pointer identity (harness sampling holder[0] after `6c8e512`) or a separate in-place writer not located here. Needs harness pointer comparison, not a static claim.
-- UNPROVEN: exact host struct type at `caller rsi`; only that it is host-supplied via the global callback registration and seeded by the guest.
-- RETRACTED: any claim that `6c8e512` makes the wrapper use the copy — it does not.
+- UNPROVEN: which exact exception producer fires after `size()==0` (the early return itself does not call 2ea6a10); needs harness landing-pad/RET trace.
+- UNPROVEN: why rdi=0 at fflush vs `__sF+0x130` here (different call site or zeroed `__sF`); `__sF` is a host stub symbol, no guest write.
+- RETRACTED: `0x72a0818` as guest call site; RETRACTED: guest-code fault in fflush.
 
 ## Evidence / NOT done
 
-Evidence: dis_wrapper_6ca8008.txt, dis_builder_fn.txt, dis_callers_fn.txt, dis_jnionload_reg.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. Input SHA 8215519f per task statement (not re-verified; no new captures).
+Evidence: dis_552.txt, dis_552_body.txt, dis_fflush_helper.txt, dis_23847db.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.

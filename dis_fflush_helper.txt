@@ -1,0 +1,50 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002ea6a10 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486be0>:
+ 2ea6a10:	55                   	push   %rbp
+ 2ea6a11:	48 89 e5             	mov    %rsp,%rbp
+ 2ea6a14:	53                   	push   %rbx
+ 2ea6a15:	48 81 ec b8 01 00 00 	sub    $0x1b8,%rsp
+ 2ea6a1c:	48 89 fb             	mov    %rdi,%rbx
+ 2ea6a1f:	48 8d bd 50 ff ff ff 	lea    -0xb0(%rbp),%rdi
+ 2ea6a26:	e8 6d 3c 00 00       	call   2eaa698 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x48a868>
+ 2ea6a2b:	48 8b 4b 10          	mov    0x10(%rbx),%rcx
+ 2ea6a2f:	48 85 c9             	test   %rcx,%rcx
+ 2ea6a32:	75 18                	jne    2ea6a4c <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486c1c>
+ 2ea6a34:	48 8d bd 50 ff ff ff 	lea    -0xb0(%rbp),%rdi
+ 2ea6a3b:	48 8d b5 48 fe ff ff 	lea    -0x1b8(%rbp),%rsi
+ 2ea6a42:	48 89 da             	mov    %rbx,%rdx
+ 2ea6a45:	e8 96 fe ff ff       	call   2ea68e0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486ab0>
+ 2ea6a4a:	eb 1a                	jmp    2ea6a66 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486c36>
+ 2ea6a4c:	4c 8b 43 18          	mov    0x18(%rbx),%r8
+ 2ea6a50:	48 8d bd 50 ff ff ff 	lea    -0xb0(%rbp),%rdi
+ 2ea6a57:	48 8d b5 48 fe ff ff 	lea    -0x1b8(%rbp),%rsi
+ 2ea6a5e:	48 89 da             	mov    %rbx,%rdx
+ 2ea6a61:	e8 3a 00 00 00       	call   2ea6aa0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486c70>
+ 2ea6a66:	bb 30 01 00 00       	mov    $0x130,%ebx
+ 2ea6a6b:	48 03 1d 66 17 38 04 	add    0x4381766(%rip),%rbx        # 72281d8 <strncat@plt+0x4f4658>
+ 2ea6a72:	48 8d 35 56 db 38 fd 	lea    -0x2c724aa(%rip),%rsi        # 2345cf <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1ba2cd1>
+ 2ea6a79:	48 8d 15 40 14 67 fd 	lea    -0x298ebc0(%rip),%rdx        # 517ec0 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x18bf3e0>
+ 2ea6a80:	48 8d 0d ef e2 3f fd 	lea    -0x2c01d11(%rip),%rcx        # 2a4d76 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b3252a>
+ 2ea6a87:	48 89 df             	mov    %rbx,%rdi
+ 2ea6a8a:	31 c0                	xor    %eax,%eax
+ 2ea6a8c:	e8 0f b0 e8 03       	call   6d31aa0 <fprintf@plt>
+ 2ea6a91:	48 89 df             	mov    %rbx,%rdi
+ 2ea6a94:	e8 87 b5 e8 03       	call   6d32020 <fflush@plt>
+ 2ea6a99:	e8 32 b6 e8 03       	call   6d320d0 <abort@plt>
+ 2ea6a9e:	cc                   	int3
+ 2ea6a9f:	cc                   	int3
+ 2ea6aa0:	55                   	push   %rbp
+ 2ea6aa1:	48 89 e5             	mov    %rsp,%rbp
+ 2ea6aa4:	41 57                	push   %r15
+ 2ea6aa6:	41 56                	push   %r14
+ 2ea6aa8:	41 55                	push   %r13
+ 2ea6aaa:	41 54                	push   %r12
+ 2ea6aac:	53                   	push   %rbx
+ 2ea6aad:	48                   	rex.W
+ 2ea6aae:	83                   	.byte 0x83
+ 2ea6aaf:	ec                   	in     (%dx),%al
