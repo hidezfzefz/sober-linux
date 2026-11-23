@@ -1,0 +1,2 @@
+48: 1db9acf:	88 1d 0b 53 f2 05    	mov    %bl,0x5f2530b(%rip)        # 7cdede0 <__stop_pb_defaults@@Base+0xa5c928>
+1316042: 239eb14:	80 3d c5 02 94 05 00 	cmpb   $0x0,0x59402c5(%rip)        # 7cdede0 <__stop_pb_defaults@@Base+0xa5c928>

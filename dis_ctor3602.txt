@@ -1,0 +1,52 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002279a47 <Java_com_roblox_engine_jni_NativeGLInterface_shouldDisplayOpenGLUnsupportedMessage@@LIBROBLOX+0x489367>:
+ 2279a47:	55                   	push   %rbp
+ 2279a48:	48 89 e5             	mov    %rsp,%rbp
+ 2279a4b:	31 c0                	xor    %eax,%eax
+ 2279a4d:	88 05 d5 5b a7 05    	mov    %al,0x5a75bd5(%rip)        # 7cef628 <__stop_pb_defaults@@Base+0xa6d170>
+ 2279a53:	48 8d 0d 2d 64 04 fe 	lea    -0x1fb9bd3(%rip),%rcx        # 2bfe87 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b17419>
+ 2279a5a:	48 89 0d cf 5b a7 05 	mov    %rcx,0x5a75bcf(%rip)        # 7cef630 <__stop_pb_defaults@@Base+0xa6d178>
+ 2279a61:	48 c7 05 cc 5b a7 05 	movq   $0x1c,0x5a75bcc(%rip)        # 7cef638 <__stop_pb_defaults@@Base+0xa6d180>
+ 2279a68:	1c 00 00 00 
+ 2279a6c:	48 8d 0d c3 3a 00 00 	lea    0x3ac3(%rip),%rcx        # 227d536 <JNI_OnLoad@@LIBROBLOX+0x25dc>
+ 2279a73:	48 89 0d c6 5b a7 05 	mov    %rcx,0x5a75bc6(%rip)        # 7cef640 <__stop_pb_defaults@@Base+0xa6d188>
+ 2279a7a:	48 8d 0d bf 5b a7 05 	lea    0x5a75bbf(%rip),%rcx        # 7cef640 <__stop_pb_defaults@@Base+0xa6d188>
+ 2279a81:	48 8b 15 e0 50 a6 05 	mov    0x5a650e0(%rip),%rdx        # 7cdeb68 <__stop_pb_defaults@@Base+0xa5c6b0>
+ 2279a88:	48 89 15 b9 5b a7 05 	mov    %rdx,0x5a75bb9(%rip)        # 7cef648 <__stop_pb_defaults@@Base+0xa6d190>
+ 2279a8f:	88 05 bb 5b a7 05    	mov    %al,0x5a75bbb(%rip)        # 7cef650 <__stop_pb_defaults@@Base+0xa6d198>
+ 2279a95:	48 8d 05 13 96 12 fe 	lea    -0x1ed69ed(%rip),%rax        # 3a30af <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a341f1>
+ 2279a9c:	48 89 05 b5 5b a7 05 	mov    %rax,0x5a75bb5(%rip)        # 7cef658 <__stop_pb_defaults@@Base+0xa6d1a0>
+ 2279aa3:	48 c7 05 b2 5b a7 05 	movq   $0x1d,0x5a75bb2(%rip)        # 7cef660 <__stop_pb_defaults@@Base+0xa6d1a8>
+ 2279aaa:	1d 00 00 00 
+ 2279aae:	48 8d 05 5c 3a 00 00 	lea    0x3a5c(%rip),%rax        # 227d511 <JNI_OnLoad@@LIBROBLOX+0x25b7>
+ 2279ab5:	48 89 05 ac 5b a7 05 	mov    %rax,0x5a75bac(%rip)        # 7cef668 <__stop_pb_defaults@@Base+0xa6d1b0>
+ 2279abc:	48 8d 05 a5 5b a7 05 	lea    0x5a75ba5(%rip),%rax        # 7cef668 <__stop_pb_defaults@@Base+0xa6d1b0>
+ 2279ac3:	48 89 0d a6 5b a7 05 	mov    %rcx,0x5a75ba6(%rip)        # 7cef670 <__stop_pb_defaults@@Base+0xa6d1b8>
+ 2279aca:	48 89 05 97 50 a6 05 	mov    %rax,0x5a65097(%rip)        # 7cdeb68 <__stop_pb_defaults@@Base+0xa5c6b0>
+ 2279ad1:	48 8d 3d a0 5b a7 05 	lea    0x5a75ba0(%rip),%rdi        # 7cef678 <__stop_pb_defaults@@Base+0xa6d1c0>
+ 2279ad8:	48 8d 35 a4 35 06 fe 	lea    -0x1f9ca5c(%rip),%rsi        # 2dd083 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1afa21d>
+ 2279adf:	e8 24 77 b4 ff       	call   1dc1208 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x16098>
+ 2279ae4:	48 8d 05 01 3a 00 00 	lea    0x3a01(%rip),%rax        # 227d4ec <JNI_OnLoad@@LIBROBLOX+0x2592>
+ 2279aeb:	48 89 05 9e 5b a7 05 	mov    %rax,0x5a75b9e(%rip)        # 7cef690 <__stop_pb_defaults@@Base+0xa6d1d8>
+ 2279af2:	48 8d 05 97 5b a7 05 	lea    0x5a75b97(%rip),%rax        # 7cef690 <__stop_pb_defaults@@Base+0xa6d1d8>
+ 2279af9:	48 8b 0d 68 50 a6 05 	mov    0x5a65068(%rip),%rcx        # 7cdeb68 <__stop_pb_defaults@@Base+0xa5c6b0>
+ 2279b00:	48 89 0d 91 5b a7 05 	mov    %rcx,0x5a75b91(%rip)        # 7cef698 <__stop_pb_defaults@@Base+0xa6d1e0>
+ 2279b07:	66 c7 05 90 5b a7 05 	movw   $0x506,0x5a75b90(%rip)        # 7cef6a0 <__stop_pb_defaults@@Base+0xa6d1e8>
+ 2279b0e:	06 05 
+ 2279b10:	48 8d 0d 63 22 ff fd 	lea    -0x200dd9d(%rip),%rcx        # 26bd7a <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b6b526>
+ 2279b17:	48 89 0d 8a 5b a7 05 	mov    %rcx,0x5a75b8a(%rip)        # 7cef6a8 <__stop_pb_defaults@@Base+0xa6d1f0>
+ 2279b1e:	48 8d 0d a2 39 00 00 	lea    0x39a2(%rip),%rcx        # 227d4c7 <JNI_OnLoad@@LIBROBLOX+0x256d>
+ 2279b25:	48 89 0d 84 5b a7 05 	mov    %rcx,0x5a75b84(%rip)        # 7cef6b0 <__stop_pb_defaults@@Base+0xa6d1f8>
+ 2279b2c:	48 8d 0d 7d 5b a7 05 	lea    0x5a75b7d(%rip),%rcx        # 7cef6b0 <__stop_pb_defaults@@Base+0xa6d1f8>
+ 2279b33:	48 89 05 7e 5b a7 05 	mov    %rax,0x5a75b7e(%rip)        # 7cef6b8 <__stop_pb_defaults@@Base+0xa6d200>
+ 2279b3a:	48 89 0d 27 50 a6 05 	mov    %rcx,0x5a65027(%rip)        # 7cdeb68 <__stop_pb_defaults@@Base+0xa5c6b0>
+ 2279b41:	48 8d 3d 06 4f a3 04 	lea    0x4a34f06(%rip),%rdi        # 6caea4e <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b6f20>
+ 2279b48:	e8 63 14 c1 00       	call   2e8afb0 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x46b180>
+ 2279b4d:	48 89 05 74 5b a7 05 	mov    %rax,0x5a75b74(%rip)        # 7cef6c8 <__stop_pb_defaults@@Base+0xa6d210>
+ 2279b54:	5d                   	pop    %rbp
+ 2279b55:	c3                   	ret
