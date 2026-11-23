@@ -1,0 +1,80 @@
+14: 2383c26:	49 89 fe             	mov    %rdi,%r14
+32: 2383c67:	4c 89 f7             	mov    %r14,%rdi
+49: 2383c98:	49 89 f6             	mov    %rsi,%r14
+56: 2383cb6:	ff 50 30             	call   *0x30(%rax)
+61: 2383cca:	ff 50 30             	call   *0x30(%rax)
+74: 2383cfc:	ff 90 08 01 00 00    	call   *0x108(%rax)
+83: 2383d2a:	ff 90 08 01 00 00    	call   *0x108(%rax)
+85: 2383d33:	4c 89 f6             	mov    %r14,%rsi
+94: 2383d53:	4c 89 b5 d0 fe ff ff 	mov    %r14,-0x130(%rbp)
+98: 2383d6b:	4c 89 f6             	mov    %r14,%rsi
+113: 2383dac:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+118: 2383dbf:	ff 91 20 03 00 00    	call   *0x320(%rcx)
+125: 2383ddf:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+130: 2383df2:	ff 91 20 03 00 00    	call   *0x320(%rcx)
+137: 2383e16:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+142: 2383e29:	ff 91 28 03 00 00    	call   *0x328(%rcx)
+150: 2383e51:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+155: 2383e64:	ff 91 f8 02 00 00    	call   *0x2f8(%rcx)
+165: 2383e90:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+170: 2383ea3:	ff 91 f8 02 00 00    	call   *0x2f8(%rcx)
+180: 2383ed3:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+185: 2383ee6:	ff 91 f8 02 00 00    	call   *0x2f8(%rcx)
+195: 2383f16:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+200: 2383f29:	ff 91 28 03 00 00    	call   *0x328(%rcx)
+207: 2383f4a:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+212: 2383f5d:	ff 91 28 03 00 00    	call   *0x328(%rcx)
+219: 2383f82:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+224: 2383f95:	ff 91 20 03 00 00    	call   *0x320(%rcx)
+371: 2384251:	49 89 f6             	mov    %rsi,%r14
+373: 2384258:	4d 89 f5             	mov    %r14,%r13
+495: 2384459:	4c 8b b5 d0 fe ff ff 	mov    -0x130(%rbp),%r14
+599: 23845f2:	49 89 fe             	mov    %rdi,%r14
+602: 23845fa:	49 8b 06             	mov    (%r14),%rax
+603: 23845fd:	4c 89 f7             	mov    %r14,%rdi
+605: 2384603:	ff 90 f8 00 00 00    	call   *0xf8(%rax)
+607: 238460c:	49 8b 06             	mov    (%r14),%rax
+609: 2384616:	4c 89 f7             	mov    %r14,%rdi
+611: 238461c:	ff 90 08 01 00 00    	call   *0x108(%rax)
+612: 2384622:	4c 89 f7             	mov    %r14,%rdi
+651: 23846b6:	ff 90 90 01 00 00    	call   *0x190(%rax)
+668: 23846e4:	49 89 fe             	mov    %rdi,%r14
+671: 23846ec:	49 8b 06             	mov    (%r14),%rax
+672: 23846ef:	4c 89 f7             	mov    %r14,%rdi
+674: 23846f5:	ff 90 f8 00 00 00    	call   *0xf8(%rax)
+676: 23846fe:	49 8b 06             	mov    (%r14),%rax
+678: 2384708:	4c 89 f7             	mov    %r14,%rdi
+680: 238470e:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+681: 2384714:	49 8b 0e             	mov    (%r14),%rcx
+683: 238471e:	4c 89 f7             	mov    %r14,%rdi
+700: 2384743:	49 89 fe             	mov    %rdi,%r14
+703: 238474b:	49 8b 06             	mov    (%r14),%rax
+704: 238474e:	4c 89 f7             	mov    %r14,%rdi
+706: 2384754:	ff 90 f8 00 00 00    	call   *0xf8(%rax)
+708: 238475d:	49 8b 06             	mov    (%r14),%rax
+710: 2384767:	4c 89 f7             	mov    %r14,%rdi
+712: 238476d:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+713: 2384773:	49 8b 0e             	mov    (%r14),%rcx
+715: 238477d:	4c 89 f7             	mov    %r14,%rdi
+766: 2384816:	ff 50 08             	call   *0x8(%rax)
+767: 2384819:	49 89 c6             	mov    %rax,%r14
+770: 2384821:	49 8b 5e 18          	mov    0x18(%r14),%rbx
+786: 2384867:	49 8b 06             	mov    (%r14),%rax
+787: 238486a:	4c 89 f7             	mov    %r14,%rdi
+788: 238486d:	ff 50 10             	call   *0x10(%rax)
+841: 2384939:	49 89 c6             	mov    %rax,%r14
+849: 238495a:	4c 89 f7             	mov    %r14,%rdi
+858: 238497d:	4c 89 35 5c 6c f4 04 	mov    %r14,0x4f46c5c(%rip)        # 72cb5e0 <__stop_pb_defaults@@Base+0x49128>
+862: 238498c:	ff 50 08             	call   *0x8(%rax)
+863: 238498f:	4c 8b 35 4a 6c f4 04 	mov    0x4f46c4a(%rip),%r14        # 72cb5e0 <__stop_pb_defaults@@Base+0x49128>
+864: 2384996:	4c 89 f7             	mov    %r14,%rdi
+877: 23849c7:	4c 8b 35 42 68 f4 04 	mov    0x4f46842(%rip),%r14        # 72cb210 <__stop_pb_defaults@@Base+0x48d58>
+888: 23849fa:	4c 89 f6             	mov    %r14,%rsi
+903: 2384a2e:	4c 8b 35 fb 69 f4 04 	mov    0x4f469fb(%rip),%r14        # 72cb430 <__stop_pb_defaults@@Base+0x48f78>
+916: 2384a6b:	4c 89 f6             	mov    %r14,%rsi
+931: 2384a9c:	4c 8b 35 8d 69 f4 04 	mov    0x4f4698d(%rip),%r14        # 72cb430 <__stop_pb_defaults@@Base+0x48f78>
+949: 2384ae7:	4c 89 f6             	mov    %r14,%rsi
+964: 2384b18:	4c 8b 35 11 69 f4 04 	mov    0x4f46911(%rip),%r14        # 72cb430 <__stop_pb_defaults@@Base+0x48f78>
+988: 2384b78:	4c 89 f6             	mov    %r14,%rsi
+997: 2384b9d:	4c 8b 33             	mov    (%rbx),%r14
+998: 2384ba0:	4c 89 f7             	mov    %r14,%rdi

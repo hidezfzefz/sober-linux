@@ -1,0 +1,4 @@
+method[12921] Lcom/roblox/client/RobloxApplication;->f()Landroid/content/Context;
+method[44244] Lyj/l2;->a(Landroid/content/Context;)Ljava/util/List;
+method[15180] Lcom/roblox/engine/jni/NativeGLInterface;->nativePostClientSettingsLoadedInitialization3(Ljava/util/List;)V
+method[19462] Lek/p;->h(Ljava/lang/String;Ljava/lang/String;)I

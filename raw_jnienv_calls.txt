@@ -1,0 +1,9 @@
+49: 2383c98:	49 89 f6             	mov    %rsi,%r14
+56: 2383cb6:	ff 50 30             	call   *0x30(%rax)
+61: 2383cca:	ff 50 30             	call   *0x30(%rax)
+74: 2383cfc:	ff 90 08 01 00 00    	call   *0x108(%rax)
+83: 2383d2a:	ff 90 08 01 00 00    	call   *0x108(%rax)
+85: 2383d33:	4c 89 f6             	mov    %r14,%rsi
+98: 2383d6b:	4c 89 f6             	mov    %r14,%rsi
+113: 2383dac:	ff 90 f0 02 00 00    	call   *0x2f0(%rax)
+118: 2383dbf:	ff 91 20 03 00 00    	call   *0x320(%rcx)

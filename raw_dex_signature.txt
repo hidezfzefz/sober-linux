@@ -1,0 +1,4 @@
+DEX magic=b'dex\n038\x00' file_size=6145160 strings=38382 types=9065 protos=12226 methods=46638 classes=7059
+METHOD idx=15180 class=Lcom/roblox/engine/jni/NativeGLInterface; name=nativePostClientSettingsLoadedInitialization3 proto='(Ljava/util/List;)V'
+CLASS_DEF idx=1953 access=0x1 super=Ljava/lang/Object; interfaces_off=0 class_data_off=5571488
+CLASS_DATA static_fields=0 instance_fields=0 direct_methods=83
