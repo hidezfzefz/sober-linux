@@ -1,0 +1,15 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002315548 <JNI_OnLoad@@LIBROBLOX+0x9a5ee>:
+ 2315548:	49 89 f7             	mov    %rsi,%r15
+ 231554b:	48 8b 06             	mov    (%rsi),%rax
+ 231554e:	48 89 f7             	mov    %rsi,%rdi
+ 2315551:	48 89 d6             	mov    %rdx,%rsi
+ 2315554:	31 d2                	xor    %edx,%edx
+ 2315556:	ff 90 48 05 00 00    	call   *0x548(%rax)
+ 231555c:	48 85 c0             	test   %rax,%rax
+ 231555f:	74                   	.byte 0x74

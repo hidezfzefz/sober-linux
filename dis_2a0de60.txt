@@ -1,0 +1,59 @@
+
+/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000002a0de60 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a6c5>:
+ 2a0de60:	55                   	push   %rbp
+ 2a0de61:	48 89 e5             	mov    %rsp,%rbp
+ 2a0de64:	48 8d 3d f5 06 82 04 	lea    0x48206f5(%rip),%rdi        # 722e560 <strncat@plt+0x4fa9e0>
+ 2a0de6b:	e8 d0 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0de70:	8a 00                	mov    (%rax),%al
+ 2a0de72:	24 01                	and    $0x1,%al
+ 2a0de74:	3c 00                	cmp    $0x0,%al
+ 2a0de76:	75 36                	jne    2a0deae <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a713>
+ 2a0de78:	e8 53 00 00 00       	call   2a0ded0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a735>
+ 2a0de7d:	48 8d 3d bc 06 82 04 	lea    0x48206bc(%rip),%rdi        # 722e540 <strncat@plt+0x4fa9c0>
+ 2a0de84:	e8 b7 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0de89:	48 8d 3d 50 01 00 00 	lea    0x150(%rip),%rdi        # 2a0dfe0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a845>
+ 2a0de90:	48 8d 15 29 9d 32 04 	lea    0x4329d29(%rip),%rdx        # 6d37bc0 <strncat@plt+0x4040>
+ 2a0de97:	48 89 c6             	mov    %rax,%rsi
+ 2a0de9a:	e8 91 82 49 00       	call   2ea6130 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486300>
+ 2a0de9f:	48 8d 3d ba 06 82 04 	lea    0x48206ba(%rip),%rdi        # 722e560 <strncat@plt+0x4fa9e0>
+ 2a0dea6:	e8 95 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0deab:	c6 00 01             	movb   $0x1,(%rax)
+ 2a0deae:	48 8d 3d 8b 06 82 04 	lea    0x482068b(%rip),%rdi        # 722e540 <strncat@plt+0x4fa9c0>
+ 2a0deb5:	e8 86 85 49 00       	call   2ea6440 <Java_com_google_androidgamesdk_GameActivity_initializeNativeCode@@LIBROBLOX+0x486610>
+ 2a0deba:	48 05 10 04 00 00    	add    $0x410,%rax
+ 2a0dec0:	5d                   	pop    %rbp
+ 2a0dec1:	c3                   	ret
+ 2a0dec2:	cc                   	int3
+ 2a0dec3:	cc                   	int3
+ 2a0dec4:	cc                   	int3
+ 2a0dec5:	cc                   	int3
+ 2a0dec6:	cc                   	int3
+ 2a0dec7:	cc                   	int3
+ 2a0dec8:	cc                   	int3
+ 2a0dec9:	cc                   	int3
+ 2a0deca:	cc                   	int3
+ 2a0decb:	cc                   	int3
+ 2a0decc:	cc                   	int3
+ 2a0decd:	cc                   	int3
+ 2a0dece:	cc                   	int3
+ 2a0decf:	cc                   	int3
+ 2a0ded0:	55                   	push   %rbp
+ 2a0ded1:	48 89 e5             	mov    %rsp,%rbp
+ 2a0ded4:	41 56                	push   %r14
+ 2a0ded6:	53                   	push   %rbx
+ 2a0ded7:	8b 05 a3 f7 88 04    	mov    0x488f7a3(%rip),%eax        # 729d680 <__stop_pb_defaults@@Base+0x1b1c8>
+ 2a0dedd:	83 f8 02             	cmp    $0x2,%eax
+ 2a0dee0:	74 35                	je     2a0df17 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a77c>
+ 2a0dee2:	b9 01 00 00 00       	mov    $0x1,%ecx
+ 2a0dee7:	31 c0                	xor    %eax,%eax
+ 2a0dee9:	f0 0f b1 0d 8f f7 88 	lock cmpxchg %ecx,0x488f78f(%rip)        # 729d680 <__stop_pb_defaults@@Base+0x1b1c8>
+ 2a0def0:	04 
+ 2a0def1:	0f 85 b9 00 00 00    	jne    2a0dfb0 <Java_com_roblox_universalapp_activitylifecyclecallbacks_JNIActivityLifecycleCallbacks_nativeOnDestroyed@@LIBROBLOX+0x29a815>
+ 2a0def7:	48 8d 1d 82 46 87 04 	lea    0x4874682(%rip),%rbx        # 7282580 <__stop_pb_defaults@@Base+0xc8>
+ 2a0defe:	48                   	rex.W
+ 2a0deff:	89                   	.byte 0x89
