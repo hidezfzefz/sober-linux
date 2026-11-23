@@ -1,59 +1,69 @@
-# n4 #675 static-B — #552 chain to fflush(NULL) (READ-ONLY)
+# n5 #680 static-B — after-#552 calls, threads, 3rd N14 replay (READ-ONLY)
 
-Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n4-static-b.
-FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f` (audit #677 correction; earlier +0x3f retracted), `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=NULL — **not guest code**. RET64 absent.
+FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f`, `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=0 (n4 audit #677, ledger 42). Object OFF. All quotes raw from saved source/captures.
 
-## PROVEN — "first guest RVA" 0x72a0818 is DATA, not a call site
+## (a) PROVEN — harness calls after #552 returns (src/linux/guest_app_shell.c)
 
-`readelf -S`: `.bss NOBITS vaddr 0x7282500 size 0xb1ad1c` (covers 0x72a0818). RETRACTED: treating it as an instruction address.
-
-## PROVEN — List.size() call site and immediate post-`size()==0` action
-
-`0x2383c18` (nativePostClientSettingsLoadedInitialization3) calls main body `0x2383c84` at `2383c6d`. Inside it (dis_552_body.txt):
+Source lines 1768-1845, in order:
 ```
-2383d16: lea -0x1e3519f(%rip),%rdx   # 54eb7e   ; "size"
-2383d1d: lea -0x1edef0c(%rip),%rcx   # 4a4e18   ; "()I"
-2383cfc/2383d2a: call *0x108(%rax)   ; GetMethodID("size","()I")
-2383d2a: (rax = methodID)
-2383d30: mov %r13,%rdi
-2383d33: mov %r14,%rsi              ; rsi = jobject (entry rdx)
-2383d36: mov %rax,%rdx
-2383d39: xor %eax,%eax
-2383d3b: call 238463c               ; <-- CallIntMethodA wrapper (size())
-2383d40: test %eax,%eax
-2383d42: jle 23844e9                ; size() <= 0 -> EARLY NORMAL RETURN
-23844e9: mov 0x4ea4f08(%rip),%rax   # 72293f8  (stack canary)
-23844f3: cmp -0x30(%rbp),%rax
-23844f7: jne 2384510
-238450a: ret
+if (getenv("SOBER_N15_SCAN")) n15_scan_closures(base);
+    rc = ((long (*)(void *, void *, void *, void *))(base + 0x24650a9u))
+             (env, app_class, s_base1, s_base2);
+      rc = ((long (*)(void *, void *, void *))(base + 0x232d484u))
+               (env, app_class, s_ver);
+      rc = ((long (*)(void *, void *, void *))(base + 0x2326e2eu))
+               (env, app_class, s_chan);
+        rc = ((long (*)(void *, void *, void *))(base + 0x246515du))
+                 (env, app_class, s_prefs);
+        rc = ((long (*)(void *, void *, void *))(base + 0x2465210u))
+                 (env, app_class, flags);
+      rc = call_jni_static(base + 0x233762cu, env, app_class);
+    rc = ((long (*)(void *, void *, void *))(base + 0x24abf96u))
+             (env, app_class, param_obj);
 ```
-Helper `0x238463c`: `238460c: lea # 4a4e18 ("()I")`; `238461c: call *0x108(%rax)` (GetMethodID); `23846b6: ff 90 90 01 00 00 call *0x190(%rax)` (CallIntMethodA -> eax = size). Strings verified from file: `0x54eb7e="size"`, `0x4a4e18="()I"`, `0x217ca9="java/util/List"`, `0x3305b9="get"`, `0x250e4f="(I)Ljava/lang/Object;"`.
-So **right after size() returns 0: `test eax,eax; jle` -> normal early return**, not an immediate abort.
+(Line-wrapped call expressions quoted verbatim; intervening `fprintf(stderr,"[app-shell]...")` log lines omitted for brevity but present in source.)
+Each is followed by `fprintf(stderr, "[app-shell] ... -> rc=%ld\n", rc)` — host stderr logging, **not** the guest fflush shim. Note: in object-OFF Run D, #552 faults internally and never returns; this sequence is only reached when #552 returns.
 
-## PROVEN — how fflush(NULL) is reached (fatal-report/abort helper 0x2ea6a10)
+**Next 3 guest threads** by first appearance in `/tmp/opencode/w18-avd/peract2.log` (after Main seq1 / DefaultDispatch seq6):
+```
+{"seq":71,"phase":"PRE_LATCH_WR","site":"ENTRY@0x2312009","tid":4572,"thread":"AsyncTask #3","depth":16,...,
+{"seq":89,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4605,"thread":"FunctionMarshal","depth":16,...,
+{"seq":100,"phase":"POST_LATCH_WR","site":"ENTRY@0x2312009","tid":4585,"thread":"RBX Worker A","depth":3,...,
+```
+(`...` marks truncated tail of each JSON line; prefix is verbatim.)
+Further: HttpClientHandl seq=115, RBX Worker B seq=122. Temporal alignment of these first appearances to #552's return is **UNPROVEN** (peract2 has no #552 marker).
 
-`0x2383c84` contains C++ exception cleanup/catch blocks; its catch path calls the fatal helper:
-```
-23845d2: mov %rbx,%rdi
-23845d5: e8 36 24 b2 00   call 2ea6a10
-```
-Helper `0x2ea6a10` (dis_fflush_helper.txt):
-```
-2ea6a66: mov $0x130,%ebx
-2ea6a6b: add 0x4381766(%rip),%rbx  # 72281d8  ; __sF base + 0x130 = stderr
-2ea6a8c: call 6d31aa0 <fprintf@plt>
-2ea6a91: mov %rbx,%rdi
-2ea6a94: e8 87 b5 e8 03  call 6d32020 <fflush@plt>
-2ea6a99: call 6d320d0 <abort@plt>
-```
-Format string at `0x2345cf` = `"libunwind: %s - %s\n"`. This matches `/home/user/sober-linux/src/compat/bionic_sf_full.c:5-8`: *"glibc's `_IO_fflush` faults reading the NULL `_lock` at FILE+0x88"* and the guest's `__sF+0x98/+0x130` stderr derivation. The same fatal helper is called from catch blocks in the tail-jumped function `0x239d1c7` (e.g. `239d8ba`, `239da5f`, `239dcf8`). #552's full chain: `0x2383c18 -> 0x2383c84 (size/get loop; catch -> 2ea6a10)` then `2383c72: call 23847db` then `2383c7f: jmp 239d1c7` (more catch -> 2ea6a10).
+**Which logs through fflush:** guest-side only — FLog logger `0x2e61ca0` (`0x2e61ce2: mov 0x40(%rbx),%rcx; ... call fwrite@plt (0x2e61cf1)` / `0x2e61d0f: mov 0x40(%rbx),%rdi; call fflush@plt (0x2e61d13)`, per w18-avd/analysis/fflag-registry-fault2-stdio.md:87-91) and fatal helper `0x2ea6a10` (`2ea6a8c: call fprintf@plt; 2ea6a94: call fflush@plt`, format `0x2345cf="libunwind: %s - %s\n"`, n4 #675). Shim `src/compat/bionic_libc.c:487`: `int fflush(FILE *stream)` maps `__sF+0x98/+0x130` then `return real ? real(mapped) : 0;` — NULL mapped stream reaches glibc `_IO_fflush` and faults.
 
-## UNPROVEN / RETRACTED
+## (b) PROVEN — 3rd N14 replay + threads after OnResumed
 
-- UNPROVEN: which exact exception producer fires after `size()==0` (the early return itself does not call 2ea6a10); needs harness landing-pad/RET trace.
-- UNPROVEN: why rdi=0 at fflush vs `__sF+0x130` here (different call site or zeroed `__sF`); `__sF` is a host stub symbol, no guest write.
-- RETRACTED: `0x72a0818` as guest call site; RETRACTED: guest-code fault in fflush.
+`src/linux/guest_app_shell.c:1759-1766`:
+```
+rc = ((long (*)(void *, void *, void *))(base + 0x2383c18u))
+         (env, app_class, opaque);
+fprintf(stderr, "[N14_REPLAY 3/3] nativePostClientSettingsLoaded"
+                "Initialization3 0x2383c18([object Object])"
+                " -> rc=%ld\n", rc);
+n14_log_guard(base, "after nativePostClientSettingsLoadedInitialization3");
+```
+It is the third of the AVD-captured pre-BaseDirs natives: #67 `nativeOnPreCreated` (`0x23239c5`), #105 `nativeOnResumed` (`0x2328066`), #552 `nativePostClientSettingsLoadedInitialization3` (`0x2383c18`). `opaque = param_obj` (harness's real native-backed `shared_param_obj`); with `SOBER_N2_JAVA_OBJECT` it is a DEX-typed `java/util/List` from `sober_native_java_list(j, NULL, 0)` (**object OFF in this wave**). Capture `w12-j2n-300.log:82,120,567`:
+```
+J2N #67 t=2406ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnPreCreated("ActivitySplash")
+J2N #105 t=20511ms com.roblox.universalapp.activitylifecyclecallbacks.JNIActivityLifecycleCallbacks.nativeOnResumed("ActivitySplash")
+J2N #552 t=290696ms com.roblox.engine.jni.NativeGLInterface.nativePostClientSettingsLoadedInitialization3([object Object])
+```
+**Threads after OnResumed** — `w18-avd/report.md:30` POST_LATCH_WR phase:
+```
+threads: RBX Worker A x19, FunctionMarshal x15, DefaultDispatch x13,
+         Main x4, AsyncTask #3 x2, HttpClientHandl x1, RBX Worker B x2
+```
+These are the worker threads present in the post-latch phase; that phase follows the lifecycle replay in the AVD capture, but exact per-thread start times vs J2N #105 are **UNPROVEN**.
+
+## RETRACTED / UNPROVEN
+
+- RETRACTED: treating host `[app-shell]`/`[N14_REPLAY]` lines as guest-fflush logs (they are host `fprintf(stderr,...)`).
+- UNPROVEN: exact thread set at the instant #552 returns; exact producer of rdi=0 among guest fflush sites; typed object path (object OFF).
 
 ## Evidence / NOT done
 
-Evidence: dis_552.txt, dis_552_body.txt, dis_fflush_helper.txt, dis_23847db.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.
+Evidence: report.md; sources quoted in place (guest_app_shell.c, bionic_libc.c, fflag-registry-fault2-stdio.md, w18-avd/report.md, w18-avd/peract2.log, w12-j2n-300.log). NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.
