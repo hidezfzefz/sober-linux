@@ -38,13 +38,13 @@ in these runs (see above).
 (and `W fflush@@GLIBC_2.2.5`). `objdump -d` at `0x7c8ff`:
 `7c8ff: 48 8b 47 08 mov rax,QWORD PTR [rdi+0x8]`
 `7c903: 74 05 je 7c90a <_IO_fflush@@GLIBC_2.2.5+0xaa>`
-**Function = `_IO_fflush@@GLIBC_2.2.5 + 0x3f`** (`0x7c8ff - 0x7c860`),
+**Function = `_IO_fflush@@GLIBC_2.2.5 + 0x9f`** (`0x7c8ff - 0x7c860`; corrected by lead/audit from the earlier `+0x3f`),
 i.e. the NULL-FILE `fflush` path — not guest code. This confirms the earlier
 n3 "host/shared-lib `...08ff`" fault site.
 
 ## NOT DONE / UNPROVEN
 No ledger edit by me (entry sent); no object build/extension; no device.
-UNPROVEN: who passes NULL rdi into `_IO_fflush+0x3f`, and the guest call site
+UNPROVEN: who passes NULL rdi into `_IO_fflush+0x9f`, and the guest call site
 leading there (static-A/B scope). No questions asked; DELETE NOTHING honored.
 
 ## Evidence
