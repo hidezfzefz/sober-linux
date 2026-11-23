@@ -1,0 +1,27 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000227d4e0 <JNI_OnLoad@@LIBROBLOX+0x2586>:
+ 227d4e0:	00 41 b8             	add    %al,-0x48(%rcx)
+ 227d4e3:	01 00                	add    %eax,(%rax)
+ 227d4e5:	00 00                	add    %al,(%rax)
+ 227d4e7:	e9 64 f6 ff ff       	jmp    227cb50 <JNI_OnLoad@@LIBROBLOX+0x1bf6>
+ 227d4ec:	48 8b 3d 25 fc a5 05 	mov    0x5a5fc25(%rip),%rdi        # 7cdd118 <__stop_pb_defaults@@Base+0xa5ac60>
+ 227d4f3:	48 8d 35 42 b7 20 fe 	lea    -0x1df48be(%rip),%rsi        # 488c3c <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x194e664>
+ 227d4fa:	48 8d 15 77 21 a7 05 	lea    0x5a72177(%rip),%rdx        # 7cef678 <__stop_pb_defaults@@Base+0xa6d1c0>
+ 227d501:	b9 01 00 00 00       	mov    $0x1,%ecx
+ 227d506:	41 b8 02 00 00 00    	mov    $0x2,%r8d
+ 227d50c:	e9 b3 f9 ff ff       	jmp    227cec4 <JNI_OnLoad@@LIBROBLOX+0x1f6a>
+ 227d511:	48 8b 3d 00 fc a5 05 	mov    0x5a5fc00(%rip),%rdi        # 7cdd118 <__stop_pb_defaults@@Base+0xa5ac60>
+ 227d518:	48 8d 35 90 5b 12 fe 	lea    -0x1eda470(%rip),%rsi        # 3a30af <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a341f1>
+ 227d51f:	48 8d 15 2a 21 a7 05 	lea    0x5a7212a(%rip),%rdx        # 7cef650 <__stop_pb_defaults@@Base+0xa6d198>
+ 227d526:	b9 01 00 00 00       	mov    $0x1,%ecx
+ 227d52b:	41 b8 04 00 00 00    	mov    $0x4,%r8d
+ 227d531:	e9 58 ec ff ff       	jmp    227c18e <JNI_OnLoad@@LIBROBLOX+0x1234>
+ 227d536:	48 8b 3d db fb a5 05 	mov    0x5a5fbdb(%rip),%rdi        # 7cdd118 <__stop_pb_defaults@@Base+0xa5ac60>
+ 227d53d:	48 8d 35 43 29 04 fe 	lea    -0x1fbd6bd(%rip),%rsi        # 2bfe87 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1b17419>
+ 227d544:	48 8d 15 dd 20 a7 05 	lea    0x5a720dd(%rip),%rdx        # 7cef628 <__stop_pb_defaults@@Base+0xa6d170>
+ 227d54b:	b9 01 00 00 00       	mov    $0x1,%ecx

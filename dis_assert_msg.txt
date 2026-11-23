@@ -1,0 +1,29 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000023a1440 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0x1d828>:
+ 23a1440:	a8 0f                	test   $0xf,%al
+ 23a1442:	11 04 24             	adc    %eax,(%rsp)
+ 23a1445:	48 8d 0d 2c 1c 00 fe 	lea    -0x1ffe3d4(%rip),%rcx        # 3a3078 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a34228>
+ 23a144c:	41 b8 36 00 00 00    	mov    $0x36,%r8d
+ 23a1452:	48 89 df             	mov    %rbx,%rdi
+ 23a1455:	ba 01 00 00 00       	mov    $0x1,%edx
+ 23a145a:	41 b9 01 00 00 00    	mov    $0x1,%r9d
+ 23a1460:	e8 ab c9 f8 ff       	call   232de10 <Java_com_roblox_engine_jni_NativeSettingsInterface_nativeInitCrashpad@@LIBROBLOX+0x758>
+ 23a1465:	48 8d 35 bf f8 11 fe 	lea    -0x1ee0741(%rip),%rsi        # 4c0d2b <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1916575>
+ 23a146c:	31 ff                	xor    %edi,%edi
+ 23a146e:	e8 ea d8 90 04       	call   6caed5d <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x14b722f>
+ 23a1473:	e8 c8 0c 99 04       	call   6d32140 <__stack_chk_fail@plt>
+ 23a1478:	48 8d 0d d2 ed 8d 04 	lea    0x48dedd2(%rip),%rcx        # 6c80251 <Java_org_fmod_FMOD_OutputAAudioHeadphonesChanged@@LIBROBLOX+0x1488723>
+ 23a147f:	48 85 ff             	test   %rdi,%rdi
+ 23a1482:	48 0f 45 cf          	cmovne %rdi,%rcx
+ 23a1486:	48 89 0d 2b 7b 93 05 	mov    %rcx,0x5937b2b(%rip)        # 7cd8fb8 <__stop_pb_defaults@@Base+0xa56b00>
+ 23a148d:	48 89 35 2c 7b 93 05 	mov    %rsi,0x5937b2c(%rip)        # 7cd8fc0 <__stop_pb_defaults@@Base+0xa56b08>
+ 23a1494:	74 2a                	je     23a14c0 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0x1d8a8>
+ 23a1496:	48 89 f8             	mov    %rdi,%rax
+ 23a1499:	b9 00 40 00 00       	mov    $0x4000,%ecx
+ 23a149e:	f0                   	lock
+ 23a149f:	48                   	rex.W
