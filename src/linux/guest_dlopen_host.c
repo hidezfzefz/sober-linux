@@ -142,6 +142,24 @@ static void crash_handler(int sig, siginfo_t *si, void *ucontext)
     w24_put(&p, " rip="); w24_u64(&p, rip, 1);
     w24_put(&p, " si_addr="); w24_u64(&p, fault, 1);
     w24_put(&p, " rsp="); w24_u64(&p, rsp, 1); w24_line(&p, buf, end);
+    /* W28: name the FAULTING INSTRUCTION first: 16 raw bytes at RIP. */
+    w24_put(&p, "[W28_FAULT_INSN] rip="); w24_u64(&p, rip, 1);
+    if (base && rip >= base && rip < base + g_guest_size) {
+        w24_put(&p, " guest_rva=0x");
+        for (int sh = 28; sh >= 0; sh -= 4) {
+            unsigned d = (unsigned)((rip - base) >> sh) & 0xfu;
+            if (p < end) *p++ = "0123456789abcdef"[d];
+        }
+    }
+    w24_line(&p, buf, end);
+    if (rip >= 0x10000u && rip < 0x0000800000000000ULL) {
+        w24_put(&p, "[W28_INSN_BYTES] ");
+        for (unsigned k = 0; k < 16; ++k) {
+            w24_u64(&p, *(const unsigned char *)(rip + k), 0);
+            w24_put(&p, " ");
+        }
+        w24_line(&p, buf, end);
+    }
     if (uc) {
         static const struct { const char *n; int g; } regs[] = {
             {"r15",REG_R15},{"r14",REG_R14},{"r13",REG_R13},{"r12",REG_R12},
