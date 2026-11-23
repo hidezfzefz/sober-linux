@@ -2,6 +2,9 @@
 /* Native Linux libc shim with Bionic version nodes (task #373). */
 #define _GNU_SOURCE
 #include <dlfcn.h>
+#include <stdint.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -467,6 +470,12 @@ unsigned char sober_libc_obj___stack_chk_guard[64];
         ".size " #name ", .-" #name "\n\t" \
         : : : "memory")
 
+/* n5 HOST-ONLY stdio shim ring: the ring itself lives in the host executable
+ * (exported with -rdynamic) so the crash handler can dump it async-safely.
+ * This DSO calls it via a weak reference resolved at dlopen time. */
+extern void sober_stdio_ring_note(uintptr_t file, uintptr_t ra)
+    __attribute__((weak));
+
 /* Bionic stdio stream translation (__sF stride 0x98). */
 static FILE *sober_host_stdin, *sober_host_stdout, *sober_host_stderr;
 static FILE *sober_stdio_map(FILE *stream)
@@ -486,6 +495,9 @@ static FILE *sober_stdio_map(FILE *stream)
 __attribute__((visibility("default")))
 int fflush(FILE *stream)
 {
+    if (sober_stdio_ring_note)
+        sober_stdio_ring_note((uintptr_t)stream,
+                              (uintptr_t)__builtin_return_address(0));
     typedef int (*sober_fflush_fn)(FILE *);
     sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;
     FILE *mapped = sober_stdio_map(stream);
@@ -501,6 +513,9 @@ int fflush(FILE *stream)
 __attribute__((visibility("default")))
 int fclose(FILE *stream)
 {
+    if (sober_stdio_ring_note)
+        sober_stdio_ring_note((uintptr_t)stream,
+                              (uintptr_t)__builtin_return_address(0));
     typedef int (*sober_fclose_fn)(FILE *);
     sober_fclose_fn real = (sober_fclose_fn)sober_libc_fn_fclose;
     const char *dbg = getenv("SOBER_STDIO_DEBUG");
@@ -521,6 +536,9 @@ int fclose(FILE *stream)
 __attribute__((visibility("default")))
 size_t fwrite(const void *buf, size_t size, size_t n, FILE *stream)
 {
+    if (sober_stdio_ring_note)
+        sober_stdio_ring_note((uintptr_t)stream,
+                              (uintptr_t)__builtin_return_address(0));
     typedef size_t (*sober_fwrite_fn)(const void *, size_t, size_t, FILE *);
     sober_fwrite_fn real = (sober_fwrite_fn)sober_libc_fn_fwrite;
     FILE *mapped = sober_stdio_map(stream);
