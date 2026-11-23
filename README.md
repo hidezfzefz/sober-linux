@@ -12,6 +12,24 @@ or build problem. See [Status](#status) and
 
 ---
 
+## Progress map
+
+![progress map](docs/assets/progress.svg)
+
+![guest init](docs/assets/badge-guest-init.svg)
+![APS2 relocs](docs/assets/badge-relocs.svg)
+![JNI slots](docs/assets/badge-jni.svg)
+![native render](docs/assets/badge-render.svg)
+![verification](docs/assets/badge-verification.svg)
+![decision 013 gate](docs/assets/badge-gate.svg)
+![app-shell callback](docs/assets/badge-callback.svg)
+![marker](docs/assets/badge-marker.svg)
+
+Full review: [docs/REVIEW-100.md](docs/REVIEW-100.md). Regenerate the map and
+badges with `python3 tools/gen_progress.py`.
+
+---
+
 ## Status
 
 | Area | State | Evidence |
