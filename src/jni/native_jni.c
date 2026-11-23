@@ -487,8 +487,147 @@ static void w31_obj_sig(int s, siginfo_t *si, void *uc)
     }
 }
 
+/* ---- W32 instrumentation ------------------------------------------------
+ * (a) HW exec breakpoints on the two static +0x28 writer sites 0x2a0ed45 and
+ *     0x2a1362f: hit count, tid, caller RA, and the 0x2a13350 entry counter at
+ *     each hit (0 => hit precedes the first predicate entry).
+ * (b) compact obj trace at 0x2a1335e: distinct obj values at predicate entry.
+ */
+static long w32_writer_hits[2];
+static void w32_writer_sig(int s, siginfo_t *si, void *uc, int which)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&w32_writer_hits[which], 1, __ATOMIC_RELAXED) + 1;
+    uintptr_t rbp = (uintptr_t)c->uc_mcontext.gregs[REG_RBP];
+    uintptr_t ra = 0;
+    (void)w31_read(rbp + 8u, &ra, 8u);
+    long entries = __atomic_load_n(&w31_obj_calls, __ATOMIC_RELAXED);
+    char line[320], *p = line;
+    static char *lim;
+    lim = line + sizeof(line);
+    #define P(x) do { const char *_s=(x); while (*_s && p<lim-1) *p++=*_s++; } while(0)
+    P("[W32_WRITER "); P(which == 0 ? "0x2a0ed45" : "0x2a1362f");
+    P("] hit="); { char t[32]; snprintf(t,sizeof(t),"%ld",n); P(t); }
+    P(" tid="); { char t[32]; snprintf(t,sizeof(t),"%ld",(long)syscall(SYS_gettid)); P(t); }
+    P(" guest_RA=");
+    if (w31_base && ra >= w31_base && ra < w31_base + 0x8000000u) {
+        P("guest+0x"); w31_hex(&p, (uint64_t)(ra - w31_base));
+    } else { char t[32]; snprintf(t,sizeof(t),"%p",(void*)ra); P(t); }
+    P(" entries_so_far="); { char t[32]; snprintf(t,sizeof(t),"%ld",entries); P(t); }
+    P(" precedes_first_entry="); *p++ = (char)('0' + (entries == 0));
+    *p++ = '\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p - line)); (void)u;
+    #undef P
+}
+static void w32_writer0(int s, siginfo_t *si, void *uc) { w32_writer_sig(s,si,uc,0); }
+static void w32_writer1(int s, siginfo_t *si, void *uc) { w32_writer_sig(s,si,uc,1); }
+static void w32_entry_compact(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&w31_obj_calls, 1, __ATOMIC_RELAXED) + 1;
+    if (n <= 3 || (n % 10000) == 0)
+        fprintf(stderr, "[W32_ENTRY #%ld] tid=%ld rip=base+0x%lx\n", n,
+                (long)syscall(SYS_gettid),
+                (unsigned long)((uintptr_t)c->uc_mcontext.gregs[REG_RIP] - w31_base));
+}
+static void w32_obj_compact(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    uintptr_t holder = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t obj = 0;
+    if (w31_read(holder, &obj, 8u) != 8) return;
+    uint64_t v = 0;
+    (void)w31_read(obj + 0x28u, &v, 8u);
+    long n = __atomic_load_n(&w31_obj_calls, __ATOMIC_RELAXED);
+    fprintf(stderr, "[W32_OBJ #%ld] tid=%ld obj=%p [obj+0x28]=%016lx\n",
+            n, (long)syscall(SYS_gettid), (void *)obj, (unsigned long)v);
+}
+
+/* W32 lead mid-wave add: read-only exec bp at 0x6ca800e (call *0x720(%rax)).
+ * Logs tid, rdi, rax, [rax], [rax+0x720] with guest/host/other decoding.
+ * No fix is applied; all guest reads go through process_vm_readv. */
+static long w32_call720_hits;
+static uintptr_t w32_call720_last;
+static uintptr_t w32_host_base;
+static void w32_call720_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&w32_call720_hits, 1, __ATOMIC_RELAXED) + 1;
+    uintptr_t rax0 = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t probe = 0;
+    (void)w31_read(rax0 + 0x720u, &probe, 8u);
+    int changed = (probe != w32_call720_last);
+    w32_call720_last = probe;
+    if (n > 3 && n != 100 && !changed) return;
+    uintptr_t rdi = (uintptr_t)c->uc_mcontext.gregs[REG_RDI];
+    uintptr_t rax = (uintptr_t)c->uc_mcontext.gregs[REG_RAX];
+    uintptr_t tab = 0, fn = 0;
+    (void)w31_read(rax, &tab, 8u);
+    (void)w31_read(rax + 0x720u, &fn, 8u);
+    char line[512], *p = line;
+    static char *lim; lim = line + sizeof(line);
+    #define P(x) do { const char *_s=(x); while (*_s && p<lim-1) *p++=*_s++; } while(0)
+    P("[W32_CALL720] hit="); { char t[32]; snprintf(t,sizeof(t),"%ld",n); P(t); }
+    P(" tid="); { char t[32]; snprintf(t,sizeof(t),"%ld",(long)syscall(SYS_gettid)); P(t); }
+    P(" rdi="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rdi); P(t); }
+    P(" rax="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)rax); P(t); }
+    P(" [rax]="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)tab); P(t); }
+    P(" [rax+0x720]="); { char t[32]; snprintf(t,sizeof(t),"%p",(void*)fn); P(t); }
+    P(" decode=");
+    if (w31_base && fn >= w31_base && fn < w31_base + 0x8000000u) {
+        P("guest+0x"); w31_hex(&p, (uint64_t)(fn - w31_base));
+    } else if (w32_host_base && fn >= w32_host_base &&
+               fn < w32_host_base + 0x200000u) {
+        P("host+0x"); w31_hex(&p, (uint64_t)(fn - w32_host_base));
+    } else P("other");
+    *p++ = '\n';
+    ssize_t u = write(STDERR_FILENO, line, (size_t)(p - line)); (void)u;
+    #undef P
+}
+
 static void w21_init(uintptr_t base)
 {
+    if (getenv("SOBER_W32_CALL720")) {
+        w21_base = w31_base = base;
+        {
+            Dl_info li;
+            if (dladdr((void *)(uintptr_t)&w32_call720_sig, &li) && li.dli_fbase)
+                w32_host_base = (uintptr_t)li.dli_fbase;
+        }
+        int fd = w21_perf(w31_base + 0x6ca800eu);
+        int ok = fd >= 0 ? w21_arm(fd, SIGRTMIN + 4, w32_call720_sig) : -1;
+        fprintf(stderr, "[W32_CALL720_ARM] base=%p host=%p fd_rc=%d\n",
+                (void *)w31_base, (void *)w32_host_base, ok);
+        return;
+    }
+    if (getenv("SOBER_W32_TRACE")) {
+        w21_base = w31_base = base;
+        static const uintptr_t addrs[4] = {
+            0x2a13350u, 0x2a1335eu, 0x2a0ed45u, 0x2a1362fu
+        };
+        static void (*fns[4])(int, siginfo_t *, void *) = {
+            w32_entry_compact, w32_obj_compact, w32_writer0, w32_writer1
+        };
+        static const int sigs[4] = {
+            SIGUSR1, SIGUSR2, 36, 37
+        };
+        int ok[4];
+        for (int i = 0; i < 4; ++i) {
+            int fd = w21_perf(w31_base + addrs[i]);
+            ok[i] = fd >= 0 ? w21_arm(fd, sigs[i], fns[i]) : -1;
+        }
+        fprintf(stderr, "[W32_ARM] base=%p entry=%d obj=%d writer0=%d writer1=%d\n",
+                (void *)w31_base, ok[0], ok[1], ok[2], ok[3]);
+        return;
+    }
     if (getenv("SOBER_W31_OBJ_TRACE") || getenv("SOBER_W31_LATCH_WATCH")) {
         w21_base = w31_base = base;
         int a1 = -1, a2 = -1, a3a = -1, a3b = -1;

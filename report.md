@@ -1,103 +1,70 @@
-# WAVE32 #641 — wrapper RA, obj provenance, +0x28 writer chains
+# W32 #643 — harness (one page)
 
-Read-only; no runs/device. Engine SHA `3e498d64…`. Every success claim quotes
-a raw line. I did not read anything under `/tmp/opencode/uploads`.
-Evidence: `dis_wrapper_6ca7f72.txt`, `dis_sched_getter.txt`, `dis_constructor.txt`,
-`dis_writer1_region.txt`, `raw_wrapper_call.txt`, `raw_obj_chain.txt`,
-`raw_writers.txt`, `raw_writer_callers.txt`.
+Worktree `/tmp/opencode/w32-harness`, branch w32-harness. Engine SHA `3e498d64`.
+flock held; no device/guest writes/gate edits/seeder; seed OFF; JNI_OnLoad-first
+ON; full JSON SHA verified. Every success claim quotes a raw line. The uploaded
+doc under `/tmp/opencode/uploads` was NOT read (out of scope).
+Evidence: `trace_{1,2,3}.err`, `nowatch_{1,2,3}.err`, `rund3.sh`.
 
-Faulting instruction first (W30 harness, seed OFF): `guest+0x6ca7f95:
-call 0x2a13350`, `si_addr=rsp-8`, repeated frame `0x6ca8014`.
+## FAULTING INSTRUCTION FIRST — PROVEN
+`guest+0x6ca7f95`, bytes `e8 b6 b3 d6 fb` = **`call 0x2a13350`**,
+`si_addr = rsp-8` (stack overflow). Raw `nowatch_1.err`:
+`[W30_FAULT] rip=0x00007fffef8e3f95 si_addr=0x00007fffff7fefc8 rsp=0x00007fffff7fefd0 rbp=0x00007fffff7ff0a0 insn=00000000000000e8 00000000000000b6 ...` (corrected to exact raw `rbp=0x00007fffff7ff0a0` by lead/audit — earlier `...090` was not verbatim)
 
-## (a) Call with RA `0x6ca8014` — PROVEN
+## (a) HW exec breakpoints on the two +0x28 writers — PROVEN
+`[W32_ARM] base=0x7fffe8c3c000 entry=0 obj=0 writer0=0 writer1=0` (all 3).
+Run D ×3: `0x2a0ed45` **0 hits**, `0x2a1362f` **68 hits** every run
+(`w0=0 w1=68 precede=0`). First hit, raw `trace_1.err`:
+`[W32_WRITER 0x2a1362f] hit=1 tid=1606363 guest_RA=guest+0x0000000002a0ede0 entries_so_far=27 precedes_first_entry=0`
+**No hit precedes the first `0x2a13350` entry** (`precedes_first_entry=1` count
+= 0/0/0); all writer hits are on tid 1606363. Caller RAs observed:
+`guest+0x2a0ede0`, `guest+0x2a0e598`, `guest+0x2a0e1d8`, plus `guest+0x2a0e840` and `guest+0x2a0f492` (two RAs omitted in the original list, restored by lead/audit — all 5 appear in the raw writer-hit lines).
 
-Full wrapper `0x6ca7f72..0x6ca8020` (quoted):
-> `6ca800e: ff 90 20 07 00 00   call   *0x720(%rax)`
-> `6ca8014: 49 8b 0e           mov    (%r14),%rcx`
+## (b) Distinct obj values — PROVEN
+`trace_1.err`: 37,547 `[W32_OBJ]` lines, first three:
+`[W32_OBJ #1] tid=1606363 obj=0x7fffe85c2500 [obj+0x28]=0000000000000000`
+`#2` and `#3` identical. Distinct obj count **1 per run**
+(`grep -o obj=... | sort -u` → `obj=0x7fffe85c2500` only; runs 2-3 →
+`obj=0x7fffe860c640`, also 1 each). **Same object across every entry within a
+run**; address varies between runs (allocation layout), `[obj+0x28]=0` always.
 
-The call whose return address is `0x6ca8014` is the indirect call at `0x6ca800e`,
-target `JNIEnv fn[224]` at byte offset `0x720` = **ExceptionCheck** (the bridge
-`SETFN(*t,224,sr_ExceptionCheck)`). `0x6ca8014` itself is the following canary
-check — an **epilogue**, not a call site; the repeated `0x6ca8014` frames are
-re-entries of the wrapper reaching that epilogue.
+## (c) Rung1 WITHOUT watchers — PROVEN + ledger
+No watcher armed (`grep -c 'W32_ARM|W31_ARM|W21_WATCH|W21_LATCH_HIT|W28_PAIRS'
+nowatch_1.err` = 0). Raw, all 3 runs:
+`[W32_LATCH_RO] before=0 after=1`
+`[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=1)`
+Supporting raw: `[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519f...`;
+`[app-shell] AVD boundary pre: arg0_len=1533221 ... latch=0 ...`;
+`[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 ... latch=1 ...`;
+`[flags-latch] route=none (inert; no guest call, latch=0, withhold=0)`. Host source has **no write** to `0x7cdd149` (only comparisons); the label-only
+change accepts before=0/after=1 + SHA when no watcher is armed. Ledger entry
+sent lead: "W32 watcher-free rung1: before=0 after=1, SHA 8215519f, no harness
+write -> PASS-BOUNDARY-REPLAY (DEBT=1) label only; DEBT".
 
-Guard and polarity (quoted):
-> `6ca7f95: e8 b6 b3 d6 fb   call   2a13350`
-> `6ca7f9a: 84 c0           test   %al,%al`
-> `6ca7f9c: 74 5c           je     6ca7ffa`
+## ADDENDUM — 0x6ca800e SIG STOP hook (lead mid-wave add, read-only)
+`[W32_CALL720_ARM] base=0x7fffe8c3c000 host=0x555555554000 fd_rc=0`. Raw hits:
+```
+[W32_CALL720] hit=1 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
+[W32_CALL720] hit=2 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
+[W32_CALL720] hit=3 tid=1612252 rdi=0x555555ae0bb8 rax=0x555555ae0420 [rax]=(nil) [rax+0x720]=0x555555582690 decode=host+0x000000000002e690
+[W32_CALL720] hit=20 tid=1612252 rdi=0x555555ae0bb8 rax=0x7fffb8001f18 [rax]=(nil) [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72
+[W32_CALL720] hit=100 tid=1612252 rdi=0x555555ae0bb8 rax=0x7fffb8001f18 [rax]=(nil) [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72
+```
+**PROVEN:** `[rax+0x720]` (JNI fn[224]) starts as host bridge `host+0x2e690`,
+then at hit 20 becomes **`guest+0x6ca7f72`** — the *prologue of the same
+function* containing `call [rax+0x720]` at `0x6ca800e` (static decode:
+`6ca7f72: push rbp; mov rbp,rsp; sub rsp,0xc0`). Calling it re-enters that
+function → infinite recursion → stack overflow. This is the recursion's
+mechanism. No fix applied (read-only). Evidence `call720c.err`.
 
-`0x2a13350` returns `*(obj+0x28) != 0`. The `je` at `0x6ca7f9c` is taken when
-`al == 0` — i.e. predicate **FALSE / ZERO**. The FALSE path `0x6ca7ffa →
-0x6ca8008 → 0x6ca800e` reaches the `ExceptionCheck` call. On NONZERO the TRUE
-path dispatches the closure (lambda `0x6ca805b`), which calls `*0x720` at
-`0x6ca8090`. **Reconciliation with wave-24:** W24 correctly identified
-`*0x720 = ExceptionCheck`, the FALSE-path call, and the TRUE-path lambda call;
-the only refinement is that `0x6ca8014` is the epilogue/RA of the FALSE-path
-call, not the call instruction itself. No contradiction; W24's claim stands.
+## NOT DONE
+No ledger edit by me (entry sent); no guest bytes/gate edits/device; writer
+`0x2a1362f` not proven to target this obj's +0x28 (UNPROVEN); why `0x2a0ed45`
+never runs UNPROVEN (static); who writes fn[224] with the guest pointer
+UNPROVEN (next step).
 
-## (b) obj provenance — PROVEN chain, type/size partly UNPROVEN
-
-Quoted from `0x2a0de60`:
-> `2a0de64: lea … # 722e560` → `2a0de6b: call 2ea6440` (TLS descriptor accessor, guard byte)
-> `2a0de7d: lea … # 722e540` → `2a0de84: call 2ea6440`
-> `2a0de89: lea … # 2a0dfe0` ; `2a0de90: lea … # 6d37bc0` ; `2a0de9a: call 2ea6130`
-> `2a0deba: add $0x410,%rax` ; `2a0dec1: ret`
-
-So `obj = *(TLS[0x722e540] + 0x410)` — a **TLS-derived field**, not a plain
-global or argument. The object is a per-thread scheduler-state object built
-from the template at `0x2a0dfe0` with type descriptor/vtable `0x6d37bc0`
-(`.data.rel.ro`, populated by packed RELA) via `0x2ea6130`. Type: guest
-scheduler thread state (W24/A06); +0 is a vtable/type pointer — UNPROVEN which
-exact vtable the live object holds (the `lea # 6d37bc0` is the descriptor
-passed to the constructor). Size: fields through `+0x78` are written
-(`2a0ecf3: mov %rax,0x78(%rbx)`), so ≥`0x80` bytes; exact size UNPROVEN. The
-constructor helper allocates a 0x18-byte registration wrapper
-(`2ea6173: mov $0x18,%edi; call 1dbad62`), not necessarily the object itself.
-
-## (c) `+0x28` writer chains — PROVEN links, entry UNPROVEN
-
-`0x2a0ed45` is inside function `0x2a0e8c0`; quoted:
-> `2a0ed1d: call 2a13620` (zero-init helper, `edx=3`)
-> `2a0ed45: mov %r15,0x28(%rbx)` (stores the callback word)
-
-Its only static caller (quoted):
-> `2a0e83b: call 2a0e8c0`
-
-inside function `0x2a0e7c0`; no static direct caller of `0x2a0e7c0` was found →
-invocation via function pointer / queued scheduler task is likely but
-**UNPROVEN**. `0x2a1362f` is in the leaf helper `0x2a13620` (quoted
-`2a1362f: movq $0x0,0x28(%rdi)`), called from seven sites in the
-`0x2a0e..0x2a0f` scheduler region (`2a0e3d0`, `2a0e793`, `2a0ea3a`,
-`2a0ed1d`, `2a0efda`, `2a0f2ab`, `2a0f699`). Which of these lies on a
-capture-order native, JNI_OnLoad, ctor, thread start or queued-task path in a
-real boot is **UNPROVEN** — no raw log line ties a writer to a tid/native.
-
-## What NOT done
-No diff applied, no harness edit, no runs/gdb/perf, no device/AVD/Frida/phone,
-no new captures, no guest writes, no gate edits, no ledger edits, no credentials,
-no reading of `/tmp/opencode/uploads`.
-
-## First divergence + next step
-First divergence: `*(obj+0x28)` non-NULL on the harness thread (TRUE path,
-queued task recursion) vs NULL on device. Next: harness logs the `+0x28`
-writer with tid and entry native.
-
-## FINAL ADDENDUM (lead-appended from static's delivered root-cause correction)
-
-- **Slot `0x720` target (PROVEN, quoted):** host bridge `sr_ExceptionCheck` is a
-  pure leaf — `native_jni.c:1397-1398, quoted: 'static sr_jboolean sr_ExceptionCheck(void *env)' /
-  '{ (void)env; return 0; }'`, installed at `native_jni.c:1560 SETFN(*t,224,sr_ExceptionCheck)`.
-  But at runtime `[rax+0x720]` changes: `call720.err:3703 '[W32_CALL720] hit=1 ...
-  [rax+0x720]=0x555555582690 decode=host+0x000000000002e690'` →
-  `':3732 ... hit=100 ... [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72'`.
-  With base `0x7fffe8c3c000` (`:3682`), the latter is guest RVA `0x6ca7f72` — the
-  **prologue of the very wrapper containing `call *0x720(%rax)` at `0x6ca800e`**.
-  Calling it re-enters `0x6ca7f72` → infinite recursion → stack overflow at
-  `0x6ca7f95` (`si_addr=rsp-8`).
-- **WAVE-24 scheduler TRUE-path attribution RETRACTED.** Harness logged
-  `[obj+0x28]=0` on all 37,547 predicate entries ⇒ `6ca7f9c je 6ca7ffa` always
-  takes the FALSE path to `6ca800e call *0x720`; the TRUE path / lambda
-  `0x6ca805b` never runs. The recursion is the fn[224] self-pointer feedback
-  loop, not the `*(obj+0x28)!=0` scheduler path.
-- **UNPROVEN:** which guest code writes `0x6ca7f72` into fn[224], and the
-  identity/route of `host+0x2e690`. (Audit ledger entry 30.)
+## First divergence / next step
+`[obj+0x28]` stays 0 so the `0x6ca8014` recursion never terminates; the
+37,547th entry faults at `call 0x2a13350`, `si_addr=rsp-8`. Mechanism is in the
+addendum (fn[224] becomes a self-pointer). Next: static identify who writes
+fn[224] with the guest pointer.
