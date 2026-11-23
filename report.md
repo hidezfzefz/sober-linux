@@ -1,50 +1,54 @@
-# n1 #647 static-B — TLS getters / fn224 / dispatcher
+# OVERNIGHT n1 #645 — harness (one page)
 
-READ-ONLY, engine SHA 3e498d64, taskset -c 4,5. Worktree /tmp/opencode/n1-static-b.
-Faulting instruction first (harness recursion): `6ca800e: ff 90 20 07 00 00 call *0x720(%rax)` (and `6ca8090` in lambda 6ca805b) — JNIEnv slot 0x720 = fn[224] ExceptionCheck; repeated `0x6ca8014` frames exhaust the stack.
+Worktree `/tmp/opencode/n1-harness` branch n1-harness (fresh `build-n1`; inherited
+`build/` cache left untouched — DELETE NOTHING). Cores 0-1, flock held for all 6
+runs. No device/captures/guest writes/gate edits/seeder/fake returns/path remaps;
+TSD seed OFF, JNI_OnLoad-first ON. SHA verified EVERY run:
+`[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b`
+Config proof (ALL 6 runs, quoted): `[app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006`
+and `[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)`;
+script `rund6.sh:9` exports `SOBER_SEEDER_DISABLE=1 SOBER_JNI_ONLOAD_FIRST=1`.
+Evidence: `with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`. Logs 151 KB each.
 
-## PROVEN (quoted raw disasm)
+## FAULTING INSTRUCTION FIRST — PROVEN, CONFIGURATION-DEPENDENT
+**WITH bps (3/3):** `guest+0x2a1335e`, bytes `48 8b 00` = **`mov rax,[rax]`**,
+`si_addr=0x0` (NULL). Raw with_1:
+`[W30_FAULT] rip=0x00007faa0fca735e si_addr=0x0000000000000000 rsp=0x00007fffd71ba630 rbp=0x00007fffd71ba630 insn=0000000000000048 000000000000008b 0000000000000000 ...`
+`[W28_FAULT_INSN] rip=0x00007faa0fca735e guest_rva=0x02a1335e`
+**WITHOUT bps (3/3): non-deterministic call site, all `si_addr = rsp-8`**
+(stack-guard push): without_1 `guest_rva=0x06ca7f95` (`call 0x2a13350`),
+without_2 `guest_rva=0x02ea645b` (`call pthread_getspecific@plt`), without_3
+`guest_rva=0x02a0de6b` (`call 6c89e70`). Raw without_1:
+`[W30_FAULT] rip=0x00007fea4abb7f95 si_addr=0x00007fff4ff2eff8 rsp=0x00007fff4ff2f000 ...`
+**RETRACTED:** earlier waves' "the faulting instruction is always
+`0x6ca7f95`" — that is only the no-bp configuration (1/3 here).
 
-TLS getters (file dis_6c89e50_70.txt):
-```
-6c89e54: lea 0x5f81ed(%rip),%rdi # 7282048
-6c89e5b: call 2ea6440
-6c89e74: lea 0x5f81ed(%rip),%rdi # 7282068
-6c89e7b: call 2ea6440
-6c89e94: lea 0x5f81ed(%rip),%rdi # 7282088
-```
-Keys = globals 0x7282048 / 0x7282068 / 0x7282088. Their shared getter 2ea6440 (dis_2ea6440.txt):
-```
-2ea644c: mov 0x10(%rdi),%r13        ; key index from key object +0x10
-2ea6455: mov 0x...(%rip),%edi # 72a1b08
-2ea645b: call 6d322e0 <pthread_getspecific@plt>
-```
-Key created once by pthread_once cb 2ea6640 (`2ea664f: call pthread_key_create`, key global 0x72a1b08, dtor 2ea6670 -> pthread_setspecific). Which getter returns real vs wrapper env: 6ca7f40 uses `call 6c89e50; mov 0x18(%rax),%r14` (object with +0x18 closure) then `call 6c89e70; mov (%rax),%rax; call *0x718(%rax)` (vtable object) — the two returns are structurally different; real-vs-wrapper identity UNPROVEN from static bytes alone.
+## Perf exec bps (WITH runs) — PROVEN
+`[N1_ARM] base=0x7faa0d294000 host=0x55a82eb50000 pred=0 al=0 call720=0`.
+**0x2a1335e** raw: `[N1_PRED #1] tid=1624646 rax=0x55a84a0ac9b0 [rax]=0x7faa0cb86280 [[rax]+0x28]=0000000000000000`
+(also #2,#3,#10000,#20000,#30000 — identical; 6 sampled lines, 3/3 runs).
+**0x6ca7f9a** raw: `[N1_AL #1] tid=1624646 al=0x00 al_dec=0` — **al=0 at every
+sampled hit** (#1..#30000, all 3 runs): the predicate always returns FALSE.
+**0x6ca800e** hits 1,2,3,100 raw:
+`[N1_CALL720] hit=1 tid=1624646 rax=0x55a84a3dfe80 rbx=0x55a84a3e0618 [rax+0x720]=0x55a82eb7e690 decode=host+0x000000000002e690 bridge_env=0x55a84a3e0618 rax_is_env=0`
+`[N1_CALL720] hit=100 tid=1624646 rax=0x7fa9f4001f18 rbx=0x55a84a3e0618 [rax+0x720]=0x7faa13f3bf72 decode=guest+0x0000000006ca7f72 bridge_env=0x55a84a3e0618 rax_is_env=0`
+fn[224] flips host bridge → **`guest+0x6ca7f72`** (the function prologue
+containing the `call [rax+0x720]`); `rbx == bridge_env` constant, `rax` is not
+the env at any logged hit. 3/3 runs identical pattern.
 
-fn224 / slot 0x720: JNIEnv offset 0x720 = index 224 = **ExceptionCheck** (analysis/jni/jni-map.md:51, recursion-note.md:38, src/jni/README.md:60 `ExceptionCheck 0x720 -> 224`). Real boot holds ART's ExceptionCheck function pointer there; harness installs sr_ExceptionCheck (native_jni.c). Exact real-boot pointer value UNPROVEN (no capture).
+## New first divergence
+`[[rax]+0x28]=0` and `al=0` at every sampled predicate hit → FALSE branch at
+`0x6ca7f9c` recurses; fn[224] becomes the self-pointer `guest+0x6ca7f72`. The
+breakpoint set changes the fault site: bps → NULL deref at `mov rax,[rax]`
+(`0x2a1335e`, `si_addr=0`); no bps → stack-guard push at whichever `call` in
+the recursion reaches the guard page first (varies per run, always
+`si_addr=rsp-8`).
 
-2a13560 full (dis_2a13560.txt, 24 bytes):
-```
-2a13569: call 2a0de60
-2a1356e: mov (%rax),%rax
-2a13571: mov 0x70(%rax),%rdi
-2a13575: and $0xffffffffffffffc0,%rdi
-2a13579: mov %rbx,%rsi
-2a13582: jmp 2a12e80
-```
-Scheduler accessor: masks nesting low 6 bits, tail-jumps dispatcher 2a12e80.
+## NOT DONE
+No fix applied (read-only); no ledger edit; why with-bps rax at fault is
+`0x55a84a0ac9b0` while `si_addr=0` is UNPROVEN; who writes fn[224] UNPROVEN;
+total predicate hit count not logged (sampled 1,2,3,10k,20k,30k). No questions
+asked. Uploads untouched.
 
-2a13370 bit test (dis_2a13370.txt):
-```
-2a13374/2a13379: call 2a0de60
-2a1337e: mov (%rax),%rax
-2a13381: movzbl 0x20(%rax),%eax
-2a13385: and $0x1,%al
-```
-Callers (callers_2a13370.txt): 55f5748, 55f58a1, 560ad0b — all in `IPlatformSystemDialogHandler$CppProxy_native_dismissAll` region. So bit0 of byte +0x20 of the scheduler/TLS object is consumed by dialog-dismiss code, not the scheduler nesting path.
-
-## Evidence / NOT done
-
-Evidence files: dis_6c89e50_70.txt, dis_2ea6440.txt, dis_2a13560.txt, dis_2a13370.txt, dis_fn224_write.txt, dis_wrapper_full.txt, callers_2a13370.txt, writes_720.txt.
-NOT DONE: no runs/device/phone/captures, no guest writes/gate/seeder/fake returns, no apply. UNPROVEN: key-object +0x10 writers, real-vs-wrapper env identity, exact real-boot fn224 pointer, writer of byte +0x20 bit0. No questions.
-First divergence: harness sr_ExceptionCheck at JNIEnv 0x720 vs real ART ExceptionCheck, re-entering 6ca7f72 via scheduled callback (obj+0x28 != 0). Next smallest step: static-A/harness confirm which TLS key holds which env under genuine JNI_OnLoad, read-only at 0x6ca800e.
+## Evidence files
+`/tmp/opencode/n1-harness/with_{1,2,3}.err`, `without_{1,2,3}.err`, `rund6.sh`.
