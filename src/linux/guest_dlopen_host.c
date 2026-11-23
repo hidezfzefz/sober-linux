@@ -187,6 +187,28 @@ static void n7b_after_sig(int s, siginfo_t *si, void *uc)
 }
 /* n7 WAVE3: read-only exec bp at 0x2383c18 (3rd replay) armed at the same
  * earliest guest-base hook, before the constructor replay loop. */
+/* ---- n7 WAVE4: early-armed exec bps on inner flush / HardAssert path ---- */
+static long n7d_hits[5];
+static const char *n7d_tags[5] = {
+    "[N7D FLOG_FFLUSH 0x2e61d13]",
+    "[N7D UNWIND_FFLUSH 0x2ea6a94]",
+    "[N7D ASSERT_DISPATCH 0x6caed5d]",
+    "[N7D ASSERT_REPORT 0x6caed7c]",
+    "[N7D TRAP 0x6caef66]"
+};
+static void n7d_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si; (void)uc;
+    int idx = s - 38;
+    if (idx < 0 || idx > 4) return;
+    long n = __atomic_fetch_add(&n7d_hits[idx], 1, __ATOMIC_RELAXED) + 1;
+    char b[256], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, n7d_tags[idx]);
+    w24_put(&p, " hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_line(&p, b, end);
+}
+
 static long n7b_third_hits;
 static void n7b_third_sig(int s, siginfo_t *si, void *uc)
 {
@@ -232,17 +254,35 @@ static int n7b_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
 static void n7b_arm_all(uintptr_t base)
 {
     n7b_base = base;
-    int f1 = n7b_perf(base + 0x2279a47u);
-    int f2 = n7b_perf(base + 0x2279a8fu);
-    int f3 = n7b_perf(base + 0x2279a95u);
-    int a1 = n7b_arm(f1, SIGUSR1, n7b_entry_sig);
-    int a2 = n7b_arm(f2, SIGUSR2, n7b_store_sig);
-    int a3 = n7b_arm(f3, 36, n7b_after_sig);
-    int f4 = n7b_perf(base + 0x2383c18u);
-    int a4 = n7b_arm(f4, 37, n7b_third_sig);
+    /* n7 WAVE4: inner-only mode frees perf slots for the 5 path bps. */
+    int inner_only = getenv("SOBER_N7D_ONLY") != NULL;
+    int f1 = -1, f2 = -1, f3 = -1, f4 = -1;
+    int a1 = -1, a2 = -1, a3 = -1, a4 = -1;
+    if (!inner_only) {
+    f1 = n7b_perf(base + 0x2279a47u);
+    f2 = n7b_perf(base + 0x2279a8fu);
+    f3 = n7b_perf(base + 0x2279a95u);
+    a1 = n7b_arm(f1, SIGUSR1, n7b_entry_sig);
+    a2 = n7b_arm(f2, SIGUSR2, n7b_store_sig);
+    a3 = n7b_arm(f3, 36, n7b_after_sig);
+    f4 = n7b_perf(base + 0x2383c18u);
+    a4 = n7b_arm(f4, 37, n7b_third_sig);
+    }
+    /* n7 WAVE4: five more early-armed bps on the inner path. */
+    static const uintptr_t n7d_addrs[5] = {
+        0x2e61d13u, 0x2ea6a94u, 0x6caed5du, 0x6caed7cu, 0x6caef66u
+    };
+    int fa[5], aa[5];
+    for (int i = 0; i < 5; ++i) {
+        fa[i] = n7b_perf(base + n7d_addrs[i]);
+        aa[i] = n7b_arm(fa[i], 38 + i, n7d_sig);
+    }
     fprintf(stderr,
-            "[N7B_ARM] base=%p fds=%d/%d/%d/%d rc=%d/%d/%d/%d\n",
-            (void *)base, f1, f2, f3, f4, a1, a2, a3, a4);
+            "[N7B_ARM] base=%p fds=%d/%d/%d/%d rc=%d/%d/%d/%d "
+            "inner_fd=%d/%d/%d/%d/%d inner_rc=%d/%d/%d/%d/%d\n",
+            (void *)base, f1, f2, f3, f4, a1, a2, a3, a4,
+            fa[0], fa[1], fa[2], fa[3], fa[4],
+            aa[0], aa[1], aa[2], aa[3], aa[4]);
 }
 
 /* n4 HOST-ONLY: /proc/self/maps reader using only open/read/close/write.
