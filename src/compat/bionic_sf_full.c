@@ -164,6 +164,9 @@ static size_t sf_fwrite(const void *buf, size_t size, size_t n, FILE *p)
 __attribute__((visibility("default")))
 void sober_bionic_sf_full_install(unsigned char *sf_base)
 {
+    /* n5 A/B: unconditional host-only banner showing switch state. */
+    fprintf(stderr, "[N6_BANNER] SOBER_BIONIC_SF_FULL=%s\n",
+            getenv("SOBER_BIONIC_SF_FULL") ? "1" : "UNSET");
     if (!getenv("SOBER_BIONIC_SF_FULL")) return;
     g_sf = sf_base;
     real_fflush_fn = (int (*)(FILE *))
