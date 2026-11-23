@@ -1,0 +1,38 @@
+
+/home/user/.local/share/basalt/linux/payloads/3170-204ad049599c96afb75b8a21d5051063e821d6c9/libroblox.so:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000023847db <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0xbc3>:
+ 23847db:	55                   	push   %rbp
+ 23847dc:	48 89 e5             	mov    %rsp,%rbp
+ 23847df:	41 57                	push   %r15
+ 23847e1:	41 56                	push   %r14
+ 23847e3:	41 55                	push   %r13
+ 23847e5:	41 54                	push   %r12
+ 23847e7:	53                   	push   %rbx
+ 23847e8:	48 81 ec e8 01 00 00 	sub    $0x1e8,%rsp
+ 23847ef:	4c 8b 2d 02 4c ea 04 	mov    0x4ea4c02(%rip),%r13        # 72293f8 <strncat@plt+0x4f5878>
+ 23847f6:	49 8b 45 00          	mov    0x0(%r13),%rax
+ 23847fa:	48 89 45 d0          	mov    %rax,-0x30(%rbp)
+ 23847fe:	80 3d 4b 6a f4 04 00 	cmpb   $0x0,0x4f46a4b(%rip)        # 72cb250 <__stop_pb_defaults@@Base+0x48d98>
+ 2384805:	74 69                	je     2384870 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0xc58>
+ 2384807:	48 8b 3d 4a e8 f1 04 	mov    0x4f1e84a(%rip),%rdi        # 72a3058 <__stop_pb_defaults@@Base+0x20ba0>
+ 238480e:	48 85 ff             	test   %rdi,%rdi
+ 2384811:	74 5d                	je     2384870 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0xc58>
+ 2384813:	48 8b 07             	mov    (%rdi),%rax
+ 2384816:	ff 50 08             	call   *0x8(%rax)
+ 2384819:	49 89 c6             	mov    %rax,%r14
+ 238481c:	48 85 c0             	test   %rax,%rax
+ 238481f:	74 4f                	je     2384870 <Java_com_roblox_engine_jni_NativeGLInterface_nativePostClientSettingsLoadedInitialization3@@LIBROBLOX+0xc58>
+ 2384821:	49 8b 5e 18          	mov    0x18(%r14),%rbx
+ 2384825:	48 8d 3d fd 91 fe fd 	lea    -0x2016e03(%rip),%rdi        # 36da29 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1a69877>
+ 238482c:	e8 af d1 9a 04       	call   6d319e0 <strlen@plt>
+ 2384831:	49 89 c7             	mov    %rax,%r15
+ 2384834:	4c 8b 25 ed 5c 40 05 	mov    0x5405ced(%rip),%r12        # 778a528 <__stop_pb_defaults@@Base+0x508070>
+ 238483b:	e8 26 fb b1 ff       	call   1ea4366 <Java_com_roblox_engine_jni_NativeGLInterface_shouldDisplayOpenGLUnsupportedMessage@@LIBROBLOX+0xb3c86>
+ 2384840:	f2 0f 59 05 98 0b 22 	mulsd  -0x1ddf468(%rip),%xmm0        # 5a53e0 <Java_com_roblox_client_LocalStorageManager_initStorageManagerNative@@LIBROBLOX-0x1831ec0>
+ 2384847:	fe 
+ 2384848:	f2 48 0f 2c c0       	cvttsd2si %xmm0,%rax
+ 238484d:	49 01 c4             	add    %rax,%r12

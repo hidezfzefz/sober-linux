@@ -1,75 +1,59 @@
-# n4 #676 — fflush fault, import/GOT, rdi source, shim
+# n4 #675 static-B — #552 chain to fflush(NULL) (READ-ONLY)
 
-Read-only; cores 2-3; no runs/device. Every success claim quotes a raw line.
-Evidence: `raw_harness_fault.txt`, `raw_fflush_plt.txt`, `raw_shim_fflush.txt`,
-`raw_fflush_callsites.txt`, `raw_sections.txt`.
+Engine SHA 3e498d64, taskset -c 4,5, worktree /tmp/opencode/n4-static-b.
+FAULTING INSTRUCTION FIRST: host libc `_IO_fflush@@GLIBC_2.2.5+0x9f` (audit #677 correction; earlier +0x3f retracted), `mov rax,[rdi+8]`, `si_addr=0x8`, rdi=NULL — **not guest code**. RET64 absent.
 
-## FAULTING INSTRUCTION FIRST — PROVEN
+## PROVEN — "first guest RVA" 0x72a0818 is DATA, not a call site
 
-Quoted harness raw line (lead-relayed from n4 harness):
-> `[W40_RIP_MAP] rip0x00007fa51a6518ff offset=0x00000000000588ff maps='7fa51a5f9000-7fa51a749000 r-xp 00024000 00:17 482353 /usr/lib64/libc.so.6'`
+`readelf -S`: `.bss NOBITS vaddr 0x7282500 size 0xb1ad1c` (covers 0x72a0818). RETRACTED: treating it as an instruction address.
 
-Host libc ELF offset `0x7c8ff`; `objdump` quoted by harness:
-> `7c8ff: 48 8b 47 08 mov rax,QWORD PTR [rdi+0x8]`
+## PROVEN — List.size() call site and immediate post-`size()==0` action
 
-`nm -D` quoted: `_IO_fflush@@GLIBC_2.2.5 at 0x7c860` ⇒ fault = **`_IO_fflush+0x9f`, NULL rdi** (`si_addr=0x8`). RET64 was NOT exercised (si_addr far from rsp), so **there is no first-guest-RVA call site** — PROVEN.
+`0x2383c18` (nativePostClientSettingsLoadedInitialization3) calls main body `0x2383c84` at `2383c6d`. Inside it (dis_552_body.txt):
+```
+2383d16: lea -0x1e3519f(%rip),%rdx   # 54eb7e   ; "size"
+2383d1d: lea -0x1edef0c(%rip),%rcx   # 4a4e18   ; "()I"
+2383cfc/2383d2a: call *0x108(%rax)   ; GetMethodID("size","()I")
+2383d2a: (rax = methodID)
+2383d30: mov %r13,%rdi
+2383d33: mov %r14,%rsi              ; rsi = jobject (entry rdx)
+2383d36: mov %rax,%rdx
+2383d39: xor %eax,%eax
+2383d3b: call 238463c               ; <-- CallIntMethodA wrapper (size())
+2383d40: test %eax,%eax
+2383d42: jle 23844e9                ; size() <= 0 -> EARLY NORMAL RETURN
+23844e9: mov 0x4ea4f08(%rip),%rax   # 72293f8  (stack canary)
+23844f3: cmp -0x30(%rbp),%rax
+23844f7: jne 2384510
+238450a: ret
+```
+Helper `0x238463c`: `238460c: lea # 4a4e18 ("()I")`; `238461c: call *0x108(%rax)` (GetMethodID); `23846b6: ff 90 90 01 00 00 call *0x190(%rax)` (CallIntMethodA -> eax = size). Strings verified from file: `0x54eb7e="size"`, `0x4a4e18="()I"`, `0x217ca9="java/util/List"`, `0x3305b9="get"`, `0x250e4f="(I)Ljava/lang/Object;"`.
+So **right after size() returns 0: `test eax,eax; jle` -> normal early return**, not an immediate abort.
 
-The first guest-mapped stack qword `guest+0x00000000072a0818` is **DATA, not a
-call site**: quoted `readelf -SW` `.bss` = `0000000007282500 … b1ad1c`, which
-contains `0x72a0818`. PROVEN.
+## PROVEN — how fflush(NULL) is reached (fatal-report/abort helper 0x2ea6a10)
 
-## Guest import / GOT slot — PROVEN
+`0x2383c84` contains C++ exception cleanup/catch blocks; its catch path calls the fatal helper:
+```
+23845d2: mov %rbx,%rdi
+23845d5: e8 36 24 b2 00   call 2ea6a10
+```
+Helper `0x2ea6a10` (dis_fflush_helper.txt):
+```
+2ea6a66: mov $0x130,%ebx
+2ea6a6b: add 0x4381766(%rip),%rbx  # 72281d8  ; __sF base + 0x130 = stderr
+2ea6a8c: call 6d31aa0 <fprintf@plt>
+2ea6a91: mov %rbx,%rdi
+2ea6a94: e8 87 b5 e8 03  call 6d32020 <fflush@plt>
+2ea6a99: call 6d320d0 <abort@plt>
+```
+Format string at `0x2345cf` = `"libunwind: %s - %s\n"`. This matches `/home/user/sober-linux/src/compat/bionic_sf_full.c:5-8`: *"glibc's `_IO_fflush` faults reading the NULL `_lock` at FILE+0x88"* and the guest's `__sF+0x98/+0x130` stderr derivation. The same fatal helper is called from catch blocks in the tail-jumped function `0x239d1c7` (e.g. `239d8ba`, `239da5f`, `239dcf8`). #552's full chain: `0x2383c18 -> 0x2383c84 (size/get loop; catch -> 2ea6a10)` then `2383c72: call 23847db` then `2383c7f: jmp 239d1c7` (more catch -> 2ea6a10).
 
-Quoted `.plt` disassembly:
-> `6d32020 <fflush@plt>: ff 25 2a 77 4f 00 jmp *0x4f772a(%rip) # 7229750`
+## UNPROVEN / RETRACTED
 
-So the guest imports symbol **`fflush`** via PLT `0x6d32020`, whose GOT slot is
-`0x7229750`. Call sites found (quoted): `232b8d9`, `237d747`, `237d9d3`,
-`2a26665`, `2b5b3e8`, `2cb81a7`, `2e61d13`, `2ea69d1`, … all indirect via that
-PLT.
+- UNPROVEN: which exact exception producer fires after `size()==0` (the early return itself does not call 2ea6a10); needs harness landing-pad/RET trace.
+- UNPROVEN: why rdi=0 at fflush vs `__sF+0x130` here (different call site or zeroed `__sF`); `__sF` is a host stub symbol, no guest write.
+- RETRACTED: `0x72a0818` as guest call site; RETRACTED: guest-code fault in fflush.
 
-## rdi just before the call — PROVEN at sampled sites
+## Evidence / NOT done
 
-Quoted raw disassembly:
-> `232b8d2: mov 0x98(%rbx),%rdi` → `232b8d9: call 6d32020 <fflush@plt>`
-> `237d743: mov 0x30(%rbx),%rdi` → `237d747: call 6d32020 <fflush@plt>`
-> `237d9d0: mov %r15,%rdi` → `237d9d3: call 6d32020 <fflush@plt>`
-> `2e61d0f: mov 0x40(%rbx),%rdi` → `2e61d13: call 6d32020 <fflush@plt>`
-
-So rdi is loaded from an **object field / register**, never a global or TLS
-holder. A NULL field/register yields the NULL FILE* that reaches glibc.
-
-## Which shim/trampoline forwards the symbol — PROVEN
-
-Quoted source:
-> `/home/user/sober-linux/src/compat/bionic_libc.c:487: int fflush(FILE *stream)`
-> `:490: sober_fflush_fn real = (sober_fflush_fn)sober_libc_fn_fflush;`
-> `:653: sober_libc_fn_fflush = native_lookup("fflush");`
-
-`gen_bionic_libc.py:262` quoted: `if s["name"] in ("fflush", "fclose", "fwrite"):` — these are **skipped** by the TRAMP generator, so the stub exports its own C `fflush` directly (not a generated trampoline). Forwarding chain: guest `fflush@plt` → GOT `0x7229750` → stub `fflush@@LIBC` (our `bionic_libc.c:487`) → `sober_libc_fn_fflush` → glibc `_IO_fflush`.
-
-`sober_stdio_map` quoted:
-> `:471: if (!p) return NULL;`
-> `:497: return real ? real(mapped) : 0;`
-
-So a NULL guest stream maps to NULL and is passed straight to glibc — the
-mechanism for the NULL rdi at `_IO_fflush+0x9f`. The exact guest call site on
-the #552 path that supplies NULL is **UNPROVEN** (no `fflush@plt` call inside
-the `0x2383c18` body; the sampled sites load rdi from FILE*-bearing fields).
-
-## What NOT done
-No apply/build, no runs/gdb/perf, no device/AVD/Frida/phone, no new captures,
-no guest writes, gate edits, seeder, fake returns or path remaps, no
-credentials, no captures/logs/tokens in git.
-
-## First divergence + next step
-First divergence: NULL FILE* from a guest FILE*-bearing field reaches host
-`_IO_fflush`; real boot supplies a valid stream. Next: harness logs the guest
-flush call site and its FILE* field on the #552 path.
-
-## CORRECTION (audit #677) — symbol offset
-
-RETRACTED my `_IO_fflush+0x3f` wording: `nm -D` gives `_IO_fflush@@GLIBC_2.2.5 =
-0x7c860` and the faulting address is `0x7c8ff`, so
-`0x7c8ff - 0x7c860 = 0x9f`. Correct designation: **`_IO_fflush+0x9f`**. All
-other findings unchanged.
+Evidence: dis_552.txt, dis_552_body.txt, dis_fflush_helper.txt, dis_23847db.txt, report.md. NOT DONE: no runs/device/emulator/captures/guest writes/gate edits/seeder/fake returns/path remaps/apply; object OFF, no extension. No captures/tokens in git.
