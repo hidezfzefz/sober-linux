@@ -1,0 +1,2 @@
+/home/user/sober-linux/analysis/abort/repro-unrepaired.err:3683:[app-shell] JNI args: base=0x561244e8fee0,0x561244e93680 ver=0x561244e96ed0 chan=0x561244e9a700 am=0x561244e9df30 cfg=0x561244e9ef40 shared_param_obj=0x561244e9ef60 (blob=0x1000)
+/tmp/opencode/w31-harness/runD_1.err:4021:[app-shell] JNI args: base=0x55555722e5e0,0x555556baf5e0 ver=0x555557504220 chan=0x555556c2bd00 am=0x555556c26230 cfg=0x5555560a2770 shared_param_obj=0x555556be4eb0 (blob=0x1000)
