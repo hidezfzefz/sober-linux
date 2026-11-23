@@ -1,0 +1,3 @@
+/home/user/sober-linux/analysis/FABRICATION-LEDGER.md:494:  TSD seed ON eq=1 for first two call-pairs then guest replaces TLS (writes `0x7265502f666f7270`
+/home/user/sober-linux/analysis/FABRICATION-LEDGER.md:495:  "profileP"), seed OFF guest-owned TLS `[tls]=0x1`; seed-OFF fault `guest+0x2a13354 = call
+/home/user/sober-linux/analysis/FABRICATION-LEDGER.md:524:  `tsdtrace2.err:3706/3727` TSD eq=1 then `[seed]=0x7265502f666f7270` eq=0; `seedoff_trace.err:3701`

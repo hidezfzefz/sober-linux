@@ -1,59 +1,75 @@
-# W30 #636 — harness (one page)
+# WAVE31 #640 — accessor layout / prof-Per / Decision 008 chain
 
-Worktree `/tmp/opencode/w30-harness`, branch w30-harness. Engine SHA `3e498d64`.
-flock held for all runs. No device/guest writes/gate edits; NO seeder;
-JNI_OnLoad-first ON. NEW RULE: success claims quote raw log lines.
-Evidence: `runD_{1,2,3}.err`, `rund3.sh`.
+Read-only; no runs/device/phone. Engine SHA `3e498d64…`. Every success claim
+quotes a raw line (evidence files: `raw_accessor_lines.txt`, `raw_prof_users.txt`,
+`raw_profper_value.txt`, `raw_decision008.txt`, `raw_chain.txt`, `raw_rund_fflag.txt`).
 
-## FAULTING INSTRUCTION FIRST (Run D ×3, identical) — PROVEN
-`guest+0x6ca7f95`: `e8 b6 b3 d6 fb` = **`call 0x2a13350`** (the TLS predicate
-accessor). Raw line (run 1):
-`[W30_FAULT] rip=0x00007fffef8e3f95 si_addr=0x00007fffff7fefc8 rsp=0x00007fffff7fefd0 rbp=0x00007fffff7ff0a0 insn=00000000000000e8 00000000000000b6 00000000000000b3 00000000000000d6 00000000000000fb 0000000000000084 00000000000000c0 0000000000000074`
-`[W28_FAULT_INSN] rip=0x00007fffef8e3f95 guest_rva=0x06ca7f95`
-**`si_addr - rsp = -8`** (raw: `[W30_SI_RSP_DELTA] 8`): the `call` tried to push
-its return address into the guard page at `rsp-8` → **stack overflow**.
-Static decode: `0x6ca7f95: call 2a13350; 0x6ca7f9a: test al,al; je 6ca7ffa`.
-RA/stack return addresses: `fp#0..fp#23 = guest+0x6ca8014` (all 24):
-`[W23_FP] from rbp=0x00007fffff7ff0a0` / `fp#0=guest+0x0000000006ca8014` ...
+Faulting instruction first (W30 harness, seed OFF + full JSON + no bp):
+`guest+0x6ca7f95: call 0x2a13350`, `si_addr=rsp-8` (stack overflow), repeated
+frame `0x6ca8014` — quoted in the W30 harness report. Seed ON fault was
+`0x6ca229c: call *0x548(%rax)`.
 
-## (a) Crash handler — PROVEN (raw quotes)
-`[W30_SIGALTSTACK] installed sp=0x5555555e3a80 size=65536` — SA_ONSTACK +
-sigaltstack active. First emitted line is the W30_FAULT line above (RIP,
-si_addr, rsp, rbp, insn bytes). **No guest-pointer dereference remains:**
-RIP/RSP/RBP/RDI/FP/stack reads all go through `process_vm_readv`
-(`w30_readmem`); unreadable pages print `UNREADABLE` instead of faulting
-(raw: `[0]=UNREADABLE[1]=UNREADABLE...`). Ring dumps use host-only buffers.
+## (a) Accessor `0x2ea6440` / lazy branch `0x2ea656e` — PROVEN allocation/layout
 
-## (b) TSD seed REMOVED (default OFF) — PROVEN
-Raw: `[app-shell] W30 TSD seed REMOVED (default OFF; harness-fabricated state)`.
-Ledger wording sent: **"harness-fabricated state, caused the 0x6ca229c fault"**.
+Raw disassembly (`dis_accessor_alloc.txt`, quoted):
+> `2ea6528: lea -0x10(,%r12,8),%r15`
+> `2ea6530: lea 0x10(%r15),%rdi`
+> `2ea6534: call 1dbad62`  (allocator)
+> `2ea6555: call 6d31d00 <memset@plt>`
+> `2ea655a: movq $0x1,(%r14)`
+> `2ea6561: mov %r12,0x8(%r14)`
+> `2ea656e: call 6d31d10 <pthread_setspecific@plt>`
 
-## (c) Run D ×3 (full JSON, seed OFF, NO breakpoints) — PROVEN
-Raw: `[avd-boundary] verified /tmp/opencode/w11-arg0.json bytes sha256=8215519ff31bb79e66baa65baf9b09fe46ea172f64df33d2399db315fd27634b`
-Raw: `[app-shell] AVD boundary pre: arg0_len=1533221 jstr0=0x5555562e2fd0 D08=0 latch=0 ...`
-rc=139 ×3. Per-run: fault `guest+0x6ca7f95` `call 0x2a13350`, `si_addr=0x7fffff7fefc8`,
-delta 8 (3/3). **0x2eb7520 fires: UNPROVEN** — no watcher armed (no breakpoints);
-`grep -c 'W21_LATCH_HIT' runD_*.err = 0/0/0`. Nearest latch raw line:
-`[app-shell] AVD boundary nativeInitClientSettings 0x2359277 -> rc=0 D08_len=0 latch=1 CF0=0 72a31b8=0x1`
-Raw rung line (all 3): `[checkpoint] rung1 FAIL (DEBT=1)`.
+It allocates **8 × r12 bytes** (r12 = descriptor slot count; the sibling path
+clamps it to ≥8 at `2ea6585: mov $0x8,%r15d`). Layout: `+0x00 = 1`
+(refcount/presence marker), `+0x08 = r12` (slot count), `+0x10..` = zeroed
+8-byte slots. The `+0x28` of **this state block** is simply a zeroed slot
+(index `(0x28-0x10)/8 = 3`) — UNPROVEN that any consumer assigns it here. The
+**scheduler object's** `+0x28` (a different object, reached via
+`0x2a0de60 → TLS[0x722e540]+0x410`) is the installed-callback word tested by
+`0x2a13350: cmpq $0x0,0x28(%rax)` (W24/W28 evidence). PROVEN for the predicate;
+UNPROVEN that the accessor state's `+0x28` is the same field.
 
-## (d) Stack cycle (si_addr within 64 KiB of rsp: delta=8) — PROVEN
-Raw: `[W30_RET64] rsp=0x00007fffff7fefd0`. Index-0..5 = `UNREADABLE` (guard
-page ends at `rsp+48 = 0x7fffff7ff000`). Repeating 15-qword pattern at indices
-**13–27** and **41–55**: `guest+0x221414, 0x3, guest+0x221414, 0x3,
-0x7fffe8c0c76b, 0x5555555addbb8, guest+0x2ea6460, 0x5555555addbb8,
-0x55555555e3060, 0x555555590c830, 0xabcdef0123456789, 0x5555555addbb8,
-0x55555555e3060, <stack ptr>, guest+0x6ca8014`.
-**Cycle period = 28 qwords = 224 bytes/frame; 2 full repetitions in the
-64-word window; recursion depth ≥24** (FP chain capped at 24, all `0x6ca8014`).
+**"prof/Per" bytes:** runtime value from `tsdtrace.err:3727`:
+> `[W29_TLS 0x2315556] ... [seed]=0x7265502f666f7270 eq=0`
 
-## NOT DONE
-No ledger edit by me (entries sent audit); no device; no guest bytes/gate
-edits; recursion root cause UNPROVEN (static scope); 0x2eb7520 firing not
-observed (no watcher in this configuration). No success claim without a quote.
+`0x7265502f666f7270` LE = `70 72 6f 66 2f 50 65 72` = "prof/Per". A raw
+8-byte search of the engine returned **0 occurrences** (`engine_profper.txt`
+empty) and `src/` has no such literal (only the analysis note in
+`FABRICATION-LEDGER.md:494-495`). Engine `prof/` strings and their users:
+> `2290b6 prof/total/scripts`  → used at `23a3257: lea … # 2290b6`
+> `2310c3 prof/Physics/Simulation_other_max` → used at `23a2feb: lea … # 2310c3`
 
-## First divergence / next step
-With the fabricated TSD state gone, the guest recurses at `0x6ca8014` until
-`call 0x2a13350` at `0x6ca7f95` overflows the stack (`si_addr=rsp-8`); W25's
-`0x548`/NULL-env fault is RETRACTED for this configuration. Next: static trace
-the `call [rax+0x720]` at `0x6ca800e` that re-enters `0x6ca8014`.
+No exact-byte match; the guest store site of those 8 bytes is **UNPROVEN**
+(no `movabs $0x7265502f666f7270` in the disassembly).
+
+## (b) Decision 008 / ctor[0] `0x2e62390` — PROVEN / partly UNPROVEN
+
+`docs/decisions/008-packed-relocations.md:1`:
+> `# Decision 008 — Android packed RELA must be applied before bootstrap`
+and line 14:
+> `packed relocations. Without applying them, ctor[0] is a NULL call`.
+
+Bootstrap profile skips ctor 0 (`bootstrap-map.md:97`: `| 0 (SKIP) | 0x7220e58 | 0x2e62390 |`). Harness replays it; Raw Run D
+`runD_1.err:3687`:
+> `[fflag-default] replayed guest ctor 0x2e62390 (FFlag registry): guard=257 (expect 257) handle=0x7fffef9f0008 ctrl=0x7fffefedcb88 -> OK; ctors 1/3/4 not required ...`
+
+So ctor[0] **is active in Run D** (PROVEN by that line). Chain links:
+> `2e623a0: call 2e618b0` — PROVEN
+> `2e618d8: call 2e61280` — PROVEN
+> `2e61298: call 2e5bf00` — the next hop is `0x2e5bf00`, **not** directly `0x2e5bc10`; the remainder of the stated chain (→ `0x2e5bc10` → `0x2e7b850`) is **UNPROVEN** as a direct call chain.
+
+Consumers of FFlag registry `0x72a0520` that ran in Run D (quoted):
+> `3708:[app-shell] global-string seed at 0x72a0520 (SOBER_SEED_GLOBAL_STRING, early) -> rc=1`
+> `3714:[app-shell] controller ensure_flag -> rc=0 flag=1`
+> `3705:[app-shell] AVD boundary pre: ... fflag_ctx=0x7fffefedf1c8 fflag_obj=0x555555c50880`
+
+## What NOT done
+No diff/applied change, no runs/gdb/perf, no device/AVD/emulator/Frida/phone,
+no new captures, no guest writes, no gate edits, no ledger edits, no credentials.
+Exact prof/Per store site and the tail of the ctor chain are UNPROVEN.
+
+## First divergence + next step
+First divergence: guest-created TLS state (`[tls]=0x1`) vs seeded value later
+overwritten with "prof/Per"; ctor[0] replay succeeds but the recursion
+terminator remains unidentified. Next: harness logs the `+0x28` writer with tid.
