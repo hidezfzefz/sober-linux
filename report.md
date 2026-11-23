@@ -81,3 +81,23 @@ no reading of `/tmp/opencode/uploads`.
 First divergence: `*(obj+0x28)` non-NULL on the harness thread (TRUE path,
 queued task recursion) vs NULL on device. Next: harness logs the `+0x28`
 writer with tid and entry native.
+
+## FINAL ADDENDUM (lead-appended from static's delivered root-cause correction)
+
+- **Slot `0x720` target (PROVEN, quoted):** host bridge `sr_ExceptionCheck` is a
+  pure leaf — `native_jni.c:1397-1398, quoted: 'static sr_jboolean sr_ExceptionCheck(void *env)' /
+  '{ (void)env; return 0; }'`, installed at `native_jni.c:1560 SETFN(*t,224,sr_ExceptionCheck)`.
+  But at runtime `[rax+0x720]` changes: `call720.err:3703 '[W32_CALL720] hit=1 ...
+  [rax+0x720]=0x555555582690 decode=host+0x000000000002e690'` →
+  `':3732 ... hit=100 ... [rax+0x720]=0x7fffef8e3f72 decode=guest+0x0000000006ca7f72'`.
+  With base `0x7fffe8c3c000` (`:3682`), the latter is guest RVA `0x6ca7f72` — the
+  **prologue of the very wrapper containing `call *0x720(%rax)` at `0x6ca800e`**.
+  Calling it re-enters `0x6ca7f72` → infinite recursion → stack overflow at
+  `0x6ca7f95` (`si_addr=rsp-8`).
+- **WAVE-24 scheduler TRUE-path attribution RETRACTED.** Harness logged
+  `[obj+0x28]=0` on all 37,547 predicate entries ⇒ `6ca7f9c je 6ca7ffa` always
+  takes the FALSE path to `6ca800e call *0x720`; the TRUE path / lambda
+  `0x6ca805b` never runs. The recursion is the fn[224] self-pointer feedback
+  loop, not the `*(obj+0x28)!=0` scheduler path.
+- **UNPROVEN:** which guest code writes `0x6ca7f72` into fn[224], and the
+  identity/route of `host+0x2e690`. (Audit ledger entry 30.)
