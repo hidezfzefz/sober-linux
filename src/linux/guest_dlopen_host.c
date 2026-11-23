@@ -39,6 +39,9 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linux/perf_event.h>
+#include <linux/hw_breakpoint.h>
 #include <sys/uio.h>
 #include <ucontext.h>
 #include <unistd.h>
@@ -140,6 +143,81 @@ static long w30_readmem(uintptr_t addr, void *dst, size_t len)
     struct iovec ri = { (void *)addr, len };
     return syscall(SYS_process_vm_readv, (long)getpid(),
                    &li, 1UL, &ri, 1UL, 0UL);
+}
+
+/* ---- n7 WAVE2: ctor3602 exec bps armed BEFORE the constructor replay -----
+ * Earliest host hook with the guest base is right after `guest base=%p`;
+ * drive_constructors() is called later, so these bps see ctor[3602]. */
+static long n7b_entry_hits, n7b_store_hits, n7b_after_hits;
+static uintptr_t n7b_base;
+static void n7b_log(const char *tag, long n, const char *extra)
+{
+    char b[256], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, tag); w24_put(&p, " hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_put(&p, extra); w24_line(&p, b, end);
+}
+static void n7b_entry_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si; (void)uc;
+    long n = __atomic_fetch_add(&n7b_entry_hits, 1, __ATOMIC_RELAXED) + 1;
+    n7b_log("[N7B_ENTRY 0x2279a47]", n, "");
+}
+static void n7b_store_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    long n = __atomic_fetch_add(&n7b_store_hits, 1, __ATOMIC_RELAXED) + 1;
+    unsigned long rax = c ? (unsigned long)c->uc_mcontext.gregs[REG_RAX] : 0;
+    char extra[64];
+    snprintf(extra, sizeof(extra), " al=0x%02x store_to=0x7cef650",
+             (unsigned)(rax & 0xffu));
+    n7b_log("[N7B_STORE 0x2279a8f]", n, extra);
+}
+static void n7b_after_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si; (void)uc;
+    long n = __atomic_fetch_add(&n7b_after_hits, 1, __ATOMIC_RELAXED) + 1;
+    unsigned char v = 0;
+    long g = n7b_base ? w30_readmem(n7b_base + 0x7cef650u, &v, 1u) : -1;
+    char extra[64];
+    snprintf(extra, sizeof(extra), " [0x7cef650]=%s0x%02x",
+             (g == 1) ? "" : "UNREADABLE-", (unsigned)v);
+    n7b_log("[N7B_AFTER 0x2279a95]", n, extra);
+}
+static int n7b_perf(uintptr_t addr)
+{
+    struct perf_event_attr a; memset(&a, 0, sizeof(a));
+    a.type = PERF_TYPE_BREAKPOINT; a.size = sizeof(a);
+    a.bp_type = HW_BREAKPOINT_X; a.bp_addr = (uint64_t)addr;
+    a.bp_len = HW_BREAKPOINT_LEN_8; a.disabled = 1;
+    a.sample_period = 1; a.wakeup_events = 1;
+    a.exclude_kernel = 1; a.exclude_hv = 1;
+    return (int)syscall(SYS_perf_event_open, &a, 0, -1, -1, 0);
+}
+static int n7b_arm(int fd, int signo, void (*fn)(int, siginfo_t *, void *))
+{
+    if (fd < 0) return -1;
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = fn; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(signo, &sa, NULL) != 0) return -2;
+    if (fcntl(fd, F_SETSIG, signo) != 0) return -3;
+    if (fcntl(fd, F_SETOWN, getpid()) != 0) return -4;
+    if (fcntl(fd, F_SETFL, O_ASYNC) != 0) return -5;
+    return ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0 ? -6 : 0;
+}
+static void n7b_arm_all(uintptr_t base)
+{
+    n7b_base = base;
+    int f1 = n7b_perf(base + 0x2279a47u);
+    int f2 = n7b_perf(base + 0x2279a8fu);
+    int f3 = n7b_perf(base + 0x2279a95u);
+    int a1 = n7b_arm(f1, SIGUSR1, n7b_entry_sig);
+    int a2 = n7b_arm(f2, SIGUSR2, n7b_store_sig);
+    int a3 = n7b_arm(f3, 36, n7b_after_sig);
+    fprintf(stderr, "[N7B_ARM] base=%p fds=%d/%d/%d rc=%d/%d/%d\n",
+            (void *)base, f1, f2, f3, a1, a2, a3);
 }
 
 /* n4 HOST-ONLY: /proc/self/maps reader using only open/read/close/write.
@@ -942,6 +1020,8 @@ int main(int argc, char **argv)
     g_guest_base = base;
     elf.base = base;
     fprintf(stderr, "[harness] guest base=%p\n", (void *)base);
+    /* n7 WAVE2: arm ctor3602 exec bps HERE, before drive_constructors(). */
+    if (getenv("SOBER_N7B_BEFORE")) n7b_arm_all(base);
     sober_guest_elf_describe(&elf);
 
     size_t applied = 0, relative = 0, symbolic = 0, unknown = 0, unresolved = 0;
