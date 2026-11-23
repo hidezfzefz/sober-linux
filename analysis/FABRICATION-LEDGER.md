@@ -1216,3 +1216,47 @@ RETRACTED: size()==0 directly throws / unwind proven to cause the mimalloc HardA
 → OUTPUT: 71 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only (afed56d), not introduced by n7w3. Marker WITHHELD.
+
+## Overnight n7 WAVE4 audit (task #699) — HardAssert path, table tag, log-fire sequence
+
+Owner: audit (`/tmp/opencode/n7-audit`, branch `n7-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+SHA+banner verified on EVERY run: `verified … sha256=8215519f…` = 1 and
+`[N6_BANNER] SOBER_BIONIC_SF_FULL=1` = 1 in each `n7e_{1,2,3}.err` (3/3); rc=139 3/3;
+fault int3 `0x6caef66` (RIP `0x6caef67`), signal=5, si_addr=0.
+
+**harness #698 — all quoted claims verified:** `[N7B_ARM] base=0x7f5e98424000 fds=-1/-1/-1/-1
+rc=-1/-1/-1/-1 inner_fd=4/5/6/7/-1 inner_rc=0/0/0/0/-1` — 4 of 5 inner bps armed (FLog fflush,
+unwind fflush, assert dispatcher, assert reporter); the trap bp at 0x6caef66 FAILED (perf HW
+breakpoint slot limit), so no direct trap-hit observation. Hits per run: FLOG_FFLUSH=2,
+UNWIND_FFLUSH=0, ASSERT_DISPATCH=1, ASSERT_REPORT=1, TRAP=0, all on replay thread tid 2093725.
+Order (lines 3732-3737): dispatch → reporter → FLog fflush #1 → `RBXCRASH: HardAssert (Expect to
+have mimalloc working, but it was not detected!)` → FLog fflush #2 → W30_FAULT. **Which reporter
+fires (PROVEN among armed bps):** the HardAssert reporter, logging via FLog fflush `0x2e61d13`;
+the unwind-reporter fflush `0x2ea6a94` has ZERO hits — the `_Unwind_Resume` path is NOT taken here.
+UNPROVEN: exact trap instruction (bp unarmed; identified by RIP decode + static), any path between
+last FLog fflush and the trap.
+
+**static-A #697 — all quoted disasm verified (some via direct objdump):** no direct size()==0 →
+HardAssert edge — `2383d42 jle 23844e9` → canary (`23844e9 mov 0x72293f8`, `23844f9 add $0x128,%rsp`)
+→ `238450a ret`, with no 6caed5d/6caed7c call. Message call at `23a146e call 6caed5d` with
+`rsi = 0x4c0d2b` mimalloc string and `edi=0` (index 0), dispatcher `6caed61..6caed77`, table
+`0x721fbd0` → reporter `0x6caed7c` → byte tests 6caef4f/6caef58 → int3. Reach chain via mi_option
+printer `239d215 call 239ead3` → `239eb14 cmpb $0,0x7cdede0` (ctor3 flag, zero in harness) →
+`239eb1b je 23a1422` → `23a1424 je 23a1465` → call. Entry edge to 239d215 UNPROVEN.
+
+**static-B #700 — all quoted disasm verified (dispatcher lines by direct objdump):** dispatcher
+`6caed61 cmp $0xa,%edi` / `6caed64 mov $0xa,%eax` / `6caed69 cmovb %edi,%eax` ⇒ index clamped
+0..10, 11 qword entries `0x721fbd0..0x721fbe8`; `6caed6c lea #721fbd0` / `6caed73 mov
+(%rcx,%rax,8),%rdi` / `6caed77 call 6caed7c`. Call site `23a1465 lea #4c0d2b,%rsi`,
+`23a146c xor %edi,%edi` (index 0), `23a146e call 6caed5d`. **RETRACTED: describing 0x721fbd0
+as a message table whose index selects the string** — the message is passed in `%rsi` from the
+call site; the table supplies `%rdi` (tag/severity); the two meet only at this call site. Table
+file bytes are zero (filled by DT_ANDROID_RELA/APS2 at load); APS2 magic present at RVA 0x15e00
+but SLEB decode implausible ⇒ contents UNPROVEN (no runtime read).
+
+**Secrets-scan command + output (final wave4):**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n7-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 72 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only (afed56d), not introduced by n7w4. Marker WITHHELD.
