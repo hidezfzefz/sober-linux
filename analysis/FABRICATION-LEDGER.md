@@ -1608,4 +1608,17 @@ Owner: audit (`/tmp/opencode/n10-audit`, branch `n10-audit`). Cores 6-7, MANDATO
 
 All quoted claims verified. Baseline `baseline.err` (rc=9): `[harness] guest: /tmp/opencode/n9-harness/n9bin/libroblox.so` / `[avd-boundary] INPUT MISSING/MISMATCH (no rung): open failed: /tmp/opencode/w11-arg0.json` / `[checkpoint] rung1 INPUT MISSING/MISMATCH (no rung)`; audit confirmed source gate `guest_dlopen_host.c:1282-1285` (`sober_avd_boundary_fail_closed()` before memfd copy, exit 9), `avd_boundary.c:95` `g_n10_arg0_sha_hex` published only after open+hash, `:218-219` hardcoded SHA banner removed (was the misleading provenance constant), and both rung printers fail closed on `!g_w29_arg0_sha_ok`. Ledger: host-only input gate, owner=harness, DEBT=1, gate/withhold unchanged; removal condition = genuine 1,533,221 B SHA-8215519f input available again.
 
+**static-A #728 (DEX settings fetch, READ-ONLY, no network) — quotes verified:** endpoint string
+`STR 30766: 'https://clientsettingscdn.'` and `'https:///v2/settings-compressed/application/
+ca4e…dcz'` (empty host in capture); request builder `raw_request_builder.txt` adds only
+`Pragma: akamai-x-cache-on` before `Request$Builder->build` (no auth header on this path);
+`raw_dex_hits.txt` shows `FLAG_CACHE_COMPRESSION_TYPE_ZSTD_WITHOUT_DICTIONARY`,
+`preload_zstd_dictionary`, `responseBodyZstdCompressed`, `X-Rbx-Zstd-Dict-SHA`;
+`X-Signature-Ed25519` is response verification. **Minor quote caveat:** the report's phrasing
+"I scanned every method of `Lcom/roblox/client/startup/b;` … zero hits" is NOT backed by a
+verbatim scoped line in `raw_auth_strings.txt` — that file lists auth strings in OTHER classes
+(`bg/c`, `uk/j`, `ci/s`) but has no `startup/b` section; the substantive "no auth header added
+on this path" claim IS supported by the request-builder quote above. Scoped "zero hits" wording
+marked UNPROVEN as quoted (not retracted); exact runtime domain UNPROVEN; cookie-jar UNPROVEN.
+
 A/B (allocator patch OFF x3 / ON x3, modified-input opt-in `SOBER_N10_MODIFIED_INPUT=1` default OFF): all 6 audit-verified verbatim `[avd-boundary] MODIFIED-INPUT (no rung): diagnostic opt-in SOBER_N10_MODIFIED_INPUT=1; sha256=4d50a0ec… want=8215519f…`; `PASS-BOUNDARY-REPLAY` count 0 in all 6; rc=139 6/6; fault `guest+0x06caef67` int3 `0x6caef66`; latch `[0x7cdd149]=1 [0x7cef650]=0` 6/6 (latch=1 because boundary replay now RUNS with modified input, unlike n9 input-missing latch=0); `0x2eb7520` fires 6/6 with `guest_RA=0x2359342`; `N14_REPLAY 3/3` 0/6; patch banner only in OFF arm; no A/B behavioral difference. All runs DIAGNOSTIC ONLY, NO rung credit. static-b #726 quotes verified: CHECKPOINT-LADDER.md:20-26 rung2 order (#727/#734/#736) and surviving raw_capture J2N #67/#70/#105/#534/#541/#551/#552/#612; rung2 credit RETRACTED, #736 impossible without authoritative input.
