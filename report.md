@@ -1,80 +1,82 @@
-# n8w1 #701 — ctor3 safety + HardAssert polarities (BEFORE run)
+# n9w2 #717 static-B — 8 allocator patches ON/OFF (READ-ONLY)
 
-Read-only; cores 2-3; no runs/device. Every claim quotes a raw line.
-Evidence: `dis_ctor3_full.txt`, `raw_polarities.txt`.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`, `89 c0 mov %eax,%eax; e8 62... call abort@plt`), SIGTRAP. All quotes raw. Object OFF, SF_FULL=1, ctor3 OFF, seed OFF, JNI_OnLoad-first ON. No apply/runs by me.
 
-Faulting instruction first: guest `0x6caef66: int3` (HardAssert), bytes `cc`.
+## PROVEN — the 8 patches and their ON/OFF control
 
-## (1) ctor3 `0x1db9a40` — complete inventory — PROVEN
+Table (n9-harness `src/compat/bionic_bootstrap/bootstrap_profile.h:62-74`, `bionic_bootstrap.c:889-908`):
+```
+#define SOBER_BRIDGE_ALLOC_SMALL_RVA   0x1dbad62u   -> g_bb_ops.alloc_small  "small-allocate"
+#define SOBER_BRIDGE_USABLE_SIZE_RVA   0x1dbdfbau   -> g_bb_ops.usable_size  "usable-size"
+#define SOBER_BRIDGE_REALLOCATE_RVA    0x227aafau   -> g_bb_ops.realloc      "reallocate"
+#define SOBER_BRIDGE_ALLOCATE_RVA      0x1dbab02u   -> g_bb_ops.allocate     "allocate"
+#define SOBER_BRIDGE_ALIGNED_ALLOC_RVA 0x1dd60e5u   -> g_bb_ops.aligned_alloc "aligned-allocate-direct"
+#define SOBER_BRIDGE_FREE_RVA          0x1dbe559u   -> g_bb_ops.free         "free"
+#define SOBER_BRIDGE_CALLOC_RVA        0x253225eu   -> bb_calloc_plain_installed "calloc-plain"
+#define SOBER_BRIDGE_CALLOC_RUNTIME_RVA 0x231f0e2u  -> bb_calloc_header_installed "calloc-header"
+```
+`install_bridge()` (`:838-873`) overwrites each 12-byte thunk prologue after fingerprint check:
+```
+/* movabs rax, imm64 ; jmp rax  -- absolute jump to the native function. */
+tramp[0] = 0x48; tramp[1] = 0xb8;
+tramp[10] = 0xff; tramp[11] = 0xe0;
+memcpy((void *)site, tramp, sizeof(tramp));
+```
+Host targets from `bb_resolve_alloc_ops()` (`:585-596`) → `host_allocate` (`:271-276`): `274: void *p = malloc(n);` — **glibc malloc/free** (weak `mi_*` declarations at `:175-176,262-265` are dead; n6 #684).
 
-Globals written (exactly two, quoted):
-> `1db9a4b: movq $0x20,0x7cdedd8`   (usable-size probe input = 0x20)
-> `1db9acf: mov %bl,0x7cdede0`      (probe result byte)
+Control (n9-harness `bionic_bootstrap.c:1606-1613, 1638-1644`):
+```
+/* n9 WAVE1 KILL SWITCH ... the 8 bridge patches are all
+ * allocator entry points, never the page source; they do not make 1dbe4fc see
+ * a registered pointer.  Default OFF; opt in only with SOBER_ALLOCATOR_PATCH=1.
+ * 1dbe4fc is NEVER bridged. */
+static int bb_alloc_patch_enabled(void) {
+    const char *e = getenv("SOBER_ALLOCATOR_PATCH");
+    return (e && e[0] == '1' && e[1] == '\0') ? 1 : 0;
+}
+...
+if (!getenv("SOBER_BOOTSTRAP_NO_BRIDGES") && bb_alloc_patch_enabled()) {
+    if (install_bridges(base) != 0) return set_err("failed to install mimalloc bridges");
+    ...
+} else {
+    fprintf(stderr, "[N9_ALLOC_PATCH] OFF (default); guest allocator "
+                    "unpatched; 1dbe4fc NOT bridged\n");
+```
+- **ON**: 8 guest allocator thunks → glibc host malloc/free; embedded mimalloc bypassed at those entries only; calloc slot `0x726c0c0` patched too.
+- **OFF (default)**: all 8 thunks stay original guest code → embedded mimalloc remains the backend; probe `0x1dbe4fc` untouched. Raw log `n9off_1.err:19 [N9_ALLOC_PATCH] OFF (default); guest allocator unpatched; 1dbe4fc NOT bridged`.
 
-Every call (nine, all internal guest allocator helpers, quoted):
-> `1db9a5b: call 1dbad62` with `1db9a56: mov $0x20,%edi`  (allocate 0x20)
-> `1db9a66: call 1dbe4fc` → `1db9a6b: mov %eax,%r15d`     (usable size #1)
-> `1db9a71: call 1dbdfba` → `1db9a76: mov %rax,%r14`      (end ptr #1)
-> `1db9a83: call 1dbe559`                                  (free #1)
-> `1db9a9b: call 1dbab02` with `rdi=[0x7cdedd8]`          (allocate #2)
-> `1db9aa6: call 1dbe4fc` → `1db9aab: mov %eax,%ebx`      (usable size #2)
-> `1db9ab0: call 1dbdfba` → `1db9ab5: mov %rax,%r14`      (end ptr #2)
-> `1db9ac2: call 1dbe5be`                                  (free #2)
-then `1db9add: ret`.
+## PROVEN — the two fatal messages are two guards on the SAME reporter/int3
 
-**No `getenv`, no syscall, no JNIEnv, no pthread/thread creation** — the full
-function body is quoted above and contains none of those. Probe logic quoted:
-`1db9a88: xor %ebx,%ebx`; `1db9a8a: test %r15b,%r15b` /
-`1db9a8d: je 1db9acf` (result 0 if first query returned 0);
-`1db9a8f: cmp %r12,%r14` / `1db9a92: jb 1db9acf` (result 0 if end ptr < base);
-second query `1db9aa6/1db9aab`, `1db9ac7: cmp %r12,%r14` /
-`1db9aca: setae %al` / `1db9acd: and %al,%bl`, then the store. So the probe is
-a pure allocator usable-size/geometry check, matching `fflag_default.c:111-113`
-("mimalloc usable-size/allocator feature probe").
+Both pass through dispatcher `0x6caed5d` → reporter `0x6caed7c` → `6caef66: int3`:
+```
+6caed61: 83 ff 0a              cmp    $0xa,%edi
+6caed64: b8 0a 00 00 00        mov    $0xa,%eax
+6caed69: 0f 42 c7              cmovb  %edi,%eax        ; index = min(edi,10)
+6caed6c: lea 0x570e5d(%rip),%rcx   # 721fbd0
+6caed73: mov (%rcx,%rax,8),%rdi
+6caed77: call 6caed7c
+```
+- **mimalloc HardAssert**: `23a1465: lea #4c0d2b,%rsi` ("Expect to have mimalloc working, but it was not detected!"), `23a146c: xor %edi,%edi` (**index 0**), `23a146e: call 6caed5d`. Reached via the probe/flag path (n7 static-A #697: `239d215 call 239ead3` printer → `239eb14 cmpb $0,0x7cdede0` → `23a1424 je 23a1465`).
+- **TaskScheduler-before-flags**: raw disasm from `analysis/lua-rbxcrash-flags-loaded.md:30-35`:
+```
+23862b0: cmpb $0x0, 0x7cdd149(%rip)     ; "flags loaded" latch
+23862b7: je   2386588                   ; latch==0 -> report + crash
+2386588: lea  0x36a389(%rip),%rsi       ; "Can't initialize the TaskScheduler before flags have been loaded"
+238658f: mov  $0x6,%edi                 ; crash type 6 (FatalRuntimeError)
+2386594: call 0x6caed5d                 ; same dispatcher
+```
+and `src/jni/flags_latch_default.h:9-10` quotes `RBXCRASH "Can't initialize the TaskScheduler before flags have been loaded" (int3 at 0x6caef67)`.
 
-## (2) Polarities — PROVEN
+## PROVEN / UNPROVEN — observed message in n9 A/B logs
 
-- `0x239eb14: cmpb $0,0x7cdede0` (in printer `0x239ead3`): if the byte is
-  **ZERO**, `0x239eb1b: je 0x23a1422` is taken → assertion branch. If NON-ZERO,
-  fall through to `0x239eb21: test %al,%al` (version check result).
-- `0x23a1422: test %al,%al` / `0x23a1424: je 0x23a1465`: if `%al == 0`
-  → **jump to `0x23a1465`**, skipping the log block; if `%al != 0` → log
-  `"[DFLog::Mimalloc] Mimalloc integration is NOT detected"` (`0x23a1445: lea
-  #3a3078,%rcx`, `0x23a1460: call 232de10`) and then **fall through to the
-  same `0x23a1465`**. Both polarities converge there.
-- `0x23a1465` is **not a branch** — it is `lea … #0x4c0d2b,%rsi`, the message
-  pointer for the HardAssert call; the branch that targets it is the `je` at
-  `0x23a1424`. From `0x23a1465` → `0x23a146c: xor %edi,%edi` →
-  `0x23a146e: call 0x6caed5d` (dispatcher) → reporter `0x6caed7c` →
-  `0x6caef4f`/`0x6caef58` → `0x6caef66: int3`.
+Raw logs show **TaskScheduler** in both arms (n9 allocator ON and OFF):
+```
+n9_1.err:3717 RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)
+n9off_1.err:3717 RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)
+```
+So the 8 patches alone do **not** switch the message — both arms fault on the flags-latch guard (latch `0x7cdd149 == 0`), because the patches never touch `0x1dbe4fc`/page source (kill-switch comment above). which guard fires first also depends on ctor3/probe state (UNPROVEN from static bytes alone).
 
-So: flag ZERO at `0x239eb14` selects the assert path; `al==0` at `0x23a1422`
-skips only the DFLog line, and **either** polarity of that `je` ends at the
-HardAssert dispatcher.
+## RETRACTED / NOT done
 
-## (3) Replay safety — PROVEN / UNPROVEN
-
-SAFE by static evidence: ctor3 uses only the guest allocator, allocates/frees
-two 0x20-byte blocks, writes two guest BSS globals, needs **no env var** (no
-getenv), **no thread** (no pthread), and makes **no JNI/fake-return calls**.
-Prerequisite: the guest allocator must be ready — ctor3's first call is
-`0x1dbad62` (guest malloc) at `0x1db9a5b`; the harness already replays ctor[2]
-which initializes the arena (prior wave log `ctor[2] rva=0x1dbe2b1` with
-`arena_table` set). Replaying ctor3 in init_array order after ctor0 and before
-ctor3602 is therefore consistent with its allocator dependency, and it sets
-`0x7cdede0` through genuine guest code (not a hand-set byte).
-
-UNPROVEN: that the two allocations actually succeed in the harness (no run
-performed in this wave); that `0x7cdede0` becomes non-zero (the probe result
-depends on the real allocator's usable-size geometry). Neither is a static
-safety blocker, but both need the harness A/B run.
-
-## What NOT done
-No apply/build, runs/gdb/perf, device/AVD/Frida/phone, new captures, guest
-writes, gate edits, seeder, fake returns, remaps, or hand-setting `0x7cdede0`,
-no credentials, no captures/logs/tokens in git.
-
-## First divergence + next step
-First divergence: harness leaves `0x7cdede0` zero because ctor3 is skipped;
-real boot runs it. Next: harness A/B ctor3 OFF/ON x3, quoting `[0x7cdede0]`
-before/after, the HardAssert, and the faulting instruction.
+- RETRACTED: "8 patches ON ⇒ mimalloc HardAssert, OFF ⇒ TaskScheduler" — n9 A/B shows TaskScheduler in both; the two messages are separate guards on one int3 site.
+- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; no captures/tokens in git.
