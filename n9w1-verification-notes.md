@@ -53,3 +53,16 @@ No guest writes/hand-set bytes/fake returns/probe bridge. Push own (plumbing if 
   size/SHA, w18 line 74 notes, w19 line 149 report/scripts; w25 phone apk already recorded cleaned.
 - Wave1 quotes re-verified; SHA 0 verified lines in n9off runs (verified=0/provenance=1/openfail=1),
   diagnostic-only per lead. Secrets 112 self-matches; git no captures/tokens.
+- static-B #717 verified: 8 allocator bridge RVAs, install_bridge trampoline, default OFF,
+  1dbe4fc NEVER bridged; message-switch RETRACTED (both arms 3717 FatalRuntimeError); flags-latch
+  23862b0/23862b7 je 2386588/2386594 call 6caed5d verified.
+
+## Wave3 verification (task #720)
+- harness #721 all quotes verified from surviving logs (no new runs): fault guest+0x6caef67 int3
+  6caef66 6/6; [N7_FAULT_BYTES] latch 0x7cdd149=0 AND 0x7cef650=0 at line 3720 in all 6 logs
+  (tids 415380/415922/416825 ON, 422575/423081/423844 OFF). LATCH=0 BOTH configs.
+- n8-harness dir + all n8*_*.err GONE -> earlier latch=1 / mimalloc-HardAssert claims RETRACTED
+  as unverifiable from surviving evidence (inline quotes remain, nothing deleted).
+- Fatal msg 6/6 TaskScheduler FatalRuntimeError at 3717; no mimalloc HardAssert in these logs.
+- SHA 0 verified lines, openfailed 6/6 -> DIAGNOSTIC ONLY, NO rung credit.
+- Secrets scan 113 self-matches; git no captures/tokens; no file deletions by audit.

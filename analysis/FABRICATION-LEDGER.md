@@ -1496,3 +1496,35 @@ then `2386594 call 6caed5d` — SAME dispatcher as the mimalloc message. **RETRA
 arms (`n9_1.err:3717` patch ON, `n9off_1.err:3717` patch OFF) reads
 `RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`.
 No runs/device/writes/gate/apply; 1dbe4fc not bridged.
+
+### n9 WAVE3 audit (task #720) — latch=0 in both configs; all runs diagnostic-only
+
+Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+**harness #721 — all quoted claims verified against surviving logs (NO new runs):**
+Faulting instruction first `guest+0x6caef67` (int3 `0x6caef66`, bytes `89 c0 e8 62`, signal=5,
+si_addr=0, rc=139) 6/6. `[N7_FAULT_BYTES] [0x7cdd149]=0x0000000000000000 [0x7cef650]=0x0000000000000000`
+at line 3720 in ALL SIX logs — tids 415380/415922/416825 (patch ON `n9_*`) and
+422575/423081/423844 (patch OFF `n9off_*`); audit verified each line. **LATCH IS ZERO IN BOTH
+CONFIGS** — earlier waves reported latch=1 at fault, but `/tmp/opencode/n8-harness/` and all
+`n8*_*.err` are GONE (audit verified: directory MISSING, 0 logs), so those earlier latch=1 /
+mimalloc-HardAssert claims are **RETRACTED as unverifiable from surviving evidence** (values remain
+only as inline quotes in earlier ledger text — not deleted). All other latch lines also zero:
+`[flags-latch] route=none (inert; no guest call, latch=0, withhold=0)`,
+`[app-shell] flags-latch module -> rc=-2 latch=0`, `[app-shell] crashpad-return module -> rc=1
+latch=0` (6/6 each). Fatal message 6/6 `RBXCRASH: FatalRuntimeError (Can't initialize the
+TaskScheduler before flags have been loaded)` at line 3717; no mimalloc HardAssert survives in
+these logs (consistent with static-B #717 message-switch retraction). Allocator-patch banner
+`[N9_ALLOC_PATCH] OFF (default); guest allocator unpatched; 1dbe4fc NOT bridged` only in n9off
+(patch-ON runs have no banner by design). ctor3 replay OFF in all 6 (`grep -c N8_CTOR3` = 0).
+
+**SHA per wave1 run — reconfirmed diagnostic-only:** `grep -c 'avd-boundary] verified'` = 0/0/0/0/0/0;
+instead `[avd-boundary] open failed: /tmp/opencode/w11-arg0.json` 6/6 at line 3705. Per lead,
+runs with open-failed input are DIAGNOSTIC ONLY, NO rung credit; any "SHA 8215519f verified" claim
+from these logs would be UNSUPPORTED. Audit made no rung claim and deleted no file.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 113 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only. Marker WITHHELD.
