@@ -1478,3 +1478,21 @@ open-failed input is DIAGNOSTIC ONLY, no rung credit. No SHA-verified-input succ
 → OUTPUT: 112 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only. Marker WITHHELD.
+
+### n9w2 static-B #717 — allocator patch semantics, message-switch RETRACTED
+
+**static-B #717 — all quoted claims verified:** eight patched bridge RVAs (`bootstrap_profile.h:62-74`
+`0x1dbad62/0x1dbdfba/0x227aafa/0x1dbab02/0x1dd60e5/0x1dbe559/0x253225e/0x231f0e2`) all allocator
+entry points; `install_bridge` (`bionic_bootstrap.c:838-873`) overwrites 12 B with
+`movabs rax,imm64 ; jmp rax` to host `g_bb_ops` → `host_allocate` (`:274` plain glibc `malloc(n)`),
+weak `mi_*` symbols dead. Control at `:1606-1613`/`:1638-1644`: default OFF, opt-in
+`SOBER_ALLOCATOR_PATCH=1`, kill-switch note "8 patches all allocator entry points, never page source;
+do not make 1dbe4fc see registered pointer; 1dbe4fc NEVER bridged"; OFF log `n9off_1.err:19`.
+Two fatal messages share dispatcher: `6caed5d → 6caed7c → int3 6caef66` — mimalloc message
+`23a1465 lea #4c0d2b,%rsi` / `23a146c xor %edi,%edi` (idx 0, reached via printer `239d215` →
+flag `0x7cdede0`); TaskScheduler message `23862b0 cmpb $0,0x7cdd149` followed by `23862b7 je 2386588`
+(flags-latch byte == 0 selects TaskScheduler path), `2386588 lea #36a389,%rsi`, `238658f mov $6,%edi`,
+then `2386594 call 6caed5d` — SAME dispatcher as the mimalloc message. **RETRACTED: any ON/OFF message switch** — audit verified line 3717 in BOTH
+arms (`n9_1.err:3717` patch ON, `n9off_1.err:3717` patch OFF) reads
+`RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`.
+No runs/device/writes/gate/apply; 1dbe4fc not bridged.
