@@ -1,6 +1,6 @@
 # n10w1 #726 static-B — load→AppStart native/event table (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), TaskScheduler FatalRuntimeError, latch `[0x7cdd149]=0` 6/6. DELETE NOTHING; no network/runs/writes; object OFF; w11-arg0.json LOST ⇒ all runs MODIFIED INPUT, NO rung credit.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), shared reporter `0x6caed7c`. Message depends on which guard fails: n9 runs had latch `[0x7cdd149]=0` → TaskScheduler FatalRuntimeError; n10w1 A/B (harness #725, modified input `w15-flags-1.json`) had latch=1, `[0x7cef650]=0` → mimalloc HardAssert. DELETE NOTHING; no network/runs/writes; object OFF; w11-arg0.json LOST ⇒ all runs MODIFIED INPUT, NO rung credit.
 
 ## Source of quotes — important
 
