@@ -19,7 +19,7 @@ TaskScheduler setup lives in `nativePostClientSettingsLoadedInitialization3+0x23
 238658f: bf 06 00 00 00        mov    $0x6,%edi       ; index 6
 2386594: e8 c4 87 92 04        call   6caed5d         ; shared dispatcher -> int3 6caef66
 ```
-**Prerequisite 1 — flags-loaded latch `0x7cdd149 != 0`.** static-A #719 n9w3 enumerated exactly six `movb $0x1,0x7cdd149` writers: `0x2eb7520` (in `0x2eb7155`, called from `nativeInitClientSettings 0x2359277` at `0x235933d`, gated by parse-ctx `0x7697d08==1` → skipped), `0x2ec9fae` (Crashpad, gated channel `0x72a3718`), and `0x56d31a3/0x56d3386/0x56d6a4b/0x56d6b80` (dismissAll family, no direct callers). Harness log `n9_1.err:3695 [flags-latch] route=none (inert, latch=0)`; fault bytes show latch 0 in all six runs — hence the guard fires.
+**Prerequisite 1 — flags-loaded latch `0x7cdd149 != 0`.** static-A #719 n9w3 enumerated exactly six `movb $0x1,0x7cdd149` writers: `0x2eb7520` (in `0x2eb7155`, called from `nativeInitClientSettings 0x2359277` at `0x235933d`, gated by parse-ctx `0x7697d08==1` → skipped), `0x2ec9fae` (Crashpad, gated channel `0x72a3718`), and `0x56d31a3/0x56d3386/0x56d6a4b/0x56d6b80` (dismissAll family; static-A #724 corrected #719's "no direct callers" — they do have static callers `0x2eb8296→0x56d2d35`, `0x56d6765→0x56d6779`, but no genuine CppProxy route). Harness log `n9_1.err:3695 [flags-latch] route=none (inert, latch=0)`; fault bytes show latch 0 in all six runs — hence the guard fires.
 
 **Prerequisite 2 — scheduler nesting prime on `FunctionMarshaller`.** `src/linux/guest_app_shell.c:1176-1177`:
 ```
