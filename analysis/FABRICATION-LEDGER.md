@@ -1685,8 +1685,17 @@ has sole direct writer `2279a8f mov %al,0x7cef650` in ctor3602 `0x2279a47` (`227
 "DebugForceTerminateOnRbxCrash"` (surviving analysis ledger table). The two bytes are independent:
 ctor3 skip explains `0x7cdede0=0` and the DFLog "Mimalloc integration is NOT detected" string;
 the HardAssert second guard `6caef58 cmpb $0,0x7cef650` reads a separate FFlag byte, default 0.
-static-A #732 concurrently correcting "NO engine writer" to "no direct writer; indirect FFlag
-registration writer exists" (`report_w3_corr.md` pending at audit time) — consistent.
+static-A #732 `report_w3.md:33-35` absolute "NO engine writer can make `0x7cef650` nonzero" /
+"BLOCKED" is **RETRACTED as phrased**; static-A issued `report_w3_corr.md` (pushed f3a9493) with
+`raw_a03_indirect_writer.txt`. Audit verified verbatim in surviving
+`/tmp/opencode/n9-harness/analysis/A03-fflag-loaded-state.md`:
+`0x227d51f: lea 0x7cef650,%rdx ; OUT-BYTE pointer <<< the only non-ctor xref to our byte`;
+`0x2365467 mov %al,(%r15) ; <<< THE WRITE: 1 goes into 0x7cef650`;
+"Every real value update goes through the pointer stored at descriptor +0xa8; there is no direct
+mov $1 to the address anywhere in the binary". Corrected status: sole DIRECT writer = ctor3602
+`2279a8f` default ZERO; an INDIRECT FFlag-registration writer EXISTS (`227d511 → 227c18e → 2365467`).
+UNPROVEN: harness reaches these in faulting runs; runtime parse `al`; shadow-FValues latch
+`0x7cdd148` divert at `2365465 jne 2365481`. n10 fault bytes remain `[0x7cef650]=0`. No rung credit.
 
 **static-B #733 — all quotes verified:** n10 chain latch hit `[N10_LATCH_HIT 0x2eb7520] hit=1 tid=511649
 guest_RA=guest+0x0000000002359342` (from nativeInitClientSettings `0x2359277` → `0x2eb7155`);
