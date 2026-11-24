@@ -1496,3 +1496,85 @@ then `2386594 call 6caed5d` — SAME dispatcher as the mimalloc message. **RETRA
 arms (`n9_1.err:3717` patch ON, `n9off_1.err:3717` patch OFF) reads
 `RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`.
 No runs/device/writes/gate/apply; 1dbe4fc not bridged.
+
+### n9 WAVE3 audit (task #720) — latch=0 in both configs; all runs diagnostic-only
+
+Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+**harness #721 — all quoted claims verified against surviving logs (NO new runs):**
+Faulting instruction first `guest+0x6caef67` (int3 `0x6caef66`, bytes `89 c0 e8 62`, signal=5,
+si_addr=0, rc=139) 6/6. `[N7_FAULT_BYTES] [0x7cdd149]=0x0000000000000000 [0x7cef650]=0x0000000000000000`
+at line 3720 in ALL SIX logs — tids 415380/415922/416825 (patch ON `n9_*`) and
+422575/423081/423844 (patch OFF `n9off_*`); audit verified each line. **LATCH IS ZERO IN BOTH
+CONFIGS** — earlier waves reported latch=1 at fault, but `/tmp/opencode/n8-harness/` and all
+`n8*_*.err` are GONE (audit verified: directory MISSING, 0 logs), so those earlier latch=1 /
+mimalloc-HardAssert claims are **RETRACTED as unverifiable from surviving evidence** (values remain
+only as inline quotes in earlier ledger text — not deleted). All other latch lines also zero:
+`[flags-latch] route=none (inert; no guest call, latch=0, withhold=0)`,
+`[app-shell] flags-latch module -> rc=-2 latch=0`, `[app-shell] crashpad-return module -> rc=1
+latch=0` (6/6 each). Fatal message 6/6 `RBXCRASH: FatalRuntimeError (Can't initialize the
+TaskScheduler before flags have been loaded)` at line 3717; no mimalloc HardAssert survives in
+these logs (consistent with static-B #717 message-switch retraction). Allocator-patch banner
+`[N9_ALLOC_PATCH] OFF (default); guest allocator unpatched; 1dbe4fc NOT bridged` only in n9off
+(patch-ON runs have no banner by design). ctor3 replay OFF in all 6 (`grep -c N8_CTOR3` = 0).
+
+**SHA per wave1 run — reconfirmed diagnostic-only:** `grep -c 'avd-boundary] verified'` = 0/0/0/0/0/0;
+instead `[avd-boundary] open failed: /tmp/opencode/w11-arg0.json` 6/6 at line 3705. Per lead,
+runs with open-failed input are DIAGNOSTIC ONLY, NO rung credit; any "SHA 8215519f verified" claim
+from these logs would be UNSUPPORTED. Audit made no rung claim and deleted no file.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 113 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only. Marker WITHHELD.
+
+### n9w3 static-A #719 (addendum) — flags-loaded latch writers
+
+All quoted claims verified: exactly six writers of `0x7cdd149`, all `movb $0x1`, in
+`raw_all_7cdd149.txt` — `2eb7520` (fn `2eb7155`, caller `235933d` in nativeInitClientSettings
+`2359277`), `2ec9fae` (fn `2ec9eed` Crashpad), `56d31a3`/`56d3386` (fn `56d2d35` dismissAll),
+`56d6a4b`/`56d6b80` (fn `56d6779`); 2269 other refs are reads. Host gates
+`flags_latch_default.c:73-75` (route 1 nativeInitClientSettings → `2eb7155` → `2eb7520`, skipped
+because parse-ctx `0x7697d08 == 1` in default state, latch stays 0) and `:91-95` (route 2 Crashpad
+`2eca720` → `2ec9fae`, gated by channel `0x72a3710/0x72a3718` from genuine String[] argv). Harness
+`n9_1.err:3695 [flags-latch] route=none (inert; no guest call, latch=0, withhold=0)` 6/6. Capture
+`0b970` ×6 order: `nativeInitClientSettings` → `Exception=HttpError:InvalidUrl` (flags FAILED) →
+`nativePostClientSettingsLoadedInitialization3` (#552) → `FatalRuntimeError (Can't initialize the
+TaskScheduler before flags loaded)`; writer precedes #552, guard `23862b0`/`je 23862b7` inside #552.
+UNPROVEN: 56d* reach/gates. Consistent with wave3 latch=0 finding.
+
+### n9 WAVE4 audit (task #723) — TaskScheduler prerequisites + gate correction
+
+Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+**Faulting instruction first (unchanged, from surviving logs):** guest int3 `0x6caef66` (RIP
+`0x6caef67`), signal=5, si_addr=0, rc=139; `[N7_FAULT_BYTES] [0x7cdd149]=0` 6/6; fatal message
+`RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)` at
+line 3717 in all 6. All runs remain DIAGNOSTIC ONLY (SHA 0 verified, open-failed input), NO rung credit.
+
+**static-B #722 — all quoted disasm verified:** TaskScheduler setup `0x2385fa6` config init +
+allocators (`2386269 call 1dd5ee7`, `23862a0 call 2a15dd0`); guard `23862b0 cmpb $0,0x7cdd149`
+/ `23862b7 je 2386588`; reporter `2386588 lea #36a389,%rsi`, `238658f mov $6,%edi`,
+`2386594 call 6caed5d` (same dispatcher). Prereqs: (1) latch writers static-A #719, route
+`route=none` latch=0 6/6; (2) scheduler prime `guest_app_shell.c:1176-1177 install`,
+`:1897-1901 on_attach FunctionMarshaller` opt-in, `2a132c0/2a0daa0/2a0daf7` UNPROVEN (A06 gone);
+(3) MessageBus prime `24a8e44(4)` before `0x24abf96` (task507:32,59-70). Capture `#727 0x247dc8d`,
+`#734 0x24abf96`, `#736 0x25448f6` from guest_app_shell.c; numbering/order UNPROVEN (capture logs gone).
+
+**static-A #724 — all quoted disasm verified (several by direct objdump on surviving engine):**
+gate fn `0x2eb7155` — `2eb71a1 movb $0,0x7697d08` (clear), `2eb71de call 235a58c` (logger),
+`2eb71e8 cmpb $0,0x7697d08` / `2eb71ef je 2eb72bd` ⇒ byte==0 selects LATCH PATH `0x2eb7520`;
+setters `2eb7945/2eb8512/2ee4ad0 movw $0x100,0x7697d08` (low byte 0), byte=1 via parser
+`235af5d mov %eax,0x58(%rbx)`, `235a6b6`/`235ab85 movb $1,0x58(%reg)` in `235a58c`. T2_5 trace
+'g7697d08=1 → G2 FAILS' (which writer UNPROVEN). Needed for genuine latch: real `2359277` +
+valid non-empty jstrings + settings JSON leaving parse_ctx+0x58==0 (JSON UNPROVEN). **`#719 CORRECTION`:**
+56d* DO have static callers — audit verified by direct objdump `2eb8296 call 56d2d35` and
+`56d6765 call 56d6779`; the earlier "no direct callers" was too strong (header says no genuine
+CppProxy route). Latch=0 in harness explained by `route=none` 6/6.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 114 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only. No file deleted by audit. Marker WITHHELD.
