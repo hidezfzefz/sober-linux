@@ -1431,3 +1431,50 @@ Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY
 `grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
 → OUTPUT: 81 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log` fixtures only. Marker WITHHELD.
+
+## Overnight n9 WAVE2 audit (task #718) — restoration status + affected claims
+
+Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+**Ledger-cited files — recheck after wave2 restorations:** re-extraction yields 49 unique absolute
+paths; 27 now EXIST (restored mid-wave), 22 remain MISSING. Restored and verified by audit:
+`/tmp/opencode/auth-base.apk` (97621690 B, SHA `114a6f8ed6f0f974…`), `/tmp/opencode/w15-flags-1.json`
+(78 B, SHA `4d50a0ec2eb3f10a8…`), guest engine `/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so`,
+n1-n5 audit worktrees, w18-w32 audit worktrees, `w29-harness/report.md`, `w30-static/report.md`.
+Remaining MISSING (22): 18 glob-prefix/dir entries (e.g. `/tmp/opencode/n1-`, `/tmp/opencode/w28-`,
+`/tmp/opencode/uploads`, `/tmp/opencode/n2-dex/`) and 4 named files:
+`/tmp/opencode/w11-arg0.json`, `/tmp/opencode/w18-audit/audit-notes.md`,
+`/tmp/opencode/w19-harness/report.md`, `/tmp/opencode/w25-phone/base.apk`.
+`find /home/user /tmp -size 1533221c` → no file of authoritative arg0 size; no `w11-arg0.json` copy.
+
+**Claims marked UNPROVEN (NOT deleted, per instruction) — originals unavailable for re-verification:**
+- **Entry 22 (W29 leaked-credit finding)** — evidence glob `/tmp/opencode/w2[2-8]-harness/*.err`:
+  all w22-harness … w28-harness directories MISSING. The 88 `[avd-boundary]` lines / 16 rung1 PASS
+  citations survive only as inline ledger quotes; no raw log can be re-opened. Status: **UNPROVEN as
+  re-verifiable** (finding was quoted-verified at the time; not retracted, not deleted).
+- **Line 419 wording** "authoritative `w11-arg0.json` remains 1,533,221 B / SHA `8215519f…`" —
+  file gone, no copy; **UNPROVEN** (size/SHA cannot be re-measured; provenance line in logs is a
+  hardcoded constant, not verification).
+- **w18 line 74** "Full redacted notes: `/tmp/opencode/w18-audit/audit-notes.md`" — file MISSING;
+  claims sourced only from that file are **UNPROVEN as re-verifiable**.
+- **w19 line 149** "Final re-verification after harness19 #589 reported (`w19-harness/report.md`,
+  scripts `memread.py`/`memread2.py`, `stop.err`, source `native_jni.c:1416-1429`)" — report file
+  MISSING; those specific log/script citations are **UNPROVEN as re-verifiable** (source `.c` survives).
+- **w25 line 323** `/tmp/opencode/w25-phone/base.apk` — already recorded in-ledger as "cleaned up
+  (out of git), cannot be re-audited locally"; no change (consistently UNPROVEN).
+
+**Wave1 quotes re-verified again (all still present):** static-A `1db9a66/1db9aa6 call 1dbe4fc`
+(two ctor3 callers), fault `0x6caef66 int3`; harness `[N9_ALLOC_PATCH] OFF (default)`,
+`[N8G AT_FAULT]` all globals zero, `[W28_FAULT_INSN] … guest_rva=0x06caef67`,
+`RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`,
+`[avd-boundary] open failed: /tmp/opencode/w11-arg0.json`.
+
+**SHA per wave1 run — reconfirmed diagnostic-only:** `grep -c 'avd-boundary] verified'` in
+`n9off_1/2/3.err` = 0/0/0 (verified=0, provenance=1, openfail=1 each). Per lead, Run D with
+open-failed input is DIAGNOSTIC ONLY, no rung credit. No SHA-verified-input success claim.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 112 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only. Marker WITHHELD.
