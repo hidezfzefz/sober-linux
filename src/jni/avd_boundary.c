@@ -107,7 +107,11 @@ int sober_avd_boundary_fail_closed(void)
                         "boundary replay disabled\n");
         return 0;
     }
-    const char *path = SOBER_AVD_BOUNDARY_PATH;
+    /* Same path resolution as sober_avd_boundary_load(): the diagnostic
+     * unverified env may point at a modified input file. */
+    int modified_path = getenv(SOBER_AVD_BOUNDARY_UNVERIFIED) != NULL;
+    const char *env_path = modified_path ? getenv(SOBER_AVD_BOUNDARY_PATH_ENV) : NULL;
+    const char *path = (env_path && *env_path) ? env_path : SOBER_AVD_BOUNDARY_PATH;
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
@@ -143,6 +147,19 @@ int sober_avd_boundary_fail_closed(void)
                 g_n10_arg0_sha_hex);
     } else {
         g_n10_arg0_sha_hex[0] = '\0';
+        const char *opt = getenv("SOBER_N10_MODIFIED_INPUT");
+        if (opt && opt[0] == '1' && opt[1] == '\0') {
+            /* n10 EXPLICIT diagnostic opt-in (default OFF): allow a mismatched
+             * SHA to proceed ONLY for diagnostic runs. g_w29_arg0_sha_ok stays
+             * 0, so every rung printer emits MODIFIED-INPUT (no credit) and
+             * PASS-BOUNDARY-REPLAY remains unreachable. */
+            fprintf(stderr, "[avd-boundary] MODIFIED-INPUT (no rung): "
+                            "diagnostic opt-in SOBER_N10_MODIFIED_INPUT=1; "
+                            "sha256=%s want=%s\n", hex,
+                    SOBER_AVD_BOUNDARY_SHA256);
+            free(data);
+            return 1;
+        }
         fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
                         "sha256=%s want=%s\n", hex, SOBER_AVD_BOUNDARY_SHA256);
     }
