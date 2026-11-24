@@ -13,7 +13,7 @@ FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`, bytes `89 c
 ## PROVEN — decision 008 (user decision, keep as-is)
 
 `analysis/A05-skipped-ctors.md:22`: "DECISION 008 skips `init_array` indices **0, 1, 3, 4**; index 0 (`0x2e62390`) is now replayed via `SOBER_REPLAY_FFLAG_CTOR`". Table row `:193`: "3 (`0x1db9a40`) | mimalloc probe words `0x7cdedd8`, `0x7cdede0` | **NO** | only reader `0x239eb14` selects a DFLog message; zero functional effect".
-Because ctor3 is skipped, its probe bool `0x7cdede0` stays 0 (`1db9acf: mov %bl,0x7cdede0` not executed) → `239eb14: cmpb $0,0x7cdede0` selects "Mimalloc integration is NOT detected" (`0x3a3078`) → path `23a1424 je 23a1465` → HardAssert message `0x4c0d2b`. This is a **deliberate scoping decision**, not a defect to patch; mimalloc flag `0x7cef650=0` is its downstream consequence. Changing it needs an explicit user decision.
+Because ctor3 is skipped, its probe bool `0x7cdede0` stays 0 (`1db9acf: mov %bl,0x7cdede0` not executed) → `239eb14: cmpb $0,0x7cdede0` selects "Mimalloc integration is NOT detected" (`0x3a3078`) → path `23a1424 je 23a1465` → HardAssert message `0x4c0d2b`. This is a **deliberate scoping decision**, not a defect to patch; changing it needs an explicit user decision. **RETRACTED (audit #738):** "mimalloc flag `0x7cef650=0` is a downstream consequence of ctor3 skip" — the bytes are **independent**. `0x7cdede0` ← skipped ctor3 `0x1db9acf`; `0x7cef650` ← ctor3602 `0x2279a8f` (`xor %eax,%eax` ⇒ zero) plus an indirect FFlag out-pointer `0x227d51f → 0x227c18e → 0x2365467` (static-A #732 correction: no *direct* engine writer, an indirect registration writer exists).
 
 ## RETRACTED / UNPROVEN
 
