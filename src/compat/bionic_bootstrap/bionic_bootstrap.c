@@ -1603,6 +1603,16 @@ static int install_caller_ptr_fix(uintptr_t base)
     return 0;
 }
 
+/* n9 WAVE1 KILL SWITCH (host-only, ledgered): the 8 bridge patches are all
+ * allocator entry points, never the page source; they do not make 1dbe4fc see
+ * a registered pointer.  Default OFF; opt in only with SOBER_ALLOCATOR_PATCH=1.
+ * 1dbe4fc is NEVER bridged. */
+static int bb_alloc_patch_enabled(void)
+{
+    const char *e = getenv("SOBER_ALLOCATOR_PATCH");
+    return (e && e[0] == '1' && e[1] == '\0') ? 1 : 0;
+}
+
 static int do_apply(uintptr_t base)
 {
     if (bootstrap_debug()) {
@@ -1625,10 +1635,14 @@ static int do_apply(uintptr_t base)
     /* Install bridges first: the data-seed initializers may allocate. */
     sober_bootstrap_phase = 2;
     BDEBUG("installing 6 bridges");
-    if (!getenv("SOBER_BOOTSTRAP_NO_BRIDGES")) {
+    if (!getenv("SOBER_BOOTSTRAP_NO_BRIDGES") && bb_alloc_patch_enabled()) {
         if (install_bridges(base) != 0) return set_err("failed to install mimalloc bridges");
         if (patch_calloc_slot(base) != 0) return set_err("failed to patch calloc slot 0x726c0c0");
-    } else BDEBUG("BRIDGES DISABLED by env");
+    } else {
+        fprintf(stderr, "[N9_ALLOC_PATCH] OFF (default); guest allocator "
+                        "unpatched; 1dbe4fc NOT bridged\n");
+        BDEBUG("BRIDGES DISABLED (default OFF or env)");
+    }
     sober_bootstrap_phase = 3;
     BDEBUG("seeding 4 slots");
     if (bootstrap_debug()) {
