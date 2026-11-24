@@ -1,24 +1,44 @@
-# n7w2 #692 static-B — real boot: library load → AppStart (READ-ONLY)
+# n9w4 #722 static-B — TaskScheduler init prerequisites (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST (n7w1): guest `int3 0x6caef66` (RIP `0x6caef67`) HardAssert mimalloc; fault bytes `[0x7cdd149]=1, [0x7cef650]=0` 3/3. No runs/writes.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), SIGTRAP; `[0x7cdd149]=0`, `[0x7cef650]=0` 6/6 (harness #721). No runs/writes.
 
-## Backlog 5 — real-boot order (all raw quotes)
+## PROVEN — TaskScheduler guard and its prerequisites (raw disasm)
 
-| # | Real-boot step | Evidence | Harness divergence |
-|---|---|---|---|
-| 1 | Android linker applies `DT_ANDROID_RELA` (APS2) and runs **all 3618** init_array ctors | `android_relocs.h:8-12` "plain dlopen() leaves the 3618-entry DT_INIT_ARRAY at RVA 0x7220e58 zero-filled"; `guest_dlopen_host.c:824` std ranges `{2,3},{5,3618}` | replays only 2 and 5..3617; skips 0,1,3,4 |
-| 2 | ctor[0] FFlag registry `0x2e62390` runs as a genuine ctor | `guest_app_shell.c:1411-1419` decision 008 deliberate skip; log `n5_1.err:3687 [fflag-default] replayed guest ctor 0x2e62390 (FFlag registry): guard=257 ... ctors 1/3/4 not required ...` | skipped genuine call; host-side replay **after** ctor3602 (3687 > 3652) |
-| 3 | ctor[1] protobuf once-guard `0x1dba8f3`, ctor[3] allocator thread init `0x1e47927`, ctor[4] time baseline run | `guest_dlopen_host.c:824` skip; `:850-857` `SOBER_CTOR1`; `:851-854` "allocator thread init after ctor[2]" only native/all ranges; log line 3687 names them | never run in std profile |
-| 4 | ctor3602 `0x2279a47` writes `0x7cef650` (mimalloc/FFlag byte) unconditionally to 0 | static-A #687: `2279a4b xor %eax,%eax; 2279a8f mov %al,0x7cef650`, no detection call; log `n5_1.err:3652 [harness] ctor[3602] rva=0x2279a47` | same write; harness then faults because byte stays 0 |
-| 5 | ART VM calls `JNI_OnLoad` `0x227af5a` | `n5_1.err:3702 [app-shell] W24 JNI_OnLoad FIRST 0x227af5a -> ver=0x10006` | harness calls it explicitly first (JNI_OnLoad-first ON) |
-| 6 | Lifecycle natives in captured order: #67 PreCreated (2406ms), #100 PreResumed (18665ms), #105 OnResumed (20511ms) | `w12-j2n-300.log:82,115,120` quoted in report.md | N14 replays only #67 `0x23239c5` and #105 `0x2328066` (`guest_app_shell.c:1738-1748`), pre-BaseDirs |
-| 7 | Scheduler guard latch `0x7cdd149` 0→1 (real AVD: write at `0x2eb7520`) | `w18-avd/peract2.log:19 HOOK LATCH_WR 0x2eb7520 OK`; harness `n5_1.err:3706 [W32_LATCH_RO] before=0 after=1` | harness flips it immediately before nativeInitClientSettings, after ctor replay (3652→3706) |
-| 8 | #551 `nativeInitClientSettings` then #552 `nativePostClientSettingsLoadedInitialization3` | `w12-j2n-300.log:566` (`t=290317ms`), `:567` (`t=290696ms ...([object Object])`) | N14 3rd replay `0x2383c18` with opaque param_obj (`guest_app_shell.c:1759-1766`) |
-| 9 | Mimalloc probe byte `0x7cdede0` can be nonzero via ctor3 `0x1db9a40` (`1db9acf mov %bl,0x7cdede0`), which real boot runs | static-A #691: ctor3 skipped by decision 008 (`fflag_default.c:111-113`), harness "mimalloc probe=DFLog-only"; n6 static-B: glibc bridges | harness skips ctor3 → probe zero; **RETRACTED** the claim that genuine boot leaves `0x7cef650` nonzero — static-A #691 finds NO nonzero writer for it anywhere |
-| 10 | Java calls `nativeAppBridgeAppStart` `0x247dc8d`, then `nativeAppBridgeV2StartAppWithParams` | `guest_app_shell.c:1919-1931` call + log line; `:1961-1964` "Java follows nativeAppBridgeAppStart with nativeAppBridgeV2StartAppWithParams(StartAppParams)" | harness call is opt-in and never reached while HardAssert fires at step 4/9 |
+TaskScheduler setup lives in `nativePostClientSettingsLoadedInitialization3+0x238e`, entry `0x2385fa6`; it initializes a config struct and then tests the flags-loaded latch:
+```
+2385fa6: 55                    push   %rbp
+2385fcd: 48 89 1f              mov    %rbx,(%rdi)     ; zero field +0
+2385fd2: 88 47 08              mov    %al,0x8(%rdi)   ; +8 = 1
+2386008: e8 59 e3 b1 ff        call   1ea4366
+2386269: e8 79 fc a4 ff        call   1dd5ee7        ; allocator-backed object -> +0x1c8
+23862a0: e8 2b fb 68 00        call   2a15dd0
+23862b0: 80 3d 92 6e 95 05 00  cmpb   $0x0,0x5956e92(%rip)  # 7cdd149
+23862b7: 0f 84 cb 02 00 00     je     2386588         ; latch==0 -> reporter
+2386588: 48 8d 35 fa 3d fe fd  lea    -0x201c206(%rip),%rsi  # 36a389
+                                      ; "Can't initialize the TaskScheduler before flags have been loaded"
+238658f: bf 06 00 00 00        mov    $0x6,%edi       ; index 6
+2386594: e8 c4 87 92 04        call   6caed5d         ; shared dispatcher -> int3 6caef66
+```
+**Prerequisite 1 — flags-loaded latch `0x7cdd149 != 0`.** static-A #719 n9w3 enumerated exactly six `movb $0x1,0x7cdd149` writers: `0x2eb7520` (in `0x2eb7155`, called from `nativeInitClientSettings 0x2359277` at `0x235933d`, gated by parse-ctx `0x7697d08==1` → skipped), `0x2ec9fae` (Crashpad, gated channel `0x72a3718`), and `0x56d31a3/0x56d3386/0x56d6a4b/0x56d6b80` (dismissAll family; static-A #724 corrected #719's "no direct callers" — they do have static callers `0x2eb8296→0x56d2d35`, `0x56d6765→0x56d6779`, but no genuine CppProxy route). Harness log `n9_1.err:3695 [flags-latch] route=none (inert, latch=0)`; fault bytes show latch 0 in all six runs — hence the guard fires.
 
-## UNPROVEN / NOT done
+**Prerequisite 2 — scheduler nesting prime on `FunctionMarshaller`.** `src/linux/guest_app_shell.c:1176-1177`:
+```
+/* Scheduler guest nesting prime: install now; the actual prime is fired
+ * from on_attach("FunctionMarshaller") at the JavaVM attach site. */
+int sg_rc = sober_scheduler_guest_install((void *)base);
+```
+and `:1897-1901`: `sober_scheduler_guest_on_attach("FunctionMarshaller");` — opt-in (`SOBER_SCHEDULER_GUEST=1`), harness-side call is "the earliest point available to us". Guest-side worker primitives `0x2a132c0(1)` nesting write, thunk `0x2a0daa0`, vtable call `0x2a0daf7` were documented in `analysis/A06-scheduler-state.md`, which is **no longer on disk** (audit #718) — UNPROVEN from surviving files. Surviving `analysis/A08-surface-delegate.md:463` only confirms the independent symptom: `RBXCRASH: Can't initialize the TaskScheduler before flags have been loaded`, faulting RVA `0x6caef67`.
 
-- UNPROVEN: why real boot does not trap on the same zero `0x7cef650` — static-A #691 exhaustively scanned: exactly 3 refs (`2279a8f` only write = zero, `227d51f` lea, `6caef58` cmpb); no nonzero writer exists. `227d51f: lea ...#7cef650` passes the address with FFlag name `DebugForceTerminateOnRbxCrash` (`0x3a30af`) but no write was located.
-- UNPROVEN: exact real-boot timestamp of nativeAppBridgeAppStart (not in w12 300-line capture).
-- RETRACTED: none. NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF, no captures/tokens in git.
+**Prerequisite 3 — MessageBus prime before V2InitWithParams.** `analysis/callback/task507-preinit-ordering.md:32,59-70` (raw): `nativeAppBridgeV2InitWithParams 0x24abf96`; "The guest reaches this function exactly once: `0x24ad699: lea rsi,[0x7234520]; mov edi,1; call 0x253cb56`"; "the first step after spending the guard is the MessageBus service getter `0x24a8e44(4)`" and "the prime is safe as soon as the guest image is mapped and relocated" — so it must run before `0x24abf96` to avoid the one-shot window.
+
+## PROVEN / UNPROVEN — capture natives around the guard
+
+- **#727 AppStart = `0x247dc8d`**: `guest_app_shell.c:1919-1931` call `(env, app_class, s_url, s_ua, 0, s_aid, s_plat, s_ext)` with log `"[app-shell] guest call 0x247dc8d nativeAppBridgeAppStart..."`.
+- **#734 V2InitWithParams = `0x24abf96`**: `guest_app_shell.c:1871` `"[app-shell] guest call 0x24abf96 nativeAppBridgeV2InitWithParams(param_obj) -> rc=%ld"`.
+- **#736 StartLuaAppDM = `0x25448f6`**: `guest_app_shell.c:914-918` `(env, clazz)` + log; `:1940-1946` `real_appstate_start_lua(...)` then `"after StartLuaAppDM"`.
+- UNPROVEN: capture numbering/timestamps for #727/#734/#736 and their exact order relative to the guard — the authoritative `w12-j2n-*.log`, `w18-avd/`, and `n8*` logs are **gone** (audit #718/#720: missing, not deleted by us), so no raw capture line can be quoted. Harness source order is V2InitWithParams → AppStart → StartLuaAppDM; capture numbering suggests a different order — cannot resolve statically.
+
+## RETRACTED / NOT done
+
+- RETRACTED: any claim of verified latch=1/mimalloc-HardAssert in n9 (audit #720 — unverifiable, logs gone).
+- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; object OFF; no captures/tokens in git.
