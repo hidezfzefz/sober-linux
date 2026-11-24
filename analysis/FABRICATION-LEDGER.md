@@ -1675,6 +1675,19 @@ has only two hunks at `:1371`/`:2466` (rung printers), no marker hunk;
 (`bb_alloc_patch_enabled()` `:1610-1615`, `:1638` opt-in `SOBER_ALLOCATOR_PATCH=1`). Verified-SHA
 success path UNPROVEN (w11-arg0.json missing). No rung credit.
 
+**LEAD-FLAGGED CORRECTION (wave4) — two distinct bytes, NOT causally linked:** static-B
+`report4.md:16` phrasing "mimalloc flag `0x7cef650=0` is its downstream consequence" of ctor3 skip
+is **RETRACTED**. Audit verified from raw lines: `0x7cdede0` has sole direct writer `1db9acf mov
+%bl,0x7cdede0` in skipped ctor3 `0x1db9a40` (DFLog probe bool, zero functional effect); `0x7cef650`
+has sole direct writer `2279a8f mov %al,0x7cef650` in ctor3602 `0x2279a47` (`2279a4b xor %eax,%eax`
+⇒ writes ZERO) and an INDIRECT write-through via FFlag registration out-pointer `227d51f lea
+#7cef650,%rdx` → shared registration `227c18e` → `2365467` write-through, with name `0x3a30af
+"DebugForceTerminateOnRbxCrash"` (surviving analysis ledger table). The two bytes are independent:
+ctor3 skip explains `0x7cdede0=0` and the DFLog "Mimalloc integration is NOT detected" string;
+the HardAssert second guard `6caef58 cmpb $0,0x7cef650` reads a separate FFlag byte, default 0.
+static-A #732 concurrently correcting "NO engine writer" to "no direct writer; indirect FFlag
+registration writer exists" (`report_w3_corr.md` pending at audit time) — consistent.
+
 **static-B #733 — all quotes verified:** n10 chain latch hit `[N10_LATCH_HIT 0x2eb7520] hit=1 tid=511649
 guest_RA=guest+0x0000000002359342` (from nativeInitClientSettings `0x2359277` → `0x2eb7155`);
 fault bytes latch=1, `0x7cef650=0`; HardAssert message `23a1465 lea #4c0d2b,%rsi` / `23a146c xor
