@@ -1578,3 +1578,28 @@ CppProxy route). Latch=0 in harness explained by `route=none` 6/6.
 → OUTPUT: 114 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only. No file deleted by audit. Marker WITHHELD.
+
+## Weekend n10 WAVE1 audit (task #727) — evidence preservation (COPY only)
+
+Owner: audit (`/tmp/opencode/n10-audit`, branch `n10-audit`). Cores 6-7, MANDATORY. READ-ONLY re evidence; no device/runs; no questions. No deletions, no network.
+
+| # | Entry | Where | Owner | Why | Removal condition |
+| - | ----- | ----- | ----- | --- | --- |
+| 50 | **Evidence preservation: 9 surviving cited artifacts COPIED (never moved) to `/home/user/sober-evidence/` with verified SHA-256 manifest `MANIFEST.sha256`; all sources remain intact at original paths** | `/home/user/sober-evidence/` — files + manifest below; `sha256sum -c MANIFEST.sha256` → 9/9 OK | audit (owner) | Prior waves lost cited files to cleanup; snapshot preserves remaining authoritative artifacts for re-verification | Remove when evidence is archived to durable storage with independently verified manifest |
+
+**Copied files (9), SHA-256 from `MANIFEST.sha256` (all `sha256sum -c` OK):**
+- `libroblox.so` — `3e498d649421115bdbebaa69f78e2b818d4351d8990db60e232d2aef5b741335` (engine, 120041712 B)
+- `auth-base.apk` — `114a6f8ed6f0f974cf632a9cbec2f5cd45e1d85d7ed251db4f3920140bc6ead4` (97621690 B)
+- `w15-flags-1.json` — `4d50a0ec2eb3f10a8c2c4a987cfc2c3d305e2bac8e0e49f33566b35565296453` (78 B, modified input)
+- `w29-harness-report.md` — `953df81ce8c3fbbea8f4e7627ade2e60e7a50ea0cfd0b98319122c98d85fe61b`
+- `w30-static-report.md` — `579c1d4790b098c7a651ad30eb2626a9f9097a93928795808efe8a1c085a9dbb`
+- `n9_1.err` — `e2063e6b4b889ef30d5e3901affc6db065458a35898fe7aed4c2339e768d300a` (148866 B)
+- `n9off_1.err` — `5f8c61195ea785c6504c4c9cc572ea464228f19c7e8e56786a24207fcf4fdbb5` (148885 B)
+- `repro-interposed.err` — `afb14264cf65977fdf1be74eca76534ff21d56f861e851f9e2939cc654064b58` (133015 B)
+- `LastTest.log` — `5673f046d370c902fc5a597305381020de6bb8afc88ad30aa70427e246bdef3f` (1964 B)
+
+**Sources INTACT:** all 9 original paths re-checked present after copy (COPY never MOVE).
+**Evidence dir size:** `/home/user/sober-evidence` = 209 M.
+**Disk (`df -h`):** `/dev/nvme0n1p3` 230 G total, 194 G used, **36 G available, 85 %** (same for `/`, `/home`, `/tmp`).
+
+**Cited paths no longer existing (23 of 50):** four named files — `/tmp/opencode/w11-arg0.json` (authoritative input SHA 8215519f, unrecoverable), `/tmp/opencode/w18-audit/audit-notes.md`, `/tmp/opencode/w19-harness/report.md`, `/tmp/opencode/w25-phone/base.apk` — plus 19 truncated-prefix/dir entries (`n1-`, `n2-`, `n2-dex/`, `n3-`, `n4-`, `n5-`, `n7-`, `n7-audit`, `n8-`, `n8-audit`, `n8-harness/`, `n9-`, `uploads`, `w2`, `w20-harness/run`, `w28-`, `w29-`, `w30-`, `w32-` under `/tmp/opencode/`). No file was deleted by audit.
