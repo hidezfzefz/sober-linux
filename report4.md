@@ -1,39 +1,22 @@
-# n7w4 #700 static-B — message table 0x721fbd0 (READ-ONLY)
+# n10w4 #736 static-B — final rung consolidation (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), HardAssert mimalloc, `[0x7cdd149]=1 [0x7cef650]=0` 3/3. No runs/writes.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`, bytes `89 c0 e8 62`), SIGTRAP, rc=139 6/6; n10 A/B fault bytes `[0x7cdd149]=1, [0x7cef650]=0` → mimalloc HardAssert. DELETE NOTHING; no network/runs/device/writes; all runs MODIFIED INPUT, NO rung credit.
 
-## PROVEN — dispatcher indexing (verbatim)
+## Consolidated rung table (all quotes from surviving evidence)
 
-```
-6caed5d: 55                    push   %rbp
-6caed5e: 48 89 e5              mov    %rsp,%rbp
-6caed61: 83 ff 0a              cmp    $0xa,%edi
-6caed64: b8 0a 00 00 00        mov    $0xa,%eax
-6caed69: 0f 42 c7              cmovb  %edi,%eax
-6caed6c: 48 8d 0d 5d 0e 57 00  lea    0x570e5d(%rip),%rcx   # 721fbd0
-6caed73: 48 8b 3c c1           mov    (%rcx,%rax,8),%rdi
-6caed77: e8 00 00 00 00        call   6caed7c
-```
-`eax = (edi < 10) ? edi : 10` — the input index is **clamped to 0..10**, so the table has 11 eight-byte entries at `0x721fbd0 .. 0x721fbe8`. `table[index]` becomes `%rdi` (first argument) to reporter `0x6caed7c`.
+| Rung | Definition / AVD reference (raw) | Harness status | Exact blocker |
+|---|---|---|---|
+| **Rung 1 — settings latch** | `analysis/CHECKPOINT-LADDER.md:10-16`: "Condition: `nativeInitClientSettings 0x2359277` returns; guest latch `0x7cdd149 == 1`, written by the guest's own `0x2eb7520`"; AVD `INIT_ENTER CF0=0, D00=0, D08[4]=0, LATCH=0, GUARD.b0=0x80 → LATCH_WR@0x2eb7520 (RA base+0x2359342 ...) → INIT_LEAVE rc=0, LATCH=1` | **PROVEN mechanism** in n10: `[N10_LATCH_HIT 0x2eb7520] hit=1 tid=511649 guest_RA=guest+0x2359342` and `[0x7cdd149]=1` 6/6 (`report_n10w1b.md:33,23`). **NO credit**: `[avd-boundary] MODIFIED-INPUT (no rung): ... sha256=4d50a0ec... want=8215519f...`; default gate exits 9 with `rung1 INPUT MISSING/MISMATCH (no rung)` | Authoritative `w11-arg0.json` (SHA 8215519f, 1533221 B) **LOST**, unrecoverable; opt-in `SOBER_N10_MODIFIED_INPUT=1` is diagnostic only; `PASS-BOUNDARY-REPLAY` unreachable (harness #735: `guest_app_shell.c:1378/1380-1383, 2476`, gate `:1285`) |
+| **Rung 2 — app shell boot chain** | `CHECKPOINT-LADDER.md:20-26`: "Condition: `nativeAppBridgeAppStart` → `nativeAppBridgeV2InitWithParams` → `nativeAppBridgeStartLuaAppDM` all entered in order"; `#727 t=292010ms`, `#734 t=292046ms`, `#736 t=292074ms`, "Reached without login" | **AVD PROVEN**, harness **UNPROVEN**: #734 entered (3rd native bp hit) but never returns — `N14_REPLAY 3/3` printed 0/6; #727/#736 opt-in and not reached. HardAssert fires inside the 3rd native before the chain completes | Same HardAssert at `0x6caef66` — latch=1 but mimalloc flag `0x7cef650=0` fails second guard (`6caef58 cmpb $0,byte[7cef650]; 6caef5f je 6caef66`); plus modified-input no-credit rule |
+| **Rung 3 — authenticated rungs** | `CHECKPOINT-LADDER.md:26-34`: "PlaceId, `RBXSurfaceView`/ANativeWindow lifecycle, `StartGameWithParam`, notifier-driven `gameLoadedCallback(J)V`, guest-tagged G8 frame"; "**No AVD capture exists**"; "the 300 s oracle above contains zero surface, placeId, StartGame or gameLoadedCallback calls; the w13 deep-link stimulus attempt died with HTTP 401s on auth endpoints"; "Rung 3 has no definition and cannot be asserted… UNDEFINED until an authenticated AVD capture (valid session + actual game join) exists" | **UNDEFINED** — no evidence, no definition, not attempted | No authenticated AVD capture; phone/Waydroid oracle **BLOCKED** (adb unauthorized, no frida-server); login out of scope |
 
-## PROVEN — call site passing string 0x4c0d2b and index 0
+## PROVEN — decision 008 (user decision, keep as-is)
 
-```
-23a1460: e8 ab c9 f8 ff        call   232de10
-23a1465: 48 8d 35 bf f8 11 fe  lea    -0x1ee0741(%rip),%rsi  # 4c0d2b
-                                      ; "Expect to have mimalloc working, but it was not detected!"
-23a146c: 31 ff                 xor    %edi,%edi
-23a146e: e8 ea d8 90 04        call   6caed5d
-```
-- **Index = 0**, set by `xor %edi,%edi` at `0x23a146c`; the dispatcher therefore selects `table[0]` at `0x721fbd0`.
-- The string `0x4c0d2b` is **not in the table** — it is loaded into `%rsi` at `0x23a1465` and passed through the dispatcher as the reporter's **second argument**. The clamped table entry is the first argument (a tag/severity object). So the premise "which table index selects the string" is imprecise: the index selects the tag; the call site selects the message. The two meet only at this call site.
-- `0x23a146x` sits in `nativePostClientSettingsLoadedInitialization3+0x1d848` (same #552 native family); the dispatcher has many other call sites (`0x1dbac46`, `0x1dbe613`, `0x1dd6016`, `0x1e47895`, `0x230cd38`, …) that pass other indices/messages.
+`analysis/A05-skipped-ctors.md:22`: "DECISION 008 skips `init_array` indices **0, 1, 3, 4**; index 0 (`0x2e62390`) is now replayed via `SOBER_REPLAY_FFLAG_CTOR`". Table row `:193`: "3 (`0x1db9a40`) | mimalloc probe words `0x7cdedd8`, `0x7cdede0` | **NO** | only reader `0x239eb14` selects a DFLog message; zero functional effect".
+Because ctor3 is skipped, its probe bool `0x7cdede0` stays 0 (`1db9acf: mov %bl,0x7cdede0` not executed) → `239eb14: cmpb $0,0x7cdede0` selects "Mimalloc integration is NOT detected" (`0x3a3078`) → path `23a1424 je 23a1465` → HardAssert message `0x4c0d2b`. This is a **deliberate scoping decision**, not a defect to patch; mimalloc flag `0x7cef650=0` is its downstream consequence. Changing it needs an explicit user decision.
 
-## PROVEN / UNPROVEN — table contents
+## RETRACTED / UNPROVEN
 
-The 11 file bytes at `0x721fbd0` are **zero** (checked directly) — the table is filled by `DT_ANDROID_RELA` (APS2) `R_X86_64_RELATIVE` entries at load. The stream is present at RVA `0x15e00` with the `APS2` magic (`41 50 53 32` verified), but a static SLEB128 decode of its header produced an implausible negative count, so entry values remain **UNPROVEN**; no runtime read was performed (read-only task).
-
-## RETRACTED / NOT done
-
-- RETRACTED: describing `0x721fbd0` as a "message table" whose index selects `0x4c0d2b` — the message is in `%rsi` from the call site; the table supplies `%rdi`.
-- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/remaps; object OFF; no captures/tokens in git.
+- RETRACTED: any rung credit from n10 runs (all MODIFIED INPUT, no credit, never `PASS-BOUNDARY-REPLAY`); "rung 2 reproducible" refers to AVD only, not current harness.
+- UNPROVEN: full args of #727/#734/#736 (w12 lines 742/749/751 gone); runtime contents of relocation-filled table `0x721fbd0`; rung 3 definition.
+- Marker `app shell rendered` stays **WITHHELD** under decisions 013/038; gate/withhold list unchanged (harness #735).
