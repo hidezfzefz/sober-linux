@@ -1621,4 +1621,39 @@ verbatim scoped line in `raw_auth_strings.txt` — that file lists auth strings 
 on this path" claim IS supported by the request-builder quote above. Scoped "zero hits" wording
 marked UNPROVEN as quoted (not retracted); exact runtime domain UNPROVEN; cookie-jar UNPROVEN.
 
+### Weekend n10 WAVE2 audit (task #729) — TLS/singleton + auth-before-AppStart
+
+Owner: audit (`/tmp/opencode/n10-audit`, branch `n10-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions. NO deletions, NO network.
+
+**static-B #730 — all quoted claims verified from surviving files:** TLS key `0x72a1b08` six refs
+(`A04-tsd-key-audit.md:92-107`): only write to key global via `pthread_key_create` `0x2ea664f`
+(`&key` `0x2ea6641`, once-cb `0x2ea6640`, dtor `0x2ea6670`, flag `0x72a1b04=1`); rest get/setspecific,
+key_delete, dtor re-arm; value=3. Host seeders write TLS VALUE only (`tsd-static-buffer-abort.md:64-68`).
+`0x72a3058` after nativeInitClientSettings (ledger:146-157 bp `2359277 SETTINGS_ENTER`, `23115c8
+RSI_ORIGIN`, watch): `GLOBAL=0x5555574528f0`, `ctx=[G+18]=0x5555558f8ac0`, last writer host seeder
+inclusive range `0x72a2f48..0x72a3058` → `cachedMethod@` at `ctx+0` = 'cachedMe'; ledger #13 defect
+removed; guest writer `0x230cce4` value `&0x72a31c8` (not reached if JNI_OnLoad skipped). Raw
+`raw_rund_fflag.txt:2 [app-shell] AVD boundary pre: arg0_len=1533221 ... fflag_ctx=0x7fffefedf1c8
+fflag_obj=0x555555c50880` verified. **RETRACTED cachedMethod as guest singleton.** UNPROVEN: sources
+gone (`engine_full.dis`, `probe.out`, w19 report, `stop.err`).
+
+**static-A #731 — all quoted claims verified:** `CHECKPOINT-LADDER.md:16/26 'No auth required'`,
+`:18 'Rung 2 — app shell boot chain (unauthenticated)'`, `:23-25 #727/#734/#736 'Reached without
+login'`, `:28 'Rung 3 — authenticated rungs (UNDEFINED)'`, `:34 'w13 died with HTTP 401s'`;
+pre-login appUserId=-1 (`lua-app-start.md:218`). Cookie natives (`w6-06-dex-callgraph.md`):
+`nativeSetMultipleCookies 0x2333e4d ← w0;-S0`, `nativeSetUserId 0x2ec6a1d ← W0`,
+`nativeGetCookiesInNetscapeFormat 0x2330328 ← Lyj/k0;-T`; order `w6-01-node-sequence.md:121`
+`uh/e.E: 0x2e rg/w0.V0() … 0x50 nativeGameGlobalInit 0x233762c` → V0→W0→S0 cookie push before #8,
+hence before AppStart `0x247dc8d` (#10). UNPROVEN: runtime cookies/strict requirement; no rung credit.
+
+**SHA per run reconfirmed:** all 6 wave1 A/B runs `verified=0`, `MODIFIED-INPUT (no rung)=1`,
+`PASS-BOUNDARY-REPLAY=0`; diagnostic only. Evidence snapshot `/home/user/sober-evidence` 10 entries,
+`sha256sum -c MANIFEST.sha256` → 9/9 OK (no deletions). Device Waydroid oracle BLOCKED (adb
+unauthorized + no frida-server, per lead).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n10-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 137 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log` fixtures only. Marker WITHHELD.
+
 A/B (allocator patch OFF x3 / ON x3, modified-input opt-in `SOBER_N10_MODIFIED_INPUT=1` default OFF): all 6 audit-verified verbatim `[avd-boundary] MODIFIED-INPUT (no rung): diagnostic opt-in SOBER_N10_MODIFIED_INPUT=1; sha256=4d50a0ec… want=8215519f…`; `PASS-BOUNDARY-REPLAY` count 0 in all 6; rc=139 6/6; fault `guest+0x06caef67` int3 `0x6caef66`; latch `[0x7cdd149]=1 [0x7cef650]=0` 6/6 (latch=1 because boundary replay now RUNS with modified input, unlike n9 input-missing latch=0); `0x2eb7520` fires 6/6 with `guest_RA=0x2359342`; `N14_REPLAY 3/3` 0/6; patch banner only in OFF arm; no A/B behavioral difference. All runs DIAGNOSTIC ONLY, NO rung credit. static-b #726 quotes verified: CHECKPOINT-LADDER.md:20-26 rung2 order (#727/#734/#736) and surviving raw_capture J2N #67/#70/#105/#534/#541/#551/#552/#612; rung2 credit RETRACTED, #736 impossible without authoritative input.
