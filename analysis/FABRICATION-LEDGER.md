@@ -1528,3 +1528,18 @@ from these logs would be UNSUPPORTED. Audit made no rung claim and deleted no fi
 → OUTPUT: 113 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
 fixtures only. Marker WITHHELD.
+
+### n9w3 static-A #719 (addendum) — flags-loaded latch writers
+
+All quoted claims verified: exactly six writers of `0x7cdd149`, all `movb $0x1`, in
+`raw_all_7cdd149.txt` — `2eb7520` (fn `2eb7155`, caller `235933d` in nativeInitClientSettings
+`2359277`), `2ec9fae` (fn `2ec9eed` Crashpad), `56d31a3`/`56d3386` (fn `56d2d35` dismissAll),
+`56d6a4b`/`56d6b80` (fn `56d6779`); 2269 other refs are reads. Host gates
+`flags_latch_default.c:73-75` (route 1 nativeInitClientSettings → `2eb7155` → `2eb7520`, skipped
+because parse-ctx `0x7697d08 == 1` in default state, latch stays 0) and `:91-95` (route 2 Crashpad
+`2eca720` → `2ec9fae`, gated by channel `0x72a3710/0x72a3718` from genuine String[] argv). Harness
+`n9_1.err:3695 [flags-latch] route=none (inert; no guest call, latch=0, withhold=0)` 6/6. Capture
+`0b970` ×6 order: `nativeInitClientSettings` → `Exception=HttpError:InvalidUrl` (flags FAILED) →
+`nativePostClientSettingsLoadedInitialization3` (#552) → `FatalRuntimeError (Can't initialize the
+TaskScheduler before flags loaded)`; writer precedes #552, guard `23862b0`/`je 23862b7` inside #552.
+UNPROVEN: 56d* reach/gates. Consistent with wave3 latch=0 finding.
