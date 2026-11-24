@@ -1417,9 +1417,9 @@ Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY
 
 | # | Entry | Where | Owner | Why | Removal condition |
 | - | ----- | ----- | ----- | --- | --- |
-| 49 | **LEDGER-CITED FILE INTEGRITY: FAIL. All 46 unique absolute paths cited in this ledger are MISSING after the n8 disk emergency cleanup — including authoritative inputs `w11-arg0.json`, `auth-base.apk`, `w15-flags-1.json` and all n1-n8 / w18-w32 worktree files. Quoted raw lines survive inline in ledger text, but no cited original can be re-opened** | audit script `grep -oE '/tmp/opencode/[A-Za-z0-9._/-]+' analysis/FABRICATION-LEDGER.md | sort -u` → 46 paths, `test -e` → 0 exist; named files: `/tmp/opencode/w11-arg0.json`, `/tmp/opencode/w15-flags-1.json`, `/tmp/opencode/auth-base.apk`, `/tmp/opencode/w25-phone/base.apk`, `/tmp/opencode/w18-audit/audit-notes.md`, `/tmp/opencode/w19-harness/report.md`, `/tmp/opencode/w29-harness/report.md`, `/tmp/opencode/w30-static/report.md`; `find /tmp /home/user -name w11-arg0.json -o -name auth-base.apk -o -name w15-flags-1.json` → no copies | audit (lead notified) | The task required confirming no cited file was deleted; the opposite is true. Evidence quotes are preserved in-ledger but re-verification is impossible | Remove when cited files are restored from backup or the ledger is rewritten to rely only on surviving sources |
+| 49 | **LEDGER-CITED FILE INTEGRITY: FAIL. At wave start all 46 unique absolute paths cited in this ledger were MISSING after the n8 disk emergency cleanup — including authoritative inputs `w11-arg0.json`, `auth-base.apk`, `w15-flags-1.json` and all n1-n8 / w18-w32 worktree files. Quoted raw lines survive inline in ledger text, but cited originals could not be re-opened. MID-WAVE PARTIAL RESTORE: `/tmp/opencode/auth-base.apk` restored (97621690 B, SHA `114a6f8ed6f0f…` verified by audit) and guest engine restored from basalt; `w11-arg0.json` STILL MISSING** | audit script `grep -oE '/tmp/opencode/[A-Za-z0-9._/-]+' analysis/FABRICATION-LEDGER.md | sort -u` → 46 paths, `test -e` → 0 exist at wave start; named files: `/tmp/opencode/w11-arg0.json`, `/tmp/opencode/w15-flags-1.json`, `/tmp/opencode/auth-base.apk`, `/tmp/opencode/w25-phone/base.apk`, `/tmp/opencode/w18-audit/audit-notes.md`, `/tmp/opencode/w19-harness/report.md`, `/tmp/opencode/w29-harness/report.md`, `/tmp/opencode/w30-static/report.md`; audit reverified `auth-base.apk` exists with SHA 114a6f8e; `find /home/user /tmp -size 1533221c` → NO file of authoritative arg0 size | audit (lead notified) | The task required confirming no cited file was deleted; the opposite was true at wave start. Evidence quotes preserved in-ledger but most originals cannot be re-opened | Remove when all cited files are restored from backup or the ledger is rewritten to rely only on surviving sources |
 
-**SHA on every run — NOT MET (harness correctly RETRACTED the expectation):** `grep -c 'avd-boundary] verified'` in `n9off_1/2/3.err` = 0/0/0; raw line `[avd-boundary] open failed: /tmp/opencode/w11-arg0.json` in all 3 — the authoritative input file (entry 49) is gone, so no boundary SHA can be verified. The provenance line naming `sha256=8215519f...` and `[N6_BANNER] SOBER_BIONIC_SF_FULL=1` are present, but the `verified ... bytes sha256=...` line is absent. **No success claim of SHA verification is made for this wave.** A SHA-matching guest binary copy survives at `/home/user/.local/share/basalt/linux/payloads/3170-204ad049.../libroblox.so` (120041712 B, verified) — that is the engine SHA `3e498d649421...`, NOT the w11-arg0 boundary SHA.
+**SHA on every run — NOT MET (harness correctly RETRACTED the expectation):** `grep -c 'avd-boundary] verified'` in `n9off_1/2/3.err` = 0/0/0; raw line `[avd-boundary] open failed: /tmp/opencode/w11-arg0.json` in all 3 — the authoritative input file (entry 49) is gone, so no boundary SHA can be verified. The provenance line naming `sha256=8215519f...` and `[N6_BANNER] SOBER_BIONIC_SF_FULL=1` are present, but the `verified ... bytes sha256=...` line is absent. **No success claim of SHA verification is made for this wave.** Lead confirmed: no local copy of the 1,533,221 B SHA-8215519f input exists; the basalt alternative `/home/user/.local/share/basalt/linux/basalt-mocktail-state/cache/clientsettings/GoogleAndroidApp.json` is 1,529,539 B SHA `466c644fe1756d47b81b…` — AUDIT VERIFIED, but different. Per lead, any Run D with the open-failed input is DIAGNOSTIC ONLY, no rung credit. A SHA-matching guest engine copy survives at `/home/user/.local/share/basalt/linux/payloads/3170-204ad049.../libroblox.so` (120041712 B, verified) — that is the engine SHA `3e498d649421...`, NOT the w11-arg0 boundary SHA.
 
 **Harness startup failure (earlier n9_*.err, NOT credited):** three 177-byte logs rc=3: `[harness] guest: /tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so` / `[harness] fopen guest: No such file or directory` — the old engine path was deleted. Harness copied the SHA-matching engine to `n9bin/` and re-ran (flagged to lead/harness before their report); no old-path run credited.
 
@@ -1431,3 +1431,68 @@ Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY
 `grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
 → OUTPUT: 81 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log` fixtures only. Marker WITHHELD.
+
+## Overnight n9 WAVE2 audit (task #718) — restoration status + affected claims
+
+Owner: audit (`/tmp/opencode/n9-audit`, branch `n9-audit`). Cores 6-7, MANDATORY. READ-ONLY, no device/runs; no questions.
+
+**Ledger-cited files — recheck after wave2 restorations:** re-extraction yields 49 unique absolute
+paths; 27 now EXIST (restored mid-wave), 22 remain MISSING. Restored and verified by audit:
+`/tmp/opencode/auth-base.apk` (97621690 B, SHA `114a6f8ed6f0f974…`), `/tmp/opencode/w15-flags-1.json`
+(78 B, SHA `4d50a0ec2eb3f10a8…`), guest engine `/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so`,
+n1-n5 audit worktrees, w18-w32 audit worktrees, `w29-harness/report.md`, `w30-static/report.md`.
+Remaining MISSING (22): 18 glob-prefix/dir entries (e.g. `/tmp/opencode/n1-`, `/tmp/opencode/w28-`,
+`/tmp/opencode/uploads`, `/tmp/opencode/n2-dex/`) and 4 named files:
+`/tmp/opencode/w11-arg0.json`, `/tmp/opencode/w18-audit/audit-notes.md`,
+`/tmp/opencode/w19-harness/report.md`, `/tmp/opencode/w25-phone/base.apk`.
+`find /home/user /tmp -size 1533221c` → no file of authoritative arg0 size; no `w11-arg0.json` copy.
+
+**Claims marked UNPROVEN (NOT deleted, per instruction) — originals unavailable for re-verification:**
+- **Entry 22 (W29 leaked-credit finding)** — evidence glob `/tmp/opencode/w2[2-8]-harness/*.err`:
+  all w22-harness … w28-harness directories MISSING. The 88 `[avd-boundary]` lines / 16 rung1 PASS
+  citations survive only as inline ledger quotes; no raw log can be re-opened. Status: **UNPROVEN as
+  re-verifiable** (finding was quoted-verified at the time; not retracted, not deleted).
+- **Line 419 wording** "authoritative `w11-arg0.json` remains 1,533,221 B / SHA `8215519f…`" —
+  file gone, no copy; **UNPROVEN** (size/SHA cannot be re-measured; provenance line in logs is a
+  hardcoded constant, not verification).
+- **w18 line 74** "Full redacted notes: `/tmp/opencode/w18-audit/audit-notes.md`" — file MISSING;
+  claims sourced only from that file are **UNPROVEN as re-verifiable**.
+- **w19 line 149** "Final re-verification after harness19 #589 reported (`w19-harness/report.md`,
+  scripts `memread.py`/`memread2.py`, `stop.err`, source `native_jni.c:1416-1429`)" — report file
+  MISSING; those specific log/script citations are **UNPROVEN as re-verifiable** (source `.c` survives).
+- **w25 line 323** `/tmp/opencode/w25-phone/base.apk` — already recorded in-ledger as "cleaned up
+  (out of git), cannot be re-audited locally"; no change (consistently UNPROVEN).
+
+**Wave1 quotes re-verified again (all still present):** static-A `1db9a66/1db9aa6 call 1dbe4fc`
+(two ctor3 callers), fault `0x6caef66 int3`; harness `[N9_ALLOC_PATCH] OFF (default)`,
+`[N8G AT_FAULT]` all globals zero, `[W28_FAULT_INSN] … guest_rva=0x06caef67`,
+`RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`,
+`[avd-boundary] open failed: /tmp/opencode/w11-arg0.json`.
+
+**SHA per wave1 run — reconfirmed diagnostic-only:** `grep -c 'avd-boundary] verified'` in
+`n9off_1/2/3.err` = 0/0/0 (verified=0, provenance=1, openfail=1 each). Per lead, Run D with
+open-failed input is DIAGNOSTIC ONLY, no rung credit. No SHA-verified-input success claim.
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n9-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 112 self-matches (ledger's own recorded scan commands + verification-notes in 3 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log`
+fixtures only. Marker WITHHELD.
+
+### n9w2 static-B #717 — allocator patch semantics, message-switch RETRACTED
+
+**static-B #717 — all quoted claims verified:** eight patched bridge RVAs (`bootstrap_profile.h:62-74`
+`0x1dbad62/0x1dbdfba/0x227aafa/0x1dbab02/0x1dd60e5/0x1dbe559/0x253225e/0x231f0e2`) all allocator
+entry points; `install_bridge` (`bionic_bootstrap.c:838-873`) overwrites 12 B with
+`movabs rax,imm64 ; jmp rax` to host `g_bb_ops` → `host_allocate` (`:274` plain glibc `malloc(n)`),
+weak `mi_*` symbols dead. Control at `:1606-1613`/`:1638-1644`: default OFF, opt-in
+`SOBER_ALLOCATOR_PATCH=1`, kill-switch note "8 patches all allocator entry points, never page source;
+do not make 1dbe4fc see registered pointer; 1dbe4fc NEVER bridged"; OFF log `n9off_1.err:19`.
+Two fatal messages share dispatcher: `6caed5d → 6caed7c → int3 6caef66` — mimalloc message
+`23a1465 lea #4c0d2b,%rsi` / `23a146c xor %edi,%edi` (idx 0, reached via printer `239d215` →
+flag `0x7cdede0`); TaskScheduler message `23862b0 cmpb $0,0x7cdd149` followed by `23862b7 je 2386588`
+(flags-latch byte == 0 selects TaskScheduler path), `2386588 lea #36a389,%rsi`, `238658f mov $6,%edi`,
+then `2386594 call 6caed5d` — SAME dispatcher as the mimalloc message. **RETRACTED: any ON/OFF message switch** — audit verified line 3717 in BOTH
+arms (`n9_1.err:3717` patch ON, `n9off_1.err:3717` patch OFF) reads
+`RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)`.
+No runs/device/writes/gate/apply; 1dbe4fc not bridged.

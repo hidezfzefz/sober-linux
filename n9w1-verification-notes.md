@@ -43,3 +43,13 @@ No guest writes/hand-set bytes/fake returns/probe bridge. Push own (plumbing if 
   allocator patch OFF, fatal message changed to FatalRuntimeError, 1dbe4fc 0 hits, STOP honored.
 - Secrets scan 81 self-matches; git no captures/tokens.
 - Git index writes fail -> commit/push via /dev/shm tmpfs plumbing.
+
+## Wave2 verification (task #718)
+- Re-extracted ledger paths: 49 unique, 27 restored/exist, 22 missing (18 glob/dir, 4 named files:
+  w11-arg0.json, w18-audit/audit-notes.md, w19-harness/report.md, w25-phone/base.apk).
+- Restored verified: auth-base.apk 97621690B SHA 114a6f8e, w15-flags-1.json 78B SHA 4d50a0ec,
+  guest engine restored. No 1533221B arg0 file anywhere.
+- Marked UNPROVEN (NOT deleted): entry 22 leaked-credit (w22-w28 harness logs gone), line 419 arg0
+  size/SHA, w18 line 74 notes, w19 line 149 report/scripts; w25 phone apk already recorded cleaned.
+- Wave1 quotes re-verified; SHA 0 verified lines in n9off runs (verified=0/provenance=1/openfail=1),
+  diagnostic-only per lead. Secrets 112 self-matches; git no captures/tokens.
