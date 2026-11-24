@@ -20,6 +20,7 @@
 #include "android_compat.h"
 #include "guest_render.h"
 #include "guest_app_shell.h"
+#include "avd_boundary.h"
 
 #include <dlfcn.h>
 #include <execinfo.h>
@@ -431,6 +432,38 @@ static void n8p_arm_all(uintptr_t base)
     fprintf(stderr, "[N8P_ARM] base=%p fds=%d/%d/%d/%d/%d/%d rc=%d/%d/%d/%d/%d/%d\n",
             (void *)base, fd[0],fd[1],fd[2],fd[3],fd[4],fd[5],
             rc[0],rc[1],rc[2],rc[3],rc[4],rc[5]);
+}
+
+/* n10: read-only exec bp on latch writer 0x2eb7520, armed at guest-base hook. */
+static long n10l_hits;
+static void n10l_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n10l_hits, 1, __ATOMIC_RELAXED) + 1;
+    uintptr_t rbp = (uintptr_t)c->uc_mcontext.gregs[REG_RBP];
+    uintptr_t ra = 0;
+    (void)w30_readmem(rbp + 8u, &ra, 8u);
+    char b[256], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, "[N10_LATCH_HIT 0x2eb7520] hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_put(&p, " guest_RA=");
+    if (n7b_base && ra >= n7b_base && ra < n7b_base + 0x8000000u) {
+        w24_put(&p, "guest+0x"); w24_u64(&p, ra - n7b_base, 0);
+    } else w24_u64(&p, ra, 1);
+    w24_line(&p, b, end);
+    ssize_t u = write(STDERR_FILENO, b, (size_t)(p - b)); (void)u;
+}
+static void n10l_arm_all(uintptr_t base)
+{
+    n7b_base = base;
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = n10l_sig; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask); sigaction(43, &sa, NULL);
+    int fd = n7b_perf(base + 0x2eb7520u);
+    int rc = n7b_arm(fd, 43, n10l_sig);
+    fprintf(stderr, "[N10_LATCH_ARM] base=%p fd=%d rc=%d\n", (void *)base, fd, rc);
 }
 
 static void n7b_arm_all(uintptr_t base)
@@ -1246,6 +1279,12 @@ int main(int argc, char **argv)
     if (!guest) guest = "/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so";
 
     fprintf(stderr, "[harness] guest: %s\n", guest);
+    /* n10 HOST-ONLY FAIL CLOSED: verify input SHA BEFORE any guest work.
+     * Missing/mismatched input -> no rung, exit 9. No guest bytes touched. */
+    if (!sober_avd_boundary_fail_closed()) {
+        fprintf(stderr, "[checkpoint] rung1 INPUT MISSING/MISMATCH (no rung)\n");
+        return 9;
+    }
     if (install_crash_handlers() != 0) return 2;
 
     int fd = -1;
@@ -1286,6 +1325,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "[harness] guest base=%p\n", (void *)base);
     /* n7 WAVE2: arm ctor3602 exec bps HERE, before drive_constructors(). */
     if (getenv("SOBER_N7B_BEFORE")) n7b_arm_all(base);
+    if (getenv("SOBER_N10_LATCH")) n10l_arm_all(base);
     if (getenv("SOBER_N8_PROBE")) n8p_arm_all(base);
     if (getenv("SOBER_N8_EDGE")) n8e_arm_all(base);
     if (getenv("SOBER_N9_PTR")) n9p_arm_all(base);

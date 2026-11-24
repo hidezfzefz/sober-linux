@@ -1371,15 +1371,22 @@ int guest_app_shell_run(uintptr_t base)
                 (g_w32_latch_before == 0 && g_w32_latch_after == 1 &&
                  g_w29_arg0_sha_ok);
                 const int debt = sober_avd_boundary_enabled() ? 1 : 0;
-                char rb[160]; int rn = 0;
+                char rb[192]; int rn = 0;
                 static const char pre[] = "[checkpoint] rung1 ";
                 for (unsigned k = 0; k < sizeof(pre) - 1; ++k) rb[rn++] = pre[k];
+                /* n10: NEVER print PASS-BOUNDARY-REPLAY for a mismatched input. */
                 static const char pass[] = "PASS-BOUNDARY-REPLAY (DEBT=";
                 static const char fail[] = "FAIL (DEBT=";
-                const char *lab = boundary ? pass : fail;
+                const int n10_bad_input = !g_w29_arg0_sha_ok ||
+                    getenv(SOBER_AVD_BOUNDARY_UNVERIFIED) != NULL;
+                const char *lab = n10_bad_input ? "MODIFIED-INPUT (no credit) "
+                                                : (boundary ? pass : fail);
                 for (unsigned k = 0; lab[k]; ++k) rb[rn++] = lab[k];
-                rb[rn++] = (char)('0' + (debt & 7));
-                rb[rn++] = ')'; rb[rn++] = '\n';
+                if (!n10_bad_input) {
+                    rb[rn++] = (char)('0' + (debt & 7));
+                    rb[rn++] = ')';
+                }
+                rb[rn++] = '\n';
                 ssize_t u = write(STDERR_FILENO, rb, (size_t)rn);
                 (void)u;
             }
@@ -2466,7 +2473,7 @@ int guest_app_shell_run(uintptr_t base)
                 fprintf(stderr,
                         "[checkpoint] rung1 MODIFIED-INPUT (no credit) "
                         "DEBT=%d\n", debt);
-            } else if (boundary)
+            } else if (boundary && g_w29_arg0_sha_ok)
                 fprintf(stderr,
                         "[checkpoint] rung1 PASS-BOUNDARY-REPLAY (DEBT=%d)\n",
                         debt);
