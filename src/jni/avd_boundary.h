@@ -40,6 +40,12 @@ void sober_avd_boundary_provenance(char *buf, size_t cap);
  * seeded_state, because the input is host-supplied oracle data. */
 int sober_avd_boundary_should_withhold(void);
 
+/* n10 HOST-ONLY fail-closed gate: open + hash the boundary input before ANY
+ * guest work.  1 = verified SHA 8215519f; 0 = missing/mismatched (no rung).
+ * The SHA string is published only after open+hash succeed. */
+int  sober_avd_boundary_fail_closed(void);
+extern char g_n10_arg0_sha_hex[65];
+
 #ifdef __cplusplus
 }
 #endif

@@ -20,6 +20,7 @@
 #include "android_compat.h"
 #include "guest_render.h"
 #include "guest_app_shell.h"
+#include "avd_boundary.h"
 
 #include <dlfcn.h>
 #include <execinfo.h>
@@ -1246,6 +1247,12 @@ int main(int argc, char **argv)
     if (!guest) guest = "/tmp/opencode/sober-apk/split/lib/x86_64/libroblox.so";
 
     fprintf(stderr, "[harness] guest: %s\n", guest);
+    /* n10 HOST-ONLY FAIL CLOSED: verify input SHA BEFORE any guest work.
+     * Missing/mismatched input -> no rung, exit 9. No guest bytes touched. */
+    if (!sober_avd_boundary_fail_closed()) {
+        fprintf(stderr, "[checkpoint] rung1 INPUT MISSING/MISMATCH (no rung)\n");
+        return 9;
+    }
     if (install_crash_handlers() != 0) return 2;
 
     int fd = -1;

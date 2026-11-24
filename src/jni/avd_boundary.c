@@ -92,6 +92,63 @@ int sober_avd_boundary_should_withhold(void)
 }
 
 int g_w29_arg0_sha_ok;   /* W29: 1 only when arg0 SHA matches the capture */
+char g_n10_arg0_sha_hex[65];  /* published only after successful open+hash */
+static int n10_gate_done;
+
+/* n10 HOST-ONLY FAIL CLOSED. Called from main() before any guest work.
+ * Missing file or SHA != 8215519f -> print INPUT MISSING/MISMATCH (no rung)
+ * and return 0; only a verified SHA returns 1. No guest bytes are touched. */
+int sober_avd_boundary_fail_closed(void)
+{
+    if (n10_gate_done) return g_w29_arg0_sha_ok;
+    n10_gate_done = 1;
+    if (!sober_avd_boundary_enabled()) {
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "boundary replay disabled\n");
+        return 0;
+    }
+    const char *path = SOBER_AVD_BOUNDARY_PATH;
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "open failed: %s\n", path);
+        return 0;
+    }
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f);
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "seek failed\n"); return 0; }
+    long sz = ftell(f);
+    if (sz <= 0 || fseek(f, 0, SEEK_SET) != 0) { fclose(f);
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "bad size\n"); return 0; }
+    unsigned char *data = (unsigned char *)malloc((size_t)sz);
+    if (!data) { fclose(f);
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "oom\n"); return 0; }
+    if (fread(data, 1, (size_t)sz, f) != (size_t)sz) {
+        free(data); fclose(f);
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "short read\n"); return 0;
+    }
+    fclose(f);
+    unsigned char digest[32];
+    sha256(data, (size_t)sz, digest);
+    char hex[65];
+    for (int i = 0; i < 32; ++i) snprintf(hex + i*2, 3, "%02x", digest[i]);
+    hex[64] = '\0';
+    g_w29_arg0_sha_ok = (strcmp(hex, SOBER_AVD_BOUNDARY_SHA256) == 0);
+    if (g_w29_arg0_sha_ok) {
+        memcpy(g_n10_arg0_sha_hex, hex, sizeof(hex));
+        fprintf(stderr, "[avd-boundary] SHA-256 verified after open+hash: %s\n",
+                g_n10_arg0_sha_hex);
+    } else {
+        g_n10_arg0_sha_hex[0] = '\0';
+        fprintf(stderr, "[avd-boundary] INPUT MISSING/MISMATCH (no rung): "
+                        "sha256=%s want=%s\n", hex, SOBER_AVD_BOUNDARY_SHA256);
+    }
+    free(data);
+    return g_w29_arg0_sha_ok;
+}
 
 int sober_avd_boundary_load(char **buf, size_t *len)
 {
@@ -141,10 +198,18 @@ int sober_avd_boundary_load(char **buf, size_t *len)
 void sober_avd_boundary_provenance(char *buf, size_t cap)
 {
     if (!buf || !cap) return;
-    snprintf(buf, cap,
-             "class=\"%s\" session=\"%s\" file=%s sha256=%s argc=3 "
-             "arg1=null arg2=\"%s\"",
-             SOBER_AVD_BOUNDARY_CLASS, SOBER_AVD_BOUNDARY_SESSION,
-             SOBER_AVD_BOUNDARY_PATH, SOBER_AVD_BOUNDARY_SHA256,
-             SOBER_AVD_BOUNDARY_ARG2);
+    /* n10: NO hardcoded SHA banner.  Publish sha256 only after open+hash. */
+    if (g_n10_arg0_sha_hex[0])
+        snprintf(buf, cap,
+                 "class=\"%s\" session=\"%s\" file=%s sha256=%s argc=3 "
+                 "arg1=null arg2=\"%s\"",
+                 SOBER_AVD_BOUNDARY_CLASS, SOBER_AVD_BOUNDARY_SESSION,
+                 SOBER_AVD_BOUNDARY_PATH, g_n10_arg0_sha_hex,
+                 SOBER_AVD_BOUNDARY_ARG2);
+    else
+        snprintf(buf, cap,
+                 "class=\"%s\" session=\"%s\" file=%s sha256=UNVERIFIED "
+                 "argc=3 arg1=null arg2=\"%s\"",
+                 SOBER_AVD_BOUNDARY_CLASS, SOBER_AVD_BOUNDARY_SESSION,
+                 SOBER_AVD_BOUNDARY_PATH, SOBER_AVD_BOUNDARY_ARG2);
 }
