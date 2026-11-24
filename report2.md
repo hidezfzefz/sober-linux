@@ -1,44 +1,53 @@
-# n9w4 #722 static-B — TaskScheduler init prerequisites (READ-ONLY)
+# n10w2 #730 static-B — TLS key + FFlag global mapping (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), SIGTRAP; `[0x7cdd149]=0`, `[0x7cef650]=0` 6/6 (harness #721). No runs/writes.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), reporter `0x6caed7c`; n10 A/B latch=1, `[0x7cef650]=0` → mimalloc HardAssert. All runs MODIFIED INPUT (w11-arg0.json LOST), NO rung credit. DELETE NOTHING; no network/runs/writes.
 
-## PROVEN — TaskScheduler guard and its prerequisites (raw disasm)
+## PROVEN — all 6 references to TLS key global `0x72a1b08`
 
-TaskScheduler setup lives in `nativePostClientSettingsLoadedInitialization3+0x238e`, entry `0x2385fa6`; it initializes a config struct and then tests the flags-loaded latch:
+Quoted from surviving `analysis/A04-tsd-key-audit.md:92-107`:
 ```
-2385fa6: 55                    push   %rbp
-2385fcd: 48 89 1f              mov    %rbx,(%rdi)     ; zero field +0
-2385fd2: 88 47 08              mov    %al,0x8(%rdi)   ; +8 = 1
-2386008: e8 59 e3 b1 ff        call   1ea4366
-2386269: e8 79 fc a4 ff        call   1dd5ee7        ; allocator-backed object -> +0x1c8
-23862a0: e8 2b fb 68 00        call   2a15dd0
-23862b0: 80 3d 92 6e 95 05 00  cmpb   $0x0,0x5956e92(%rip)  # 7cdd149
-23862b7: 0f 84 cb 02 00 00     je     2386588         ; latch==0 -> reporter
-2386588: 48 8d 35 fa 3d fe fd  lea    -0x201c206(%rip),%rsi  # 36a389
-                                      ; "Can't initialize the TaskScheduler before flags have been loaded"
-238658f: bf 06 00 00 00        mov    $0x6,%edi       ; index 6
-2386594: e8 c4 87 92 04        call   6caed5d         ; shared dispatcher -> int3 6caef66
+Created once by the `pthread_once` callback `0x2ea6640`:
+`0x2ea6641 lea 0x72a1b08,%rdi`, `0x2ea6648 lea 0x2ea6670,%rsi` (destructor),
+`0x2ea664f call pthread_key_create@plt`; on success flag `0x72a1b04 = 1` ...
+
+2ea6455  getspecific for descriptor slot lookup        (0x2ea6440)
+2ea650c  getspecific re-check after once/mutex path    (0x2ea6440)
+2ea6565  setspecific of freshly allocated array        (0x2ea6440)
+2ea661a  key passed to pthread_key_delete              (0x2ea6610)
+2ea6641  &key passed to pthread_key_create             (0x2ea6640)
+2ea6685  destructor re-arms setspecific(key-1, ...)    (0x2ea6670)
 ```
-**Prerequisite 1 — flags-loaded latch `0x7cdd149 != 0`.** static-A #719 n9w3 enumerated exactly six `movb $0x1,0x7cdd149` writers: `0x2eb7520` (in `0x2eb7155`, called from `nativeInitClientSettings 0x2359277` at `0x235933d`, gated by parse-ctx `0x7697d08==1` → skipped), `0x2ec9fae` (Crashpad, gated channel `0x72a3718`), and `0x56d31a3/0x56d3386/0x56d6a4b/0x56d6b80` (dismissAll family; static-A #724 corrected #719's "no direct callers" — they do have static callers `0x2eb8296→0x56d2d35`, `0x56d6765→0x56d6779`, but no genuine CppProxy route). Harness log `n9_1.err:3695 [flags-latch] route=none (inert, latch=0)`; fault bytes show latch 0 in all six runs — hence the guard fires.
-
-**Prerequisite 2 — scheduler nesting prime on `FunctionMarshaller`.** `src/linux/guest_app_shell.c:1176-1177`:
+- The **only write to the key global itself** is by `pthread_key_create` at `0x2ea664f` via `&key` (`0x2ea6641`), inside the one-shot `pthread_once` callback; success sets flag `0x72a1b04=1`, teardown `0x2ea6610` calls `pthread_key_delete` with the same key.
+- `0x2ea6565` (`setspecific`) writes the **TLS value** for that key (the per-thread descriptor array), not the key global. Value observed as **3** in logs (`analysis/tls-2a0de60-r70-correction.md:47`: `2ea6455: mov 0x72a1b08,%edi ; global pthread_key_t (value 3 in logs)`).
+- Host-side seeders also write the TLS **value** for key 3, never the key global (`analysis/tsd-static-buffer-abort.md:64-68`, raw):
 ```
-/* Scheduler guest nesting prime: install now; the actual prime is fired
- * from on_attach("FunctionMarshaller") at the JavaVM attach site. */
-int sg_rc = sober_scheduler_guest_install((void *)base);
+[sober-jni] seeded STUB TSD key 3 (rva 0x72a1b08) -> 0x... (4096 bytes)   ; calloc, VALID
+[app-shell] TLS seed (key rva 0x72a1b08, 4096 bytes) -> rc=0
+[app-shell] stub-TSD seed: key=3 state=0x... rc=0                         ; static, INVALID
 ```
-and `:1897-1901`: `sober_scheduler_guest_on_attach("FunctionMarshaller");` — opt-in (`SOBER_SCHEDULER_GUEST=1`), harness-side call is "the earliest point available to us". Guest-side worker primitives `0x2a132c0(1)` nesting write, thunk `0x2a0daa0`, vtable call `0x2a0daf7` were documented in `analysis/A06-scheduler-state.md`, which is **no longer on disk** (audit #718) — UNPROVEN from surviving files. Surviving `analysis/A08-surface-delegate.md:463` only confirms the independent symptom: `RBXCRASH: Can't initialize the TaskScheduler before flags have been loaded`, faulting RVA `0x6caef67`.
+- Without `SOBER_STUB_TSD_SEED`, guest `pthread_getspecific(3)` resolves through the NDK stub into the glibc key namespace and returns NULL, so `0x2ea6520` allocates a fresh TLS array per call → nesting counter mismatch (`tls-2a0de60-r70-correction.md:90-99`).
 
-**Prerequisite 3 — MessageBus prime before V2InitWithParams.** `analysis/callback/task507-preinit-ordering.md:32,59-70` (raw): `nativeAppBridgeV2InitWithParams 0x24abf96`; "The guest reaches this function exactly once: `0x24ad699: lea rsi,[0x7234520]; mov edi,1; call 0x253cb56`"; "the first step after spending the guard is the MessageBus service getter `0x24a8e44(4)`" and "the prime is safe as soon as the guest image is mapped and relocated" — so it must run before `0x24abf96` to avoid the one-shot window.
+## PROVEN — `[0x72a3058]` after nativeInitClientSettings (from surviving ledger/quotes)
 
-## PROVEN / UNPROVEN — capture natives around the guard
+`analysis/FABRICATION-LEDGER.md:146-157` (verbatim):
+```
+breakpoints (`0x2359277` SETTINGS_ENTER, `0x23115c8` RSI_ORIGIN, watch on `0x72a3058`) ...
+- **PROVEN (corroborated):** `GLOBAL[0x72a3058] = 0x5555574528f0` and
+  `ctx = [G+0x18] = 0x5555558f8ac0` — both match `stop.err` boundary-pre log
+  `fflag_ctx=0x5555574528f0 fflag_obj=0x5555558f8ac0` (independent log source).
+- **PROVEN (source-verified):** last writer ... harness's own
+  `native_jni.c:1416-1429` cached-jmethodID seeding over the **inclusive** range
+  `0x72a2f48..0x72a3058`; final iteration writes `sr_find_method_object` named
+  `cachedMethod@%lx` into `0x72a3058`, clobbering the guest FFlag context global. `[ctx+0] =
+  0x654d646568636163` ("cachedMe") ...
+```
+- Ledger #13: that seeder clobber was a **host defect**, removed by default (skip `0x72a3058`); Run A1 logged `[SEEDER_WRITE]` slots up to `0x72a3050` with **no** `0x72a3058` write — exclusion works (ledger:186).
+- Genuine guest writer: sole write at `0x230cce4` (helper `0x230cc82`), value `&0x72a31c8` singleton, read at `0x227b204`, virtual call `*0x8(%rax)` `0x227b213`; **NOT reached when JNI_OnLoad is skipped** (ledger:208-209, static-jni3 #609).
+- Run C dumps: `[0x72a3058]` NULL at entry → guest singleton after (lazy-init PROVEN); `ctx+0` genuine guest code pointer, not host "cachedMe" (ledger:215).
+- Surviving raw boundary line (`/tmp/opencode/n9-harness/raw_rund_fflag.txt:2`): `3705:[app-shell] AVD boundary pre: arg0_len=1533221 ... D08=0 latch=0 fflag_ctx=0x7fffefedf1c8 fflag_obj=0x555555c50880` — ctx/obj sampled *before* the settings native in that run.
 
-- **#727 AppStart = `0x247dc8d`**: `guest_app_shell.c:1919-1931` call `(env, app_class, s_url, s_ua, 0, s_aid, s_plat, s_ext)` with log `"[app-shell] guest call 0x247dc8d nativeAppBridgeAppStart..."`.
-- **#734 V2InitWithParams = `0x24abf96`**: `guest_app_shell.c:1871` `"[app-shell] guest call 0x24abf96 nativeAppBridgeV2InitWithParams(param_obj) -> rc=%ld"`.
-- **#736 StartLuaAppDM = `0x25448f6`**: `guest_app_shell.c:914-918` `(env, clazz)` + log; `:1940-1946` `real_appstate_start_lua(...)` then `"after StartLuaAppDM"`.
-- UNPROVEN: capture numbering/timestamps for #727/#734/#736 and their exact order relative to the guard — the authoritative `w12-j2n-*.log`, `w18-avd/`, and `n8*` logs are **gone** (audit #718/#720: missing, not deleted by us), so no raw capture line can be quoted. Harness source order is V2InitWithParams → AppStart → StartLuaAppDM; capture numbering suggests a different order — cannot resolve statically.
+## RETRACTED / UNPROVEN
 
-## RETRACTED / NOT done
-
-- RETRACTED: any claim of verified latch=1/mimalloc-HardAssert in n9 (audit #720 — unverifiable, logs gone).
-- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; object OFF; no captures/tokens in git.
+- RETRACTED: treating the harness `cachedMethod@72a3058` value as a genuine guest singleton — ledger #13 defect removal; default path now excludes it.
+- UNPROVEN (source gone, cannot re-verify): `/tmp/opencode/w22-static-jni3/engine_full.dis`, `probe.out`/`probe_fast.out` (zero probe records — ledger:146-149), `w19-harness/report.md`, `stop.err`. Claims above are **inherited from surviving ledger/analysis quotes**, not re-measured here.
+- NOT DONE: no runs/device/captures/guest writes/gate/seeder/probe bridge/fake returns/path remaps; no captures/tokens in git.
