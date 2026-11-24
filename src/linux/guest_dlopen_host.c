@@ -373,6 +373,49 @@ static void n8e_arm_all(uintptr_t base)
             rc[0],rc[1],rc[2],rc[3],rc[4],rc[5],rc[6]);
 }
 
+/* ---- n9 WAVE1: pointer tested by unbridged 1dbe4fc, caller RVA, arena ---- */
+static long n9p_hits;
+static void n9p_sig(int s, siginfo_t *si, void *uc)
+{
+    (void)s; (void)si;
+    ucontext_t *c = (ucontext_t *)uc;
+    if (!c) return;
+    long n = __atomic_fetch_add(&n9p_hits, 1, __ATOMIC_RELAXED) + 1;
+    uintptr_t ptr = (uintptr_t)c->uc_mcontext.gregs[REG_RDI];
+    uintptr_t rbp = (uintptr_t)c->uc_mcontext.gregs[REG_RBP];
+    uintptr_t ra = 0, lo = 0, bm = 0, pt = 0;
+    (void)w30_readmem(rbp + 8u, &ra, 8u);
+    if (n7b_base) {
+        (void)w30_readmem(n7b_base + 0x7cd8ff8u, &lo, 8u);
+        (void)w30_readmem(n7b_base + 0x7cd9048u, &bm, 8u);
+        (void)w30_readmem(n7b_base + 0x7cd9040u, &pt, 8u);
+    }
+    char b[512], *p = b, *end = b + sizeof(b) - 1;
+    w24_put(&p, "[N9_PTR 1dbe4fc] hit="); w24_num(&p, n);
+    w24_put(&p, " tid="); w24_num(&p, (long)syscall(SYS_gettid));
+    w24_put(&p, " ptr="); w24_u64(&p, ptr, 1);
+    w24_put(&p, " caller_ra="); w24_u64(&p, ra, 1);
+    w24_put(&p, " caller_rva=");
+    if (n7b_base && ra >= n7b_base && ra < n7b_base + 0x8000000u) {
+        w24_put(&p, "0x"); w24_u64(&p, ra - n7b_base, 0);
+    } else w24_put(&p, "non-guest");
+    w24_put(&p, " arena_lo="); w24_u64(&p, lo, 1);
+    w24_put(&p, " bitmap="); w24_u64(&p, bm, 1);
+    w24_put(&p, " pagetable="); w24_u64(&p, pt, 1);
+    w24_line(&p, b, end);
+    ssize_t u = write(STDERR_FILENO, b, (size_t)(p - b)); (void)u;
+}
+static void n9p_arm_all(uintptr_t base)
+{
+    n7b_base = base;
+    struct sigaction sa; memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = n9p_sig; sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask); sigaction(42, &sa, NULL);
+    int fd = n7b_perf(base + 0x1dbe4fcu);
+    int rc = n7b_arm(fd, 42, n9p_sig);
+    fprintf(stderr, "[N9_PTR_ARM] base=%p fd=%d rc=%d\n", (void *)base, fd, rc);
+}
+
 static void n8p_arm_all(uintptr_t base)
 {
     n7b_base = base;
@@ -1245,6 +1288,7 @@ int main(int argc, char **argv)
     if (getenv("SOBER_N7B_BEFORE")) n7b_arm_all(base);
     if (getenv("SOBER_N8_PROBE")) n8p_arm_all(base);
     if (getenv("SOBER_N8_EDGE")) n8e_arm_all(base);
+    if (getenv("SOBER_N9_PTR")) n9p_arm_all(base);
     sober_guest_elf_describe(&elf);
 
     size_t applied = 0, relative = 0, symbolic = 0, unknown = 0, unresolved = 0;
