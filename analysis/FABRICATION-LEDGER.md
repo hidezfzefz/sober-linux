@@ -1656,4 +1656,44 @@ unauthorized + no frida-server, per lead).
 → OUTPUT: 137 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
 **Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log` fixtures only. Marker WITHHELD.
 
+### Weekend n10 WAVE3 audit (task #734) — PASS unreachable on bad SHA; one reporter two guards
+
+Owner: audit (`/tmp/opencode/n10-audit`, branch `n10-audit`). Cores 6-7, MANDATORY. READ-ONLY source audit, no runs; no questions. NO deletions, NO network.
+
+**harness #735 — all source-audit quotes verified:** exactly two PASS-BOUNDARY-REPLAY printf sites,
+both gated on `g_w29_arg0_sha_ok`: `guest_app_shell.c:1378-1383` `n10_bad_input = !g_w29_arg0_sha_ok
+|| getenv(UNVERIFIED)` selects `MODIFIED-INPUT (no credit)` first so `pass` is unreachable; `:2476
+} else if (boundary && g_w29_arg0_sha_ok)` precedes `:2478 fprintf(... PASS-BOUNDARY-REPLAY ...)`;
+input gate `guest_dlopen_host.c:1285` emits only `INPUT MISSING/MISMATCH (no rung)`. Sole writer of
+the global `avd_boundary.c:139 sha256(...) == SOBER_AVD_BOUNDARY_SHA256`; the modified-input opt-in
+(`:154-160`) returns 1 from the gate WITHOUT setting the global — **no switch can emit PASS with a
+mismatched SHA**. No probe bridge for `0x1dbe4fc` (`bootstrap_profile.h:63` bridges `0x1dbdfba`,
+not `0x1dbe4fc`; `bionic_bootstrap.c:890-893` array, `:1607-1609` "1dbe4fc is NEVER bridged",
+`:1643` banner). Withhold/marker unchanged: `git diff 892dc50 HEAD -- src/linux/guest_app_shell.c`
+has only two hunks at `:1371`/`:2466` (rung printers), no marker hunk;
+`avd_boundary.c:89-92 sober_avd_boundary_should_withhold()` unchanged. Allocator patch default OFF
+(`bb_alloc_patch_enabled()` `:1610-1615`, `:1638` opt-in `SOBER_ALLOCATOR_PATCH=1`). Verified-SHA
+success path UNPROVEN (w11-arg0.json missing). No rung credit.
+
+**static-B #733 — all quotes verified:** n10 chain latch hit `[N10_LATCH_HIT 0x2eb7520] hit=1 tid=511649
+guest_RA=guest+0x0000000002359342` (from nativeInitClientSettings `0x2359277` → `0x2eb7155`);
+fault bytes latch=1, `0x7cef650=0`; HardAssert message `23a1465 lea #4c0d2b,%rsi` / `23a146c xor
+edi,edi` index 0 / `23a146e call 6caed5d`; dispatcher `6caed61/64/69/6c/73/77`; reporter
+`6caef4f cmpb $0,0x7cdd149` PASSES (latch=1), `6caef58 cmpb $0,0x7cef650` FAILS → `6caef66 cc
+int3`. `0x7cdede0` = mimalloc usable-size probe bool written by skipped ctor3 `0x1db9a40` at
+`1db9acf`, sole consumer `0x239eb14`/`0x239eb1b` selects DFLog (A05-skipped-ctors.md:116-131,193,
+"zero functional effect"). n9 comparison: latch=0 → `23862b0/23862b7` → TaskScheduler message
+`0x36a389`, index 6, `2386594 call 6caed5d` — SAME dispatcher/reporter/int3; **RETRACTED treating
+the two messages as different crash sites** (one reporter, two guard entry points). UNPROVEN:
+table `0x721fbd0` entry values, runtime `0x7cdede0`.
+
+**Required checks reconfirmed:** all 6 A/B runs verified=0 / MODIFIED-INPUT=1 / PASS=0 (diagnostic
+only, NO rung credit); evidence snapshot 10 entries `sha256sum -c` 9/9 OK (no deletions); device
+Waydroid oracle BLOCKED (adb unauthorized + no frida-server).
+
+**Secrets-scan command + output:**
+`grep -rniE '(Cookie:[[:space:]]*[^"]{8,}|Authorization:|Bearer +[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\.|-R[0-9]{4,}-[A-Za-z0-9]{8,}|[A-Za-z0-9._%+-]+@(roblox|gmail|yahoo|hotmail|outlook)[A-Za-z0-9.-]*)' /tmp/opencode/n10-*/ --include='*.md' --include='*.txt' --include='*.err' --include='*.log' | head -20`
+→ OUTPUT: 138 self-matches (ledger's own recorded scan commands + verification-notes in 4 worktrees); no credential values.
+**Git:** no flag*.json / token / .pcap / .dump / w11-arg0 / core.* tracked; pre-existing FLog `.log` fixtures only. Marker WITHHELD.
+
 A/B (allocator patch OFF x3 / ON x3, modified-input opt-in `SOBER_N10_MODIFIED_INPUT=1` default OFF): all 6 audit-verified verbatim `[avd-boundary] MODIFIED-INPUT (no rung): diagnostic opt-in SOBER_N10_MODIFIED_INPUT=1; sha256=4d50a0ec… want=8215519f…`; `PASS-BOUNDARY-REPLAY` count 0 in all 6; rc=139 6/6; fault `guest+0x06caef67` int3 `0x6caef66`; latch `[0x7cdd149]=1 [0x7cef650]=0` 6/6 (latch=1 because boundary replay now RUNS with modified input, unlike n9 input-missing latch=0); `0x2eb7520` fires 6/6 with `guest_RA=0x2359342`; `N14_REPLAY 3/3` 0/6; patch banner only in OFF arm; no A/B behavioral difference. All runs DIAGNOSTIC ONLY, NO rung credit. static-b #726 quotes verified: CHECKPOINT-LADDER.md:20-26 rung2 order (#727/#734/#736) and surviving raw_capture J2N #67/#70/#105/#534/#541/#551/#552/#612; rung2 credit RETRACTED, #736 impossible without authoritative input.
