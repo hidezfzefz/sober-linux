@@ -1,82 +1,53 @@
-# n9w2 #717 static-B — 8 allocator patches ON/OFF (READ-ONLY)
+# n10w1 #726 static-B — load→AppStart native/event table (READ-ONLY)
 
-FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`, `89 c0 mov %eax,%eax; e8 62... call abort@plt`), SIGTRAP. All quotes raw. Object OFF, SF_FULL=1, ctor3 OFF, seed OFF, JNI_OnLoad-first ON. No apply/runs by me.
+FAULTING INSTRUCTION FIRST: guest `int3 0x6caef66` (RIP `0x6caef67`), TaskScheduler FatalRuntimeError, latch `[0x7cdd149]=0` 6/6. DELETE NOTHING; no network/runs/writes; object OFF; w11-arg0.json LOST ⇒ all runs MODIFIED INPUT, NO rung credit.
 
-## PROVEN — the 8 patches and their ON/OFF control
+## Source of quotes — important
 
-Table (n9-harness `src/compat/bionic_bootstrap/bootstrap_profile.h:62-74`, `bionic_bootstrap.c:889-908`):
-```
-#define SOBER_BRIDGE_ALLOC_SMALL_RVA   0x1dbad62u   -> g_bb_ops.alloc_small  "small-allocate"
-#define SOBER_BRIDGE_USABLE_SIZE_RVA   0x1dbdfbau   -> g_bb_ops.usable_size  "usable-size"
-#define SOBER_BRIDGE_REALLOCATE_RVA    0x227aafau   -> g_bb_ops.realloc      "reallocate"
-#define SOBER_BRIDGE_ALLOCATE_RVA      0x1dbab02u   -> g_bb_ops.allocate     "allocate"
-#define SOBER_BRIDGE_ALIGNED_ALLOC_RVA 0x1dd60e5u   -> g_bb_ops.aligned_alloc "aligned-allocate-direct"
-#define SOBER_BRIDGE_FREE_RVA          0x1dbe559u   -> g_bb_ops.free         "free"
-#define SOBER_BRIDGE_CALLOC_RVA        0x253225eu   -> bb_calloc_plain_installed "calloc-plain"
-#define SOBER_BRIDGE_CALLOC_RUNTIME_RVA 0x231f0e2u  -> bb_calloc_header_installed "calloc-header"
-```
-`install_bridge()` (`:838-873`) overwrites each 12-byte thunk prologue after fingerprint check:
-```
-/* movabs rax, imm64 ; jmp rax  -- absolute jump to the native function. */
-tramp[0] = 0x48; tramp[1] = 0xb8;
-tramp[10] = 0xff; tramp[11] = 0xe0;
-memcpy((void *)site, tramp, sizeof(tramp));
-```
-Host targets from `bb_resolve_alloc_ops()` (`:585-596`) → `host_allocate` (`:271-276`): `274: void *p = malloc(n);` — **glibc malloc/free** (weak `mi_*` declarations at `:175-176,262-265` are dead; n6 #684).
+`/tmp/opencode/w12-j2n-300.log` itself is **GONE** (audit #718/#720: missing, not deleted by us). Verbatim lines survive in `/tmp/opencode/n9-harness/raw_capture_entries.txt`, `raw_capture_order.txt`, `raw_552_capture.txt` and in `analysis/CHECKPOINT-LADDER.md`. All lines below are quoted from those surviving files, with their original w12 line numbers.
 
-Control (n9-harness `bionic_bootstrap.c:1606-1613, 1638-1644`):
-```
-/* n9 WAVE1 KILL SWITCH ... the 8 bridge patches are all
- * allocator entry points, never the page source; they do not make 1dbe4fc see
- * a registered pointer.  Default OFF; opt in only with SOBER_ALLOCATOR_PATCH=1.
- * 1dbe4fc is NEVER bridged. */
-static int bb_alloc_patch_enabled(void) {
-    const char *e = getenv("SOBER_ALLOCATOR_PATCH");
-    return (e && e[0] == '1' && e[1] == '\0') ? 1 : 0;
-}
-...
-if (!getenv("SOBER_BOOTSTRAP_NO_BRIDGES") && bb_alloc_patch_enabled()) {
-    if (install_bridges(base) != 0) return set_err("failed to install mimalloc bridges");
-    ...
-} else {
-    fprintf(stderr, "[N9_ALLOC_PATCH] OFF (default); guest allocator "
-                    "unpatched; 1dbe4fc NOT bridged\n");
-```
-- **ON**: 8 guest allocator thunks → glibc host malloc/free; embedded mimalloc bypassed at those entries only; calloc slot `0x726c0c0` patched too.
-- **OFF (default)**: all 8 thunks stay original guest code → embedded mimalloc remains the backend; probe `0x1dbe4fc` untouched. Raw log `n9off_1.err:19 [N9_ALLOC_PATCH] OFF (default); guest allocator unpatched; 1dbe4fc NOT bridged`.
+## PROVEN — order, args, harness replay vs skip (load → AppStart)
 
-## PROVEN — the two fatal messages are two guards on the SAME reporter/int3
+| w12 line / # | raw line (verbatim, truncated only where marked) | harness |
+|---|---|---|
+| 82 / #67 t=2406ms | `J2N #67 t=2406ms ...JNIActivityLifecycleCallbacks.nativeOnPreCreated("ActivitySplash")` | **REPLAY** `0x23239c5` (`guest_app_shell.c:1738`) |
+| 85 / #70 t=2422ms | `J2N #70 t=2422ms ...NativeSettingsInterface.nativeSetRobloxChannel("")` | replay `0x2326e2e` (`:1784`) |
+| 93 / #78 t=12320ms | `J2N #78 t=12320ms ...nativeOnCreated("ActivitySplash")` | SKIP |
+| 101 / #86 t=15108ms | `J2N #86 t=15108ms ...nativeOnPostCreated("ActivitySplash")` | SKIP |
+| 106 / #91 t=16027ms | `J2N #91 ...nativeOnPreStarted("ActivitySplash")` | SKIP |
+| 108 / #93 t=16891ms | `J2N #93 ...nativeOnStarted("ActivitySplash")` | SKIP |
+| 111 / #96 t=17795ms | `J2N #96 ...nativeOnPostStarted("ActivitySplash")` | SKIP |
+| 115 / #100 t=18665ms | `J2N #100 ...nativeOnPreResumed("ActivitySplash")` | SKIP (note: N14 label "#105 nativeOnResumed" maps to w12 #105) |
+| 120 / #105 t=20511ms | `J2N #105 t=20511ms ...nativeOnResumed("ActivitySplash")` | **REPLAY** `0x2328066` (`:1744`) |
+| 131 / #116 t=24008ms | `J2N #116 ...nativeOnPostResumed("ActivitySplash")` | SKIP |
+| 542 / #527 t=290171ms | `J2N #527 ...nativeSetRobloxChannel("")` | (W28_ORDER may skip duplicate) |
+| 549 / #534 t=290179ms | `J2N #534 ...nativeSetRobloxVersion("2.740.931")` | replay `0x232d484` (`:1779`) unless w28_order_done |
+| 556 / #541 t=290202ms | `J2N #541 ...NativeGLInterface.nativeGameGlobalInit()` | replay `0x233762c` (`:1832`) unless w28_order_done |
+| 566 / #551 t=290317ms | `J2N #551 ...nativeInitClientSettings("{...}", null, "GoogleAndroidApp")` | **REPLAY** `0x2359277` (AVD-boundary) |
+| 567 / #552 t=290696ms | `J2N #552 t=290696ms ...nativePostClientSettingsLoadedInitialization3([object Object])` | **REPLAY** `0x2383c18` (`:1760`) with opaque `param_obj` |
+| 612 / #612 t=290866ms | `J2N #612 ...nativeSetBaseDataDirectories("/data/user/0/com.roblox.client", "/storage/emulated/0/Android/data/com.roblox.client")` | replay `0x24650a9` (`:1773`) |
+| — | #613 PrefsFile `0x246515d`, #614 NativeFlags `0x2465210` | replayed after BaseDirs (`:1800`, `:1819`) |
+| 742 / #727 t=292010ms | `#727 t=292010ms nativeAppBridgeAppStart` | conditional/opt-in `0x247dc8d` (`:1928`); ALT path skips (`:1913`) |
+| 749 / #734 t=292046ms | `#734 t=292046ms nativeAppBridgeV2InitWithParams` | replay `0x24abf96` (`:1868`) |
+| 751 / #736 t=292074ms | `#736 t=292074ms nativeAppBridgeStartLuaAppDM` | opt-in `0x25448f6` (`:915`, `:1850`) |
 
-Both pass through dispatcher `0x6caed5d` → reporter `0x6caed7c` → `6caef66: int3`:
-```
-6caed61: 83 ff 0a              cmp    $0xa,%edi
-6caed64: b8 0a 00 00 00        mov    $0xa,%eax
-6caed69: 0f 42 c7              cmovb  %edi,%eax        ; index = min(edi,10)
-6caed6c: lea 0x570e5d(%rip),%rcx   # 721fbd0
-6caed73: mov (%rcx,%rax,8),%rdi
-6caed77: call 6caed7c
-```
-- **mimalloc HardAssert**: `23a1465: lea #4c0d2b,%rsi` ("Expect to have mimalloc working, but it was not detected!"), `23a146c: xor %edi,%edi` (**index 0**), `23a146e: call 6caed5d`. Reached via the probe/flag path (n7 static-A #697: `239d215 call 239ead3` printer → `239eb14 cmpb $0,0x7cdede0` → `23a1424 je 23a1465`).
-- **TaskScheduler-before-flags**: raw disasm from `analysis/lua-rbxcrash-flags-loaded.md:30-35`:
-```
-23862b0: cmpb $0x0, 0x7cdd149(%rip)     ; "flags loaded" latch
-23862b7: je   2386588                   ; latch==0 -> report + crash
-2386588: lea  0x36a389(%rip),%rsi       ; "Can't initialize the TaskScheduler before flags have been loaded"
-238658f: mov  $0x6,%edi                 ; crash type 6 (FatalRuntimeError)
-2386594: call 0x6caed5d                 ; same dispatcher
-```
-and `src/jni/flags_latch_default.h:9-10` quotes `RBXCRASH "Can't initialize the TaskScheduler before flags have been loaded" (int3 at 0x6caef67)`.
+## PROVEN — rung2 refs #727/#734/#736 and what each needs
 
-## PROVEN / UNPROVEN — observed message in n9 A/B logs
-
-Raw logs show **TaskScheduler** in both arms (n9 allocator ON and OFF):
+From `analysis/CHECKPOINT-LADDER.md:20-26` (verbatim):
 ```
-n9_1.err:3717 RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)
-n9off_1.err:3717 RBXCRASH: FatalRuntimeError (Can't initialize the TaskScheduler before flags have been loaded)
+- Condition: `nativeAppBridgeAppStart` → `nativeAppBridgeV2InitWithParams` →
+  `nativeAppBridgeStartLuaAppDM` all entered in order.
+- AVD reference: `/tmp/opencode/w12-j2n-300.log` (300 s window, 714 hooks,
+  1423 calls): `#727 t=292010ms nativeAppBridgeAppStart`,
+  `#734 t=292046ms nativeAppBridgeV2InitWithParams`,
+  `#736 t=292074ms nativeAppBridgeStartLuaAppDM`. Reached without login.
 ```
-So the 8 patches alone do **not** switch the message — both arms fault on the flags-latch guard (latch `0x7cdd149 == 0`), because the patches never touch `0x1dbe4fc`/page source (kill-switch comment above). which guard fires first also depends on ctor3/probe state (UNPROVEN from static bytes alone).
+- **#727 AppStart**: all three must be entered *in order*; host-side call re-enters the broken `0x233319a` path, so `SOBER_ALT_CALLBACK_PATH` skips it (`guest_app_shell.c:1911-1914`); also needs the MessageBus prime `0x24a8e44(4)` before the one-shot guard `0x72a31ba` is spent (`analysis/callback/task507-preinit-ordering.md:32,59-70`).
+- **#734 V2InitWithParams**: needs genuine `InitParams` and the MessageBus prime before `0x24abf96` (once `0x24ad699: call 0x253cb56` spends the guard, a fault leaves no node — task507). Currently never returns (n5/n9 harness: `N14_REPLAY 3/3` never printed; fault inside the native).
+- **#736 StartLuaAppDM**: `docs/WORKFLOW.md:62-64` requires "Rung 2 ... attempted only after the recursion is gone. 'Reached' requires a quoted `StartLuaAppDM` line from the harness log on the authoritative input" — impossible while `w11-arg0.json` is LOST (all runs MODIFIED INPUT, no rung credit, never print `PASS-BOUNDARY-REPLAY`).
 
-## RETRACTED / NOT done
+## UNPROVEN / RETRACTED
 
-- RETRACTED: "8 patches ON ⇒ mimalloc HardAssert, OFF ⇒ TaskScheduler" — n9 A/B shows TaskScheduler in both; the two messages are separate guards on one int3 site.
-- NOT DONE: no runs/device/guest writes/gate edits/seeder/fake returns/path remaps; no captures/tokens in git.
+- UNPROVEN: exact args of #727/#734/#736 (surviving CHECKPOINT-LADDER lines give only names/timestamps; `w12-j2n-300.log:742/749/751` with full args is gone); full w12 line 742/749/751 text.
+- RETRACTED: any rung-2 credit claim from current runs (input LOST, diagnostic only); recursion-removal replay is NOT a rung-2 attempt (ledger 35).
+- NOT DONE: no runs/device/network/writes/gate/seeder/fake returns/path remaps; DELETE NOTHING honored. No captures/tokens in git.
